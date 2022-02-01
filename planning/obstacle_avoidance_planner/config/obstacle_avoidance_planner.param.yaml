@@ -52,7 +52,8 @@
     max_lon_space_for_driveable_constraint: 0.5 # maximum lon(x) space when optimizing point[m]
 
     is_publishing_clearance_map: true # publish clearance map as nav_msgs::OccupancyGrid
-    is_publishing_area_with_objects: true # publish occupancy map as nav_msgs::OccupancyGrid
+    is_publishing_object_clearance_map: false # publish clearance map as nav_msgs::OccupancyGrid
+    is_publishing_area_with_objects: false # publish occupancy map as nav_msgs::OccupancyGrid
     enable_avoidance: true # enable avoidance function
     is_using_vehicle_config: true # use vehicle config
     num_sampling_points: 100 # number of optimizing points
@@ -74,15 +75,17 @@
     # trajectory param for mpt
     num_curvature_sampling_points: 5 # number of sampling points when calculating curvature
     delta_arc_length_for_mpt_points: 0.5 # delta arc length when generating mpt[m]
-    forward_fixing_mpt_distance: 10 # forward fixing distance for MPT
+    forward_fixing_mpt_min_distance: 3.0 # forward fixing distance for MPT
+    forward_fixing_mpt_time: 1.0 # forward fixing time with current velocity [s]
+
+    # optimization setting param for mpt
 
     # optimization param for mpt
     is_hard_fixing_terminal_point: false # hard fixing terminal point
-    base_point_weight: 2000.0 # slack weight for lateral error around base_link
-    top_point_weight: 1000.0 # slack weight for lateral error around vehicle-top point
     mid_point_weight: 1000.0 # slack weight for lateral error around the middle point
     lat_error_weight: 10.0 # weight for lateral error
     yaw_error_weight: 0.0 # weight for yaw error
+    yaw_error_rate_weight: 0.0 # weight for yaw error
     steer_input_weight: 0.01 # weight for steering input
     steer_rate_weight: 1.0 # weight for steering rate
     steer_acc_weight: 0.000001 # weight for steering acceleration
@@ -91,6 +94,7 @@
     terminal_path_lat_error_weight: 1000.0 # weight for lateral error at path end point
     terminal_path_yaw_error_weight: 1000.0 # weight for yaw error at path end point
     zero_ff_steer_angle: 0.5 # threshold that feed-forward angle becomes zero
+    optimization_center_offset: 1.5 # offset of optimization center from base_link
 
     # replanning & trimming trajectory param outside algorithm
     min_delta_dist_for_replan: 10.0 # minimum delta dist thres for replan[m]

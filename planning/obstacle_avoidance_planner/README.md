@@ -1,5 +1,3 @@
-# Obstacle Avoidance Planner
-
 ## Purpose
 
 This package generates a trajectory that is feasible to drive and collision free based on a reference path, drivable area, and static/dynamic obstacles.
@@ -13,7 +11,7 @@ Only position and orientation of trajectory are calculated in this module, and v
 | ---------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------- |
 | `~/input/path`                                                         | autoware_auto_planning_msgs/Path               | Reference path and the corresponding drivable area |
 | `~/input/objects`                                                      | autoware_auto_perception_msgs/PredictedObjects | Recognized objects around the vehicle              |
-| `/localization/kinematic_state`                                        | nav_msgs/Odometry                              | Current Velocity of ego vehicle                    |
+| `/localization/kinematic_kinematics`                                   | nav_msgs/Odometry                              | Current Velocity of ego vehicle                    |
 | `/planning/scenario_planning/lane_driving/obstacle_avoidance_approval` | tier4_planning_msgs/EnableAvoidance            | Approval to execute obstacle avoidance             |
 
 ### output
@@ -26,7 +24,56 @@ Only position and orientation of trajectory are calculated in this module, and v
 
 Each module is explained briefly here based on the flowchart.
 
-![obstacle_avoidance_planner_flowchart](./media/obstacle_avoidance_planner_flowchart.drawio.svg)
+```plantuml
+@startuml
+title generateTrajectory
+start
+
+group generateOptimizedTrajectory
+  :checkReplan;
+  if (replanning required?) then (yes)
+    group getMaps
+      :getDrivableArea;
+      :getRoadClearanceMap;
+      :drawObstacleOnImage;
+      :getObstacleClearanceMap;
+    end group
+
+    group optimizeTrajectory
+      :getEBTrajectory;
+      :getModelPredictiveTrajectory;
+
+      if (optimization failed?) then (no)
+      else (yes)
+        :send previous\n trajectory;
+      endif
+    end group
+
+    :insertZeroVeloityOutsideDrivableArea;
+
+    :publishDebugDataInOptimization;
+  else (no)
+    :send previous\n trajectory;
+  endif
+end group
+
+
+group generatePostProcessedTrajectory
+  :getExtendedOptimizedTrajectory;
+  :concatTrajectory;
+  group reCalcTrajectoryPoints
+    :generateFineTrajectoryPoints;
+    :alignVelocity;
+  end group
+end group
+
+:convertToTrajectory;
+
+:publishDebugDataInMain;
+
+stop
+@enduml
+```
 
 ### Manage trajectory generation
 
@@ -131,11 +178,47 @@ Therefore the output path may have a collision with road boundaries or obstacles
 We formulate a QP problem minimizing the distance between the previous point and the next point for each point.
 Conditions that each point can move to a certain extent are used so that the path will not changed a lot but will be smoother.
 
-For $k$'th point ($\boldsymbol{p}_k$), the objective function is as follows.
+For $k$'th point ($\boldsymbol{p}_k = (x_k, y_k)$), the objective function is as follows.
 The beginning and end point are fixed during the optimization.
 
 $$
-\min \sum_{k=1}^{n-1} |\boldsymbol{p}_{k+1} - \boldsymbol{p}_{k}| - |\boldsymbol{p}_{k} - \boldsymbol{p}_{k-1}|
+\begin{align}
+\ J & = min \sum_{k=1}^{n-1} ||\boldsymbol{p}_{k+1} - \boldsymbol{p}_{k}||^2 + ||\boldsymbol{p}_{k} - \boldsymbol{p}_{k-1}||^2 \\
+\ & =min \sum_{k=1}^{n-1} ||(x_{k} - x_{k+1}, y_k - y_{k+1})||^2 + || (x_{k-1} - x_k, y_{k-1} - y_k) ||^2 \\
+\ & = min (x_0, x_1, x_2,\dots,x_{n-2},x_{n-1}, x_n, y_0, y_1,y_2 \dots,y_{n-2} ,y_{n-1},y_n)
+    \begin{pmatrix}
+      1 & -1 & 0 & \dots& \\
+      -1 & 3 & -2 & 0 &\dots   \\
+      0 & -2 & 4 & -2&   \\
+      \vdots & 0 & \ddots&\ddots& \ddots   \\
+      & \vdots & &-2& 4 & -2 \\
+      & & & &-2& 3 & -1 \\
+      & & & & &-1&  1& \\
+      & & & & & & &1&-1& \\
+      & & & & & & &-1&3&-2\\
+      & & & & & & & &-2&4&-2 \\
+      & & & & & & & & &\ddots&\ddots&\ddots \\
+      & & & & & & & & & &-2& 4 & -2 \\
+      & & & & & & & & & & &-2& 3 & -1 \\
+      & & & & & & & & & & & &-1&  1 \\
+    \end{pmatrix}
+    \begin{pmatrix}
+        \ x_0 \\
+        \ x_1 \\
+        \ x_2 \\
+        \vdots \\
+        \ x_{n-2}\\
+        \ x_{n-1} \\
+        \ x_{n} \\
+        \ y_0 \\
+        \ y_1 \\
+        \ y_2 \\
+        \vdots \\
+        \ y_{n-2}\\
+        \ y_{n-1} \\
+        \ y_{n} \\
+    \end{pmatrix}
+\end{align}
 $$
 
 ### Model predictive trajectory
@@ -152,7 +235,7 @@ When the optimization failed or the optimized trajectory is not collision free, 
 
 Trajectory near the ego must be stable, therefore the condition where trajectory points near the ego are the same as previously generated trajectory is considered, and this is the only hard constraints in MPT.
 
-#### Formulation
+#### Vehicle kinematics
 
 As the following figure, we consider the bicycle kinematics model in the frenet frame to track the reference path.
 At time step $k$, we define lateral distance to the reference path, heading angle against the reference path, and steer angle as $y_k$, $\theta_k$, and $\delta_k$ respectively.
@@ -169,6 +252,8 @@ y_{k+1} & = y_{k} + v \sin \theta_k dt \\
 \delta_{k+1} & = \delta_k - \frac{\delta_k - \delta_{des,k}}{\tau}dt
 \end{align}
 $$
+
+##### Linearization
 
 Then we linearize these equations.
 $y_k$ and $\theta_k$ are tracking errors, so we assume that those are small enough.
@@ -200,47 +285,197 @@ $$
 \end{align}
 $$
 
-Based on the linearization, the error kinematics is formulated with the following linear equations.
+##### One-step state equation
+
+Based on the linearization, the error kinematics is formulated with the following linear equations,
 
 $$
 \begin{align}
     \begin{pmatrix}
         y_{k+1} \\
-        \theta_{k+1} \\
-        \delta_{k+1}
+        \theta_{k+1}
     \end{pmatrix}
     =
     \begin{pmatrix}
-        1 & v dt & 0 \\
-        0 & 1 & \frac{v dt}{L \cos^{2} \delta_{\mathrm{ref}, k}} \\
-        0 & 0 & 1 - \frac{dt}{\tau}
+        1 & v dt \\
+        0 & 1 \\
     \end{pmatrix}
     \begin{pmatrix}
         y_k \\
         \theta_k \\
-        \delta_k
     \end{pmatrix}
     +
     \begin{pmatrix}
         0 \\
-        0 \\
-        \frac{dt}{\tau}
+        \frac{v dt}{L \cos^{2} \delta_{\mathrm{ref}, k}} \\
     \end{pmatrix}
-    \delta_{des}
+    \delta_{k}
     +
     \begin{pmatrix}
         0 \\
         \frac{v \tan(\delta_{\mathrm{ref}, k}) dt}{L} - \frac{v \delta_{\mathrm{ref}, k} dt}{L \cos^{2} \delta_{\mathrm{ref}, k}} - \kappa_k v dt\\
-        0
     \end{pmatrix}
 \end{align}
 $$
 
-The objective function for smoothing and tracking is shown as follows.
+which can be formulated as follows with the state $\boldsymbol{x}$, control input $u$ and some matrices, where $\boldsymbol{x} = (y_k, \theta_k)$
 
 $$
 \begin{align}
-J_1 & (y_{0...N-1}, \theta_{0...N-1}, \delta_{0...N-1}) \\ & = w_y \sum_{k} y_k^2 + w_{\theta} \sum_{k} \theta_k^2 + w_{\delta} \sum_k \delta_k^2 + w_{\dot{\delta}} \sum_k \dot{\delta}_k^2 + w_{\ddot{\delta}} \sum_k \ddot{\delta}_k^2
+  \boldsymbol{x}_{k+1} = A_k \boldsymbol{x}_k + \boldsymbol{b}_k u_k + \boldsymbol{w}_k
+\end{align}
+$$
+
+##### Time-series state equation
+
+Then, we formulate time-series state equation by concatenating states, control inputs and matrices respectively as
+
+$$
+\begin{align}
+  \boldsymbol{x} = A \boldsymbol{x}_0 + B \boldsymbol{u} + \boldsymbol{w}
+\end{align}
+$$
+
+where
+
+$$
+\begin{align}
+\boldsymbol{x} = (\boldsymbol{x}^T_1, \boldsymbol{x}^T_2, \boldsymbol{x}^T_3, \dots, \boldsymbol{x}^T_{n-1})^T \\
+\boldsymbol{u} = (u_0, u_1, u_2, \dots, u_{n-2})^T \\
+\boldsymbol{w} = (\boldsymbol{w}^T_0, \boldsymbol{w}^T_1, \boldsymbol{w}^T_2, \dots, \boldsymbol{w}^T_{n-1})^T. \\
+\end{align}
+$$
+
+In detail, each matrices are constructed as follows.
+
+$$
+\begin{align}
+    \begin{pmatrix}
+        \boldsymbol{x}_1 \\
+        \boldsymbol{x}_2 \\
+        \boldsymbol{x}_3 \\
+        \vdots \\
+        \boldsymbol{x}_{n-1}
+    \end{pmatrix}
+    =
+    \begin{pmatrix}
+        A_0 \\
+        A_1 A_0 \\
+        A_2 A_1 A_0\\
+        \vdots \\
+        \prod\limits_{k=0}^{n-1} A_{k}
+    \end{pmatrix}
+    \boldsymbol{x}_0
+    +
+    \begin{pmatrix}
+      B_0 & 0 & & \dots & 0 \\
+      A_0 B_0 & B_1 & 0 & \dots & 0 \\
+      A_1 A_0 B_0 & A_0 B_1 & B_2 & \dots & 0 \\
+      \vdots & \vdots & & \ddots & 0 \\
+      \prod\limits_{k=0}^{n-3} A_k B_0 & \prod\limits_{k=0}^{n-4} A_k B_1 & \dots & A_0 B_{n-3} & B_{n-2}
+    \end{pmatrix}
+    \begin{pmatrix}
+        u_0 \\
+        u_1 \\
+        u_2 \\
+        \vdots \\
+        u_{n-2}
+    \end{pmatrix}
+    +
+    \begin{pmatrix}
+      I & 0 & & \dots & 0 \\
+      A_0 & I & 0 & \dots & 0 \\
+      A_1 A_0 & A_0 & I & \dots & 0 \\
+      \vdots & \vdots & & \ddots & 0 \\
+      \prod\limits_{k=0}^{n-3} A_k & \prod\limits_{k=0}^{n-4} A_k & \dots & A_0 & I
+    \end{pmatrix}
+    \begin{pmatrix}
+        \boldsymbol{w}_0 \\
+        \boldsymbol{w}_1 \\
+        \boldsymbol{w}_2 \\
+        \vdots \\
+        \boldsymbol{w}_{n-2}
+    \end{pmatrix}
+\end{align}
+$$
+
+##### Free-boundary-conditioned time-series state equation
+
+For path planning which does not start from the current ego pose, $\boldsymbol{x}_0$ should be the design variable of optimization.
+Therefore, we make $\boldsymbol{u}'$ by concatenating $\boldsymbol{x}_0$ and $\boldsymbol{u}$, and redefine $\boldsymbol{x}$ as follows.
+
+$$
+\begin{align}
+  \boldsymbol{u}' & = (\boldsymbol{x}^T_0, \boldsymbol{u}^T)^T \\
+  \boldsymbol{x} & = (\boldsymbol{x}^T_0, \boldsymbol{x}^T_1, \boldsymbol{x}^T_2, \dots, \boldsymbol{x}^T_{n-1})^T
+\end{align}
+$$
+
+Then we get the following state equation
+
+$$
+\begin{align}
+  \boldsymbol{x}' = B \boldsymbol{u}' + \boldsymbol{w},
+\end{align}
+$$
+
+which is in detail
+
+$$
+\begin{align}
+    \begin{pmatrix}
+        \boldsymbol{x}_0 \\
+        \boldsymbol{x}_1 \\
+        \boldsymbol{x}_2 \\
+        \boldsymbol{x}_3 \\
+        \vdots \\
+        \boldsymbol{x}_{n-1}
+    \end{pmatrix}
+    =
+    \begin{pmatrix}
+      I & 0 & \dots & & & 0 \\
+      A_0 & B_0 & 0 & & \dots & 0 \\
+      A_1 A_0 & A_0 B_0 & B_1 & 0 & \dots & 0 \\
+      A_2 A_1 A_0 & A_1 A_0 B_0 & A_0 B_1 & B_2 & \dots & 0 \\
+      \vdots & \vdots & \vdots & & \ddots & 0 \\
+      \prod\limits_{k=0}^{n-1} A_k & \prod\limits_{k=0}^{n-3} A_k B_0 & \prod\limits_{k=0}^{n-4} A_k B_1 & \dots & A_0 B_{n-3} & B_{n-2}
+    \end{pmatrix}
+    \begin{pmatrix}
+        \boldsymbol{x}_0 \\
+        u_0 \\
+        u_1 \\
+        u_2 \\
+        \vdots \\
+        u_{n-2}
+    \end{pmatrix}
+    +
+    \begin{pmatrix}
+      0 & \dots & & & 0 \\
+      I & 0 & & \dots & 0 \\
+      A_0 & I & 0 & \dots & 0 \\
+      A_1 A_0 & A_0 & I & \dots & 0 \\
+      \vdots & \vdots & & \ddots & 0 \\
+      \prod\limits_{k=0}^{n-3} A_k & \prod\limits_{k=0}^{n-4} A_k & \dots & A_0 & I
+    \end{pmatrix}
+    \begin{pmatrix}
+        \boldsymbol{w}_0 \\
+        \boldsymbol{w}_1 \\
+        \boldsymbol{w}_2 \\
+        \vdots \\
+        \boldsymbol{w}_{n-2}
+    \end{pmatrix}.
+\end{align}
+$$
+
+#### Objective function
+
+The objective function for smoothing and tracking is shown as follows, which can be formulated with value function matrices $Q, R$.
+
+$$
+\begin{align}
+J_1 (\boldsymbol{x}', \boldsymbol{u}') & = w_y \sum_{k} y_k^2 + w_{\theta} \sum_{k} \theta_k^2 + w_{\delta} \sum_k \delta_k^2 + w_{\dot{\delta}} \sum_k \dot{\delta}_k^2 + w_{\ddot{\delta}} \sum_k \ddot{\delta}_k^2 \\
+& = \boldsymbol{x}'^T Q \boldsymbol{x}' + \boldsymbol{u}'^T R \boldsymbol{u}' \\
+& = \boldsymbol{u}'^T H \boldsymbol{u}' + \boldsymbol{u}'^T \boldsymbol{f}
 \end{align}
 $$
 
@@ -250,25 +485,29 @@ Assuming that the lateral distance to the road boundaries or obstacles from the 
 $$
 y_{\mathrm{base}, k, \min} - \lambda_{\mathrm{base}, k} \leq y_{\mathrm{base}, k} (y_k)  \leq y_{\mathrm{base}, k, \max} + \lambda_{\mathrm{base}, k}\\
 y_{\mathrm{top}, k, \min} - \lambda_{\mathrm{top}, k} \leq y_{\mathrm{top}, k} (y_k) \leq y_{\mathrm{top}, k, \max} + \lambda_{\mathrm{top}, k}\\
-y_{\mathrm{mid}, k, \min} - \lambda_{\mathrm{mid}, k} \leq y_{\mathrm{mid}, k} (y_k) \leq y_{\mathrm{mid}, k, \max} + \lambda_{\mathrm{mid}, k}
+y_{\mathrm{mid}, k, \min} - \lambda_{\mathrm{mid}, k} \leq y_{\mathrm{mid}, k} (y_k) \leq y_{\mathrm{mid}, k, \max} + \lambda_{\mathrm{mid}, k} \\
+0 \leq \lambda_{\mathrm{base}, k} \\
+0 \leq \lambda_{\mathrm{top}, k} \\
+0 \leq \lambda_{\mathrm{mid}, k}
 $$
 
 Since $y_{\mathrm{base}, k}, y_{\mathrm{top}, k}, y_{\mathrm{mid}, k}$ is formulated as a linear function of $y_k$, the objective function for soft constraints is formulated as follows.
 
 $$
 \begin{align}
-J_2 & (\lambda_{\mathrm{base}, 0...N-1}, \lambda_{\mathrm{mid}, 0...N-1}, \lambda_{\mathrm{top}, 0...N-1}) \\ & = w_{\mathrm{base}} \sum_{k} \lambda_{\mathrm{base}, k}^2 + w_{\mathrm{mid}} \sum_k \lambda_{\mathrm{mid}, k}^2 + w_{\mathrm{top}} \sum_k \lambda_{\mathrm{top}, k}^2
+J_2 & (\boldsymbol{\lambda}_\mathrm{base}, \boldsymbol{\lambda}_\mathrm{top}, \boldsymbol {\lambda}_\mathrm{mid})\\
+& = w_{\mathrm{base}} \sum_{k} \lambda_{\mathrm{base}, k} + w_{\mathrm{mid}} \sum_k \lambda_{\mathrm{mid}, k} + w_{\mathrm{top}} \sum_k \lambda_{\mathrm{top}, k}
 \end{align}
 $$
 
 Slack variables are also design variables for optimization.
-We define a vector $\boldsymbol{x}$, that concatenates all the design variables.
+We define a vector $\boldsymbol{v}$, that concatenates all the design variables.
 
 $$
 \begin{align}
-\boldsymbol{x} =
+\boldsymbol{v} =
 \begin{pmatrix}
-... & y_k & \lambda_{\mathrm{base}, k} & \lambda_{\mathrm{top}, k} & \lambda_{\mathrm{mid}, k} &  ...
+  \boldsymbol{u}^T & \boldsymbol{\lambda}_\mathrm{base}^T & \boldsymbol{\lambda}_\mathrm{top}^T & \boldsymbol{\lambda}_\mathrm{mid}^T
 \end{pmatrix}^T
 \end{align}
 $$
@@ -277,7 +516,7 @@ The summation of these two objective functions is the objective function for the
 
 $$
 \begin{align}
-\min_{\boldsymbol{x}} J (\boldsymbol{x}) = \min_{\boldsymbol{x}} J_1 & (y_{0...N-1}, \theta_{0...N-1}, \delta_{0...N-1}) + J_2 (\lambda_{\mathrm{base}, 0...N-1}, \lambda_{\mathrm{mid}, 0...N-1}, \lambda_{\mathrm{top}, 0...N-1})
+\min_{\boldsymbol{v}} J (\boldsymbol{v}) = \min_{\boldsymbol{v}} J_1 (\boldsymbol{u}') + J_2 (\boldsymbol{\lambda}_\mathrm{base}, \boldsymbol{\lambda}_\mathrm{top}, \boldsymbol{\lambda}_\mathrm{mid})
 \end{align}
 $$
 
@@ -294,16 +533,154 @@ Finally we transform those objective functions to the following QP problem, and 
 
 $$
 \begin{align}
-\min_{\boldsymbol{x}} \ & \frac{1}{2} \boldsymbol{x}^T \boldsymbol{P} \boldsymbol{x} + \boldsymbol{q} \boldsymbol{x} \\
-\mathrm{s.t.} \ & \boldsymbol{b}_l \leq \boldsymbol{A} \boldsymbol{x} \leq \boldsymbol{b}_u
+\min_{\boldsymbol{v}} \ & \frac{1}{2} \boldsymbol{v}^T \boldsymbol{H} \boldsymbol{v} + \boldsymbol{f} \boldsymbol{v} \\
+\mathrm{s.t.} \ & \boldsymbol{b}_{lower} \leq \boldsymbol{A} \boldsymbol{v} \leq \boldsymbol{b}_{upper}
 \end{align}
 $$
+
+#### Constraints
+
+##### Steer angle limitaion
+
+Steer angle has a certain limitation ($\delta_{max}$, $\delta_{min}$).
+Therefore we add linear inequality equations.
+
+$$
+\begin{align}
+\delta_{min} \leq \delta_i \leq \delta_{max}
+\end{align}
+$$
+
+##### Collision free
+
+To realize collision-free path planning, we have to formulate constraints that the vehicle is inside the road (moreover, a certain meter far from the road boundary) and does not collide with obstacles in linear equations.
+For linearity, we chose a method to approximate the vehicle shape with a set of circles, that is reliable and easy to implement.
+
+Now we formulate the linear constraints where a set of circles on each trajectory point is collision-free.
+For collision checking, we have a drivable area in the format of an image where walls or obstacles are filled with a color.
+By using this drivable area, we calculate upper (left) and lower (right) boundaries along reference points so that we can interpolate boundaries on any position on the trajectory.
+
+Assuming that upper and lower boundaries are $b_l$, $b_u$ respectively, and $r$ is a radius of a circle, lateral deviation of the circle center $y'$ has to be
+
+$$
+b_l + r \leq y' \leq b_u - r.
+$$
+
+Based on the following figure, $y'$ can be formulated as follows.
+
+$$
+\begin{align}
+y' & = L \sin(\theta + \beta) + y \cos \beta - l \sin(\gamma - \phi_a) \\
+& = L \sin \theta \cos \beta + L \cos \theta \sin \beta + y \cos \beta - l \sin(\gamma - \phi_a) \\
+& \approx L \theta \cos \beta + L \sin \beta + y \cos \beta - l \sin(\gamma - \phi_a)
+\end{align}
+$$
+
+$$
+b_l + r - \lambda \leq y' \leq b_u - r + \lambda.
+$$
+
+$$
+\begin{align}
+y' & = C_1 \boldsymbol{x} + C_2 \\
+& = C_1 (B \boldsymbol{v} + \boldsymbol{w}) + C_2 \\
+& = C_1 B \boldsymbol{v} + \boldsymbol{w} + C_2
+\end{align}
+$$
+
+Note that longitudinal position of the circle center and the trajectory point to calculate boundaries are different.
+But each boundaries are vertical against the trajectory, resulting in less distortion by the longitudinal position difference since road boundaries does not change so much.
+For example, if the boundaries are not vertical against the trajectory and there is a certain difference of longitudinal position between the circe center and the trajectory point, we can easily guess that there is much more distortion when comparing lateral deviation and boundaries.
+
+$$
+\begin{align}
+    A_{blk} & =
+    \begin{pmatrix}
+        C_1 B & O & \dots & O & I_{N_{ref} \times N_{ref}} & O \dots & O\\
+        -C_1 B & O & \dots & O & I & O \dots & O\\
+        O & O & \dots & O & I & O \dots & O
+    \end{pmatrix}
+    \in \boldsymbol{R}^{3 N_{ref} \times D_v + N_{circle} N_{ref}} \\
+    \boldsymbol{b}_{lower, blk} & =
+    \begin{pmatrix}
+        \boldsymbol{b}_{lower} - C_1 \boldsymbol{w} - C_2 \\
+        -\boldsymbol{b}_{upper} + C_1 \boldsymbol{w} + C_2 \\
+        O
+    \end{pmatrix}
+    \in \boldsymbol{R}^{3 N_{ref}} \\
+    \boldsymbol{b}_{uppwer, blk} & = \boldsymbol{\infty}
+    \in \boldsymbol{R}^{3 N_{ref}}
+\end{align}
+$$
+
+We will explain options for optimization.
+
+###### L-infinity optimization
+
+The above formulation is called L2 norm for slack variables.
+Instead, if we use L-infinity norm where slack variables are shared by enabling `l_inf_norm`.
+
+$$
+\begin{align}
+    A_{blk} =
+    \begin{pmatrix}
+        C_1 B & I_{N_{ref} \times N_{ref}} \\
+        -C_1 B & I \\
+        O & I
+    \end{pmatrix}
+\in \boldsymbol{R}^{3N_{ref} \times D_v + N_{ref}}
+\end{align}
+$$
+
+###### Two-step soft constraints
+
+$$
+\begin{align}
+\boldsymbol{v}' =
+  \begin{pmatrix}
+    \boldsymbol{v} \\
+    \boldsymbol{\lambda}^{soft_1} \\
+    \boldsymbol{\lambda}^{soft_2} \\
+  \end{pmatrix}
+  \in \boldsymbol{R}^{D_v + 2N_{slack}}
+\end{align}
+$$
+
+$*$ depends on whether to use L2 norm or L-infinity optimization.
+
+$$
+\begin{align}
+    A_{blk} & =
+    \begin{pmatrix}
+        A^{soft_1}_{blk} \\
+        A^{soft_2}_{blk} \\
+    \end{pmatrix}\\
+    & =
+    \begin{pmatrix}
+        C_1^{soft_1} B & & \\
+        -C_1^{soft_1} B & \Huge{*} & \Huge{O} \\
+        O & & \\
+        C_1^{soft_2} B & & \\
+        -C_1^{soft_2} B & \Huge{O} & \Huge{*} \\
+        O & &
+    \end{pmatrix}
+    \in \boldsymbol{R}^{6 N_{ref} \times D_v + 2 N_{slack}}
+\end{align}
+$$
+
+$N_{slack}$ is $N_{circle}$ when L2 optimization, or $1$ when L-infinity optimization.
+$N_{circle}$ is the number of circles to check collision.
 
 ## Limitation
 
 - When turning right or left in the intersection, the output trajectory is close to the outside road boundary.
 - Roles of planning for behavior_path_planner and obstacle_avoidance_planner are not decided clearly.
 - High computation cost
+
+## How to make planning faster
+
+- set `is_publishing_*` false, which will not publish clearance maps or visualization markers for debugging.
+- set `enable_pre_smoothing` false which will disable EB for smoothing before MPT.
 
 ## Comparison to other methods
 

@@ -14,75 +14,16 @@
 
 #include "interpolation/spline_interpolation.hpp"
 
-#include "interpolation/interpolation_utils.hpp"
-
 #include <vector>
 
 namespace
 {
-// solve Ax = d
-// where A is tridiagonal matrix
-//     [b_0 c_0 ...                       ]
-//     [a_0 b_1 c_1 ...               O   ]
-// A = [            ...                   ]
-//     [   O         ... a_N-3 b_N-2 c_N-2]
-//     [                   ... a_N-2 b_N-1]
-struct TDMACoef
-{
-  explicit TDMACoef(const size_t num_row)
-  {
-    a.resize(num_row - 1);
-    b.resize(num_row);
-    c.resize(num_row - 1);
-    d.resize(num_row);
-  }
-
-  std::vector<double> a;
-  std::vector<double> b;
-  std::vector<double> c;
-  std::vector<double> d;
-};
-
-std::vector<double> solveTridiagonalMatrixAlgorithm(const TDMACoef & tdma_coef)
-{
-  const auto & a = tdma_coef.a;
-  const auto & b = tdma_coef.b;
-  const auto & c = tdma_coef.c;
-  const auto & d = tdma_coef.d;
-
-  const size_t num_row = b.size();
-
-  std::vector<double> x(num_row);
-  if (num_row != 1) {
-    // calculate p and q
-    std::vector<double> p;
-    std::vector<double> q;
-    p.push_back(-c[0] / b[0]);
-    q.push_back(d[0] / b[0]);
-
-    for (size_t i = 1; i < num_row; ++i) {
-      const double den = b[i] + a[i - 1] * p[i - 1];
-      p.push_back(-c[i - 1] / den);
-      q.push_back((d[i] - a[i - 1] * q[i - 1]) / den);
-    }
-
-    // calculate solution
-    x[num_row - 1] = q[num_row - 1];
-
-    for (size_t i = 1; i < num_row; ++i) {
-      const size_t j = num_row - 1 - i;
-      x[j] = p[j] * x[j + 1] + q[j];
-    }
-  } else {
-    x.push_back(d[0] / b[0]);
-  }
-
-  return x;
-}
-
-interpolation::MultiSplineCoef generateSplineCoefficients(
+interpolation::MultiSplineCoef getSplineCoefficients(
   const std::vector<double> & base_keys, const std::vector<double> & base_values)
 {
+  // throw exceptions for invalid arguments
+  interpolation_utils::validateKeysAndValues(base_keys, base_values);
+
   const size_t num_base = base_keys.size();  // N+1
 
   std::vector<double> diff_keys;    // N
@@ -95,7 +36,7 @@ interpolation::MultiSplineCoef generateSplineCoefficients(
   std::vector<double> v = {0.0};
   if (num_base > 2) {
     // solve tridiagonal matrix algorithm
-    TDMACoef tdma_coef(num_base - 2);  // N-1
+    interpolation_utils::TDMACoef tdma_coef(num_base - 2);  // N-1
 
     for (size_t i = 0; i < num_base - 2; ++i) {
       tdma_coef.b[i] = 2 * (diff_keys[i] + diff_keys[i + 1]);
@@ -107,7 +48,8 @@ interpolation::MultiSplineCoef generateSplineCoefficients(
         6.0 * (diff_values[i + 1] / diff_keys[i + 1] - diff_values[i] / diff_keys[i]);
     }
 
-    const std::vector<double> tdma_res = solveTridiagonalMatrixAlgorithm(tdma_coef);
+    const std::vector<double> tdma_res =
+      interpolation_utils::solveTridiagonalMatrixAlgorithm(tdma_coef);
 
     // calculate v
     v.insert(v.end(), tdma_res.begin(), tdma_res.end());
@@ -131,6 +73,9 @@ std::vector<double> getSplineInterpolatedValues(
   const std::vector<double> & base_keys, const std::vector<double> & query_keys,
   const interpolation::MultiSplineCoef & multi_spline_coef)
 {
+  // throw exceptions for invalid arguments
+  interpolation_utils::validateKeys(base_keys, query_keys);
+
   const auto & a = multi_spline_coef.a;
   const auto & b = multi_spline_coef.b;
   const auto & c = multi_spline_coef.c;
@@ -149,6 +94,32 @@ std::vector<double> getSplineInterpolatedValues(
 
   return res;
 }
+
+std::vector<double> getSplineInterpolatedDiffValues(
+  const std::vector<double> & base_keys, const std::vector<double> & query_keys,
+  const interpolation::MultiSplineCoef & multi_spline_coef)
+{
+  // throw exceptions for invalid arguments
+  interpolation_utils::validateKeys(base_keys, query_keys);
+
+  const auto & a = multi_spline_coef.a;
+  const auto & b = multi_spline_coef.b;
+  const auto & c = multi_spline_coef.c;
+
+  std::vector<double> res;
+  size_t j = 0;
+  for (const auto & query_key : query_keys) {
+    while (base_keys.at(j + 1) < query_key) {
+      ++j;
+    }
+
+    const double ds = query_key - base_keys.at(j);
+    res.push_back(c.at(j) + (2.0 * b.at(j) + 3.0 * a.at(j) * ds) * ds);
+  }
+
+  return res;
+}
+
 }  // namespace
 
 namespace interpolation
@@ -157,13 +128,21 @@ std::vector<double> slerp(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
   const std::vector<double> & query_keys)
 {
-  // throw exceptions for invalid arguments
-  interpolation_utils::validateInput(base_keys, base_values, query_keys);
-
   // calculate spline coefficients
-  const auto multi_spline_coef = generateSplineCoefficients(base_keys, base_values);
+  const auto multi_spline_coef = getSplineCoefficients(base_keys, base_values);
 
   // interpolate base_keys at query_keys
   return getSplineInterpolatedValues(base_keys, query_keys, multi_spline_coef);
+}
+
+std::vector<double> slerpDiff(
+  const std::vector<double> & base_keys, const std::vector<double> & base_values,
+  const std::vector<double> & query_keys)
+{
+  // calculate spline coefficients
+  const auto multi_spline_coef = getSplineCoefficients(base_keys, base_values);
+
+  // interpolate base_keys at query_keys
+  return getSplineInterpolatedDiffValues(base_keys, query_keys, multi_spline_coef);
 }
 }  // namespace interpolation
