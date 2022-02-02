@@ -322,8 +322,34 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   sensor_msgs::msg::PointCloud2::SharedPtr xyz_input_ptr(new sensor_msgs::msg::PointCloud2());
   PointCloud2Modifier<PointXYZI> xyz_input_modifier{*xyz_input_ptr, input_ptr->header.frame_id};
   xyz_input_modifier.reserve(input_ptr->width);
-  for (std::size_t idx = 0U; idx < input_ptr->data.size(); idx += input_ptr->point_step) {
-    xyz_input_modifier.push_back(std::move(*reinterpret_cast<PointXYZI *>(&input_ptr->data[idx])));
+
+  bool has_intensity = std::any_of(
+    input_ptr->fields.begin(), input_ptr->fields.end(),
+    [](auto & field) { return field.name == "intensity"; });
+
+  sensor_msgs::PointCloud2Iterator<float> it_x(*input_ptr, "x");
+  sensor_msgs::PointCloud2Iterator<float> it_y(*input_ptr, "y");
+  sensor_msgs::PointCloud2Iterator<float> it_z(*input_ptr, "z");
+
+  if(has_intensity){
+    sensor_msgs::PointCloud2Iterator<float> it_i(*input_ptr, "intensity");
+    for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_i) {
+      PointXYZI point;
+      point.x = *it_x;
+      point.y = *it_y;
+      point.z = *it_z;
+      point.intensity = *it_i;
+      xyz_input_modifier.push_back(std::move(point));
+    }
+  }else{
+    for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z) {
+      PointXYZI point;
+      point.x = *it_x;
+      point.y = *it_y;
+      point.z = *it_z;
+      point.intensity = 0.0f;
+      xyz_input_modifier.push_back(std::move(point));
+    }
   }
 
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
