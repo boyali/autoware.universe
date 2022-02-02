@@ -298,15 +298,6 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PointCloudConcatenateDataSynchronizerComponent::convertToXYZICloud(
-  const sensor_msgs::msg::PointCloud2 & input_cloud, sensor_msgs::msg::PointCloud2 & output_cloud)
-{
-  pcl::PointCloud<PointXYZI> tmp_cloud;
-  pcl::fromROSMsg(input_cloud, tmp_cloud);
-  pcl::toROSMsg(tmp_cloud, output_cloud);
-  output_cloud.header = input_cloud.header;
-}
-
 void PointCloudConcatenateDataSynchronizerComponent::setPeriod(const int64_t new_period)
 {
   if (!timer_) {
@@ -324,14 +315,42 @@ void PointCloudConcatenateDataSynchronizerComponent::setPeriod(const int64_t new
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr, const std::string & topic_name)
+  const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr, const std::string & topic_name)
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  sensor_msgs::msg::PointCloud2 xyz_cloud;
-  convertToXYZICloud(*input_ptr, xyz_cloud);
-  sensor_msgs::msg::PointCloud2::ConstSharedPtr xyz_input_ptr(
-    new sensor_msgs::msg::PointCloud2(xyz_cloud));
+  sensor_msgs::msg::PointCloud2::SharedPtr xyz_input_ptr(new sensor_msgs::msg::PointCloud2());
+  PointCloud2Modifier<PointXYZI> xyz_input_modifier{*xyz_input_ptr, input_ptr->header.frame_id};
+  xyz_input_modifier.reserve(input_ptr->width);
+
+  bool has_intensity = std::any_of(
+    input_ptr->fields.begin(), input_ptr->fields.end(),
+    [](auto & field) { return field.name == "intensity"; });
+
+  sensor_msgs::PointCloud2Iterator<float> it_x(*input_ptr, "x");
+  sensor_msgs::PointCloud2Iterator<float> it_y(*input_ptr, "y");
+  sensor_msgs::PointCloud2Iterator<float> it_z(*input_ptr, "z");
+
+  if(has_intensity){
+    sensor_msgs::PointCloud2Iterator<float> it_i(*input_ptr, "intensity");
+    for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_i) {
+      PointXYZI point;
+      point.x = *it_x;
+      point.y = *it_y;
+      point.z = *it_z;
+      point.intensity = *it_i;
+      xyz_input_modifier.push_back(std::move(point));
+    }
+  }else{
+    for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z) {
+      PointXYZI point;
+      point.x = *it_x;
+      point.y = *it_y;
+      point.z = *it_z;
+      point.intensity = 0.0f;
+      xyz_input_modifier.push_back(std::move(point));
+    }
+  }
 
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
   const bool is_already_subscribed_tmp = std::any_of(
