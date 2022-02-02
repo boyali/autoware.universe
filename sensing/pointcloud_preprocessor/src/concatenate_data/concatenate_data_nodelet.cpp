@@ -320,10 +320,10 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   std::lock_guard<std::mutex> lock(mutex_);
 
   sensor_msgs::msg::PointCloud2::SharedPtr xyz_input_ptr(new sensor_msgs::msg::PointCloud2());
-  PointCloud2Modifier<PointXYZ> xyz_input_modifier{*xyz_input_ptr, input_ptr->header.frame_id};
+  PointCloud2Modifier<PointXYZI> xyz_input_modifier{*xyz_input_ptr, input_ptr->header.frame_id};
   xyz_input_modifier.reserve(input_ptr->width);
   for (std::size_t idx = 0U; idx < input_ptr->data.size(); idx += input_ptr->point_step) {
-    xyz_input_modifier.push_back(std::move(*reinterpret_cast<PointXYZ *>(&input_ptr->data[idx])));
+    xyz_input_modifier.push_back(std::move(*reinterpret_cast<PointXYZI *>(&input_ptr->data[idx])));
   }
 
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
