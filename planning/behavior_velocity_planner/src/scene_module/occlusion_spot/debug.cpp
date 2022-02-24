@@ -160,7 +160,7 @@ visualization_msgs::msg::MarkerArray makePolygonMarker(
   for (const auto & poly : polygons) {
     for (const auto & p : poly) {
       geometry_msgs::msg::Point point =
-        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), 0.0);
+        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), z);
       debug_marker.points.push_back(point);
     }
     debug_markers.markers.push_back(debug_marker);
