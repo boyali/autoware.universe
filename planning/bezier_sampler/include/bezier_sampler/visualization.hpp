@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "bezier_sampler/matplotlibcpp.h"
 #include "bezier_sampler/bezier.hpp"
+#include "bezier_sampler/matplotlibcpp.h"
 
 namespace motion_planning
 {
@@ -25,11 +25,11 @@ namespace bezier_sampler
 {
 
 //@brief Plot a bezier curve and its control points
-void plot(Bezier b, int nb_points=100);
+void plot(Bezier b, int nb_points = 100);
 //@brief Plot a bezier curve and its curvature
-void plot_curvature(Bezier b, int nb_points=100);
+void plot_curvature(Bezier b, int nb_points = 100);
 //@brief Plot a set of bezier curves
-void plot(std::vector<Bezier> bs, int nb_points=100);
+void plot(std::vector<Bezier> bs, int nb_points = 100);
 
-} // namespace bezier_sampler
-} // namespace motion_planning
+}  // namespace bezier_sampler
+}  // namespace motion_planning

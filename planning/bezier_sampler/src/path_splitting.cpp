@@ -16,11 +16,10 @@
 
 #include <bezier_sampler/path_splitting.hpp>
 
-namespace motion_planning
+namespace motion_planning::bezier_sampler
 {
-namespace bezier_sampler
-{
-  // TODO /!\ curvatures should be probably be estimated over longer distances than just successive points.
+// TODO /!\ curvatures should be probably be estimated over longer distances than just successive
+// points.
 std::vector<std::pair<Configuration, Configuration>> splitPath(
   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path, double split_length,
   double max_length, int ego_pose_index)
@@ -29,8 +28,8 @@ std::vector<std::pair<Configuration, Configuration>> splitPath(
   std::vector<std::pair<Configuration, Configuration>> splits;
   double total_arc_length(0.0);
   double sub_arc_length(0.0);
-  Configuration initial;
-  Configuration final;
+  Configuration initial{};
+  Configuration final{};
   auto it = std::next(path.begin(), ego_pose_index);
   if (it != path.end() and std::next(it) != path.end()) {
     initial.x = it->pose.position.x;
@@ -48,11 +47,10 @@ std::vector<std::pair<Configuration, Configuration>> splitPath(
       final.heading =
         atan2(final.y - std::prev(it)->pose.position.y, final.x - std::prev(it)->pose.position.x);
       final.curvature = curvature(*std::prev(it), *it, *std::next(it));
-      splits.push_back({initial, final});
+      splits.emplace_back(initial, final);
       initial = final;
       sub_arc_length = 0.0;
-      if(total_arc_length > max_length)
-        break;
+      if (total_arc_length > max_length) break;
     } else {  // increment arc length
       const double arc_length = std::sqrt(
         (it->pose.position.x - std::prev(it)->pose.position.x) *
@@ -70,8 +68,8 @@ std::vector<std::pair<Configuration, Configuration>> splitPathByCurvature(
 {
   std::vector<std::pair<Configuration, Configuration>> splits;
   double sum_curvature(0.0);
-  Configuration initial;
-  Configuration final;
+  Configuration initial{};
+  Configuration final{};
   if (path.size() > 2) {
     initial.x = path[0].pose.position.x;
     initial.y = path[0].pose.position.y;
@@ -89,7 +87,7 @@ std::vector<std::pair<Configuration, Configuration>> splitPathByCurvature(
       final.heading = std::atan2(
         final.y - std::prev(it)->pose.position.y, final.x - std::prev(it)->pose.position.x);
       final.curvature = k;  // TODO compute proper curvature
-      splits.push_back({initial, final});
+      splits.emplace_back(initial, final);
       initial = final;
       sum_curvature = 0.0;
     } else {  // increment curvature integral
@@ -103,8 +101,7 @@ std::vector<std::pair<Configuration, Configuration>> splitPathByCurvature(
     }
   }
   std::cout << "Split by curvature size = " << splits.size() << std::endl;
-  //TODO do we want to always include a subpath to the last point of the path ?
+  // TODO do we want to always include a subpath to the last point of the path ?
   return splits;
 }
-}  // namespace bezier_sampler
-}  // namespace motion_planning
+}  // namespace motion_planning::bezier_sampler

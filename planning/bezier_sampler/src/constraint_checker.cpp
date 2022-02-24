@@ -16,37 +16,37 @@
 
 #include <bezier_sampler/constraint_checker.hpp>
 
-namespace motion_planning
-{
-namespace bezier_sampler
+namespace motion_planning::bezier_sampler
 {
 ConstraintChecker::ConstraintChecker(
-  const nav_msgs::msg::OccupancyGrid & drivable_area, ConstraintParameters parameters)
-: _drivable_area(drivable_area), _params(parameters)
+  nav_msgs::msg::OccupancyGrid drivable_area, ConstraintParameters parameters)
+: drivable_area_(std::move(drivable_area)), params_(parameters)
 {
   // Prepare rotation map -> OccupancyGrid cell
   tf2::Quaternion drivable_area_quaternion;
-  tf2::convert(_drivable_area.info.origin.orientation, drivable_area_quaternion);
+  tf2::convert(drivable_area_.info.origin.orientation, drivable_area_quaternion);
   tf2::Matrix3x3 m(drivable_area_quaternion);
-  double roll, pitch, yaw;
+  double roll{};
+  double pitch{};
+  double yaw{};
   m.getRPY(roll, pitch, yaw);
-  _drivable_area_rotation << std::cos(-yaw), -std::sin(-yaw),
-                             std::sin(-yaw),  std::cos(-yaw);
-  //TODO
-  // build polygon from the OccupancyGrid
-  // Convert to opencv image
-  // Extract contour
-  // Rotate and translate
+  drivable_area_rotation_ << std::cos(-yaw), -std::sin(-yaw), std::sin(-yaw), std::cos(-yaw);
+  // TODO
+  //  build polygon from the OccupancyGrid
+  //  Convert to opencv image
+  //  Extract contour
+  //  Rotate and translate
 
   // Prepare vectors to the footprint corners;
-  _left_front = {parameters.ego_front_length, parameters.ego_width / 2.0};
-  _right_front = {parameters.ego_front_length, -parameters.ego_width / 2.0};
-  _left_rear = {-parameters.ego_rear_length, parameters.ego_width / 2.0};
-  _right_rear = {-parameters.ego_rear_length, -parameters.ego_width / 2.0};
+  left_front_ = {parameters.ego_front_length, parameters.ego_width / 2.0};
+  right_front_ = {parameters.ego_front_length, -parameters.ego_width / 2.0};
+  left_rear_ = {-parameters.ego_rear_length, parameters.ego_width / 2.0};
+  right_rear_ = {-parameters.ego_rear_length, -parameters.ego_width / 2.0};
 }
 polygon_t ConstraintChecker::buildFootprintPolygon(const Bezier & path) const
 {
-  // Using the method from Section IV.A of A. Artuñedoet al.: Real-Time Motion Planning Approach for Automated Driving in Urban Environments
+  // Using the method from Section IV.A of A. Artuñedoet al.: Real-Time Motion Planning Approach for
+  // Automated Driving in Urban Environments
   polygon_t footprint;
   // sample points
   // we store the right bound as it needs to be added to the polygon after the left bound
@@ -57,33 +57,29 @@ polygon_t ConstraintChecker::buildFootprintPolygon(const Bezier & path) const
     const Eigen::Vector2d first_point = points.front().head<2>();
     double heading = points.front().z();
     Eigen::Matrix2d rotation;
-    rotation << std::cos(heading), -std::sin(heading),
-                std::sin(heading), std::cos(heading);
-    const Eigen::Vector2d left_rear_point = first_point + rotation * _left_rear;
+    rotation << std::cos(heading), -std::sin(heading), std::sin(heading), std::cos(heading);
+    const Eigen::Vector2d left_rear_point = first_point + rotation * left_rear_;
     bg::append(footprint, left_rear_point);
-    right_bound.push_back(first_point + rotation * _right_rear);
+    right_bound.emplace_back(first_point + rotation * right_rear_);
   }
   // For each points (except 1st and last)
-  for(auto it = std::next(points.begin()); it != std::prev(points.end()); ++it)
-  {
+  for (auto it = std::next(points.begin()); it != std::prev(points.end()); ++it) {
     const Eigen::Vector2d point = it->head<2>();
     const double prev_heading = std::prev(it)->z();
     const double heading = it->z();
     Eigen::Matrix2d rotation;
-    rotation << std::cos(heading), -std::sin(heading),
-                std::sin(heading), std::cos(heading);
-    // We use the change in the heading (restricted in [-pi;pi]) to determine if the path is turning left or right
-    const bool turning_right = (std::fmod(heading - prev_heading + M_PI, 2*M_PI) - M_PI) < 0;
-    if(turning_right)
-    {
-      const Eigen::Vector2d left_front_point = point + rotation * _left_front;
+    rotation << std::cos(heading), -std::sin(heading), std::sin(heading), std::cos(heading);
+    // We use the change in the heading (restricted in [-pi;pi]) to determine if the path is turning
+    // left or right
+    const bool turning_right = (std::fmod(heading - prev_heading + M_PI, 2 * M_PI) - M_PI) < 0;
+    if (turning_right) {
+      const Eigen::Vector2d left_front_point = point + rotation * left_front_;
       bg::append(footprint, left_front_point);
-      right_bound.push_back(point + rotation * _right_rear);
-    }
-    else {
-      const Eigen::Vector2d left_rear_point = point + rotation * _left_rear;
+      right_bound.emplace_back(point + rotation * right_rear_);
+    } else {
+      const Eigen::Vector2d left_rear_point = point + rotation * left_rear_;
       bg::append(footprint, left_rear_point);
-      right_bound.push_back(point + rotation * _right_front);
+      right_bound.emplace_back(point + rotation * right_front_);
     }
   }
   // last point: use the left and right point on the front
@@ -91,49 +87,52 @@ polygon_t ConstraintChecker::buildFootprintPolygon(const Bezier & path) const
     Eigen::Vector2d last_point = points.back().head<2>();
     double heading = points.back().z();
     Eigen::Matrix2d rotation;
-    rotation << std::cos(heading), -std::sin(heading),
-                std::sin(heading), std::cos(heading);
-    Eigen::Vector2d left_front_point = last_point + rotation * _left_front;
+    rotation << std::cos(heading), -std::sin(heading), std::sin(heading), std::cos(heading);
+    Eigen::Vector2d left_front_point = last_point + rotation * left_front_;
     bg::append(footprint, left_front_point);
-    right_bound.push_back(last_point + rotation * _right_front);
+    right_bound.emplace_back(last_point + rotation * right_front_);
   }
-  for(auto it = right_bound.rbegin(); it != right_bound.rend(); ++it)
-    bg::append(footprint, *it);
+  for (auto it = right_bound.rbegin(); it != right_bound.rend(); ++it) bg::append(footprint, *it);
   bg::correct(footprint);
   return footprint;
 }
-bool ConstraintChecker::isDrivable(const Bezier & path) const {
-  const double step = 1.0/(_params.nb_points-1);
-  for(double t = 0.0; t <= 1.0; t+=step) {
+bool ConstraintChecker::isDrivable(const Bezier & path) const
+{
+  const double step = 1.0 / (params_.nb_points - 1);
+  for (double t = 0.0; t <= 1.0; t += step) {
     const double curvature = std::abs(path.curvature(t));
-    if(curvature >= _params.maximum_curvature)
-      return false;
+    if (curvature >= params_.maximum_curvature) return false;
   }
   return true;
 }
-bool ConstraintChecker::isCollisionFree(const Bezier & path) const {
-  for(const Eigen::Vector2d & position: buildFootprintPolygon(path).outer()) {
-    if(not isCollisionFree(position))
-    {
+bool ConstraintChecker::isCollisionFree(const Bezier & path) const
+{
+  for (const Eigen::Vector2d & position : buildFootprintPolygon(path).outer()) {
+    if (not isCollisionFree(position)) {
       // std::printf("Collision @ (%2.2f, %2.2f)\n", position.x(), position.y());
       return false;
     }
   }
   return true;
 }
-int8_t ConstraintChecker::isCollisionFree(const Eigen::Vector2d & position) const {
-  const Eigen::Vector2d local_pose(position.x() - _drivable_area.info.origin.position.x, position.y() - _drivable_area.info.origin.position.y);
-  // const Eigen::Vector2d local_pose_rot = _drivable_area_rotation * local_pose;
-  const Eigen::Vector2i index = (_drivable_area_rotation * local_pose / _drivable_area.info.resolution).cast<int>();
-  const int flat_index = index.x() + index.y() * _drivable_area.info.width;
+bool ConstraintChecker::isCollisionFree(const Eigen::Vector2d & position) const
+{
+  const Eigen::Vector2d local_pose(
+    position.x() - drivable_area_.info.origin.position.x,
+    position.y() - drivable_area_.info.origin.position.y);
+  // const Eigen::Vector2d local_pose_rot = drivable_area_rotation_ * local_pose;
+  const Eigen::Vector2i index =
+    (drivable_area_rotation_ * local_pose / drivable_area_.info.resolution).cast<int>();
+  const size_t flat_index = index.x() + index.y() * drivable_area_.info.width;
   // std::printf("\tPosition (%2.2f,%2.2f)\n", position.x(), position.y());
   // std::printf("\tIndex (%d,%d)\n", index.x(), index.y());
   // std::printf("\tFlat index (%d)\n", flat_index);
-  // std::printf("\tArea info (%d x %d)\n", _drivable_area.info.width, _drivable_area.info.height);
+  // std::printf("\tArea info (%d x %d)\n", drivable_area_.info.width, drivable_area_.info.height);
   // std::cout << std::endl;
   // Return true if the position is outside of the grid OR if the corresponding cell value is 0
-  return index.x() < 0 || index.y() < 0 || index.x() >= static_cast<int>(_drivable_area.info.width) ||
-         index.y() >= static_cast<int>(_drivable_area.info.height) || static_cast<int>(_drivable_area.data[flat_index]) == 0;
+  return index.x() < 0 || index.y() < 0 ||
+         index.x() >= static_cast<int>(drivable_area_.info.width) ||
+         index.y() >= static_cast<int>(drivable_area_.info.height) ||
+         static_cast<int>(drivable_area_.data[flat_index]) == 0;
 }
-}  // namespace bezier_sampler
-} // namespace motion_planning
+}  // namespace motion_planning::bezier_sampler

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include <gtest/gtest.h>
-
-#include <bezier_sampler/constraint_checker.hpp>
 #include <bezier_sampler/bezier.hpp>
+#include <bezier_sampler/constraint_checker.hpp>
+
 #include <nav_msgs/msg/occupancy_grid.hpp>
+
+#include <gtest/gtest.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 TEST(isCollisionFree, position_square)
@@ -34,10 +35,8 @@ TEST(isCollisionFree, position_square)
   grid.info.origin.position.x = 0.0;
   grid.info.origin.position.y = 3.0;
   grid.info.origin.orientation = tf2::toMsg(tf2::Quaternion({0.0, 0.0, 1.0}, 0.0));
-  grid.data = {0, 0, 0,
-               0, 0, 0,
-               0, 0, 0};
-  
+  grid.data = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+
   // Parameters
   ConstraintParameters params;
   // Tests
@@ -54,9 +53,7 @@ TEST(isCollisionFree, position_square)
     ASSERT_TRUE(cc.isCollisionFree({2.5, 2.5}));
   }
   {
-    grid.data = {100, 100, 100,
-                 100, 100, 100,
-                 100, 100, 100};
+    grid.data = {100, 100, 100, 100, 100, 100, 100, 100, 100};
     ConstraintChecker cc(grid, params);
     ASSERT_FALSE(cc.isCollisionFree({0.5, 0.5}));
     ASSERT_FALSE(cc.isCollisionFree({0.5, 1.5}));
@@ -69,9 +66,7 @@ TEST(isCollisionFree, position_square)
     ASSERT_FALSE(cc.isCollisionFree({2.5, 2.5}));
   }
   {
-    grid.data = {  0, 100, 100,
-                 100, 100, 100,
-                 100, 100, 100};
+    grid.data = {0, 100, 100, 100, 100, 100, 100, 100, 100};
     ConstraintChecker cc(grid, params);
     ASSERT_FALSE(cc.isCollisionFree({0.5, 0.5}));
     ASSERT_FALSE(cc.isCollisionFree({0.5, 1.5}));
@@ -84,15 +79,13 @@ TEST(isCollisionFree, position_square)
     ASSERT_FALSE(cc.isCollisionFree({2.5, 2.5}));
   }
   {
-    grid.data = {100, 100, 100,
-                   0,   0,   0,
-                 100, 100, 100};
+    grid.data = {100, 100, 100, 0, 0, 0, 100, 100, 100};
     ConstraintChecker cc(grid, params);
     ASSERT_TRUE(cc.isCollisionFree({0.5, 1.5}));
     ASSERT_TRUE(cc.isCollisionFree({1.5, 1.5}));
     ASSERT_TRUE(cc.isCollisionFree({2.5, 1.5}));
-    for(double x = 0.5; x <= 2.5; ++x)
-      for(double y = 0.5; y <= 2.5; y+=2) // skip the middle row
+    for (double x = 0.5; x <= 2.5; ++x)
+      for (double y = 0.5; y <= 2.5; y += 2)  // skip the middle row
         ASSERT_FALSE(cc.isCollisionFree({x, y}));
   }
   // Change origin
@@ -103,15 +96,15 @@ TEST(isCollisionFree, position_square)
     ASSERT_TRUE(cc.isCollisionFree({3.5, 1.5}));
     ASSERT_TRUE(cc.isCollisionFree({4.5, 1.5}));
     ASSERT_TRUE(cc.isCollisionFree({5.5, 1.5}));
-    for(double x = 3.5; x <= 5.5; ++x)
-      for(double y = 0.5; y <= 2.5; y+=2) // skip the middle row
+    for (double x = 3.5; x <= 5.5; ++x)
+      for (double y = 0.5; y <= 2.5; y += 2)  // skip the middle row
         ASSERT_FALSE(cc.isCollisionFree({x, y}));
   }
   // Reset origin
   grid.info.origin.position.x = 0.0;
   grid.info.origin.position.y = 3.0;
   // Change orientation by 90 degree
-  grid.info.origin.orientation = tf2::toMsg(tf2::Quaternion({0.0, 0.0, 1.0}, M_PI/2));
+  grid.info.origin.orientation = tf2::toMsg(tf2::Quaternion({0.0, 0.0, 1.0}, M_PI / 2));
   {
     ConstraintChecker cc(grid, params);
     ASSERT_TRUE(cc.isCollisionFree({1.5, 3.5}));
@@ -154,9 +147,8 @@ TEST(isCollisionFree, position_rectangle)
   grid.info.origin.position.x = 0.0;
   grid.info.origin.position.y = 2.0;
   grid.info.origin.orientation = tf2::toMsg(tf2::Quaternion({0.0, 0.0, 1.0}, 0.0));
-  grid.data = {0, 0, 0,
-               0, 0, 0};
-  
+  grid.data = {0, 0, 0, 0, 0, 0};
+
   // Parameters
   ConstraintParameters params;
   // Tests
@@ -170,8 +162,7 @@ TEST(isCollisionFree, position_rectangle)
     ASSERT_TRUE(cc.isCollisionFree({2.5, 1.5}));
   }
   {
-    grid.data = {100, 100, 100,
-                 100, 100, 100};
+    grid.data = {100, 100, 100, 100, 100, 100};
     ConstraintChecker cc(grid, params);
     ASSERT_FALSE(cc.isCollisionFree({0.5, 0.5}));
     ASSERT_FALSE(cc.isCollisionFree({1.5, 0.5}));
@@ -181,8 +172,7 @@ TEST(isCollisionFree, position_rectangle)
     ASSERT_FALSE(cc.isCollisionFree({2.5, 1.5}));
   }
   {
-    grid.data = {  0, 100, 100,
-                 100, 100, 100};
+    grid.data = {0, 100, 100, 100, 100, 100};
     ConstraintChecker cc(grid, params);
     ASSERT_FALSE(cc.isCollisionFree({0.5, 0.5}));
     ASSERT_FALSE(cc.isCollisionFree({1.5, 0.5}));
@@ -192,8 +182,7 @@ TEST(isCollisionFree, position_rectangle)
     ASSERT_FALSE(cc.isCollisionFree({2.5, 1.5}));
   }
   {
-    grid.data = {100, 100, 100,
-                   0,   0,   0};
+    grid.data = {100, 100, 100, 0, 0, 0};
     ConstraintChecker cc(grid, params);
     ASSERT_TRUE(cc.isCollisionFree({0.5, 0.5}));
     ASSERT_TRUE(cc.isCollisionFree({1.5, 0.5}));
@@ -218,7 +207,7 @@ TEST(isCollisionFree, position_rectangle)
   grid.info.origin.position.x = 0.0;
   grid.info.origin.position.y = 2.0;
   // Change orientation by 90 degree
-  grid.info.origin.orientation = tf2::toMsg(tf2::Quaternion({0.0, 0.0, 1.0}, M_PI/2));
+  grid.info.origin.orientation = tf2::toMsg(tf2::Quaternion({0.0, 0.0, 1.0}, M_PI / 2));
   {
     ConstraintChecker cc(grid, params);
     ASSERT_FALSE(cc.isCollisionFree({0.5, 2.5}));

@@ -17,12 +17,15 @@
 #pragma once
 
 #include <bezier_sampler/bezier_sampling.hpp>
-#include <geometry_msgs/msg/pose.hpp>
-#include <vector>
-#include <cmath>
 #include <eigen3/Eigen/Core>
-#include <tf2/utils.h>
+
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+
+#include <tf2/utils.h>
+
+#include <cmath>
+#include <vector>
 
 namespace motion_planning
 {
@@ -33,9 +36,14 @@ std::vector<std::pair<Configuration, Configuration>> splitPath(
   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path, double split_length,
   double max_length, int ego_pose_index);
 //@brief split the given vector of PathPoint into segments with a maximum curvature integral
-std::vector<std::pair<Configuration, Configuration>> splitPathByCurvature(const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path, double split_curvature);
+std::vector<std::pair<Configuration, Configuration>> splitPathByCurvature(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path, double split_curvature);
 //@brief calculates the Menger curvature between the 3 given PathPoint
-inline double curvature(const autoware_auto_planning_msgs::msg::PathPoint & p0, const autoware_auto_planning_msgs::msg::PathPoint & p1, const autoware_auto_planning_msgs::msg::PathPoint & p2) {
+inline double curvature(
+  const autoware_auto_planning_msgs::msg::PathPoint & p0,
+  const autoware_auto_planning_msgs::msg::PathPoint & p1,
+  const autoware_auto_planning_msgs::msg::PathPoint & p2)
+{
   const double x0 = p0.pose.position.x;
   const double x1 = p1.pose.position.x;
   const double x2 = p2.pose.position.x;
@@ -45,5 +53,5 @@ inline double curvature(const autoware_auto_planning_msgs::msg::PathPoint & p0, 
   const double angle = std::atan2(y2 - y0, x2 - x0) - std::atan2(y1 - y0, x1 - x0);
   return 2 * std::sin(angle) / std::sqrt((x2 - x0) * (x2 - x0) + (y2 - y0) * (y2 - y0));
 }
-} // namespace bezier_sampler
-} // namespace motion_planning
+}  // namespace bezier_sampler
+}  // namespace motion_planning

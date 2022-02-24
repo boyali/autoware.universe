@@ -17,36 +17,40 @@
 #pragma once
 
 #include <bezier_sampler/bezier.hpp>
-#include <array>
-#include <vector>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
+
+#include <array>
 #include <iostream>
+#include <vector>
 
 namespace motion_planning
 {
 namespace bezier_sampler
 {
-struct Configuration {
-    double x;
-    double y;
-    double heading;
-    double curvature;
+struct Configuration
+{
+  double x;
+  double y;
+  double heading;
+  double curvature;
 };
-struct SamplingParameters {
-    int nb_t ;     // Number of samples of normalized tangent vector magnitude
-    double mt_min; // Minimum normalized tangent vector magnitude
-    double mt_max; // Maximum normalized tangent vector magnitude
-    int nb_k ;     // Number of samples of normalized curvature vector magnitude
-    double mk_min; // Minimum normalized curvature vector magnitude
-    double mk_max; // Minimum normalized curvature vector magnitude
+struct SamplingParameters
+{
+  int nb_t;       // Number of samples of normalized tangent vector magnitude
+  double mt_min;  // Minimum normalized tangent vector magnitude
+  double mt_max;  // Maximum normalized tangent vector magnitude
+  int nb_k;       // Number of samples of normalized curvature vector magnitude
+  double mk_min;  // Minimum normalized curvature vector magnitude
+  double mk_max;  // Minimum normalized curvature vector magnitude
 };
 //@brief sample Bezier curves given an initial and final configuration and some sampling parameters
-std::vector<Bezier> sample(const Configuration & initial, const Configuration & final, const SamplingParameters & params);
+std::vector<Bezier> sample(
+  const Configuration & initial, const Configuration & final, const SamplingParameters & params);
 //@brief generate a Bezier curve for the given configurations, velocities, and accelerations
 Bezier generate(
-  const Eigen::Vector2d & initial_pose, const Eigen::Vector2d & final_pose, const Eigen::Vector2d & initial_velocity,
-  const Eigen::Vector2d & initial_acceleration, const Eigen::Vector2d & final_velocity,
-  const Eigen::Vector2d & final_acceleration);
-} // namespace bezier_sampler
-} // namespace motion_planning
+  const Eigen::Vector2d & initial_pose, const Eigen::Vector2d & final_pose,
+  const Eigen::Vector2d & initial_velocity, const Eigen::Vector2d & initial_acceleration,
+  const Eigen::Vector2d & final_velocity, const Eigen::Vector2d & final_acceleration);
+}  // namespace bezier_sampler
+}  // namespace motion_planning
