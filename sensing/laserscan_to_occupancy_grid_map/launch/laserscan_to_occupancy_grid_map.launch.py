@@ -61,7 +61,7 @@ def generate_launch_description():
                     "max_height": 2.0,
                     "angle_min": -3.141592,  # -M_PI
                     "angle_max": 3.141592,  # M_PI
-                    "angle_increment": 0.00436332222,  # 0.25*M_PI/180.0
+                    "angle_increment": 0.00218166156,  # 0.25*M_PI/180.0
                     "scan_time": 0.0,
                     "range_min": 1.0,
                     "range_max": 200.0,
@@ -89,7 +89,7 @@ def generate_launch_description():
             ],
             parameters=[
                 {
-                    "map_resolution": 0.5,
+                    "map_resolution": 0.25,
                     "use_height_filter": True,
                     "input_obstacle_pointcloud": LaunchConfiguration("input_obstacle_pointcloud"),
                     "input_obstacle_and_raw_pointcloud": LaunchConfiguration(
