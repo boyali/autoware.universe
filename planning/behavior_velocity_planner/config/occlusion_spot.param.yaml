@@ -18,6 +18,8 @@
         delay_time: 0.5                     # [s] safety time buffer for delay system response
         safe_margin: 0.5                    # [m] maximum safety distance for any error
       detection_area:
+        detection_area_min_length: 5     # [m] the length of path to consider perception range
+        detection_area_max_length: 30    # [m] the length of path to consider perception range
         min_occlusion_spot_size: 1.0     # [m] occupancy grid must contain an UNKNOWN area of at least size NxN to be considered a hidden obstacle.
         slice_length: 10.0               # [m] size of slices in both length and distance relative to the ego path.
         max_lateral_distance: 6.0        # [m] buffer around the ego path used to build the detection area.

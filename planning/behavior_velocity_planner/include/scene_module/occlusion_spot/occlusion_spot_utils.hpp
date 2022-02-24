@@ -69,6 +69,8 @@ enum METHOD { OCCUPANCY_GRID, PREDICTED_OBJECT };
 
 struct DetectionArea
 {
+  double detection_area_min_length;// [m]
+  double detection_area_max_length;// [m]
   double max_lateral_distance;     // [m] distance to care about occlusion spot
   double slice_length;             // [m] size of each slice
   double min_occlusion_spot_size;  // [m] minumum size to care about the occlusion spot
