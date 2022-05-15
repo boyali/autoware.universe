@@ -22,6 +22,7 @@
 #include "tier4_autoware_utils/ros/update_param.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
+#include "act_utils.hpp"
 #include <tf2/LinearMath/Quaternion.h>
 
 #include <algorithm>
