@@ -40,18 +40,19 @@ int main()
 		int order_e_yaw = 2;    // order of the filter for yaw error.
 
 
+
 		// Base class construction.
 		StrongTypeDef<double, s_cut_off_tag> sf_cutoff{ cut_off_frequency_ey };
-		QFilterBase                          qfilter_cutoff(sf_cutoff, order_ey); // 3rd order low-pass filter
+		QFilterBase                          qfilter_cutoff(sf_cutoff, order_ey, dt); // 3rd order low-pass filter
 
 
 		StrongTypeDef<double, s_time_const_tag> stconstant{ time_constant_tau_ey };
-		QFilterBase                             qfilter_tconst(stconstant, order_ey); // 3rd order low-pass filter
+		QFilterBase                             qfilter_tconst(stconstant, order_ey, dt); // 3rd order low-pass filter
 
 
 		// Specialized qfilters for ey and eyaw.
-		Qfilter<state_vector_qfilter_ey_t>    qfilter_ey{ sf_cutoff, order_ey };
-		Qfilter<state_vector_qfilter_e_yaw_t> qfilter_epsi{ sf_cutoff, order_e_yaw };
+		Qfilter<state_vector_qfilter_ey_t>    qfilter_ey{ sf_cutoff, order_ey, dt };
+		Qfilter<state_vector_qfilter_e_yaw_t> qfilter_epsi{ sf_cutoff, order_e_yaw, dt };
 
 #ifndef NDEBUG
 
@@ -96,8 +97,8 @@ int main()
 		double u{ 1. };
 		// dt = 1;
 
-		auto yey   = qfilter_ey.y_hx(u, dt);
-		auto yepsi = qfilter_epsi.y_hx(u, dt);
+		auto yey   = qfilter_ey.y_hx(u);
+		auto yepsi = qfilter_epsi.y_hx(u);
 
 		ns_utils::print("Filter outputs ey, epsi : ", yey, "~", yepsi, "\n");
 
@@ -110,8 +111,8 @@ int main()
 		for (auto k = 0; k < 100; ++k)
 			{
 				double& uk       = ulong(k);
-				double&& yk_ey   = qfilter_ey.y_hx(uk, dt);
-				double&& yk_epsi = qfilter_epsi.y_hx(u, dt);
+				double&& yk_ey   = qfilter_ey.y_hx(uk);
+				double&& yk_epsi = qfilter_epsi.y_hx(uk);
 
 				ns_utils::print(" u, yey, yepsi : ", ulong(k), ",", yk_ey, ",", yk_epsi, "\n");
 			}
