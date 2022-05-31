@@ -48,6 +48,14 @@ enum class CDOB_PUBLIC Qfilter_e_yaw : int {
 
 using state_vector_qfilter_e_yaw_t = Eigen::Matrix<double, toUnderlyingType(Qfilter_e_yaw::STATE_DIM), 1>;
 
+enum class CDOB_PUBLIC Qfilter_delta : int {
+	STATE_DIM = 1,
+	INPUT_DIM = 1
+};
+
+using state_vector_qfilter_delta = Eigen::Matrix<double, toUnderlyingType(Qfilter_delta::STATE_DIM), 1>;
+
+
 //constexpr Eigen::Index STATE_DIM = 3;
 //constexpr Eigen::Index INPUT_DIM = 1;
 #endif //DELAY_COMPENSATION_VEHICLE_DEFINITIONS_HPP

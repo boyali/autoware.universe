@@ -24,12 +24,17 @@
 class CDOB_PUBLIC DelayObserver {
 public:
 	
+	// Constructors.
 	DelayObserver() = default;
 	
 	explicit DelayObserver(double const& wheelbase);
 
+
 private:
 	double wheelbase_{ 2.74 };
+	
+	// Inverse vehicle model with Q filtered.
+	// Qfilters.
 	
 };
 
