@@ -49,8 +49,8 @@ int main()
 		// TEST VEHICLE MODEL
 		
 		// Create a vehicle model for the qfilter inversion.
-		VehicleKinematicModelLinearized model_1;
-		VehicleKinematicModelLinearized vehicle_model{ wheelbase };
+		NonlinearVehicleKinematicModel model_1;
+		NonlinearVehicleKinematicModel vehicle_model{ wheelbase };
 		
 		state_vector_vehicle_t x0_;
 		x0_.setZero();

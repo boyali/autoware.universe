@@ -151,8 +151,11 @@ ament_auto_add_executable(main_type_erasure usage_examples/main_polymorphisim.cp
 target_link_libraries(main_type_erasure ${CDOB})
 
 ## Dummy control signal
-ament_auto_add_executable(main_dummy_signal usage_examples/main_dummy_signal.cpp)
-target_link_libraries(main_type_erasure ${CDOB})
+ament_auto_add_executable(main_qfilter_simulation usage_examples/main_qfilter_simulation.cpp)
+target_link_libraries(main_qfilter_simulation ${CDOB})
+
+ament_auto_add_executable(main_vehicle_simulation usage_examples/main_vehicle_simulation.cpp)
+target_link_libraries(main_vehicle_simulation ${CDOB})
 
 ## ODE integration
 ament_auto_add_executable(main_ode usage_examples/main_ode.cpp)
