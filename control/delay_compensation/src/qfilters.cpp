@@ -21,14 +21,17 @@
  * @param order is the order of denominator in the transfer function.  *
  * */
 QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> const& cutOffFrequency,
-		int const& order, double const& dt) : order_(order), cut_off_frequency_{ cutOffFrequency.get() }, dt_{ dt }
+                         int const& order,
+                         double const& dt) : order_(order),
+                                             cut_off_frequency_{ cutOffFrequency.get() },
+                                             dt_{ dt }
 	{
 		// Calculate the time constant.
-
+		
 		auto w_c = 2.0 * M_PI * cut_off_frequency_; // in [rad/sec]
-
-
-
+		
+		
+		
 		// Put ROS Error message if zero division.
 		// RCLCPP_ERROR(rclcpp::get_logger("mpc_utils"), "trajectory size has no consistency.");
 //		RCLCPP_WARN_SKIPFIRST_THROTTLE(
@@ -38,7 +41,7 @@ QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> const& cutOffFrequ
 //		RCLCPP_DEBUG(
 //				get_logger(), "waiting data. current_steering = %d",
 //				m_current_steering_ptr != nullptr);
-
+		
 		if (std::fabs(w_c) >= EPS)
 			{
 				time_constant_tau_ = 1.0 / w_c;
@@ -47,27 +50,27 @@ QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> const& cutOffFrequ
 			{
 				throw std::invalid_argument("The cut-off frequency cannot be zero.");
 			}
-
-
+		
+		
 		// Calculate the transfer function.
 		// Calculate the transfer function.
 		ns_control_toolbox::tf_factor denominator{ std::vector<double>{ time_constant_tau_, 1. }}; // (s+1)
-
+		
 		// Take power of the denominator.
 		denominator.power(static_cast<unsigned int>(order));
-
+		
 		// Create the transfer function from a numerator an denominator.
 		tf_ = ns_control_toolbox::tf{ std::vector<double>{ 1 }, denominator() };
 		ss_ = ns_control_toolbox::tf2ss(tf_, dt); // Convert to state space.
-
-
+		
+		
 		// DEBUG
 		ns_utils::print("TF of Qfilter is constructed from cutoff ... ");
 		tf_.print();
-
+		
 		ns_utils::print("SS of Qfilter is constructed from cutoff ... ");
 		ss_.print();
-
+		
 	}
 
 /**
@@ -75,11 +78,14 @@ QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> const& cutOffFrequ
  * @param sTimeConstantType in double to time constant of the filter ; 1/(tau*s + 1) ^ order.
  * @param order is the order of denominator in the transfer function.  *
  * */
-QFilterBase::QFilterBase(QFilterBase::t_timeConst const& timeConst, int const& order, double const& dt) : order_{
-		order }, time_constant_tau_{ timeConst.get() }, dt_{ dt }
+QFilterBase::QFilterBase(QFilterBase::t_timeConst const& timeConst,
+                         int const& order,
+                         double const& dt) : order_{ order },
+                                             time_constant_tau_{ timeConst.get() },
+                                             dt_{ dt }
 	{
 		// Calculate the cut-off frequency.
-
+		
 		if (std::fabs(time_constant_tau_) >= EPS)
 			{
 				cut_off_frequency_ = 1.0 / time_constant_tau_; // in [rad/sec]
@@ -88,18 +94,18 @@ QFilterBase::QFilterBase(QFilterBase::t_timeConst const& timeConst, int const& o
 			{
 				throw std::invalid_argument("The cut-off frequency cannot be zero.");
 			}
-
-
+		
+		
 		// Calculate the transfer function.
 		ns_control_toolbox::tf_factor denominator{ std::vector<double>{ time_constant_tau_, 1. }}; // (s+1)
-
+		
 		// Take power of the denominator.
 		denominator.power(static_cast<unsigned int>(order));
-
+		
 		// Create the transfer function from a numerator an denominator.
 		tf_ = ns_control_toolbox::tf{ std::vector<double>{ 1 }, denominator() };
 		ss_ = ns_control_toolbox::tf2ss(tf_, dt); // Convert to state space.
-
+		
 	}
 
 void QFilterBase::print_tf() const

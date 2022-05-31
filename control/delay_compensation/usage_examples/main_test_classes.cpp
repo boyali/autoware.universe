@@ -22,42 +22,43 @@
 int main()
 	{
 		double const wheelbase{ 2.9 };
-
+		double const dt{ 0.1 };
+		
 		// TEST DELAY OBSERVER MAIN
 		DelayObserver observer(wheelbase);
 		std::cout << "hello world" << std::endl;
-
-
+		
+		
 		// Test autoware control toolbox
 		std::vector<double> num{ -1, -1, 5 };
 		std::vector<double> den{ 1, 5, 1 };
-
+		
 		// With a num, den
 		ns_control_toolbox::tf sys(num, den);
-
+		
 		// Print sys
 		sys.print();
-
+		
 		// TEST QFilterBase constructors.
 		StrongTypeDef<double, s_cut_off_tag> sf_cutoff{ 0.1 };
-		QFilterBase                          qfilter_cutoff(sf_cutoff, 4); // 4th order low-pass filter
-
+		QFilterBase                          qfilter_cutoff(sf_cutoff, 4, dt); // 4th order low-pass filter
+		
 		StrongTypeDef<double, s_time_const_tag> sf_tconstant{ 0.1 };
-		QFilterBase                             qfilter_timeconstant(sf_tconstant, 4); // 4th order low-pass filter
-
+		QFilterBase                             qfilter_timeconstant(sf_tconstant, 4, dt); // 4th order low-pass filter
+		
 		// TEST VEHICLE MODEL
-
+		
 		// Create a vehicle model for the qfilter inversion.
 		VehicleKinematicModelLinearized model_1;
 		VehicleKinematicModelLinearized vehicle_model{ wheelbase };
-
+		
 		state_vector_vehicle_t x0_;
 		x0_.setZero();
 		vehicle_model.getInitialStates(x0_);
-
+		
 		ns_utils::print("x0_ .....; \n");
-
+		
 		ns_eigen_utils::printEigenMat(x0_);
-
+		
 		return 0;
 	}

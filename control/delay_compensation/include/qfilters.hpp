@@ -51,7 +51,7 @@ class CDOB_PUBLIC QFilterBase
 		int                       order_{ 1 }; // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
 		double                    cut_off_frequency_{}; // Cut-off frequency in Hz.
 		double                    time_constant_tau_{};
-		double                    dt_{};
+		double                    dt_{}; // time step for filter discretization.
 		ns_control_toolbox::tf    tf_{}; // Transfer function of the q-filter.
 		ns_control_toolbox::tf2ss ss_{}; // State space representation of the q-filter.
 
