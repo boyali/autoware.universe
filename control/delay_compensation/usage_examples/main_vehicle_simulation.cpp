@@ -22,88 +22,35 @@ int main()
 		unsigned int frequency{ 40 };   // Hz
 		double       dt{ 1. / frequency };
 		
-		Eigen::Index num_of_time_points = static_cast<Eigen::Index>(tfinal / dt ) + 1;
-		auto         time_vector        = Eigen::VectorXd::LinSpaced(num_of_time_points, 0., tfinal);
-		
-		// a sinus signal
-		double fhz_eysin = 0.1;
-		double w_eysin   = 2 * M_PI * fhz_eysin; // [rad/sec]
-		auto   ey_sin    = Eigen::VectorXd(time_vector.unaryExpr([&](auto const& t)
-			                                                         { return sin(w_eysin * t); }));
 		
 		// Create an inverse vehicle model for these signal channels with Q-filters.
 		// First create Q-filter for ey.
-		double cut_off_frequency_ey   = 20.; // [Hz]
-		double cut_off_frequency_eyaw = 10.; // [Hz]
+		double cut_off_frequency_ey    = 20.; // [Hz]
+		double cut_off_frequency_eyaw  = 15.; // [Hz]
+		double cut_off_frequency_delta = 10.;
 		
 		
 		int order_ey    = 3;    // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
 		int order_e_yaw = 2;    // order of the filter for yaw error.
+		int order_delta = 1;    // order of stereing model.
 		
 		
 		// Base class construction.
 		StrongTypeDef<double, s_cut_off_tag> sf_cutoff_ey{ cut_off_frequency_ey };
 		StrongTypeDef<double, s_cut_off_tag> sf_cutoff_eyaw{ cut_off_frequency_eyaw };
+		StrongTypeDef<double, s_cut_off_tag> sf_cutoff_delta{ cut_off_frequency_delta };
 		
 		
-		
-		// Specialized qfilters for ey and eyaw.
+		// Specialized Qfilters for ey and eyaw.
 		Qfilter<state_vector_qfilter_ey_t>    qfilter_ey{ sf_cutoff_ey, order_ey, dt };
 		Qfilter<state_vector_qfilter_e_yaw_t> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
+		Qfilter<state_vector_qfilter_delta>   qfilter_delta{ sf_cutoff_delta, order_delta, dt };
+		
+		// Create a nonlinear vehicle model.
 
 #ifndef NDEBUG
 		
-		ns_eigen_utils::printEigenMat(time_vector.transpose());
-		ns_eigen_utils::printEigenMat(ey_sin.transpose());
 		
-		// Print Qfilter initial states from ey and epsi filters.
-		ns_utils::print("Initial state of Qfilter ey : \n");
-		qfilter_ey.print_x0();
-		
-		ns_utils::print("Setting Initial state of Qfilter epsi : \n");
-		state_vector_qfilter_e_yaw_t x0{ state_vector_qfilter_e_yaw_t::Ones() };
-		qfilter_epsi.set_initial_state_x0(x0);
-		qfilter_epsi.print_x0();
-		
-		// Reseting an initial state.
-		ns_utils::print("Re-setting Initial state of Qfilter epsi : \n");
-		qfilter_epsi.reset_initial_state_x0();
-		qfilter_epsi.print_x0();
-		
-		
-		// Qfilter base class access;
-		ns_utils::print("TF of ey : \n");
-		qfilter_ey.print_tf();
-		qfilter_ey.print_ss();
-		
-		ns_utils::print("TF of epsi : \n");
-		qfilter_epsi.print_tf();
-		qfilter_epsi.print_ss();
-		
-		
-		// Test the dynamics of the filters.
-		double u{ 1. };
-		// dt = 1;
-		
-		auto yey   = qfilter_ey.y_hx(u);
-		auto yepsi = qfilter_epsi.y_hx(u);
-		
-		ns_utils::print("Filter outputs ey, epsi : ", yey, "~", yepsi, "\n");
-		
-		// Simulate for the long input.
-		auto ulong = ey_sin;
-		qfilter_ey.reset_initial_state_x0();
-		qfilter_epsi.reset_initial_state_x0();
-		
-		
-		for (auto k = 0; k < 100; ++k)
-			{
-				double& uk       = ulong(k);
-				double&& yk_ey   = qfilter_ey.y_hx(uk);
-				double&& yk_epsi = qfilter_epsi.y_hx(uk);
-				
-				ns_utils::print(" u, yey, yepsi : ", ulong(k), ",", yk_ey, ",", yk_epsi, "\n");
-			}
 		
 		// Create and simulate an inverse vehicle model.
 		/***

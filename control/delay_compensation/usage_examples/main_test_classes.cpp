@@ -22,6 +22,9 @@
 int main()
 	{
 		double const wheelbase{ 2.9 };
+		double const tau_steer{ 0.3 };
+		double const tau_velocity{ 0.3 };
+		
 		double const dt{ 0.1 };
 		
 		// TEST DELAY OBSERVER MAIN
@@ -49,16 +52,17 @@ int main()
 		// TEST VEHICLE MODEL
 		
 		// Create a vehicle model for the qfilter inversion.
-		NonlinearVehicleKinematicModel model_1;
-		NonlinearVehicleKinematicModel vehicle_model{ wheelbase };
 		
-		state_vector_vehicle_t x0_;
-		x0_.setZero();
+		NonlinearVehicleKinematicModel model_1;
+		NonlinearVehicleKinematicModel vehicle_model{ wheelbase, tau_velocity, tau_steer };
+		
+		std::array<double, 4> x0_{};
+		
 		vehicle_model.getInitialStates(x0_);
 		
 		ns_utils::print("x0_ .....; \n");
 		
-		ns_eigen_utils::printEigenMat(x0_);
+		ns_utils::print_container(std::vector(x0_.begin(), x0_.end()));
 		
 		return 0;
 	}
