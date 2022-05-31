@@ -26,24 +26,39 @@
 #include "autoware_control_toolbox.hpp"
 
 
-class CDOB_PUBLIC VehicleKinematicModelLinearized {
+/**
+ * @brief Implemented to test the current packages and inverted model performance.
+ * */
+class CDOB_PUBLIC NonlinearVehicleKinematicModel {
 public:
 	
-	// Using typedefs to make the code more readable and faster.
-	VehicleKinematicModelLinearized() = default;
+	// Constructors.
+	NonlinearVehicleKinematicModel() = default;
 	
-	explicit VehicleKinematicModelLinearized(double const& wheelbase);
+	explicit NonlinearVehicleKinematicModel(double const& wheelbase,
+	                                        double const& tau_vel,
+	                                        double const& tau_steer);
 	
-	void getInitialStates(state_vector_vehicle_t& x0);
+	
+	// Public methods.
+	std::array<double, 4> simulateOneStep(const double& desired_velocity,
+	                                      double const& desired_steering,
+	                                      double const& dt);
+	
+	void getInitialStates(std::array<double, 4>& x0);
 
 
 private:
 	double                   wheelbase_{ 2.74 };
-	std::vector<std::string> state_names_{ "ey", "eyaw", "delta" }; // state names.
-	std::vector<std::string> control_names_{ "delta" }; // control names.
+	double                   tau_steer_{};
+	double                   tau_vel_{};
+	std::vector<std::string> state_names_{ "ey", "eyaw", "delta", "V" }; // state names.
+	std::vector<std::string> control_names_{ "desired_vel", "delta_desired" }; // control names.
 	
 	// Initial state
-	state_vector_vehicle_t x0_{ 0.0, 0.0, 0.0 };
+	std::array<double, 4> x0_{}; // this state is updated.
+	
+	
 	
 	
 };
