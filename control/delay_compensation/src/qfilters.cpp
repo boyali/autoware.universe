@@ -20,8 +20,8 @@
  * @param sCutOffFrequencyType in double to the cut-off frequency in Hz (e.g. 5.0)
  * @param order is the order of denominator in the transfer function.  *
  * */
-QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> cutOffFrequency,
-		const int& order) : order_(order), cut_off_frequency_{ cutOffFrequency.get() }
+QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> const& cutOffFrequency,
+		int const& order, double const& dt) : order_(order), cut_off_frequency_{ cutOffFrequency.get() }, dt_{ dt }
 	{
 		// Calculate the time constant.
 
@@ -58,7 +58,7 @@ QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> cutOffFrequency,
 
 		// Create the transfer function from a numerator an denominator.
 		tf_ = ns_control_toolbox::tf{ std::vector<double>{ 1 }, denominator() };
-		ss_ = ns_control_toolbox::tf2ss(tf_); // Convert to state space.
+		ss_ = ns_control_toolbox::tf2ss(tf_, dt); // Convert to state space.
 
 
 		// DEBUG
@@ -75,8 +75,8 @@ QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> cutOffFrequency,
  * @param sTimeConstantType in double to time constant of the filter ; 1/(tau*s + 1) ^ order.
  * @param order is the order of denominator in the transfer function.  *
  * */
-QFilterBase::QFilterBase(QFilterBase::t_timeConst timeConst, const int& order) : order_{ order },
-		time_constant_tau_{ timeConst.get() }
+QFilterBase::QFilterBase(QFilterBase::t_timeConst const& timeConst, int const& order, double const& dt) : order_{
+		order }, time_constant_tau_{ timeConst.get() }, dt_{ dt }
 	{
 		// Calculate the cut-off frequency.
 
@@ -98,8 +98,7 @@ QFilterBase::QFilterBase(QFilterBase::t_timeConst timeConst, const int& order) :
 
 		// Create the transfer function from a numerator an denominator.
 		tf_ = ns_control_toolbox::tf{ std::vector<double>{ 1 }, denominator() };
-		ss_ = ns_control_toolbox::tf2ss(tf_); // Convert to state space.
-
+		ss_ = ns_control_toolbox::tf2ss(tf_, dt); // Convert to state space.
 
 	}
 

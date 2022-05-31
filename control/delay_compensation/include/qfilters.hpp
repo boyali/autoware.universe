@@ -37,9 +37,9 @@ class CDOB_PUBLIC QFilterBase
 		using t_cutOffFreq = StrongTypeDef<double, s_cut_off_tag>;
 		using t_timeConst = StrongTypeDef<double, s_time_const_tag>;
 
-		QFilterBase(t_cutOffFreq cutOffFreq, const int& order);
+		QFilterBase(t_cutOffFreq const& cutOffFreq, const int& order, double const& dt);
 
-		QFilterBase(t_timeConst timeConst, const int& order);
+		QFilterBase(t_timeConst const& timeConst, const int& order, double const& dt);
 
 		// Member functions.
 		void print_tf() const;
@@ -51,6 +51,7 @@ class CDOB_PUBLIC QFilterBase
 		int                       order_{ 1 }; // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
 		double                    cut_off_frequency_{}; // Cut-off frequency in Hz.
 		double                    time_constant_tau_{};
+		double                    dt_{};
 		ns_control_toolbox::tf    tf_{}; // Transfer function of the q-filter.
 		ns_control_toolbox::tf2ss ss_{}; // State space representation of the q-filter.
 
@@ -65,10 +66,10 @@ class CDOB_PUBLIC Qfilter : public QFilterBase
 
 		// Member functions
 		// xdot = f(x)
-		eigenT xdot_fx(double const& u);
+		eigenT xknext_fx(double const& u);
 
 		// Single output y. Uses Euler integration.
-		double y_hx(double const& u, double const& dt);
+		double y_hx(double const& u);
 
 		void print_x0() const;
 
@@ -79,8 +80,9 @@ class CDOB_PUBLIC Qfilter : public QFilterBase
 
 	private:
 
-		eigenT x0_{ eigenT::Zero() }; // Filter state
-		eigenT xdot0_{ eigenT::Zero() }; // Filter xdot place holder
+		eigenT x0_{ eigenT::Zero() }; // Filter current state
+
+
 	};
 
 /**
@@ -88,13 +90,13 @@ class CDOB_PUBLIC Qfilter : public QFilterBase
  * @param u is a SISO input double.
  * */
 template<typename eigenT>
-eigenT Qfilter<eigenT>::xdot_fx(const double& u)
+eigenT Qfilter<eigenT>::xknext_fx(const double& u)
 	{
 
-		xdot0_ = ss_.A_ * x0_ + ss_.B_ * u;
+		auto xnext = ss_.Ad_ * x0_ + ss_.Bd_ * u;
 		// ns_eigen_utils::printEigenMat(xdot);
 
-		return xdot0_;
+		return xnext;
 	}
 
 /**
@@ -104,15 +106,15 @@ eigenT Qfilter<eigenT>::xdot_fx(const double& u)
 * */
 
 template<typename eigenT>
-double Qfilter<eigenT>::y_hx(double const& u, const double& dt)
+double Qfilter<eigenT>::y_hx(double const& u)
 	{
 		// Compute xdot.
-		// auto&& xdot = xdot_fx(u);
-		xdot0_ = ss_.A_ * x0_ + ss_.B_ * u;
-		x0_.noalias() = x0_ + dt * xdot0_;
+		// auto&& xdot = xknext_fx(u);
+		x0_ = ss_.Ad_ * x0_ + ss_.Bd_ * u;
+
 
 		// Compute y
-		auto y = ss_.C_ * x0_ + ss_.D_ * u;
+		auto y = ss_.Cd_ * x0_ + ss_.Dd_ * u;
 
 		// print xdot
 //		print_x0();
