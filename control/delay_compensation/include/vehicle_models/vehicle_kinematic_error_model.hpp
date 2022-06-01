@@ -65,7 +65,7 @@ private:
 	ns_control_toolbox::tf2ss deadtime_velocity_model{};
 	
 	// Initial state
-	std::array<double, 4> x0_{}; // this state is updated.
+	std::array<double, 4> x0_{ 0., 0., 0., 10. }; // this state is updated.
 	
 	
 	
