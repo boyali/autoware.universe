@@ -115,6 +115,12 @@ int main()
 		 *   ....  ey, epsi, delta ---> Q * inverse vehicle model --> ey, epsi, delta to subtract from refs.
 		 * */
 		
+		ns_control_toolbox::tf_factor V1{{ 1 }};
+		ns_control_toolbox::tf_factor V2{{ 1, 1 }};
+		//
+		auto                          v1v2 = V1 * V2 * V2;
+		auto                          aa   = v1v2();
+		
 		std::cout << "In the DEBUG mode ... " << std::endl;
 #else
 		std::cout << "In the RELEASE mode " << std::endl;
