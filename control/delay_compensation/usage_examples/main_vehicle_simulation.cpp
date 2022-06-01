@@ -18,7 +18,7 @@
 #include "utils_delay_observer/delay_compensation_utils.hpp"
 //#include "utils_delay_observer/writetopath.hpp"
 
-int main() noexcept
+int main()
 	{
 		// Create a dummy output signal for ey, epsi and delta.
 		double       tfinal{ 10. };     // signal length in time
@@ -62,11 +62,12 @@ int main() noexcept
 		
 		// Control signals
 		double control_frq{ 0.2 };
-		auto   acc_sqr_vec_input   = ns_control_toolbox::make_square_signal(time_vec, control_frq);
+		auto   vel_sqr_vec_input   = ns_control_toolbox::make_square_signal(time_vec, control_frq);
+		auto   vel_trg_vec_input   = ns_control_toolbox::make_triangle_signal(time_vec, 5);
 		auto   steer_sin_vec_input = ns_control_toolbox::make_sinus_signal(time_vec, 2 * control_frq);
 		
 		
-		// ns_eigen_utils::printEigenMat(acc_sqr_vec_input);
+		// ns_eigen_utils::printEigenMat(vel_sqr_vec_input);
 		
 		// Generate vehicle vector.
 		NonlinearVehicleKinematicModel nonlinear_model(wheelbase,
@@ -79,10 +80,30 @@ int main() noexcept
 		ns_utils::print(fs::path("..") / "logs");
 		
 		fs::path output_path{ "../logs" };
-		writeToFile(output_path, acc_sqr_vec_input, "acc_sqr_vec_input");
+		writeToFile(output_path, vel_trg_vec_input, "vel_trg_vec_input");
+		writeToFile(output_path, vel_sqr_vec_input, "vel_sqr_vec_input");
 		writeToFile(output_path, steer_sin_vec_input, "steer_sin_vec_input");
 		writeToFile(output_path, time_vec, "time_vec");
-
+		
+		// Simulate the vehicle model.
+		auto            tsim_f = time_vec.rows();
+		Eigen::MatrixXd sim_results(tsim_f, 4);
+		sim_results.setZero();
+		
+		// State placeholder array
+		std::array<double, 4> x{};
+		
+		for (auto k = 0; k < tsim_f; ++k)
+			{
+				double desired_vel   = vel_trg_vec_input(k) * 10.; // max(vel_.) is 1.
+				double desired_steer = steer_sin_vec_input(k) * 0.1;
+				x = nonlinear_model.simulateOneStep(desired_vel, desired_steer, dt);
+				
+				sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(x.data());
+			}
+		
+		ns_eigen_utils::printEigenMat(sim_results);
+		writeToFile(output_path, sim_results, "sim_results");
 
 #ifndef NDEBUG
 		
