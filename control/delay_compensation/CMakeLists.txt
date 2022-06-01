@@ -54,6 +54,22 @@ ament_auto_find_build_dependencies()
 
 ##  ----------------- Required Packages ---------------------------------------
 find_package(Eigen3 REQUIRED)
+find_package(fmt REQUIRED)
+find_package(Boost REQUIRED)
+
+if (${Eigen3_FOUND})
+    message("Eigen FOUND ...")
+endif (${Eigen3_FOUND})
+
+if (${fmt_FOUND})
+    message("FMT FOUND ...")
+    include_directories(fmt_INCLUDE_DIRS)
+endif (${fmt_FOUND})
+
+if (${Boost_FOUND})
+    #    include_directories(Boost_INCLUDE_DIRS)
+    message("Boost Found")
+endif (${Boost_FOUND})
 
 ## ----------------- Library headers and sources -------------------------------
 set(CDOB_LIB_INCLUDE_DIRS

@@ -19,9 +19,16 @@
 #include <utility>
 #include <type_traits>
 #include <limits>
+#include <vector>
+#include <filesystem>
+#include <fstream>
 #include "visibility_control.hpp"
 
+#define GET_VARIABLE_NAME(Variable) (#Variable)
 auto constexpr EPS = std::numeric_limits<double>::epsilon();
+
+namespace fs = std::filesystem;
+
 
 /**
  * @brief Implements strong type definition for defining different class constructor behaviors with the same kind of
@@ -60,6 +67,58 @@ template<typename E>
 constexpr auto toUnderlyingType(E e) noexcept
 	{
 		return static_cast<std::underlying_type_t<E>>(e);
+	}
+
+
+// ************* WRITE TO PATH **************************
+
+template<typename T>
+void writeToFile(const fs::path& outputPath, T var, std::string varname)
+	{
+		/**
+		 * @brief writes the given variable into the folder in txt format
+		 * @param outputPath path of the folder the txt file goes into
+		 * @param var   the variable to be written into the file
+		 * @param varname name of the txt file
+		 *
+		 * */
+		
+		if (not fs::exists(outputPath) and not fs::create_directories(outputPath))
+			{
+				throw std::runtime_error("Could not create output directory!");
+			}
+		
+		varname += ".txt";
+		std::ofstream f(outputPath / varname);
+		
+		f << var;
+		
+	}
+
+template<typename T>
+void writeToFile(const fs::path& outputPath, std::vector<T> var, std::string varname)
+	{
+		/**
+		 * @brief writes the given variable into the folder in txt format
+		 * @param outputPath path of the folder the txt file goes into
+		 * @param var   the variable to be written into the file
+		 * @param varname name of the txt file
+		 *
+		 * */
+		
+		if (not fs::exists(outputPath) and not fs::create_directories(outputPath))
+			{
+				throw std::runtime_error("Could not create output directory!");
+			}
+		
+		varname += ".txt";
+		std::ofstream f(outputPath / varname);
+		
+		for (auto&& x: var)
+			{
+				f << x << " ";
+			}
+		
 	}
 
 
