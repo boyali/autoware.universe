@@ -16,17 +16,27 @@
 
 NonlinearVehicleKinematicModel::NonlinearVehicleKinematicModel(double const& wheelbase,
                                                                double const& tau_vel,
-                                                               double const& tau_steer) : wheelbase_{ wheelbase },
-                                                                                          tau_steer_{ tau_steer },
-                                                                                          tau_vel_{ tau_vel }
+                                                               double const& tau_steer,
+                                                               double const& deadtime_vel,
+                                                               double const& deadtime_steer)
+		: wheelbase_{ wheelbase },
+		  tau_steer_{ tau_steer },
+		  tau_vel_{ tau_vel },
+		  dead_time_steer_{ deadtime_steer },
+		  dead_time_vel_{ deadtime_vel }
 	{
-	
+		size_t order_pade     = 2;
+		auto   tf_steer_input = ns_control_toolbox::pade(deadtime_steer, order_pade);
+		auto   tf_vel_input   = ns_control_toolbox::pade(deadtime_vel, order_pade);
+		
+		deadtime_steering_model = ns_control_toolbox::tf2ss(tf_steer_input);
+		deadtime_velocity_model = ns_control_toolbox::tf2ss(tf_vel_input);
+		
 	}
 
 void NonlinearVehicleKinematicModel::getInitialStates(std::array<double, 4>& x0)
 	{
 		x0 = x0_;
-		
 	}
 
 /**

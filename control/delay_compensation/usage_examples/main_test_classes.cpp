@@ -52,9 +52,13 @@ int main()
 		// TEST VEHICLE MODEL
 		
 		// Create a vehicle model for the qfilter inversion.
+		double deadtime = 0.1;
 		
+		//
 		NonlinearVehicleKinematicModel model_1;
-		NonlinearVehicleKinematicModel vehicle_model{ wheelbase, tau_velocity, tau_steer };
+		NonlinearVehicleKinematicModel vehicle_model{ wheelbase,
+		                                              tau_velocity, tau_steer,
+		                                              deadtime, deadtime };
 		
 		std::array<double, 4> x0_{};
 		

@@ -18,7 +18,7 @@
 #include "utils_delay_observer/delay_compensation_utils.hpp"
 //#include "utils_delay_observer/writetopath.hpp"
 
-int main()
+int main() noexcept
 	{
 		// Create a dummy output signal for ey, epsi and delta.
 		double       tfinal{ 10. };     // signal length in time
@@ -53,7 +53,8 @@ int main()
 		double wheelbase{ 2.9 };
 		double tau_vel{ 0.1 };
 		double tau_steer{ 0.24 };
-		// double dead_time{ 0.3 };
+		double dead_time_steer{ 0.3 };
+		double dead_time_vel{ 0.3 };
 		
 		// Generate test signal
 		auto time_vec     = ns_control_toolbox::make_time_signal(dt, tfinal);
@@ -61,7 +62,9 @@ int main()
 		ns_eigen_utils::printEigenMat(triangle_vec);
 		
 		// Generate vehicle vector.
-		NonlinearVehicleKinematicModel nonlinear_model(wheelbase, tau_vel, tau_steer);
+		NonlinearVehicleKinematicModel nonlinear_model(wheelbase,
+		                                               tau_vel, tau_steer,
+		                                               dead_time_vel, dead_time_steer);
 
 //		auto file_path_to_text = getOutputPath();
 //		ns_utils::print(file_path_to_text.c_str());
