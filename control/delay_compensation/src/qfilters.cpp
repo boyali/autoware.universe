@@ -120,4 +120,14 @@ void QFilterBase::print_ss() const
 		ss_.print();
 	}
 
+std::vector<double> QFilterBase::num() const
+	{
+		return tf_.num();
+	}
+
+std::vector<double> QFilterBase::den() const
+	{
+		return tf_.den();
+	}
+
 

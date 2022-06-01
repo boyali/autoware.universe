@@ -123,6 +123,8 @@ int main()
 		 *   ....  ey, epsi, delta ---> Q * inverse vehicle model --> ey, epsi, delta to subtract from refs.
 		 * */
 		
+		auto pade0 = ns_control_toolbox::pade(0, 1);
+		pade0.print();
 		std::cout << "In the DEBUG mode ... " << std::endl;
 #else
 		std::cout << "In the RELEASE mode " << std::endl;

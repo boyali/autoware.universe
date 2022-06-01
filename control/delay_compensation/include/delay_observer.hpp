@@ -16,12 +16,15 @@
 #define DELAY_COMPENSATION__DELAY_OBSERVER_H
 
 #include <iostream>
-#include "visibility_control.hpp"
-#include "autoware_control_toolbox.hpp"
 #include <eigen3/Eigen/Core>
+#include "visibility_control.hpp"
+#include "qfilters.hpp"
+#include "autoware_control_toolbox.hpp"
+
 
 // class __attribute__((__visibility__("default"))) DelayObserver
-class CDOB_PUBLIC DelayObserver {
+class CDOB_PUBLIC DelayObserver
+	{
 public:
 	
 	// Constructors.
@@ -33,10 +36,16 @@ public:
 private:
 	double wheelbase_{ 2.74 };
 	
+	// Qfilter transfer function.
+	ns_control_toolbox::tf Qfilter_tf_{};
+	
+	// Model transfer function.
+	
+	
 	// Inverse vehicle model with Q filtered.
 	// Qfilters.
 	
-};
+	};
 
 
 #endif // DELAY_COMPENSATION__DELAY_OBSERVER_H
