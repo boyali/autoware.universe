@@ -75,27 +75,27 @@ private:
 	};
 
 
-///**
-// * @brief An real-time polymorphic class for the inverse kinematic model of a vehicle with Qfilters.
-// *
-// * */
-//class CDOB_PUBLIC InverseModelwithQfilter
-//	{
-//public:
-//	InverseModelwithQfilter() = default;
-//
-//
-//private:
-//	/**
-//	 * @brief G(s) is the forward model of a state in the vehicle model such as ey diff. equation.
-//	 * */
-//	ns_control_toolbox::tf_factor num_G_{{}};
-//	ns_control_toolbox::tf_factor den_G_{{}};
-//
-//	// It is corresponding Q-filter.
-//
-//
-//	};
+/**
+ * @brief An real-time polymorphic class for the inverse kinematic model of a vehicle with Qfilters.
+ *
+ * */
+class CDOB_PUBLIC InverseModel
+	{
+public:
+	InverseModel() = default;
+
+
+private:
+	/**
+	 * @brief G(s) is the forward model of a state in the vehicle model such as ey diff. equation.
+	 * */
+	ns_control_toolbox::tf_factor num_G_{{}};
+	ns_control_toolbox::tf_factor den_G_{{}};
+	
+	// It is corresponding Q-filter.
+	
+	
+	};
 
 
 #endif //DELAY_COMPENSATION_VEHICLE_KINEMATIC_ERROR_MODEL_HPP
