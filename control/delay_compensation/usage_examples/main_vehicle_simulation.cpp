@@ -14,6 +14,9 @@
 
 #include "delay_observer.hpp"
 #include "qfilters.hpp"
+#include "vehicle_models/vehicle_kinematic_error_model.hpp"
+#include "utils_delay_observer/delay_compensation_utils.hpp"
+//#include "utils_delay_observer/writetopath.hpp"
 
 int main()
 	{
@@ -47,6 +50,27 @@ int main()
 		Qfilter<state_vector_qfilter_delta>   qfilter_delta{ sf_cutoff_delta, order_delta, dt };
 		
 		// Create a nonlinear vehicle model.
+		double wheelbase{ 2.9 };
+		double tau_vel{ 0.1 };
+		double tau_steer{ 0.24 };
+		// double dead_time{ 0.3 };
+		
+		// Generate test signal
+		auto time_vec     = ns_control_toolbox::make_time_signal(dt, tfinal);
+		auto triangle_vec = ns_control_toolbox::make_square_signal(time_vec, frequency);
+		ns_eigen_utils::printEigenMat(triangle_vec);
+		
+		// Generate vehicle vector.
+		NonlinearVehicleKinematicModel nonlinear_model(wheelbase, tau_vel, tau_steer);
+
+//		auto file_path_to_text = getOutputPath();
+//		ns_utils::print(file_path_to_text.c_str());
+		ns_utils::print(fs::current_path());
+		ns_utils::print(fs::path("..") / "logs");
+		
+		fs::path output_path{ "../logs" };
+		writeToFile(output_path, triangle_vec, "triangle_vec");
+
 
 #ifndef NDEBUG
 		
