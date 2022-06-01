@@ -57,9 +57,16 @@ int main() noexcept
 		double dead_time_vel{ 0.3 };
 		
 		// Generate test signal
-		auto time_vec     = ns_control_toolbox::make_time_signal(dt, tfinal);
-		auto triangle_vec = ns_control_toolbox::make_triangle_signal(time_vec, frequency);
-		ns_eigen_utils::printEigenMat(triangle_vec);
+		auto time_vec = ns_control_toolbox::make_time_signal(dt, tfinal);
+		ns_eigen_utils::printEigenMat(time_vec);
+		
+		// Control signals
+		double control_frq{ 0.2 };
+		auto   acc_sqr_vec_input   = ns_control_toolbox::make_square_signal(time_vec, control_frq);
+		auto   steer_sin_vec_input = ns_control_toolbox::make_sinus_signal(time_vec, 2 * control_frq);
+		
+		
+		// ns_eigen_utils::printEigenMat(acc_sqr_vec_input);
 		
 		// Generate vehicle vector.
 		NonlinearVehicleKinematicModel nonlinear_model(wheelbase,
@@ -72,7 +79,9 @@ int main() noexcept
 		ns_utils::print(fs::path("..") / "logs");
 		
 		fs::path output_path{ "../logs" };
-		writeToFile(output_path, triangle_vec, "triangle_vec");
+		writeToFile(output_path, acc_sqr_vec_input, "acc_sqr_vec_input");
+		writeToFile(output_path, steer_sin_vec_input, "steer_sin_vec_input");
+		writeToFile(output_path, time_vec, "time_vec");
 
 
 #ifndef NDEBUG
