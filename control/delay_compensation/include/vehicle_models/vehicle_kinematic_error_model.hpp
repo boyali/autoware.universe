@@ -37,7 +37,9 @@ public:
 	
 	explicit NonlinearVehicleKinematicModel(double const& wheelbase,
 	                                        double const& tau_vel,
-	                                        double const& tau_steer);
+	                                        double const& tau_steer,
+	                                        double const& deadtime_vel,
+	                                        double const& deadtime_steer);
 	
 	
 	// Public methods.
@@ -49,11 +51,18 @@ public:
 
 
 private:
-	double                   wheelbase_{ 2.74 };
-	double                   tau_steer_{};
-	double                   tau_vel_{};
+	double wheelbase_{ 2.74 };
+	double tau_steer_{};
+	double tau_vel_{};
+	double dead_time_steer_{ 0 };
+	double dead_time_vel_{ 0 };
+	
 	std::vector<std::string> state_names_{ "ey", "eyaw", "delta", "V" }; // state names.
 	std::vector<std::string> control_names_{ "desired_vel", "delta_desired" }; // control names.
+	
+	// Deadtime inputs
+	ns_control_toolbox::tf2ss deadtime_steering_model{};
+	ns_control_toolbox::tf2ss deadtime_velocity_model{};
 	
 	// Initial state
 	std::array<double, 4> x0_{}; // this state is updated.
