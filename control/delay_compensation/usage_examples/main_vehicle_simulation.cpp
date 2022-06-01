@@ -57,7 +57,7 @@ int main()
 		
 		// Generate test signal
 		auto time_vec     = ns_control_toolbox::make_time_signal(dt, tfinal);
-		auto triangle_vec = ns_control_toolbox::make_square_signal(time_vec, frequency);
+		auto triangle_vec = ns_control_toolbox::make_triangle_signal(time_vec, frequency);
 		ns_eigen_utils::printEigenMat(triangle_vec);
 		
 		// Generate vehicle vector.
