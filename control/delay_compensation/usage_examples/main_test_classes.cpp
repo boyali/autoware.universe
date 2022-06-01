@@ -60,6 +60,7 @@ int main()
 		                                              tau_velocity, tau_steer,
 		                                              deadtime, deadtime };
 		
+		
 		std::array<double, 4> x0_{};
 		
 		vehicle_model.getInitialStates(x0_);
