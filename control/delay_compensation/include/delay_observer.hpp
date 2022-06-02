@@ -21,8 +21,6 @@
 #include "qfilters.hpp"
 #include "autoware_control_toolbox.hpp"
 
-// Lazy transfer function
-
 
 // class __attribute__((__visibility__("default"))) DelayObserver
 class CDOB_PUBLIC DelayObserver
@@ -38,15 +36,16 @@ public:
 private:
 	// Model parameters
 	double m_wheelbase_{ 2.94 };
-	double m_tau_steer_{};
+	double m_tau_steer_{}; // @brief time constant of 1st order steering model.
+	double m_tau_vel_{}; // @brief time constant of 1st order velocity model.
 	
 	// Associated Qfilter parameters
-	int    q_order_{ 1 }; // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
-	double q_cut_off_frequency_{}; // Cut-off frequency in Hz.
+	int    q_order_{ 1 }; // @brief order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
+	double q_cut_off_frequency_{}; // @brief cut-off frequency in Hz.
 	double q_time_constant_tau_{};
 	
 	// Qfilter transfer function.
-	ns_control_toolbox::tf Qfilter_tf_{};
+	ns_control_toolbox::tf Qfilter_tf_{}; // @brief
 	
 	// Model transfer function.
 	ns_control_toolbox::tf G_{};

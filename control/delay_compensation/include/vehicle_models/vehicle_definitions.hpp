@@ -22,7 +22,8 @@
 /**
  * @brief Kinematic Vehicle Lateral Error Model state and control definitions.
  * */
-enum class CDOB_PUBLIC KinematicErrorDims : int {
+enum class CDOB_PUBLIC KinematicErrorDims : int
+{
 	STATE_DIM = 3,
 	INPUT_DIM = 1
 };
@@ -34,26 +35,29 @@ using input_vector_vehicle_t = Eigen::Matrix<double, toUnderlyingType(KinematicE
  * @brief Lateral error Qfilter dynamic model state definition.
  * */
 
-enum class CDOB_PUBLIC Qfilter_ey : int {
+enum class CDOB_PUBLIC Qfilter_ey : int
+{
 	STATE_DIM = 3,
 	INPUT_DIM = 1
 };
 
-using state_vector_qfilter_ey_t = Eigen::Matrix<double, toUnderlyingType(Qfilter_ey::STATE_DIM), 1>;
+using state_vector_qfilter_3S = Eigen::Matrix<double, toUnderlyingType(Qfilter_ey::STATE_DIM), 1>;
 
-enum class CDOB_PUBLIC Qfilter_e_yaw : int {
+enum class CDOB_PUBLIC Qfilter_e_yaw : int
+{
 	STATE_DIM = 2,
 	INPUT_DIM = 1
 };
 
-using state_vector_qfilter_e_yaw_t = Eigen::Matrix<double, toUnderlyingType(Qfilter_e_yaw::STATE_DIM), 1>;
+using state_vector_qfilter_2S = Eigen::Matrix<double, toUnderlyingType(Qfilter_e_yaw::STATE_DIM), 1>;
 
-enum class CDOB_PUBLIC Qfilter_delta : int {
+enum class CDOB_PUBLIC Qfilter_delta : int
+{
 	STATE_DIM = 1,
 	INPUT_DIM = 1
 };
 
-using state_vector_qfilter_delta = Eigen::Matrix<double, toUnderlyingType(Qfilter_delta::STATE_DIM), 1>;
+using state_vector_qfilter_1S = Eigen::Matrix<double, toUnderlyingType(Qfilter_delta::STATE_DIM), 1>;
 
 
 //constexpr Eigen::Index STATE_DIM = 3;
