@@ -30,13 +30,11 @@ public:
 	// Constructors.
 	DelayObserver() = default;
 
-	explicit DelayObserver(double const& wheelbase);
-
 
 private:
 
 	// Associated Qfilter parameters
-	int    q_order_{ 1 }; // @brief order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
+	int q_order_{ 1 }; // @brief order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
 	double q_cut_off_frequency_{}; // @brief cut-off frequency in Hz.
 	double q_time_constant_tau_{};
 
