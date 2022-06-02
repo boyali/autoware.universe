@@ -120,6 +120,7 @@ int main()
 	s_filter_fields_data qfilter_ey_data(qfilter_ey);
 	s_filter_fields_data qfilter_eyaw_data(qfilter_epsi);
 	s_filter_fields_data qfilter_delta_data(qfilter_delta);
+	s_filter_fields_data qfilter_speed_data(qfilter_speed);
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
 #else
