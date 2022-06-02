@@ -38,8 +38,8 @@ int main()
 	double cut_off_frequency_ey = 20.; // [Hz]
 	double time_constant_tau_ey = 0.1; // [sec] (time constant of the filter)
 
-	int order_ey    = 3;    // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
-	int order_e_yaw = 2;    // order of the filter for yaw error.
+	const int order_ey    = 3;    // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
+	const int order_e_yaw = 2;    // order of the filter for yaw error.
 
 
 
@@ -53,8 +53,8 @@ int main()
 
 
 	// Specialized qfilters for ey and eyaw.
-	Qfilter<state_vector_qfilter_3S> qfilter_ey{ sf_cutoff, order_ey, dt };
-	Qfilter<state_vector_qfilter_2S> qfilter_epsi{ sf_cutoff, order_e_yaw, dt };
+	Qfilter<state_vector_qfilter<order_ey>>    qfilter_ey{ sf_cutoff, order_ey, dt };
+	Qfilter<state_vector_qfilter<order_e_yaw>> qfilter_epsi{ sf_cutoff, order_e_yaw, dt };
 
 #ifndef NDEBUG
 
@@ -75,7 +75,7 @@ int main()
 	qfilter_ey.print_x0();
 
 	ns_utils::print("Setting Initial state of Qfilter epsi : \n");
-	state_vector_qfilter_2S x0{ state_vector_qfilter_2S::Ones() };
+	state_vector_qfilter<order_e_yaw> x0{ state_vector_qfilter<order_e_yaw>::Ones() };
 	qfilter_epsi.set_initial_state_x0(x0);
 	qfilter_epsi.print_x0();
 

@@ -33,9 +33,9 @@ int main()
 	double cut_off_frequency_speed = 10.; // for longitudinal control.
 
 
-	int order_ey    = 3;    // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
-	int order_e_yaw = 2;    // order of the filter for yaw error.
-	int order_delta = 1;    // order of stereing model.
+	int const order_ey    = 3;    // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
+	int const order_e_yaw = 2;    // order of the filter for yaw error.
+	int const order_delta = 1;    // order of stereing model.
 
 
 	// Base class construction.
@@ -46,10 +46,11 @@ int main()
 
 
 	// Specialized Qfilters for ey and eyaw.
-	Qfilter<state_vector_qfilter_3S> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
-	Qfilter<state_vector_qfilter_2S> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
-	Qfilter<state_vector_qfilter_1S> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
-	Qfilter<state_vector_qfilter_1S> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
+
+	Qfilter<state_vector_qfilter<order_ey>>    qfilter_ey{ sf_cutoff_ey, order_ey, dt };
+	Qfilter<state_vector_qfilter<order_e_yaw>> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
+	Qfilter<state_vector_qfilter<order_delta>> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
+	Qfilter<state_vector_qfilter<order_delta>> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
 
 	// Create a nonlinear vehicle model.
 	double wheelbase{ 2.9 };
