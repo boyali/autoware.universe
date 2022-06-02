@@ -31,33 +31,11 @@ enum class CDOB_PUBLIC KinematicErrorDims : int
 using state_vector_vehicle_t = Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::STATE_DIM), 1>;
 using input_vector_vehicle_t = Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::INPUT_DIM), 1>;
 
-/**
- * @brief Lateral error Qfilter dynamic model state definition.
- * */
 
-enum class CDOB_PUBLIC Qfilter_ey : int
-{
-	STATE_DIM = 3,
-	INPUT_DIM = 1
-};
 
-using state_vector_qfilter_3S = Eigen::Matrix<double, toUnderlyingType(Qfilter_ey::STATE_DIM), 1>;
-
-enum class CDOB_PUBLIC Qfilter_e_yaw : int
-{
-	STATE_DIM = 2,
-	INPUT_DIM = 1
-};
-
-using state_vector_qfilter_2S = Eigen::Matrix<double, toUnderlyingType(Qfilter_e_yaw::STATE_DIM), 1>;
-
-enum class CDOB_PUBLIC Qfilter_delta : int
-{
-	STATE_DIM = 1,
-	INPUT_DIM = 1
-};
-
-using state_vector_qfilter_1S = Eigen::Matrix<double, toUnderlyingType(Qfilter_delta::STATE_DIM), 1>;
+// General Template for enum class types.
+template<int Nnum_of_states>
+using state_vector_qfilter = Eigen::Matrix<double, Nnum_of_states, 1>;
 
 
 //constexpr Eigen::Index STATE_DIM = 3;
