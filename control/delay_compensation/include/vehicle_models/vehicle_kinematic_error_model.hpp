@@ -60,6 +60,11 @@ private:
 	double dead_time_vel_{ 0 };
 	double dt_{ 0.1 };
 
+	// Bool agains static gain discretizaiton.
+	bool discretisize_vel_delay_{ false };
+	bool discretisize_steering_delay_{ false };
+
+
 	std::vector<std::string> state_names_{ "ey", "eyaw", "delta", "V" }; // state names.
 	std::vector<std::string> control_names_{ "desired_vel", "delta_desired" }; // control names.
 

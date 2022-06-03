@@ -30,11 +30,18 @@ NonlinearVehicleKinematicModel::NonlinearVehicleKinematicModel(double const& whe
 	auto tf_steer_input = ns_control_toolbox::pade(deadtime_steer, order_pade);
 	auto tf_vel_input = ns_control_toolbox::pade(deadtime_vel, order_pade);
 
-	deadtime_steering_model_ = ns_control_toolbox::tf2ss(tf_steer_input, dt);
-	deadtime_velocity_model_ = ns_control_toolbox::tf2ss(tf_vel_input, dt);
+	if (!ns_utils::isEqual(deadtime_vel, 0.))
+	{
+		discretisize_vel_delay_ = true;
+		deadtime_velocity_model_ = ns_control_toolbox::tf2ss(tf_vel_input, dt);
+	}
 
-	deadtime_velocity_model_.print_discrete_system();
-	deadtime_steering_model_.print_discrete_system();
+	if (!ns_utils::isEqual(deadtime_steer, 0.))
+	{
+		discretisize_steering_delay_ = true;
+		deadtime_steering_model_ = ns_control_toolbox::tf2ss(tf_steer_input, dt);
+	}
+
 
 	xv0_ = Eigen::MatrixXd::Zero(order_pade, 1);
 	xs0_ = Eigen::MatrixXd::Zero(order_pade, 1);
