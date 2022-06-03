@@ -77,10 +77,6 @@ int main()
 	double wheelbase{ 2.9 }; // L in vehicle model.
 
 	// Parameter names are the arguments of num den variable functions.
-	// We store the factored num and denominators:  a(var1) * num / b(var1)*den where num-den are constants.
-
-	std::pair<std::string_view, std::string_view> param_names{ "v", "delta" };
-
 	act::tf_factor m_den1{{ wheelbase, 0, 0 }}; // L*s^2
 	act::tf_factor m_den2{{ tau_steer, 1 }}; // (tau*s + 1)
 	auto den_tf_factor = m_den1 * m_den2;
@@ -88,11 +84,23 @@ int main()
 	//act::tf Gey({ 1. }, den_tf_factor(), 5., 2.);
 	act::tf Gey({ 1. }, den_tf_factor(), 1., 1.);
 
+	// We store the factored num and denominators:  a(var1) * num / b(var1)*den where num-den are constants.
+	std::pair<std::string_view, std::string_view> param_names{ "v", "delta" };
+
+	// Using unordered map to store functions.
+	std::unordered_map<std::string_view, func_type<double>> f_variable_num_den_funcs{};
+
+	// auto maplen = f_variable_num_den_funcs.size();
+	f_variable_num_den_funcs["v"] = [](auto const& x) -> double
+	{ return std::fabs(x) < 0.1 ? 0.1 : x * x; }; // to prevent zero division.
+
+	f_variable_num_den_funcs["delta"] = [](auto const& x) -> double
+	{ return cos(x) * cos(x); };
+
 	// Store in a struct and pass to the delay compensator.
-	s_model_G_data model_data(param_names, Gey);
+	s_model_G_data model_data(param_names, f_variable_num_den_funcs, Gey);
 
 	// Create time-delay compensator for ey system.
-
 	DelayCompensator<state_vector_qfilter<order_ey>> delay_compensator_ey(qfilter_ey_data,
 	                                                                      model_data, dt);
 	delay_compensator_ey.print();
@@ -113,33 +121,33 @@ int main()
 	sim_results.setZero();
 
 	// State placeholder array
-	double y_ey{};
+	std::array<double, 4> y_ey{};
+
+	const double timer_dc_sim = ns_utils::tic();
 
 	for (auto k = 0; k < tsim_f; ++k)
 	{
 		double desired_vel = vel_trg_vec_input(k) * 10.; // max(vel_.) is 1.
 		double desired_steer = steer_sin_vec_input(k) * 0.1;
-		// x = nonlinear_model.simulateOneStep(desired_vel, desired_steer);
+
+		std::pair<double, double> num_den_pairs_G{ desired_vel, desired_steer };
+
+
+		delay_compensator_ey.simulateOneStep(desired_steer, num_den_pairs_G, y_ey);
 
 		// sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(x.data());
 	}
+	ns_utils::print("Time for sim takes : ", ns_utils::toc(timer_dc_sim), " ms");
 
 //	ns_utils::print("Simulation results for delay observer of ey");
 //	ns_eigen_utils::printEigenMat(sim_results);
 //	writeToFile(output_path, sim_results, "sim_results_DO_ey");
 
-
-	// Using unordered map to store functions.
-	std::unordered_map<std::string_view, func_type<double>> f_variable_num_den_funcs;
-	f_variable_num_den_funcs["v"] = [](auto const& x) -> double
-	{ return x * x; };
-
-	f_variable_num_den_funcs["delta"] = [](auto const& x) -> double
-	{ return cos(x) * cos(x); };
-
-
 	ns_utils::print(f_variable_num_den_funcs[param_names.first](10.));
 	ns_utils::print(f_variable_num_den_funcs[param_names.second](10.));
+
+//	auto aa = std::string_view("1");
+//	auto svbool = aa == "1";
 
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
