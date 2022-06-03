@@ -166,17 +166,24 @@ struct CDOB_PUBLIC s_filter_data
 
 struct CDOB_PUBLIC s_model_G_data
 {
-	using pairs = std::pair<std::string_view, std::string_view>;
+	using pairs_t = std::pair<std::string_view, std::string_view>;
+	using pairs_func_maps_t = std::unordered_map<std::string_view, func_type<double>>;
 	using tf = ns_control_toolbox::tf;
 
 	// Constructors.
 	s_model_G_data() = default;
 
-	s_model_G_data(pairs params_names, tf Gs);
+	s_model_G_data(pairs_t params_names,
+	               pairs_func_maps_t funcs,
+	               tf Gs);
 
-	std::pair<std::string_view, std::string_view> num_den_coeff_names{};
+
+	// Data members.
+	pairs_t num_den_coeff_names{};
+	pairs_func_maps_t funcs{};
 
 	tf TF{};
+
 };
 
 

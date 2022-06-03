@@ -27,7 +27,8 @@ template<typename eigenT>
 class CDOB_PUBLIC DelayCompensator
 {
 public:
-	using pairs = std::pair<std::string_view, std::string_view>;
+	using pairs_t = s_model_G_data::pairs_t;
+	using pairs_func_maps_t = s_model_G_data::pairs_func_maps_t;
 
 	// Constructors.
 	DelayCompensator() = default;
@@ -38,7 +39,9 @@ public:
 	void print() const;
 
 	// simulate  one-step and get the outputs.
-	std::array<double, 4> simulateOneStep();
+	std::array<double, 4> simulateOneStep(double const& input,
+	                                      std::pair<double, double> const& num_den_args_of_G,
+	                                      std::array<double, 4>& y_outputs);
 
 
 private:
@@ -56,9 +59,13 @@ private:
 
 	/**
 	 * @brief  Associated model parameters as multiplication factors for num and den of G and Q/G.
+	 * i.e G(s) = f(V) num/ (g(delta) den). V and delta are the arguments stored in the pairs_t.
 	 * */
-	pairs num_den_constant_names_G_{ "1", "1" };
-	pairs num_den_constant_names_QGinv_{ "1", "1" };
+	pairs_t num_den_constant_names_G_{ "1", "1" };
+	pairs_t num_den_constant_names_QGinv_{ "1", "1" };
+
+	// and their functions.
+	pairs_func_maps_t pair_func_map_{};
 
 
 	// Model transfer function.
@@ -83,8 +90,7 @@ private:
 	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 	 * */
 
-	std::array<double, 4> y_outputs{};
-
+	std::array<double, 4> y_outputs_{};
 
 };
 
@@ -97,7 +103,7 @@ DelayCompensator<eigenT>::DelayCompensator(s_filter_data const& Qfilter_data,
 		q_time_constant_tau_{ Qfilter_data.time_constant },
 		Qfilter_tf_(Qfilter_data.TF),
 		num_den_constant_names_G_{ Gdata.num_den_coeff_names },
-		Gtf_(Gdata.TF)
+		Gtf_(Gdata.TF), pair_func_map_{ Gdata.funcs }
 {
 
 	// Compute the state-space model of Qfilter.
@@ -116,7 +122,7 @@ DelayCompensator<eigenT>::DelayCompensator(s_filter_data const& Qfilter_data,
 	QGinv_ss_ = ns_control_toolbox::tf2ss(QGinv_tf_, dt);
 
 	// Invert the num den constant names.
-	num_den_constant_names_QGinv_ = pairs(num_den_constant_names_G_.second, num_den_constant_names_G_.first);
+	num_den_constant_names_QGinv_ = pairs_t(num_den_constant_names_G_.second, num_den_constant_names_G_.first);
 
 
 }
@@ -158,7 +164,7 @@ void DelayCompensator<eigenT>::print() const
 /**
  * @brief Given an input "u" that sent to the system and system response "y", computes four outputs by means of the
  * internal models for the filter Qf, for the system model G(s) for the Q-filtered inverse model.
- * [in] u : control input for this system.
+ * [in] u : control input for this system (delta:steering in lateral control).
  * [in] ym: measured response i.e ey, eyaw, edelta, eV.
  * [out] y0: u_filtered,Q(s)*u where u is the input sent to the system.
  * [out] y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
@@ -166,11 +172,33 @@ void DelayCompensator<eigenT>::print() const
  * [out] y3: ydu = G(s)*du where ydu is the response of the system to du.
  * */
 template<typename eigenT>
-std::array<double, 4> DelayCompensator<eigenT>::simulateOneStep()
+std::array<double, 4> DelayCompensator<eigenT>::simulateOneStep(double const& input,
+                                                                std::pair<double, double> const& num_den_args_of_G,
+                                                                std::array<double, 4>& y_outputs)
 {
-	//
+	// Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
+	auto&& numkey = num_den_constant_names_G_.first; // Corresponds to v in ey model.
+	auto&& denkey = num_den_constant_names_G_.second;
 
-	return std::array<double, 4>();
+	auto&& num_const_g = pair_func_map_[numkey](num_den_args_of_G.first);
+	auto&& den_const_g = pair_func_map_[denkey](num_den_args_of_G.second);
+
+	// Update G(s) num, den constants.
+	Gtf_.update_num_den_coef(num_const_g, den_const_g);
+
+	// Update Gss accordingly from the TF version.
+	Gss_ = ns_control_toolbox::tf2ss(Gtf_, dt_);
+
+	// Update QGinv num, den constants, must be inverse of G(s) as Q is constant.
+	QGinv_tf_.update_num_den_coef(den_const_g, num_const_g);
+	QGinv_ss_ = ns_control_toolbox::tf2ss(QGinv_tf_, dt_);
+
+
+	ns_utils::print("input  : ", input, numkey, " : ", num_const_g, ", ", denkey, " : ", den_const_g);
+	y_outputs = std::array<double, 4>{ 1, 2, 3, 4 };
+
+	return std::array<double, 4>{};
+
 }
 
 #endif // DELAY_COMPENSATION__DELAY_OBSERVER_H
