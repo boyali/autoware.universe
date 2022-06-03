@@ -176,3 +176,7 @@ target_link_libraries(main_vehicle_simulation ${CDOB})
 ## ODE integration
 ament_auto_add_executable(main_ode usage_examples/main_ode.cpp)
 target_link_libraries(main_ode ${CDOB})
+
+## ODE integration
+ament_auto_add_executable(main_delay_observer usage_examples/main_delay_observer.cpp)
+target_link_libraries(main_delay_observer ${CDOB})

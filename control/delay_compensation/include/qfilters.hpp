@@ -56,11 +56,11 @@ public:
 	void getTimeConstantCutOffFrq(double& tc, double& fc) const;
 
 protected:
-	int                       order_{ 1 }; // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
-	double                    cut_off_frequency_{}; // Cut-off frequency in Hz.
-	double                    time_constant_tau_{};
-	double                    dt_{}; // time step for filter discretization.
-	ns_control_toolbox::tf    tf_{}; // Transfer function of the q-filter.
+	int order_{ 1 }; // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
+	double cut_off_frequency_{}; // Cut-off frequency in Hz.
+	double time_constant_tau_{};
+	double dt_{}; // time step for filter discretization.
+	ns_control_toolbox::tf tf_{}; // Transfer function of the q-filter.
 	ns_control_toolbox::tf2ss ss_{}; // State space representation of the q-filter.
 
 };
@@ -152,17 +152,40 @@ void Qfilter<eigenT>::reset_initial_state_x0()
 
 }
 
-// @brief Temporarily copies the data from a Qfilter
-struct CDOB_PUBLIC s_filter_fields_data
-{
-	s_filter_fields_data() = default;
+/**
+ * @brief Temporarily copies the data from a Qfilter
+ */
 
-	explicit s_filter_fields_data(QFilterBase const& Qf);
+struct CDOB_PUBLIC s_filter_data
+{
+	s_filter_data() = default;
+
+	explicit s_filter_data(QFilterBase const& Qf);
 
 	// Data members.
-	double                 time_constant{}; // @brief tau in 1/(tau*s + 1)^n.
-	double                 cut_off_frq{}; // in Hz.
+	double time_constant{}; // @brief tau in 1/(tau*s + 1)^n.
+	double cut_off_frq{}; // in Hz.
 	ns_control_toolbox::tf TF{};
+};
+
+struct CDOB_PUBLIC s_model_G_data
+{
+	using pairs = std::pair<std::string_view, std::string_view>;
+	using tf = ns_control_toolbox::tf;
+
+	// Constructors.
+	s_model_G_data() = default;
+
+	s_model_G_data(pairs params_names,
+	               double const& num_coeff,
+	               double const& den_coeff,
+	               tf Gs);
+
+	std::pair<std::string_view, std::string_view> num_den_coeff_names{};
+	double num_coeff_{ 1. };
+	double den_coeff_{ 1. };
+
+	tf TF{};
 };
 
 
