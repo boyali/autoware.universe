@@ -101,7 +101,7 @@ template<typename eigenT>
 eigenT Qfilter<eigenT>::xknext_fx(const double& u)
 {
 
-	auto xnext = ss_.Ad_ * x0_ + ss_.Bd_ * u;
+	auto xnext = ss_.Ad() * x0_ + ss_.Bd() * u;
 	// ns_eigen_utils::printEigenMat(xdot);
 
 	return xnext;
@@ -116,20 +116,16 @@ eigenT Qfilter<eigenT>::xknext_fx(const double& u)
 template<typename eigenT>
 double Qfilter<eigenT>::y_hx(double const& u)
 {
-	// Compute xdot.
-	// auto&& xdot = xknext_fx(u);
-	x0_ = ss_.Ad_ * x0_ + ss_.Bd_ * u;
 
 
 	// Compute y
-	auto y = ss_.Cd_ * x0_ + ss_.Dd_ * u;
+	double y = (ss_.Cd() * x0_ + ss_.Dd() * u)(0);
 
-	// print xdot
-	// print_x0();
-	// ns_eigen_utils::printEigenMat(xdot);
-	//print_x0();
+	// Update x.
+	x0_ = ss_.Ad() * x0_ + ss_.Bd() * u;
 
-	return y(0);
+
+	return y;
 }
 
 template<typename eigenT>
