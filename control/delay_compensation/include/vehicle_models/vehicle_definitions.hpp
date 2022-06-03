@@ -38,6 +38,10 @@ template<int Nnum_of_states>
 using state_vector_qfilter = Eigen::Matrix<double, Nnum_of_states, 1>;
 
 
+template<typename T>
+using func_type = std::function<T(T)>;
+
+
 //constexpr Eigen::Index STATE_DIM = 3;
 //constexpr Eigen::Index INPUT_DIM = 1;
 #endif //DELAY_COMPENSATION_VEHICLE_DEFINITIONS_HPP

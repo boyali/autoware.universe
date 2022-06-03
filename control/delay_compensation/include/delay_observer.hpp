@@ -57,8 +57,8 @@ private:
 	/**
 	 * @brief  Associated model parameters as multiplication factors for num and den of G and Q/G.
 	 * */
-	pairs num_den_constant_names_G_{ "1.0", "1.0" };
-	pairs num_den_constant_names_QGinv_{ "1.0", "1.0" };
+	pairs num_den_constant_names_G_{ "1", "1" };
+	pairs num_den_constant_names_QGinv_{ "1", "1" };
 
 
 	// Model transfer function.
