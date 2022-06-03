@@ -55,8 +55,8 @@ int main()
 	double wheelbase{ 2.9 };
 	double tau_vel{ 0.1 };
 	double tau_steer{ 0.24 };
-	double dead_time_steer{ 0.3 };
-	double dead_time_vel{ 0.3 };
+	double dead_time_steer{ 0.0 };
+	double dead_time_vel{ 0.0 };
 
 	// Generate test signal
 	auto time_vec = ns_control_toolbox::make_time_signal(dt, tfinal);
