@@ -55,7 +55,7 @@ public:
 
 	void getTimeConstantCutOffFrq(double& tc, double& fc) const;
 
-	int order() const
+	[[nodiscard]] int order() const
 	{
 		return order_;
 	}
@@ -70,7 +70,7 @@ protected:
 
 };
 
-template<typename eigenT>
+template<int Norder, typename state_t = Eigen::Matrix<double, Norder, 1>>
 class CDOB_PUBLIC Qfilter : public QFilterBase
 {
 public:
@@ -79,21 +79,21 @@ public:
 
 	// Member functions
 	// xdot = f(x)
-	eigenT xknext_fx(double const& u);
+	state_t xknext_fx(double const& u);
 
 	// Single output y. Uses Euler integration.
 	double y_hx(double const& u);
 
 	void print_x0() const;
 
-	void set_initial_state_x0(eigenT const& xval);
+	void set_initial_state_x0(state_t const& xval);
 
 	void reset_initial_state_x0();
 
 
 private:
 
-	eigenT x0_{ eigenT::Zero() }; // Filter current state
+	state_t x0_{ state_t::Zero() }; // Filter current state
 
 
 };
@@ -102,8 +102,8 @@ private:
  * @brief given an control signal, computes xdot = f(x, u), x0 is stored as a state in.
  * @param u is a SISO input double.
  * */
-template<typename eigenT>
-eigenT Qfilter<eigenT>::xknext_fx(const double& u)
+template<int Norder, typename state_t>
+state_t Qfilter<Norder, state_t>::xknext_fx(const double& u)
 {
 
 	auto xnext = ss_.Ad() * x0_ + ss_.Bd() * u;
@@ -118,8 +118,8 @@ eigenT Qfilter<eigenT>::xknext_fx(const double& u)
 * @param u is a SISO input double.
 * */
 
-template<typename eigenT>
-double Qfilter<eigenT>::y_hx(double const& u)
+template<int Norder, typename state_t>
+double Qfilter<Norder, state_t>::y_hx(double const& u)
 {
 
 
@@ -133,21 +133,20 @@ double Qfilter<eigenT>::y_hx(double const& u)
 	return y;
 }
 
-template<typename eigenT>
-void Qfilter<eigenT>::print_x0() const
+template<int Norder, typename state_t>
+void Qfilter<Norder, state_t>::print_x0() const
 {
-
 	ns_eigen_utils::printEigenMat(x0_);
 }
 
-template<typename eigenT>
-void Qfilter<eigenT>::set_initial_state_x0(eigenT const& xval)
+template<int Norder, typename state_t>
+void Qfilter<Norder, state_t>::set_initial_state_x0(state_t const& xval)
 {
 	x0_ = xval;
 }
 
-template<typename eigenT>
-void Qfilter<eigenT>::reset_initial_state_x0()
+template<int Norder, typename state_t>
+void Qfilter<Norder, state_t>::reset_initial_state_x0()
 {
 	x0_.setZero();
 
@@ -170,16 +169,16 @@ struct CDOB_PUBLIC s_filter_data
 	ns_control_toolbox::tf TF{};
 };
 
-struct CDOB_PUBLIC s_model_G_data
+struct CDOB_PUBLIC s_model_g_data
 {
 	using pairs_t = std::pair<std::string_view, std::string_view>;
 	using pairs_func_maps_t = std::unordered_map<std::string_view, func_type<double>>;
 	using tf = ns_control_toolbox::tf;
 
 	// Constructors.
-	s_model_G_data() = default;
+	s_model_g_data() = default;
 
-	s_model_G_data(pairs_t params_names,
+	s_model_g_data(pairs_t params_names,
 	               pairs_func_maps_t funcs,
 	               tf Gs);
 

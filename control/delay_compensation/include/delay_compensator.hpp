@@ -23,18 +23,38 @@
 
 // class __attribute__((__visibility__("default"))) DelayCompensator
 // For internal states use state_T, for ABCD matrices use mat_eig_T.
-template<typename state_eig_T, typename mat_eig_T>
-class CDOB_PUBLIC DelayCompensator
+template<int Norder>
+class DelayCompensatorBaseTypes
 {
 public:
-	using pairs_t = s_model_G_data::pairs_t;
-	using pairs_func_maps_t = s_model_G_data::pairs_func_maps_t;
+	using state_vec_type = Eigen::Matrix<double, Norder, 1>;
+	using mat_Atype = Eigen::Matrix<double, Norder, Norder>;
+	using mat_Btype = Eigen::Matrix<double, Norder, 1>;
+	using mat_Ctype = Eigen::Matrix<double, 1, Norder>;
+	using mat_Dtype = Eigen::Matrix<double, 1, 1>;
+	using pairs_t = s_model_g_data::pairs_t;
+	using pairs_func_maps_t = s_model_g_data::pairs_func_maps_t;
+};
+
+
+template<int Norder>
+class CDOB_PUBLIC DelayCompensator : public DelayCompensatorBaseTypes<Norder>
+{
+public:
+
+	using state_vec_type = Eigen::Matrix<double, Norder, 1>;
+	using mat_Atype = Eigen::Matrix<double, Norder, Norder>;
+	using mat_Btype = Eigen::Matrix<double, Norder, 1>;
+	using mat_Ctype = Eigen::Matrix<double, 1, Norder>;
+	using mat_Dtype = Eigen::Matrix<double, 1, 1>;
+	using pairs_t = s_model_g_data::pairs_t;
+	using pairs_func_maps_t = s_model_g_data::pairs_func_maps_t;
 
 	// Constructors.
 	DelayCompensator() = default;
 
 	DelayCompensator(s_filter_data const& qfilter_data,
-	                 s_model_G_data& model_data, double const& dt);
+	                 s_model_g_data& model_data, double const& dt);
 
 	void print() const;
 
@@ -75,9 +95,9 @@ private:
 	ns_control_toolbox::tf2ss QGinv_ss_{};
 
 	// Internal states.
-	state_eig_T x0_Qfilter_{ state_eig_T::Zero() };
-	state_eig_T x0_Gsystem_{ state_eig_T::Zero() };
-	state_eig_T x0_QGinvsystem_{ state_eig_T::Zero() };
+	state_vec_type x0_qfilter_{ state_vec_type::Zero() };
+	state_vec_type x0_gsystem_{ state_vec_type::Zero() };
+	state_vec_type x0_qg_inv_system_{ state_vec_type::Zero() };
 
 	// Placeholders for Ad, Bd, Cd, Dd.
 
@@ -94,9 +114,9 @@ private:
 
 };
 
-template<typename state_eig_T, typename mat_eig_T>
-DelayCompensator<state_eig_T, mat_eig_T>::DelayCompensator(s_filter_data const& qfilter_data,
-                                                           s_model_G_data& model_data, double const& dt) :
+template<int Norder>
+DelayCompensator<Norder>::DelayCompensator(s_filter_data const& qfilter_data,
+                                           s_model_g_data& model_data, double const& dt) :
 		dt_{ dt }, q_order_{ qfilter_data.order },
 		q_cut_off_frequency_{ qfilter_data.cut_off_frq },
 		q_time_constant_tau_{ qfilter_data.time_constant },
@@ -126,8 +146,8 @@ DelayCompensator<state_eig_T, mat_eig_T>::DelayCompensator(s_filter_data const& 
 
 }
 
-template<typename state_eig_T, typename mat_eig_T>
-void DelayCompensator<state_eig_T, mat_eig_T>::print() const
+template<int Norder>
+void DelayCompensator<Norder>::print() const
 {
 	ns_utils::print("Delay Compensator Summary :  \n");
 	ns_utils::print("Qfilter Model : \n");
@@ -169,10 +189,10 @@ void DelayCompensator<state_eig_T, mat_eig_T>::print() const
  * [out] y2: du = y0 - y1 where du is the estimated disturbance input
  * [out] y3: ydu = G(s)*du where ydu is the response of the system to du.
  * */
-template<typename state_eig_T, typename mat_eig_T>
-std::array<double, 4> DelayCompensator<state_eig_T, mat_eig_T>::simulateOneStep(double const& input,
-                                                                                std::pair<double, double> const& num_den_args_of_G,
-                                                                                std::array<double, 4>& y_outputs)
+template<int Norder>
+std::array<double, 4> DelayCompensator<Norder>::simulateOneStep(double const& input,
+                                                                std::pair<double, double> const& num_den_args_of_G,
+                                                                std::array<double, 4>& y_outputs)
 {
 	// Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
 	if (num_den_constant_names_G_.first != "1")

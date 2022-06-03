@@ -47,10 +47,10 @@ int main()
 
 
 	// Specialized Qfilters for ey and eyaw.
-	Qfilter<state_vector_qfilter<order_ey>> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
-	Qfilter<state_vector_qfilter<order_e_yaw>> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
-	Qfilter<state_vector_qfilter<order_delta>> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
-	Qfilter<state_vector_qfilter<order_delta>> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
+	Qfilter <order_ey> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
+	Qfilter <order_e_yaw> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
+	Qfilter <order_delta> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
+	Qfilter <order_delta> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
 
 #ifndef NDEBUG
 
@@ -83,10 +83,10 @@ int main()
 	act::tf Gey({ 1. }, den_tf_factor(), 1., 1.);
 
 	// We store the factored num and denominators:  a(var1) * num / b(var1)*den where num-den are constants.
-	std::pair<std::string_view, std::string_view> param_names{ "v", "delta" };
+	std::pair <std::string_view, std::string_view> param_names{ "v", "delta" };
 
 	// Using unordered map to store functions.
-	std::unordered_map<std::string_view, func_type<double>> f_variable_num_den_funcs{};
+	std::unordered_map <std::string_view, func_type<double>> f_variable_num_den_funcs{};
 
 	// auto maplen = f_variable_num_den_funcs.size();
 	f_variable_num_den_funcs["v"] = [](auto const& x) -> double
@@ -96,11 +96,11 @@ int main()
 	{ return cos(x) * cos(x); };
 
 	// Store in a struct and pass to the delay compensator.
-	s_model_G_data model_data(param_names, f_variable_num_den_funcs, Gey);
+	s_model_g_data model_data(param_names, f_variable_num_den_funcs, Gey);
 
 	// Create time-delay compensator for ey system.
 
-	DelayCompensator<state_vector_qfilter<order_ey>, MatTypes<order_ey>>
+	DelayCompensator <order_ey>
 			delay_compensator_ey(qfilter_ey_data, model_data, dt);
 
 	delay_compensator_ey.print();
@@ -145,16 +145,6 @@ int main()
 	ns_utils::print(f_variable_num_den_funcs[param_names.first](10.));
 	ns_utils::print(f_variable_num_den_funcs[param_names.second](10.));
 
-//	auto aa = std::string_view("1");
-//	auto svbool = aa == "1";
-
-	Eigen::MatrixXd aaa(4, 4);
-	aaa.setRandom();
-
-	const int norder = 4;
-
-	MatTypes<norder>::Atype Atemp{ aaa };
-	ns_eigen_utils::printEigenMat(Atemp);
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
 #else

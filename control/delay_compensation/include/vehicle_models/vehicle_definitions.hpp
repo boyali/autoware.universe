@@ -31,22 +31,12 @@ enum class CDOB_PUBLIC KinematicErrorDims : int
 using state_vector_vehicle_t = Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::STATE_DIM), 1>;
 using input_vector_vehicle_t = Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::INPUT_DIM), 1>;
 
-
 // General Template for enum class types.
 template<int Nnum_of_states>
 using state_vector_qfilter = Eigen::Matrix<double, Nnum_of_states, 1>;
 
 template<typename T>
 using func_type = std::function<T(T)>;
-
-template<int Norder>
-struct MatTypes
-{
-	using Atype = Eigen::Matrix<double, Norder, Norder>;
-	using Btype = Eigen::Matrix<double, Norder, 1>;
-	using Ctype = Eigen::Matrix<double, 1, Norder>;
-	using Dtype = Eigen::Matrix<double, 1, 1>;
-};
 
 
 //constexpr Eigen::Index STATE_DIM = 3;
