@@ -70,7 +70,9 @@ private:
 	// Initial state
 	std::array<double, 4> x0_{ 0., 0., 0., 10. }; // this state is updated.
 
-
+	// Initial states for the delay models.
+	Eigen::MatrixXd x0_delay_vel_;
+	Eigen::MatrixXd x0_delay_steer_;
 
 
 };
