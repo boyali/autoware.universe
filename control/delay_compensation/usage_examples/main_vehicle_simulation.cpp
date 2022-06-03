@@ -46,10 +46,10 @@ int main()
 
 
 	// Specialized Qfilters for ey and eyaw.
-	Qfilter <state_vector_qfilter<order_ey>> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
-	Qfilter <state_vector_qfilter<order_e_yaw>> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
-	Qfilter <state_vector_qfilter<order_delta>> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
-	Qfilter <state_vector_qfilter<order_delta>> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
+	Qfilter<state_vector_qfilter<order_ey>> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
+	Qfilter<state_vector_qfilter<order_e_yaw>> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
+	Qfilter<state_vector_qfilter<order_delta>> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
+	Qfilter<state_vector_qfilter<order_delta>> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
 
 	// Create a nonlinear vehicle model.
 	double wheelbase{ 2.9 };
@@ -60,7 +60,7 @@ int main()
 
 	// Generate test signal
 	auto time_vec = ns_control_toolbox::make_time_signal(dt, tfinal);
-	ns_eigen_utils::printEigenMat(time_vec);
+//	ns_eigen_utils::printEigenMat(time_vec);
 
 	// Control signals
 	double control_frq{ 0.2 };
@@ -72,7 +72,8 @@ int main()
 	// ns_eigen_utils::printEigenMat(vel_sqr_vec_input);
 
 	// Generate vehicle vector.
-	NonlinearVehicleKinematicModel nonlinear_model(wheelbase, tau_vel, tau_steer,
+	NonlinearVehicleKinematicModel nonlinear_model(wheelbase,
+	                                               tau_vel, tau_steer,
 	                                               dead_time_vel, dead_time_steer, dt);
 
 //		auto file_path_to_text = getOutputPath();

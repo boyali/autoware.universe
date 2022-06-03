@@ -64,11 +64,15 @@ private:
 	std::vector<std::string> control_names_{ "desired_vel", "delta_desired" }; // control names.
 
 	// Deadtime inputs
-	ns_control_toolbox::tf2ss deadtime_steering_model{};
-	ns_control_toolbox::tf2ss deadtime_velocity_model{};
+	ns_control_toolbox::tf2ss deadtime_steering_model_{};
+	ns_control_toolbox::tf2ss deadtime_velocity_model_{};
 
 	// Initial state
 	std::array<double, 4> x0_{ 0., 0., 0., 10. }; // this state is updated.
+
+	// delayed input states.
+	Eigen::MatrixXd xv0_{ Eigen::MatrixXd::Zero(2, 1) }; // delayed speed input states
+	Eigen::MatrixXd xs0_{ Eigen::MatrixXd::Zero(2, 1) }; // delayed steeering input states.
 
 
 
