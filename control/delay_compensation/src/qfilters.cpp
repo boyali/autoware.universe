@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include "qfilters.hpp"
+
+#include <utility>
 #include "visibility_control.hpp"
 
 /**
@@ -20,11 +22,8 @@
  * @param sCutOffFrequencyType in double to the cut-off frequency in Hz (e.g. 5.0)
  * @param order is the order of denominator in the transfer function.  *
  * */
-QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> const& cutOffFrequency,
-                         int const& order,
-                         double const& dt) : order_(order),
-                                             cut_off_frequency_{ cutOffFrequency.get() },
-                                             dt_{ dt }
+QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> const& cutOffFrequency, int const& order,
+                         double const& dt) : order_(order), cut_off_frequency_{ cutOffFrequency.get() }, dt_{ dt }
 {
 	// Calculate the time constant.
 
@@ -78,11 +77,8 @@ QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> const& cutOffFrequ
  * @param sTimeConstantType in double to time constant of the filter ; 1/(tau*s + 1) ^ order.
  * @param order is the order of denominator in the transfer function.  *
  * */
-QFilterBase::QFilterBase(QFilterBase::t_timeConst const& timeConst,
-                         int const& order,
-                         double const& dt) : order_{ order },
-                                             time_constant_tau_{ timeConst.get() },
-                                             dt_{ dt }
+QFilterBase::QFilterBase(QFilterBase::t_timeConst const& timeConst, int const& order, double const& dt) : order_{
+		order }, time_constant_tau_{ timeConst.get() }, dt_{ dt }
 {
 	// Calculate the cut-off frequency.
 
@@ -143,9 +139,20 @@ void QFilterBase::getTimeConstantCutOffFrq(double& tc, double& fc) const
 
 
 // @brief Temporarily copies the data from a Qfilter
-s_filter_fields_data::s_filter_fields_data(QFilterBase const& Qf)
+s_filter_data::s_filter_data(QFilterBase const& Qf)
 {
 	Qf.getTimeConstantCutOffFrq(time_constant, cut_off_frq);
 	TF = Qf.TF();
+
+}
+
+s_model_G_data::s_model_G_data(s_model_G_data::pairs params_names, const double& num_coeff,
+                               const double& den_coeff,
+                               s_model_G_data::tf Gs) : num_den_coeff_names{ std::move(params_names) },
+                                                        num_coeff_{ num_coeff },
+                                                        den_coeff_{ den_coeff },
+                                                        TF{ std::move(Gs) }
+{
+
 
 }
