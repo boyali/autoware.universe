@@ -137,6 +137,18 @@ void DelayCompensator<eigenT>::print() const
 	ns_utils::print("Q/G(s) num and den constant names :", num_den_constant_names_QGinv_.first,
 	                num_den_constant_names_QGinv_.second);
 
+	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
+	ns_utils::print("Qfilter State-Space: ");
+	Qfilter_ss_.print_discrete_system();
+
+	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
+	ns_utils::print("System G(s) State-Space: ");
+	Gss_.print_discrete_system();
+
+	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
+	ns_utils::print("System Q(s)/G(s) State-Space: ");
+	QGinv_ss_.print_discrete_system();
+
 
 }
 
