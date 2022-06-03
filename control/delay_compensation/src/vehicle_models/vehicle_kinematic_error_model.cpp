@@ -29,6 +29,10 @@ NonlinearVehicleKinematicModel::NonlinearVehicleKinematicModel(double const& whe
 	auto tf_steer_input = ns_control_toolbox::pade(deadtime_steer, order_pade);
 	auto tf_vel_input = ns_control_toolbox::pade(deadtime_vel, order_pade);
 
+	// Prepare delay initial states.
+	x0_delay_vel_ = Eigen::MatrixXd(order_pade, 1);
+	x0_delay_steer_ = Eigen::MatrixXd(order_pade, 1);
+
 	// Create the state space models for the dead-times.
 	deadtime_vel_ss_ = ns_control_toolbox::tf2ss(tf_vel_input);
 	deadtime_steer_ss_ = ns_control_toolbox::tf2ss(tf_steer_input);
@@ -53,7 +57,7 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateOneStep(const doub
 
 	if (use_vel_deadtime)
 	{
-		auto uvel = deadtime_vel_ss_.Ad_;
+		x0_delay_steer_ = deadtime_vel_ss_.Ad_ * x0_delay_steer_;
 	}
 
 
