@@ -61,26 +61,23 @@ private:
 	double dt_{ 0.1 };
 
 	// Bool agains static gain discretizaiton.
-	bool discretisize_vel_delay_{ false };
-	bool discretisize_steering_delay_{ false };
+	bool is_discretisize_vel_delay_{ false };
+	bool is_discretisize_steering_delay_{ false };
 
 
 	std::vector<std::string> state_names_{ "ey", "eyaw", "delta", "V" }; // state names.
 	std::vector<std::string> control_names_{ "desired_vel", "delta_desired" }; // control names.
 
 	// Deadtime inputs
-	ns_control_toolbox::tf2ss deadtime_steering_model_{};
 	ns_control_toolbox::tf2ss deadtime_velocity_model_{};
+	ns_control_toolbox::tf2ss deadtime_steering_model_{};
 
 	// Initial state
-	std::array<double, 4> x0_{ 0., 0., 0., 10. }; // this state is updated.
+	std::array<double, 4> x0_{ 0., 0., 0., 20. }; // this state is updated.
 
 	// delayed input states.
 	Eigen::MatrixXd xv0_{ Eigen::MatrixXd::Zero(2, 1) }; // delayed speed input states
 	Eigen::MatrixXd xs0_{ Eigen::MatrixXd::Zero(2, 1) }; // delayed steeering input states.
-
-
-
 
 };
 
