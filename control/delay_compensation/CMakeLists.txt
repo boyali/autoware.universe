@@ -4,6 +4,10 @@ project(delay_compensation)
 # Example https://github.com/tier4/autoware.universe/blob/b6beeece906024794c708c1d4dc6051cd5e270fc/control/trajectory_follower/CMakeLists.txt#L105
 # require that dependencies from package.xml be available
 
+# Release, Debug, RelWithDebInfo, MinSizeRel
+set(CMAKE_BUILD_TYPE "Debug")
+
+
 if (NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -125,7 +129,7 @@ install(TARGETS ${CDOB_LIB}
         INCLUDES DESTINATION include
         )
 
-autoware_set_compile_options(${CDOB_LIB})
+# autoware_set_compile_options(${CDOB_LIB})
 
 ## ----------------- Library Tests----------------------------------------------
 

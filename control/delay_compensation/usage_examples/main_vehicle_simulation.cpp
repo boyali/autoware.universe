@@ -46,10 +46,10 @@ int main()
 
 
 	// Specialized Qfilters for ey and eyaw.
-	Qfilter<state_vector_qfilter<order_ey>> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
-	Qfilter<state_vector_qfilter<order_e_yaw>> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
-	Qfilter<state_vector_qfilter<order_delta>> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
-	Qfilter<state_vector_qfilter<order_delta>> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
+	Qfilter <state_vector_qfilter<order_ey>> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
+	Qfilter <state_vector_qfilter<order_e_yaw>> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
+	Qfilter <state_vector_qfilter<order_delta>> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
+	Qfilter <state_vector_qfilter<order_delta>> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
 
 	// Create a nonlinear vehicle model.
 	double wheelbase{ 2.9 };
@@ -73,7 +73,7 @@ int main()
 
 	// Generate vehicle vector.
 	NonlinearVehicleKinematicModel nonlinear_model(wheelbase, tau_vel, tau_steer,
-	                                               dead_time_vel, dead_time_steer);
+	                                               dead_time_vel, dead_time_steer, dt);
 
 //		auto file_path_to_text = getOutputPath();
 //		ns_utils::print(file_path_to_text.c_str());
@@ -98,13 +98,13 @@ int main()
 	{
 		double desired_vel = vel_trg_vec_input(k) * 10.; // max(vel_.) is 1.
 		double desired_steer = steer_sin_vec_input(k) * 0.1;
-		x = nonlinear_model.simulateOneStep(desired_vel, desired_steer, dt);
+		x = nonlinear_model.simulateOneStep(desired_vel, desired_steer);
 
 		sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(x.data());
 	}
 
 	ns_eigen_utils::printEigenMat(sim_results);
-	writeToFile(output_path, sim_results, "sim_results");
+	writeToFile(output_path, sim_results, "sim_results_nodelay");
 
 #ifndef NDEBUG
 
