@@ -18,20 +18,20 @@
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(__WIN32)
 #if defined(CDOB_BUILDING_DLL) || defined(CDOB_EXPORTS)
-    #define CDOB_PUBLIC __declspec(dllexport)
-    #define CDOB_LOCAL
-  #else  // defined(CDOB_BUILDING_DLL) || defined(CDOB_EXPORTS)
-    #define CDOB_PUBLIC __declspec(dllimport)
-    #define CDOB_LOCAL
-  #endif  // defined(CDOB_BUILDING_DLL) || defined(CDOB_EXPORTS)
+#define CDOB_PUBLIC __declspec(dllexport)
+#define CDOB_LOCAL
+#else  // defined(CDOB_BUILDING_DLL) || defined(CDOB_EXPORTS)
+#define CDOB_PUBLIC __declspec(dllimport)
+#define CDOB_LOCAL
+#endif  // defined(CDOB_BUILDING_DLL) || defined(CDOB_EXPORTS)
 #elif defined(__linux__)
 #define CDOB_PUBLIC __attribute__((visibility("default")))
-  #define CDOB_LOCAL __attribute__((visibility("hidden")))
+#define CDOB_LOCAL __attribute__((visibility("hidden")))
 #elif defined(__APPLE__)
 #define CDOB_PUBLIC __attribute__((visibility("default")))
-  #define CDOB_LOCAL __attribute__((visibility("hidden")))
+#define CDOB_LOCAL __attribute__((visibility("hidden")))
 #else
 #error "Unsupported Build Configuration"
 #endif
 
-#endif //COMMUNICATION_DELAY_OBSERVER_BASED_CONTROL_VISIBILITY_CONTROL_HPP
+#endif // COMMUNICATION_DELAY_OBSERVER_BASED_CONTROL_VISIBILITY_CONTROL_HPP

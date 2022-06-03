@@ -22,7 +22,6 @@ namespace act = ns_control_toolbox;
 
 int main()
 {
-
 	// Create a dummy output signal for ey, epsi and delta.
 	// double tfinal{ 10. };     // signal length in time
 	unsigned int frequency{ 40 };   // Hz
@@ -90,11 +89,15 @@ int main()
 	s_model_G_data model_data(param_names, Gey);
 
 	// Test Q(s) / G(s)
+	Gey.inv(); // invert the transfer function
 
-	auto Qey_Gey_inv = qfilter_ey * Gey.inv();
+//	ns_utils::print("Inverted Gey");
+//	Gey.print();
+//	auto Qey_Gey_inv = qfilter_ey.TF() * Gey;
 
 	// Create time-delay compensator for ey system.
 	DelayCompensator delay_compensator_ey(qfilter_ey_data, model_data);
+	delay_compensator_ey.print();
 
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
