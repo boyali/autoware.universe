@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "delay_observer.hpp"
+#include "delay_compensator.hpp"
 #include "qfilters.hpp"
 
 int main()

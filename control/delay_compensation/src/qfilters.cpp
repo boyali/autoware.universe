@@ -139,11 +139,10 @@ void QFilterBase::getTimeConstantCutOffFrq(double& tc, double& fc) const
 
 
 // @brief Temporarily copies the data from a Qfilter
-s_filter_data::s_filter_data(QFilterBase const& Qf)
+s_filter_data::s_filter_data(QFilterBase const& Qf) : order{ Qf.order() }
 {
 	Qf.getTimeConstantCutOffFrq(time_constant, cut_off_frq);
 	TF = Qf.TF();
-
 }
 
 s_model_G_data::s_model_G_data(pairs_t params_names,

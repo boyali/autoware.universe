@@ -55,6 +55,11 @@ public:
 
 	void getTimeConstantCutOffFrq(double& tc, double& fc) const;
 
+	int order() const
+	{
+		return order_;
+	}
+
 protected:
 	int order_{ 1 }; // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
 	double cut_off_frequency_{}; // Cut-off frequency in Hz.
@@ -159,6 +164,7 @@ struct CDOB_PUBLIC s_filter_data
 	explicit s_filter_data(QFilterBase const& Qf);
 
 	// Data members.
+	int order{};
 	double time_constant{}; // @brief tau in 1/(tau*s + 1)^n.
 	double cut_off_frq{}; // in Hz.
 	ns_control_toolbox::tf TF{};
