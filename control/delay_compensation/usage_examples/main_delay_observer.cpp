@@ -23,7 +23,8 @@ namespace act = ns_control_toolbox;
 int main()
 {
 	// Create a dummy output signal for ey, epsi and delta.
-	// double tfinal{ 10. };     // signal length in time
+	fs::path output_path{ "../logs" };
+	double tfinal{ 10. };     // signal length in time
 	unsigned int frequency{ 40 };   // Hz
 	double dt{ 1. / frequency };
 
@@ -87,12 +88,12 @@ int main()
 	s_model_G_data model_data(param_names, Gey);
 
 	// Create time-delay compensator for ey system.
-	DelayCompensator delay_compensator_ey(qfilter_ey_data, model_data);
+
+	DelayCompensator<state_vector_qfilter<order_ey>> delay_compensator_ey(qfilter_ey_data, model_data);
 	delay_compensator_ey.print();
 
 	// Simulate the delay compensator.
 	// Generate test signal
-	double tfinal{ 10. };
 	auto time_vec = ns_control_toolbox::make_time_signal(dt, tfinal);
 
 	// Control signals
@@ -103,7 +104,7 @@ int main()
 
 	// Simulate the vehicle model.
 	auto tsim_f = time_vec.rows();
-	Eigen::MatrixXd sim_results(tsim_f, 2);
+	Eigen::MatrixXd sim_results(tsim_f, 4);
 	sim_results.setZero();
 
 	// State placeholder array
@@ -115,9 +116,12 @@ int main()
 		double desired_steer = steer_sin_vec_input(k) * 0.1;
 		// x = nonlinear_model.simulateOneStep(desired_vel, desired_steer);
 
-		sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(x.data());
+		// sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(x.data());
 	}
 
+	ns_utils::print("Simulation results for delay observer of ey");
+	ns_eigen_utils::printEigenMat(sim_results);
+	writeToFile(output_path, sim_results, "sim_results_DO_ey");
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
 #else
