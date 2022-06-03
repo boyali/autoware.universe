@@ -17,7 +17,6 @@
 #include "vehicle_models/vehicle_kinematic_error_model.hpp"
 #include "utils_delay_observer/delay_compensation_utils.hpp"
 
-
 namespace act = ns_control_toolbox;
 
 int main()
@@ -52,7 +51,6 @@ int main()
 	Qfilter<state_vector_qfilter<order_e_yaw>> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
 	Qfilter<state_vector_qfilter<order_delta>> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
 	Qfilter<state_vector_qfilter<order_delta>> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
-
 
 #ifndef NDEBUG
 
@@ -101,8 +99,10 @@ int main()
 	s_model_G_data model_data(param_names, f_variable_num_den_funcs, Gey);
 
 	// Create time-delay compensator for ey system.
-	DelayCompensator<state_vector_qfilter<order_ey>> delay_compensator_ey(qfilter_ey_data,
-	                                                                      model_data, dt);
+
+	DelayCompensator<state_vector_qfilter<order_ey>, MatTypes<order_ey>>
+			delay_compensator_ey(qfilter_ey_data, model_data, dt);
+
 	delay_compensator_ey.print();
 
 	// Simulate the delay compensator.
@@ -132,7 +132,6 @@ int main()
 
 		std::pair<double, double> num_den_pairs_G{ desired_vel, desired_steer };
 
-
 		delay_compensator_ey.simulateOneStep(desired_steer, num_den_pairs_G, y_ey);
 
 		// sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(x.data());
@@ -149,12 +148,18 @@ int main()
 //	auto aa = std::string_view("1");
 //	auto svbool = aa == "1";
 
+	Eigen::MatrixXd aaa(4, 4);
+	aaa.setRandom();
+
+	const int norder = 4;
+
+	MatTypes<norder>::Atype Atemp{ aaa };
+	ns_eigen_utils::printEigenMat(Atemp);
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
 #else
 	std::cout << "In the RELEASE mode " << std::endl;
 #endif
-
 
 	return 0;
 }
