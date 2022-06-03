@@ -75,7 +75,11 @@ int main()
 
 	double tau_steer{ 0.3 };
 	double wheelbase{ 2.9 }; // L in vehicle model.
-	std::pair<std::string_view, std::string_view> param_names{ "V^2,", "Cos(delta)^2" };
+
+	// Parameter names are the arguments of num den variable functions.
+	// We store the factored num and denominators:  a(var1) * num / b(var1)*den where num-den are constants.
+
+	std::pair<std::string_view, std::string_view> param_names{ "v", "delta" };
 
 	act::tf_factor m_den1{{ wheelbase, 0, 0 }}; // L*s^2
 	act::tf_factor m_den2{{ tau_steer, 1 }}; // (tau*s + 1)
@@ -123,6 +127,20 @@ int main()
 //	ns_utils::print("Simulation results for delay observer of ey");
 //	ns_eigen_utils::printEigenMat(sim_results);
 //	writeToFile(output_path, sim_results, "sim_results_DO_ey");
+
+
+	// Using unordered map to store functions.
+	std::unordered_map<std::string_view, func_type<double>> f_variable_num_den_funcs;
+	f_variable_num_den_funcs["v"] = [](auto const& x) -> double
+	{ return x * x; };
+
+	f_variable_num_den_funcs["delta"] = [](auto const& x) -> double
+	{ return cos(x) * cos(x); };
+
+
+	ns_utils::print(f_variable_num_den_funcs[param_names.first](10.));
+	ns_utils::print(f_variable_num_den_funcs[param_names.second](10.));
+
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
 #else
