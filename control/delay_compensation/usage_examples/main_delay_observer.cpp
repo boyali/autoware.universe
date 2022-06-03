@@ -69,12 +69,19 @@ int main()
 
 	// Explicitly construct ey, eyaw, delta and V models.
 	// ey model.
+	/**
+	 *  ey(s) = V^2 / (cos(delta)^2 * Ls^2 *(tau*s + 1))
+	 * */
+
 	double tau_steer{ 0.3 };
 	double wheelbase{ 2.9 }; // L in vehicle model.
 	std::pair<std::string_view, std::string_view>{ "V^2", "Cos(delta)^2" };
 
 	act::tf_factor m_den1{{ wheelbase, 0, 0 }}; // L*s^2
 	act::tf_factor m_den2{{ tau_steer, 1 }}; // (tau*s + 1)
+
+
+
 
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
