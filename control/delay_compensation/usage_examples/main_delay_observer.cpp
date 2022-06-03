@@ -89,7 +89,8 @@ int main()
 
 	// Create time-delay compensator for ey system.
 
-	DelayCompensator<state_vector_qfilter<order_ey>> delay_compensator_ey(qfilter_ey_data, model_data);
+	DelayCompensator<state_vector_qfilter<order_ey>> delay_compensator_ey(qfilter_ey_data,
+	                                                                      model_data, dt);
 	delay_compensator_ey.print();
 
 	// Simulate the delay compensator.
@@ -119,9 +120,9 @@ int main()
 		// sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(x.data());
 	}
 
-	ns_utils::print("Simulation results for delay observer of ey");
-	ns_eigen_utils::printEigenMat(sim_results);
-	writeToFile(output_path, sim_results, "sim_results_DO_ey");
+//	ns_utils::print("Simulation results for delay observer of ey");
+//	ns_eigen_utils::printEigenMat(sim_results);
+//	writeToFile(output_path, sim_results, "sim_results_DO_ey");
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
 #else

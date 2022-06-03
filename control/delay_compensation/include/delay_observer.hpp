@@ -32,7 +32,8 @@ public:
 	// Constructors.
 	DelayCompensator() = default;
 
-	DelayCompensator(s_filter_data const& Qfilter_data, s_model_G_data& Gdata);
+	DelayCompensator(s_filter_data const& Qfilter_data,
+	                 s_model_G_data& Gdata, double const& dt);
 
 	void print() const;
 
@@ -41,6 +42,7 @@ public:
 
 
 private:
+	double dt_{ 0.1 };
 
 	// Associated Qfilter parameters
 	int q_order_{ 1 }; // @brief order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
@@ -48,7 +50,9 @@ private:
 	double q_time_constant_tau_{};
 
 	// Qfilter transfer function.
-	ns_control_toolbox::tf Qfilter_tf_{}; // @brief
+	ns_control_toolbox::tf Qfilter_tf_{}; // @brief Transfer function of the qfilter.
+	ns_control_toolbox::tf2ss Qfilter_ss_{}; //@brief State space model of the qfilter
+
 
 	/**
 	 * @brief  Associated model parameters as multiplication factors for num and den of G and Q/G.
@@ -58,10 +62,12 @@ private:
 
 
 	// Model transfer function.
-	ns_control_toolbox::tf G_{};
+	ns_control_toolbox::tf Gtf_{};
+	ns_control_toolbox::tf2ss Gss_;
 
 	// Q(s)/G(s)
-	ns_control_toolbox::tf QGinv_{};
+	ns_control_toolbox::tf QGinv_tf_{};
+	ns_control_toolbox::tf2ss QGinv_ss_{};
 
 	// Internal states.
 	eigenT x0_filter_{ eigenT::Zero() };
@@ -81,22 +87,35 @@ private:
 
 
 template<typename eigenT>
-DelayCompensator<eigenT>::DelayCompensator(s_filter_data const& Qfilter_data, s_model_G_data& Gdata) :
+DelayCompensator<eigenT>::DelayCompensator(s_filter_data const& Qfilter_data,
+                                           s_model_G_data& Gdata, double const& dt) :
+		dt_{ dt },
 		q_cut_off_frequency_{ Qfilter_data.cut_off_frq },
 		q_time_constant_tau_{ Qfilter_data.time_constant },
 		Qfilter_tf_(Qfilter_data.TF),
 		num_den_constant_names_G_{ Gdata.num_den_coeff_names },
-		G_(Gdata.TF)
+		Gtf_(Gdata.TF)
 {
+
+	// Compute the state-space model of Qfilter.
+	Qfilter_ss_ = ns_control_toolbox::tf2ss(Qfilter_data.TF, dt);
+
+	// Compute the state-space model of the system model G(s).
+	Gss_ = ns_control_toolbox::tf2ss(Gtf_, dt);
 
 	// Compute Q/G
 	auto tempG = std::move(Gdata.TF);
 	tempG.inv();
 
-	QGinv_ = Qfilter_tf_ * tempG;
+	QGinv_tf_ = Qfilter_tf_ * tempG;
+
+	// Compute the state-space model of QGinv(s)
+	QGinv_ss_ = ns_control_toolbox::tf2ss(QGinv_tf_, dt);
 
 	// Invert the num den constant names.
 	num_den_constant_names_QGinv_ = pairs(num_den_constant_names_G_.second, num_den_constant_names_G_.first);
+
+
 }
 
 template<typename eigenT>
@@ -107,13 +126,13 @@ void DelayCompensator<eigenT>::print() const
 	Qfilter_tf_.print();
 
 	ns_utils::print("Forward model G(s) : \n\n");
-	G_.print();
+	Gtf_.print();
 
 	ns_utils::print("G(s) num and den constant names :", num_den_constant_names_G_.first,
 	                num_den_constant_names_G_.second, "\n");
 
 	ns_utils::print("Forward model Q/G(s) :  \n");
-	QGinv_.print();
+	QGinv_tf_.print();
 
 	ns_utils::print("Q/G(s) num and den constant names :", num_den_constant_names_QGinv_.first,
 	                num_den_constant_names_QGinv_.second);
