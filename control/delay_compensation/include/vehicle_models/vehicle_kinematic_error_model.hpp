@@ -60,8 +60,8 @@ private:
 	double dead_time_vel_{ 0 };
 
 	// Dead-time models for velocity and steering.
-	ns_control_toolbox::tf2ss deadtime_vel_ss_{};
-	ns_control_toolbox::tf2ss deadtime_steer_ss_{};
+	ns_control_toolbox::ss_system deadtime_vel_ss_discrete_{}; // stores A, B, C, D
+	ns_control_toolbox::ss_system deadtime_steer_ss_discrete_{};
 
 	std::vector<std::string> state_names_{ "ey", "eyaw", "delta", "V" }; // state names.
 	std::vector<std::string> control_names_{ "desired_vel", "delta_desired" }; // control names.
