@@ -176,14 +176,9 @@ struct CDOB_PUBLIC s_model_G_data
 	// Constructors.
 	s_model_G_data() = default;
 
-	s_model_G_data(pairs params_names,
-	               double const& num_coeff,
-	               double const& den_coeff,
-	               tf Gs);
+	s_model_G_data(pairs params_names, tf Gs);
 
 	std::pair<std::string_view, std::string_view> num_den_coeff_names{};
-	double num_coeff_{ 1. };
-	double den_coeff_{ 1. };
 
 	tf TF{};
 };

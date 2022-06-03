@@ -75,13 +75,26 @@ int main()
 
 	double tau_steer{ 0.3 };
 	double wheelbase{ 2.9 }; // L in vehicle model.
-	std::pair<std::string_view, std::string_view>{ "V^2", "Cos(delta)^2" };
+	std::pair<std::string_view, std::string_view> param_names{ "V^2", "Cos(delta)^2" };
 
 	act::tf_factor m_den1{{ wheelbase, 0, 0 }}; // L*s^2
 	act::tf_factor m_den2{{ tau_steer, 1 }}; // (tau*s + 1)
+	auto den_tf_factor = m_den1 * m_den2;
 
+	//act::tf Gey({ 1. }, den_tf_factor(), 5., 2.);
+	act::tf Gey({ 1. }, den_tf_factor(), 1., 1.);
+//	Gey.print();
+//	Gey.inv();
+//	Gey.print();
 
+	s_model_G_data model_data(param_names, Gey);
 
+	// Test Q(s) / G(s)
+
+	auto Qey_Gey_inv = qfilter_ey * Gey.inv();
+
+	// Create time-delay compensator for ey system.
+	DelayCompensator delay_compensator_ey(qfilter_ey_data, model_data);
 
 
 	std::cout << "In the DEBUG mode ... " << std::endl;

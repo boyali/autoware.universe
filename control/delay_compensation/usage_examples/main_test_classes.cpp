@@ -28,7 +28,7 @@ int main()
 	double const dt{ 0.1 };
 
 	// TEST DELAY OBSERVER MAIN
-	DelayObserver observer;
+	DelayCompensator observer;
 	std::cout << "hello world" << std::endl;
 
 
