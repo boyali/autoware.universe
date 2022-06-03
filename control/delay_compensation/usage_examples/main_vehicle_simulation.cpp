@@ -69,18 +69,6 @@ int main()
 	auto steer_sin_vec_input = ns_control_toolbox::make_sinus_signal(time_vec, 2 * control_frq);
 
 
-	// ns_eigen_utils::printEigenMat(vel_sqr_vec_input);
-
-	auto dead_time_tf_model = ns_control_toolbox::pade(dead_time_steer, 2);
-
-	ns_utils::print("Deadtime transfer function ");
-	dead_time_tf_model.print();
-
-	auto dead_time_ss_model = ns_control_toolbox::tf2ss(dead_time_tf_model, dt);
-	dead_time_ss_model.print();
-	dead_time_ss_model.print_discrete_system();
-
-
 	// Generate vehicle vector.
 	NonlinearVehicleKinematicModel nonlinear_model(wheelbase,
 	                                               tau_vel, tau_steer,
