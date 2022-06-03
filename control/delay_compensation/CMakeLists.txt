@@ -163,9 +163,6 @@ ament_auto_package(INSTALL_TO_SHARE)
 # --------------- Other Installation Macros ------------
 
 ##  Usage Examples
-ament_auto_add_executable(main_test_classes usage_examples/main_test_classes.cpp)
-target_link_libraries(main_test_classes ${CDOB})
-
 ## Type erasure example
 ament_auto_add_executable(main_type_erasure usage_examples/main_polymorphisim.cpp)
 target_link_libraries(main_type_erasure ${CDOB})

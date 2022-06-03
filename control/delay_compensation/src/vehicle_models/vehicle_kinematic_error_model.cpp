@@ -26,13 +26,18 @@ NonlinearVehicleKinematicModel::NonlinearVehicleKinematicModel(double const& whe
 		  dead_time_steer_{ deadtime_steer },
 		  dead_time_vel_{ deadtime_vel }, dt_{ dt }
 {
-	size_t order_pade = 2;
+	size_t const order_pade = 2;
 	auto tf_steer_input = ns_control_toolbox::pade(deadtime_steer, order_pade);
 	auto tf_vel_input = ns_control_toolbox::pade(deadtime_vel, order_pade);
 
-	deadtime_steering_model = ns_control_toolbox::tf2ss(tf_steer_input);
-	deadtime_velocity_model = ns_control_toolbox::tf2ss(tf_vel_input);
+	deadtime_steering_model_ = ns_control_toolbox::tf2ss(tf_steer_input, dt);
+	deadtime_velocity_model_ = ns_control_toolbox::tf2ss(tf_vel_input, dt);
 
+	deadtime_velocity_model_.print_discrete_system();
+	deadtime_steering_model_.print_discrete_system();
+
+	xv0_ = Eigen::MatrixXd::Zero(order_pade, 1);
+	xs0_ = Eigen::MatrixXd::Zero(order_pade, 1);
 }
 
 void NonlinearVehicleKinematicModel::getInitialStates(std::array<double, 4>& x0)
@@ -48,6 +53,25 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateOneStep(const doub
 {
 	auto&& Vd = desired_velocity;
 	auto&& delta_d = desired_steering;
+
+	auto use_vel_deadtime = ns_utils::isEqual(dead_time_vel_, 0.);
+	auto use_steer_deadtime = ns_utils::isEqual(dead_time_steer_, 0.);
+
+	double udelayed_vel{ desired_velocity };
+	double udelayed_steer{ desired_steering };
+
+	if (use_vel_deadtime)
+	{
+		ns_utils::print("deadtime vel model");
+		deadtime_velocity_model_.print_discrete_system();
+		int a = 1;
+	}
+
+	if (use_steer_deadtime)
+	{
+		int a = 1;
+	}
+
 
 	// Get the previous states.
 	auto&& ey0 = x0_[0];
