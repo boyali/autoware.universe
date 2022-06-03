@@ -70,7 +70,10 @@ private:
 	ns_control_toolbox::tf2ss QGinv_ss_{};
 
 	// Internal states.
-	eigenT x0_filter_{ eigenT::Zero() };
+	eigenT x0_Qfilter_{ eigenT::Zero() };
+	eigenT x0_Gsystem_{ eigenT::Zero() };
+	eigenT x0_QGinvsystem_{ eigenT::Zero() };
+
 
 	/**
 	 * @brief Outputs of the delay compensator.
@@ -152,9 +155,21 @@ void DelayCompensator<eigenT>::print() const
 
 }
 
+/**
+ * @brief Given an input "u" that sent to the system and system response "y", computes four outputs by means of the
+ * internal models for the filter Qf, for the system model G(s) for the Q-filtered inverse model.
+ * [in] u : control input for this system.
+ * [in] ym: measured response i.e ey, eyaw, edelta, eV.
+ * [out] y0: u_filtered,Q(s)*u where u is the input sent to the system.
+ * [out] y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+ * [out] y2: du = y0 - y1 where du is the estimated disturbance input
+ * [out] y3: ydu = G(s)*du where ydu is the response of the system to du.
+ * */
 template<typename eigenT>
 std::array<double, 4> DelayCompensator<eigenT>::simulateOneStep()
 {
+	//
+
 	return std::array<double, 4>();
 }
 
