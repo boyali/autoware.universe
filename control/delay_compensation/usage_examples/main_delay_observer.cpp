@@ -74,7 +74,7 @@ int main()
 
 	double tau_steer{ 0.3 };
 	double wheelbase{ 2.9 }; // L in vehicle model.
-	std::pair<std::string_view, std::string_view> param_names{ "V^2", "Cos(delta)^2" };
+	std::pair<std::string_view, std::string_view> param_names{ "V^2,", "Cos(delta)^2" };
 
 	act::tf_factor m_den1{{ wheelbase, 0, 0 }}; // L*s^2
 	act::tf_factor m_den2{{ tau_steer, 1 }}; // (tau*s + 1)
@@ -82,24 +82,41 @@ int main()
 
 	//act::tf Gey({ 1. }, den_tf_factor(), 5., 2.);
 	act::tf Gey({ 1. }, den_tf_factor(), 1., 1.);
-//	Gey.print();
-//	Gey.inv();
-//	Gey.print();
 
+	// Store in a struct and pass to the delay compensator.
 	s_model_G_data model_data(param_names, Gey);
-
-	// Test Q(s) / G(s)
-	Gey.inv(); // invert the transfer function
-
-//	ns_utils::print("Inverted Gey");
-//	Gey.print();
-//	auto Qey_Gey_inv = qfilter_ey.TF() * Gey;
 
 	// Create time-delay compensator for ey system.
 	DelayCompensator delay_compensator_ey(qfilter_ey_data, model_data);
 	delay_compensator_ey.print();
 
 	// Simulate the delay compensator.
+	// Generate test signal
+	double tfinal{ 10. };
+	auto time_vec = ns_control_toolbox::make_time_signal(dt, tfinal);
+
+	// Control signals
+	double control_frq{ 0.2 };
+	auto vel_sqr_vec_input = ns_control_toolbox::make_square_signal(time_vec, control_frq);
+	auto vel_trg_vec_input = ns_control_toolbox::make_triangle_signal(time_vec, 5);
+	auto steer_sin_vec_input = ns_control_toolbox::make_sinus_signal(time_vec, 2 * control_frq);
+
+	// Simulate the vehicle model.
+	auto tsim_f = time_vec.rows();
+	Eigen::MatrixXd sim_results(tsim_f, 2);
+	sim_results.setZero();
+
+	// State placeholder array
+	double y_ey{};
+
+	for (auto k = 0; k < tsim_f; ++k)
+	{
+		double desired_vel = vel_trg_vec_input(k) * 10.; // max(vel_.) is 1.
+		double desired_steer = steer_sin_vec_input(k) * 0.1;
+		// x = nonlinear_model.simulateOneStep(desired_vel, desired_steer);
+
+		sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(x.data());
+	}
 
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
