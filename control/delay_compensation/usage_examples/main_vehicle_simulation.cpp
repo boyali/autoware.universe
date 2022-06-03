@@ -60,7 +60,6 @@ int main()
 
 	// Generate test signal
 	auto time_vec = ns_control_toolbox::make_time_signal(dt, tfinal);
-//	ns_eigen_utils::printEigenMat(time_vec);
 
 	// Control signals
 	double control_frq{ 0.2 };

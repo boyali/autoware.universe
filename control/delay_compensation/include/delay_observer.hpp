@@ -23,6 +23,7 @@
 
 
 // class __attribute__((__visibility__("default"))) DelayCompensator
+template<typename eigenT>
 class CDOB_PUBLIC DelayCompensator
 {
 public:
@@ -34,6 +35,9 @@ public:
 	DelayCompensator(s_filter_data const& Qfilter_data, s_model_G_data& Gdata);
 
 	void print() const;
+
+	// simulate  one-step and get the outputs.
+	std::array<double, 4> simulateOneStep();
 
 
 private:
@@ -47,7 +51,7 @@ private:
 	ns_control_toolbox::tf Qfilter_tf_{}; // @brief
 
 	/**
-	 * @brief  Associated model parameters as multiplication factors for num and den of G.
+	 * @brief  Associated model parameters as multiplication factors for num and den of G and Q/G.
 	 * */
 	pairs num_den_constant_names_G_{ "1.0", "1.0" };
 	pairs num_den_constant_names_QGinv_{ "1.0", "1.0" };
@@ -59,9 +63,19 @@ private:
 	// Q(s)/G(s)
 	ns_control_toolbox::tf QGinv_{};
 
+	// Internal states.
+	eigenT x0_filter_{ eigenT::Zero() };
 
-	// Inverse vehicle model with Q filtered.
-	// Qfilters.
+	/**
+	 * @brief Outputs of the delay compensator.
+	 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+	 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+	 * y2: du = y0 - y1 where du is the estimated disturbance input
+	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+	 * */
+
+	std::array<double, 4> y_outputs{};
+
 
 };
 

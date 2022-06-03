@@ -14,7 +14,8 @@
 
 #include "delay_observer.hpp"
 
-DelayCompensator::DelayCompensator(s_filter_data const& Qfilter_data, s_model_G_data& Gdata) :
+template<typename eigenT>
+DelayCompensator<eigenT>::DelayCompensator(s_filter_data const& Qfilter_data, s_model_G_data& Gdata) :
 		q_cut_off_frequency_{ Qfilter_data.cut_off_frq },
 		q_time_constant_tau_{ Qfilter_data.time_constant },
 		Qfilter_tf_(Qfilter_data.TF),
@@ -32,7 +33,8 @@ DelayCompensator::DelayCompensator(s_filter_data const& Qfilter_data, s_model_G_
 	num_den_constant_names_QGinv_ = pairs(num_den_constant_names_G_.second, num_den_constant_names_G_.first);
 }
 
-void DelayCompensator::print() const
+template<typename eigenT>
+void DelayCompensator<eigenT>::print() const
 {
 	ns_utils::print("Delay Compensator Summary :  \n");
 	ns_utils::print("Qfilter Model : \n");
@@ -51,4 +53,10 @@ void DelayCompensator::print() const
 	                num_den_constant_names_QGinv_.second);
 
 
+}
+
+template<typename eigenT>
+std::array<double, 4> DelayCompensator<eigenT>::simulateOneStep()
+{
+	return std::array<double, 4>();
 }
