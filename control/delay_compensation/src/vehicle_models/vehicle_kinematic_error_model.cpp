@@ -24,20 +24,21 @@ NonlinearVehicleKinematicModel::NonlinearVehicleKinematicModel(double const& whe
 		  tau_vel_{ tau_vel },
 		  dead_time_steer_{ deadtime_steer },
 		  dead_time_vel_{ deadtime_vel }
-	{
-		size_t order_pade     = 2;
-		auto   tf_steer_input = ns_control_toolbox::pade(deadtime_steer, order_pade);
-		auto   tf_vel_input   = ns_control_toolbox::pade(deadtime_vel, order_pade);
-		
-		deadtime_steering_model = ns_control_toolbox::tf2ss(tf_steer_input);
-		deadtime_velocity_model = ns_control_toolbox::tf2ss(tf_vel_input);
-		
-	}
+{
+	size_t order_pade = 2;
+	auto tf_steer_input = ns_control_toolbox::pade(deadtime_steer, order_pade);
+	auto tf_vel_input = ns_control_toolbox::pade(deadtime_vel, order_pade);
+
+	// Create the state space models for the dead-times.
+	deadtime_vel_ss_ = ns_control_toolbox::tf2ss(tf_vel_input);
+	deadtime_steer_ss_ = ns_control_toolbox::tf2ss(tf_steer_input);
+
+}
 
 void NonlinearVehicleKinematicModel::getInitialStates(std::array<double, 4>& x0)
-	{
-		x0 = x0_;
-	}
+{
+	x0 = x0_;
+}
 
 /**
  *@brief Integrates the nonlinear dynamics one-step.
@@ -45,20 +46,30 @@ void NonlinearVehicleKinematicModel::getInitialStates(std::array<double, 4>& x0)
 std::array<double, 4> NonlinearVehicleKinematicModel::simulateOneStep(const double& desired_velocity,
                                                                       double const& desired_steering,
                                                                       double const& dt)
+{
+
+	auto use_vel_deadtime = ns_utils::isEqual(dead_time_vel_, 0.);
+	auto use_steer_deadtime = ns_utils::isEqual(dead_time_steer_, 0.);
+
+	if (use_vel_deadtime)
 	{
-		auto&& Vd      = desired_velocity;
-		auto&& delta_d = desired_steering;
-		
-		// Get the previous states.
-		auto&& ey0    = x0_[0];
-		auto&& eyaw0  = x0_[1];
-		auto&& delta0 = x0_[2];
-		auto&& V0     = x0_[3];
-		
-		x0_[0] = ey0 + dt * V0 * sin(eyaw0);
-		x0_[1] = eyaw0 + dt * (V0 / wheelbase_) * (tan(delta0) - tan(delta_d));
-		x0_[2] = delta0 - dt * (1 / tau_steer_) * (delta0 - delta_d);
-		x0_[3] = V0 - dt * (1 / tau_vel_) * (V0 - Vd);
-		
-		return x0_;
+		auto uvel = deadtime_vel_ss_.Ad_;
 	}
+
+
+	auto&& Vd = desired_velocity;
+	auto&& delta_d = desired_steering;
+
+	// Get the previous states.
+	auto&& ey0 = x0_[0];
+	auto&& eyaw0 = x0_[1];
+	auto&& delta0 = x0_[2];
+	auto&& V0 = x0_[3];
+
+	x0_[0] = ey0 + dt * V0 * sin(eyaw0);
+	x0_[1] = eyaw0 + dt * (V0 / wheelbase_) * (tan(delta0) - tan(delta_d));
+	x0_[2] = delta0 - dt * (1 / tau_steer_) * (delta0 - delta_d);
+	x0_[3] = V0 - dt * (1 / tau_vel_) * (V0 - Vd);
+
+	return x0_;
+}
