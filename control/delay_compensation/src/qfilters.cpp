@@ -145,7 +145,7 @@ s_filter_data::s_filter_data(QFilterBase const& Qf) : order{ Qf.order() }
 	TF = Qf.TF();
 }
 
-s_model_G_data::s_model_G_data(pairs_t params_names,
+s_model_g_data::s_model_g_data(pairs_t params_names,
                                pairs_func_maps_t funcs, tf Gs) : num_den_coeff_names{ std::move(params_names) },
                                                                  funcs{ std::move(funcs) },
                                                                  TF{ std::move(Gs) }

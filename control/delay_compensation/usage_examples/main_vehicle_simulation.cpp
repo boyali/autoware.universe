@@ -46,10 +46,10 @@ int main()
 
 
 	// Specialized Qfilters for ey and eyaw.
-	Qfilter<state_vector_qfilter<order_ey>> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
-	Qfilter<state_vector_qfilter<order_e_yaw>> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
-	Qfilter<state_vector_qfilter<order_delta>> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
-	Qfilter<state_vector_qfilter<order_delta>> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
+	Qfilter<order_ey> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
+	Qfilter<order_e_yaw> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
+	Qfilter<order_delta> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
+	Qfilter<order_delta> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
 
 	// Create a nonlinear vehicle model.
 	double wheelbase{ 2.9 };
