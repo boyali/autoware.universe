@@ -33,8 +33,8 @@ public:
 	// Constructors.
 	DelayCompensator() = default;
 
-	DelayCompensator(s_filter_data const& Qfilter_data,
-	                 s_model_G_data& Gdata, double const& dt);
+	DelayCompensator(s_filter_data const& qfilter_data,
+	                 s_model_G_data& model_data, double const& dt);
 
 	void print() const;
 
@@ -96,24 +96,25 @@ private:
 
 
 template<typename eigenT>
-DelayCompensator<eigenT>::DelayCompensator(s_filter_data const& Qfilter_data,
-                                           s_model_G_data& Gdata, double const& dt) :
-		dt_{ dt },
-		q_cut_off_frequency_{ Qfilter_data.cut_off_frq },
-		q_time_constant_tau_{ Qfilter_data.time_constant },
-		Qfilter_tf_(Qfilter_data.TF),
-		num_den_constant_names_G_{ Gdata.num_den_coeff_names },
-		Gtf_(Gdata.TF), pair_func_map_{ Gdata.funcs }
+DelayCompensator<eigenT>::DelayCompensator(s_filter_data const& qfilter_data,
+                                           s_model_G_data& model_data, double const& dt) :
+		dt_{ dt }, q_order_{ qfilter_data.order },
+		q_cut_off_frequency_{ qfilter_data.cut_off_frq },
+		q_time_constant_tau_{ qfilter_data.time_constant },
+		Qfilter_tf_(qfilter_data.TF),
+		num_den_constant_names_G_{ model_data.num_den_coeff_names },
+		pair_func_map_{ model_data.funcs },
+		Gtf_(model_data.TF)
 {
 
 	// Compute the state-space model of Qfilter.
-	Qfilter_ss_ = ns_control_toolbox::tf2ss(Qfilter_data.TF, dt);
+	Qfilter_ss_ = ns_control_toolbox::tf2ss(qfilter_data.TF, dt);
 
 	// Compute the state-space model of the system model G(s).
 	Gss_ = ns_control_toolbox::tf2ss(Gtf_, dt);
 
 	// Compute Q/G
-	auto tempG = std::move(Gdata.TF);
+	auto tempG = std::move(model_data.TF);
 	tempG.inv();
 
 	QGinv_tf_ = Qfilter_tf_ * tempG;
@@ -177,24 +178,38 @@ std::array<double, 4> DelayCompensator<eigenT>::simulateOneStep(double const& in
                                                                 std::array<double, 4>& y_outputs)
 {
 	// Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
-	auto&& numkey = num_den_constant_names_G_.first; // Corresponds to v in ey model.
-	auto&& denkey = num_den_constant_names_G_.second;
+	if (num_den_constant_names_G_.first != "1")
+	{
+		auto&& numkey = num_den_constant_names_G_.first; // Corresponds to v in ey model.
+		auto&& num_const_g = pair_func_map_[numkey](num_den_args_of_G.first);
 
-	auto&& num_const_g = pair_func_map_[numkey](num_den_args_of_G.first);
-	auto&& den_const_g = pair_func_map_[denkey](num_den_args_of_G.second);
+		Gtf_.update_num_coef(num_const_g);
+		QGinv_tf_.update_den_coef(num_const_g); // since they are inverted.
 
-	// Update G(s) num, den constants.
-	Gtf_.update_num_den_coef(num_const_g, den_const_g);
+		ns_utils::print("input  : ", input, numkey, " : ", num_const_g);
+	}
 
-	// Update Gss accordingly from the TF version.
-	Gss_ = ns_control_toolbox::tf2ss(Gtf_, dt_);
+	if (num_den_constant_names_G_.second != "1")
+	{
+		auto&& denkey = num_den_constant_names_G_.second; // Corresponds to delta in ey model.
+		auto&& den_const_g = pair_func_map_[denkey](num_den_args_of_G.second);
 
-	// Update QGinv num, den constants, must be inverse of G(s) as Q is constant.
-	QGinv_tf_.update_num_den_coef(den_const_g, num_const_g);
-	QGinv_ss_ = ns_control_toolbox::tf2ss(QGinv_tf_, dt_);
+		Gtf_.update_den_coef(den_const_g);
+		QGinv_tf_.update_num_coef(den_const_g); // since they are inverted.
+
+		ns_utils::print("input  : ", input, denkey, " : ", den_const_g);
+	}
+
+	// If any of num den constant changes, update the state-space models.
+	if (num_den_constant_names_G_.first != "1" || num_den_constant_names_G_.second != "1")
+	{
+		// Update Gss accordingly from the TF version.
+		Gss_ = ns_control_toolbox::tf2ss(Gtf_, dt_);
+		QGinv_ss_ = ns_control_toolbox::tf2ss(QGinv_tf_, dt_);
+	}
 
 
-	ns_utils::print("input  : ", input, numkey, " : ", num_const_g, ", ", denkey, " : ", den_const_g);
+	// ns_utils::print("input  : ", input, numkey, " : ", num_const_g, ", ", denkey, " : ", den_const_g);
 	y_outputs = std::array<double, 4>{ 1, 2, 3, 4 };
 
 	return std::array<double, 4>{};

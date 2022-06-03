@@ -93,7 +93,7 @@ set(CDOB_LIB_SOURCE
         )
 
 set(CDOB_LIB_HEADERS
-        include/delay_observer.hpp
+        include/delay_compensator.hpp
         include/visibility_control.hpp
         include/utils_delay_observer/delay_compensation_utils.hpp
         include/qfilters.hpp
