@@ -22,42 +22,40 @@
 #include "autoware_control_toolbox.hpp"
 
 
-// class __attribute__((__visibility__("default"))) DelayObserver
-class CDOB_PUBLIC DelayObserver
+// class __attribute__((__visibility__("default"))) DelayCompensator
+class CDOB_PUBLIC DelayCompensator
 {
 public:
-	
+
 	// Constructors.
-	DelayObserver() = default;
-	
-	DelayObserver(s_filter_data const& Qfilter_data, s_model_G_data const& Gdata);
+	DelayCompensator() = default;
+
+	DelayCompensator(s_filter_data const& Qfilter_data, s_model_G_data const& Gdata);
 
 
 private:
-	
+
 	// Associated Qfilter parameters
 	int q_order_{ 1 }; // @brief order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
 	double q_cut_off_frequency_{}; // @brief cut-off frequency in Hz.
 	double q_time_constant_tau_{};
-	
+
 	// Qfilter transfer function.
 	ns_control_toolbox::tf Qfilter_tf_{}; // @brief
-	
+
 	// Associated model parameters as multiplication factors for num and den.
 	std::pair<std::string_view, std::string_view> num_den_coeff_names_{ "1.0", "1.0" };
-	
-	double m_num_factor_{ 1. }; //  Numerator multiplier for the model.
-	double m_den_factor_{ 1. }; //  Denominator multiplier for the model.
-	
-	
-	
+
+
 	// Model transfer function.
 	ns_control_toolbox::tf G_{};
-	
-	
+
+	// Q(s)/G(s)
+
+
 	// Inverse vehicle model with Q filtered.
 	// Qfilters.
-	
+
 };
 
 

@@ -146,11 +146,8 @@ s_filter_data::s_filter_data(QFilterBase const& Qf)
 
 }
 
-s_model_G_data::s_model_G_data(s_model_G_data::pairs params_names, const double& num_coeff,
-                               const double& den_coeff,
+s_model_G_data::s_model_G_data(s_model_G_data::pairs params_names,
                                s_model_G_data::tf Gs) : num_den_coeff_names{ std::move(params_names) },
-                                                        num_coeff_{ num_coeff },
-                                                        den_coeff_{ den_coeff },
                                                         TF{ std::move(Gs) }
 {
 
