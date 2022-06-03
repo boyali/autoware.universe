@@ -37,17 +37,17 @@ public:
 	// Constructors.
 	NonlinearVehicleKinematicModel() = default;
 
-	explicit NonlinearVehicleKinematicModel(double const& wheelbase,
-	                                        double const& tau_vel,
-	                                        double const& tau_steer,
-	                                        double const& deadtime_vel,
-	                                        double const& deadtime_steer);
+	NonlinearVehicleKinematicModel(double const& wheelbase,
+	                               double const& tau_vel,
+	                               double const& tau_steer,
+	                               double const& deadtime_vel,
+	                               double const& deadtime_steer,
+	                               double const& dt);
 
 
 	// Public methods.
 	std::array<double, 4> simulateOneStep(const double& desired_velocity,
-	                                      double const& desired_steering,
-	                                      double const& dt);
+	                                      double const& desired_steering);
 
 	void getInitialStates(std::array<double, 4>& x0);
 
@@ -58,44 +58,19 @@ private:
 	double tau_vel_{};
 	double dead_time_steer_{ 0 };
 	double dead_time_vel_{ 0 };
-
-	// Dead-time models for velocity and steering.
-	ns_control_toolbox::ss_system deadtime_vel_ss_discrete_{}; // stores A, B, C, D
-	ns_control_toolbox::ss_system deadtime_steer_ss_discrete_{};
+	double dt_{ 0.1 };
 
 	std::vector<std::string> state_names_{ "ey", "eyaw", "delta", "V" }; // state names.
 	std::vector<std::string> control_names_{ "desired_vel", "delta_desired" }; // control names.
 
+	// Deadtime inputs
+	ns_control_toolbox::tf2ss deadtime_steering_model{};
+	ns_control_toolbox::tf2ss deadtime_velocity_model{};
 
 	// Initial state
 	std::array<double, 4> x0_{ 0., 0., 0., 10. }; // this state is updated.
 
-	// Initial states for the delay models.
-	Eigen::MatrixXd x0_delay_vel_;
-	Eigen::MatrixXd x0_delay_steer_;
 
-
-};
-
-
-/**
- * @brief An real-time polymorphic class for the inverse kinematic model of a vehicle with Qfilters.
- *
- * */
-class CDOB_PUBLIC InverseModel
-{
-public:
-	InverseModel() = default;
-
-
-private:
-	/**
-	 * @brief G(s) is the forward model of a state in the vehicle model such as ey diff. equation.
-	 * */
-	ns_control_toolbox::tf_factor num_G_{{}};
-	ns_control_toolbox::tf_factor den_G_{{}};
-
-	// It is corresponding Q-filter.
 
 
 };
