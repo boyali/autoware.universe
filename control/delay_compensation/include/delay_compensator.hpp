@@ -21,9 +21,9 @@
 #include "qfilters.hpp"
 #include "autoware_control_toolbox.hpp"
 
-
 // class __attribute__((__visibility__("default"))) DelayCompensator
-template<typename eigenT>
+// For internal states use state_T, for ABCD matrices use mat_eig_T.
+template<typename state_eig_T, typename mat_eig_T>
 class CDOB_PUBLIC DelayCompensator
 {
 public:
@@ -42,7 +42,6 @@ public:
 	std::array<double, 4> simulateOneStep(double const& input,
 	                                      std::pair<double, double> const& num_den_args_of_G,
 	                                      std::array<double, 4>& y_outputs);
-
 
 private:
 	double dt_{ 0.1 };
@@ -67,7 +66,6 @@ private:
 	// and their functions.
 	pairs_func_maps_t pair_func_map_{};
 
-
 	// Model transfer function.
 	ns_control_toolbox::tf Gtf_{};
 	ns_control_toolbox::tf2ss Gss_;
@@ -77,9 +75,11 @@ private:
 	ns_control_toolbox::tf2ss QGinv_ss_{};
 
 	// Internal states.
-	eigenT x0_Qfilter_{ eigenT::Zero() };
-	eigenT x0_Gsystem_{ eigenT::Zero() };
-	eigenT x0_QGinvsystem_{ eigenT::Zero() };
+	state_eig_T x0_Qfilter_{ state_eig_T::Zero() };
+	state_eig_T x0_Gsystem_{ state_eig_T::Zero() };
+	state_eig_T x0_QGinvsystem_{ state_eig_T::Zero() };
+
+	// Placeholders for Ad, Bd, Cd, Dd.
 
 
 	/**
@@ -94,10 +94,9 @@ private:
 
 };
 
-
-template<typename eigenT>
-DelayCompensator<eigenT>::DelayCompensator(s_filter_data const& qfilter_data,
-                                           s_model_G_data& model_data, double const& dt) :
+template<typename state_eig_T, typename mat_eig_T>
+DelayCompensator<state_eig_T, mat_eig_T>::DelayCompensator(s_filter_data const& qfilter_data,
+                                                           s_model_G_data& model_data, double const& dt) :
 		dt_{ dt }, q_order_{ qfilter_data.order },
 		q_cut_off_frequency_{ qfilter_data.cut_off_frq },
 		q_time_constant_tau_{ qfilter_data.time_constant },
@@ -125,11 +124,10 @@ DelayCompensator<eigenT>::DelayCompensator(s_filter_data const& qfilter_data,
 	// Invert the num den constant names.
 	num_den_constant_names_QGinv_ = pairs_t(num_den_constant_names_G_.second, num_den_constant_names_G_.first);
 
-
 }
 
-template<typename eigenT>
-void DelayCompensator<eigenT>::print() const
+template<typename state_eig_T, typename mat_eig_T>
+void DelayCompensator<state_eig_T, mat_eig_T>::print() const
 {
 	ns_utils::print("Delay Compensator Summary :  \n");
 	ns_utils::print("Qfilter Model : \n");
@@ -159,7 +157,6 @@ void DelayCompensator<eigenT>::print() const
 	ns_utils::print("System Q(s)/G(s) State-Space: ");
 	QGinv_ss_.print_discrete_system();
 
-
 }
 
 /**
@@ -172,10 +169,10 @@ void DelayCompensator<eigenT>::print() const
  * [out] y2: du = y0 - y1 where du is the estimated disturbance input
  * [out] y3: ydu = G(s)*du where ydu is the response of the system to du.
  * */
-template<typename eigenT>
-std::array<double, 4> DelayCompensator<eigenT>::simulateOneStep(double const& input,
-                                                                std::pair<double, double> const& num_den_args_of_G,
-                                                                std::array<double, 4>& y_outputs)
+template<typename state_eig_T, typename mat_eig_T>
+std::array<double, 4> DelayCompensator<state_eig_T, mat_eig_T>::simulateOneStep(double const& input,
+                                                                                std::pair<double, double> const& num_den_args_of_G,
+                                                                                std::array<double, 4>& y_outputs)
 {
 	// Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
 	if (num_den_constant_names_G_.first != "1")
