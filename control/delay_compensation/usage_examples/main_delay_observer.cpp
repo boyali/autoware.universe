@@ -99,6 +99,8 @@ int main()
 	DelayCompensator delay_compensator_ey(qfilter_ey_data, model_data);
 	delay_compensator_ey.print();
 
+	// Simulate the delay compensator.
+
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
 #else

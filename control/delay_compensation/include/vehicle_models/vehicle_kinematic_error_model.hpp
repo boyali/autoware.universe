@@ -31,24 +31,24 @@
  * @brief Implemented to test the current packages and inverted model performance.
  * */
 class CDOB_PUBLIC NonlinearVehicleKinematicModel
-	{
+{
 public:
-	
+
 	// Constructors.
 	NonlinearVehicleKinematicModel() = default;
-	
+
 	explicit NonlinearVehicleKinematicModel(double const& wheelbase,
 	                                        double const& tau_vel,
 	                                        double const& tau_steer,
 	                                        double const& deadtime_vel,
 	                                        double const& deadtime_steer);
-	
-	
+
+
 	// Public methods.
 	std::array<double, 4> simulateOneStep(const double& desired_velocity,
 	                                      double const& desired_steering,
 	                                      double const& dt);
-	
+
 	void getInitialStates(std::array<double, 4>& x0);
 
 
@@ -58,21 +58,22 @@ private:
 	double tau_vel_{};
 	double dead_time_steer_{ 0 };
 	double dead_time_vel_{ 0 };
-	
+
+	// Dead-time models for velocity and steering.
+	ns_control_toolbox::tf2ss deadtime_vel_ss_{};
+	ns_control_toolbox::tf2ss deadtime_steer_ss_{};
+
 	std::vector<std::string> state_names_{ "ey", "eyaw", "delta", "V" }; // state names.
 	std::vector<std::string> control_names_{ "desired_vel", "delta_desired" }; // control names.
-	
-	// Deadtime inputs
-	ns_control_toolbox::tf2ss deadtime_steering_model{};
-	ns_control_toolbox::tf2ss deadtime_velocity_model{};
-	
+
+
 	// Initial state
 	std::array<double, 4> x0_{ 0., 0., 0., 10. }; // this state is updated.
-	
-	
-	
-	
-	};
+
+
+
+
+};
 
 
 /**
@@ -80,7 +81,7 @@ private:
  *
  * */
 class CDOB_PUBLIC InverseModel
-	{
+{
 public:
 	InverseModel() = default;
 
@@ -91,11 +92,11 @@ private:
 	 * */
 	ns_control_toolbox::tf_factor num_G_{{}};
 	ns_control_toolbox::tf_factor den_G_{{}};
-	
+
 	// It is corresponding Q-filter.
-	
-	
-	};
+
+
+};
 
 
 #endif //DELAY_COMPENSATION_VEHICLE_KINEMATIC_ERROR_MODEL_HPP
