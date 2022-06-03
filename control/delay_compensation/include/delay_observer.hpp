@@ -26,11 +26,14 @@
 class CDOB_PUBLIC DelayCompensator
 {
 public:
+	using pairs = std::pair<std::string_view, std::string_view>;
 
 	// Constructors.
 	DelayCompensator() = default;
 
-	DelayCompensator(s_filter_data const& Qfilter_data, s_model_G_data const& Gdata);
+	DelayCompensator(s_filter_data const& Qfilter_data, s_model_G_data& Gdata);
+
+	void print() const;
 
 
 private:
@@ -43,14 +46,18 @@ private:
 	// Qfilter transfer function.
 	ns_control_toolbox::tf Qfilter_tf_{}; // @brief
 
-	// Associated model parameters as multiplication factors for num and den.
-	std::pair<std::string_view, std::string_view> num_den_coeff_names_{ "1.0", "1.0" };
+	/**
+	 * @brief  Associated model parameters as multiplication factors for num and den of G.
+	 * */
+	pairs num_den_constant_names_G_{ "1.0", "1.0" };
+	pairs num_den_constant_names_QGinv_{ "1.0", "1.0" };
 
 
 	// Model transfer function.
 	ns_control_toolbox::tf G_{};
 
 	// Q(s)/G(s)
+	ns_control_toolbox::tf QGinv_{};
 
 
 	// Inverse vehicle model with Q filtered.
