@@ -101,11 +101,10 @@ private:
 	state_vec_type x0_qg_inv_system_{ state_vec_type::Zero() };
 
 	// Placeholders for Ad, Bd, Cd, Dd.
-	mat_Atype Ad_{};
-	mat_Btype Bd_{};
-	mat_Ctype Cd_{};
-	mat_Dtype Dd_{};
-
+	Eigen::MatrixXd Ad_{};
+	Eigen::MatrixXd Bd_{};
+	Eigen::MatrixXd Cd_{};
+	Eigen::MatrixXd Dd_{};
 
 	/**
 	 * @brief Outputs of the delay compensator.
@@ -237,10 +236,10 @@ std::array<double, 4> DelayCompensator<Norder>::simulateOneStep(double const& in
 	getSSsystem(QGinv_ss_);
 
 	// Print matrices.
-	ns_eigen_utils::printEigenMat(Ad_);
-	ns_eigen_utils::printEigenMat(Bd_);
-	ns_eigen_utils::printEigenMat(Cd_);
-	ns_eigen_utils::printEigenMat(Dd_);
+	ns_eigen_utils::printEigenMat(Ad_, "Ad:");
+	ns_eigen_utils::printEigenMat(Bd_, "Bd:");
+	ns_eigen_utils::printEigenMat(Cd_, "Cd:");
+	ns_eigen_utils::printEigenMat(Dd_, "Dd:");
 
 
 	// ns_utils::print("input  : ", input, numkey, " : ", num_const_g, ", ", denkey, " : ", den_const_g);
@@ -254,6 +253,10 @@ template<int Norder>
 void DelayCompensator<Norder>::getSSsystem(ns_control_toolbox::tf2ss const& ss)
 {
 
+//	Ad_ = ss.Ad();
+//	Bd_ = ss.B();
+//	Cd_ = ss.Cd();
+//	Dd_ = ss.Dd();
 	ss.getABCD_discrete(Ad_, Bd_, Cd_, Dd_);
 }
 
