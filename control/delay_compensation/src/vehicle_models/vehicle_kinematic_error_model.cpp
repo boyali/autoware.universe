@@ -96,7 +96,7 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateOneStep(const doub
 		// Update x0v
 		xv0_ = Ad * xv0_ + Bd * desired_velocity;
 
-		int a = 1;
+		//int a = 1;
 	}
 
 	if (is_discretisize_steering_delay_)
@@ -120,7 +120,7 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateOneStep(const doub
 		// Update x0v
 		xv0_ = Ad * xv0_ + Bd * desired_steering;
 
-		int a = 1;
+		//int a = 1;
 	}
 
 
