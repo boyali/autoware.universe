@@ -42,7 +42,7 @@ class CDOB_PUBLIC DelayCompensator : public DelayCompensatorBaseTypes<Norder>
 {
 public:
 
-	using state_vec_type = Eigen::Matrix<double, Norder, 1>;
+	using state_vec_type = Eigen::Matrix<double, Norder + 1, 1>; // state of [A, B; C, D] system : xu
 	using mat_Atype = Eigen::Matrix<double, Norder, Norder>;
 	using mat_Btype = Eigen::Matrix<double, Norder, 1>;
 	using mat_Ctype = Eigen::Matrix<double, 1, Norder>;
@@ -96,9 +96,9 @@ private:
 	ns_control_toolbox::tf2ss QGinv_ss_{};
 
 	// Internal states.
-	state_vec_type x0_qfilter_{ state_vec_type::Zero() };
-	state_vec_type x0_gsystem_{ state_vec_type::Zero() };
-	state_vec_type x0_qg_inv_system_{ state_vec_type::Zero() };
+	state_vec_type u_Q_uf_xu0_qfilter_{ state_vec_type::Zero() }; // u--> Q(s) -->ufiltered
+	state_vec_type u_G_y_xu0_gsystem_{ state_vec_type::Zero() }; // u--> G(s)-->y (i,e ey, eyaw ..)
+	state_vec_type yQG_udu_xu0_qg_inv_system_{ state_vec_type::Zero() }; // y--> Q(s)/G(s) --> u-du
 
 	// Placeholders for Ad, Bd, Cd, Dd.
 	Eigen::MatrixXd Ad_{};
@@ -113,7 +113,6 @@ private:
 	 * y2: du = y0 - y1 where du is the estimated disturbance input
 	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 	 * */
-
 	std::array<double, 4> y_outputs_{};
 
 	// Member functions.
@@ -228,9 +227,25 @@ std::array<double, 4> DelayCompensator<Norder>::simulateOneStep(double const& in
 	if (num_den_constant_names_G_.first != "1" || num_den_constant_names_G_.second != "1")
 	{
 		// Update Gss accordingly from the TF version.
-		Gss_ = ns_control_toolbox::tf2ss(Gtf_, dt_);
-		QGinv_ss_ = ns_control_toolbox::tf2ss(QGinv_tf_, dt_);
+		Gss_.updateStateSpace(Gtf_);
+		QGinv_ss_.updateStateSpace(QGinv_tf_);
 	}
+
+	// Simulate Qs, Gs, Qs/Gs/
+	// set u (last row).
+	u_Q_uf_xu0_qfilter_.bottomRows(1)(0, 0) = input;
+	Qfilter_ss_.simulateOneStep(u_Q_uf_xu0_qfilter_);
+
+	// Get outputs.
+	/**
+	 * @brief Outputs of the delay compensator.
+	 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+	 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+	 * y2: du = y0 - y1 where du is the estimated disturbance input
+	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+	 * */
+
+	y_outputs[0] = u_Q_uf_xu0_qfilter_.bottomRows(1)(0, 0);
 
 	// Get Ad_, Bd_, Cd_,Dd_ from QGinv_ss_.
 	// getSSsystem(QGinv_ss_);
