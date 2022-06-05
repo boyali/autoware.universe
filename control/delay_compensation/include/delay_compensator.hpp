@@ -253,11 +253,11 @@ template<int Norder>
 void DelayCompensator<Norder>::getSSsystem(ns_control_toolbox::tf2ss const& ss)
 {
 
-//	Ad_ = ss.Ad();
-//	Bd_ = ss.B();
-//	Cd_ = ss.Cd();
-//	Dd_ = ss.Dd();
-	ss.getABCD_discrete(Ad_, Bd_, Cd_, Dd_);
+	Ad_ = ss.Ad();
+	Bd_ = ss.B();
+	Cd_ = ss.Cd();
+	Dd_ = ss.Dd();
+
 }
 
 #endif // DELAY_COMPENSATION__DELAY_OBSERVER_H

@@ -78,11 +78,17 @@ public:
 	using QFilterBase::QFilterBase;
 
 	// Member functions
-	// xdot = f(x)
+	// State propagation in form of xnext = Ax + Bu.
 	state_t xknext_fx(double const& u);
 
-	// Single output y. Uses Euler integration.
+	// Single output y of (y = Cx + Du) discrete SS.
 	double y_hx(double const& u);
+
+	// Simulate single step delegated to the SS member.
+	void simulateOneStep(Eigen::MatrixXd& xu);
+
+
+	// Other methods
 
 	void print_x0() const;
 
@@ -150,6 +156,13 @@ void Qfilter<Norder, state_t>::reset_initial_state_x0()
 {
 	x0_.setZero();
 
+}
+
+template<int Norder, typename state_t>
+void Qfilter<Norder, state_t>::simulateOneStep(Eigen::MatrixXd& xu)
+{
+	// Takes xu returns xy.
+	ss_.simulateOneStep(xu);
 }
 
 /**
