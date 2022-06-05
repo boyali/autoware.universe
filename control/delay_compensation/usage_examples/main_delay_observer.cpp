@@ -30,7 +30,7 @@ int main()
 
 	// Create an inverse vehicle model for these signal channels with Q-filters.
 	// First create Q-filter for ey.
-	double cut_off_frequency_ey = 3.; // [Hz]
+	double cut_off_frequency_ey = 20.; // [Hz]
 	double cut_off_frequency_eyaw = 15.; // [Hz]
 	double cut_off_frequency_delta = 10.;
 	double cut_off_frequency_speed = 10.; // for longitudinal control.
@@ -93,15 +93,14 @@ int main()
 	{ return std::fabs(x) < 1. ? 1. : x * x; }; // to prevent zero division.
 
 	f_variable_num_den_funcs["delta"] = [](auto const& x) -> double
-	{ return cos(x) * cos(x); };
+	{ return std::cos(x) * std::cos(x); };
 
 	// Store in a struct and pass to the delay compensator.
 	s_model_g_data model_data(param_names, f_variable_num_den_funcs, Gey);
 
 	// Create time-delay compensator for ey system.
 
-	DelayCompensator<order_ey>
-			delay_compensator_ey(qfilter_ey_data, model_data, dt);
+	DelayCompensator delay_compensator_ey(qfilter_ey_data, model_data, dt);
 
 	delay_compensator_ey.print();
 

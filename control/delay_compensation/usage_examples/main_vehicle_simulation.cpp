@@ -52,9 +52,9 @@ int main()
 	Qfilter<order_delta> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
 
 	// Create a nonlinear vehicle model.
-	double wheelbase{ 2.9 };
+	double wheelbase{ 2.94 };
 	double tau_vel{ 0.1 };
-	double tau_steer{ 0.24 };
+	double tau_steer{ 0.3 };
 	double dead_time_steer{ 0.0 };
 	double dead_time_vel{ 1.0 };
 
