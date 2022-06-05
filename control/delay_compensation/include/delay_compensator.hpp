@@ -98,7 +98,7 @@ private:
 	// Internal states.
 	Eigen::MatrixXd u_Q_uf_xu0_qfilter_{ state_vec_type::Zero() }; // u--> Q(s) -->ufiltered
 	Eigen::MatrixXd u_G_y_xu0_gsystem_{ state_vec_type::Zero() }; // u--> G(s)-->y (i,e ey, eyaw ..)
-	Eigen::MatrixXd yQG_udu_xu0_qg_inv_system_{ state_vec_type::Zero() }; // y--> Q(s)/G(s) --> u-du
+	Eigen::MatrixXd yQGinv_udu_xu0_qg_inv_system_{ state_vec_type::Zero() }; // y--> Q(s)/G(s) --> u-du
 
 	// Placeholders for Ad, Bd, Cd, Dd.
 	Eigen::MatrixXd Ad_{};
@@ -155,7 +155,7 @@ DelayCompensator<Norder>::DelayCompensator(s_filter_data const& qfilter_data,
 template<int Norder>
 void DelayCompensator<Norder>::print() const
 {
-	ns_utils::print("Delay Compensator Summary :  \n");
+	ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
 	ns_utils::print("Qfilter Model : \n");
 	Qfilter_tf_.print();
 
@@ -238,11 +238,32 @@ void DelayCompensator<Norder>::simulateOneStep(double const& input,
 
 	// set u of G(s) : u--> G(s) --> y (ey, eyaw. ..).
 	u_G_y_xu0_gsystem_.bottomRows(1)(0, 0) = input;
+
+//	ns_utils::print("xuG before system: ");
+//	ns_eigen_utils::printEigenMat(u_G_y_xu0_gsystem_);
+
 	Gss_.simulateOneStep(u_G_y_xu0_gsystem_); // output is y (i.e ey, eyaw, ...).
 
+//	ns_utils::print("xuG after system: ");
+//	ns_eigen_utils::printEigenMat(u_G_y_xu0_gsystem_);
+
+//	ns_utils::print("Current G Model");
+//	Gtf_.print();
+//	Gss_.print_discrete_system();
+
 	// set input y of Q(s)/ G(s) : y --> Q(s)/ G(s) --> u-du (original input - disturbance input).
-	yQG_udu_xu0_qg_inv_system_.bottomRows(1)(0, 0) = u_G_y_xu0_gsystem_.bottomRows(1)(0, 0);
-	QGinv_ss_.simulateOneStep(yQG_udu_xu0_qg_inv_system_); // output is u-du.
+	yQGinv_udu_xu0_qg_inv_system_.bottomRows(1)(0, 0) = input;
+	QGinv_ss_.simulateOneStep(yQGinv_udu_xu0_qg_inv_system_); // output is u-du.
+
+	ns_utils::print("Current velocity and steering :", num_den_args_of_G.first, input);
+	ns_utils::print("Current V^2 and cos(delta)^2  : ", pair_func_map_["v"](num_den_args_of_G.first),
+	                pair_func_map_["delta"](num_den_args_of_G.second), "\n");
+
+	ns_utils::print("Current Q/G Model");
+	QGinv_tf_.print();
+	QGinv_ss_.print();
+	QGinv_ss_.print_discrete_system();
+
 
 	// Get outputs.
 	/**
@@ -254,7 +275,7 @@ void DelayCompensator<Norder>::simulateOneStep(double const& input,
 	 * */
 
 	y_outputs[0] = u_Q_uf_xu0_qfilter_.bottomRows(1)(0, 0); // ufiltered
-	y_outputs[1] = yQG_udu_xu0_qg_inv_system_.bottomRows(1)(0, 0); // u-du
+	y_outputs[1] = yQGinv_udu_xu0_qg_inv_system_.bottomRows(1)(0, 0); // u-du
 	y_outputs[2] = y_outputs[0] - y_outputs[1]; // du
 	y_outputs[3] = u_G_y_xu0_gsystem_.bottomRows(1)(0, 0); // for time being y of u-->G(s)-->y
 

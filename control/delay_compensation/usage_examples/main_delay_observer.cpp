@@ -80,7 +80,7 @@ int main()
 	auto den_tf_factor = m_den1 * m_den2;
 
 	//act::tf Gey({ 1. }, den_tf_factor(), 5., 2.);
-	act::tf Gey({ 1. }, den_tf_factor(), 1., 1.);
+	act::tf Gey({ 1. }, den_tf_factor(), 2., 1.); // num, den, num constant, den constant
 
 	// We store the factored num and denominators:  a(var1) * num / b(var1)*den where num-den are constants.
 	std::pair<std::string_view, std::string_view> param_names{ "v", "delta" };
@@ -90,7 +90,7 @@ int main()
 
 	// auto maplen = f_variable_num_den_funcs.size();
 	f_variable_num_den_funcs["v"] = [](auto const& x) -> double
-	{ return std::fabs(x) < 0.1 ? 0.1 : x * x; }; // to prevent zero division.
+	{ return std::fabs(x) < 1. ? 1. : x * x; }; // to prevent zero division.
 
 	f_variable_num_den_funcs["delta"] = [](auto const& x) -> double
 	{ return cos(x) * cos(x); };
@@ -110,10 +110,10 @@ int main()
 	auto time_vec = ns_control_toolbox::make_time_signal(dt, tfinal);
 
 	// Control signals
-	double control_frq{ 0.2 };
-	auto vel_sqr_vec_input = ns_control_toolbox::make_square_signal(time_vec, control_frq);
+	double signal_frequency{ 1. / (2. * M_PI) };
+	auto vel_sqr_vec_input = ns_control_toolbox::make_square_signal(time_vec, signal_frequency);
 	auto vel_trg_vec_input = ns_control_toolbox::make_triangle_signal(time_vec, 5);
-	auto steer_sin_vec_input = ns_control_toolbox::make_sinus_signal(time_vec, 2 * control_frq);
+	auto steer_sin_vec_input = ns_control_toolbox::make_sinus_signal(time_vec, signal_frequency);
 
 	// Simulate the vehicle model.
 	auto tsim_f = time_vec.rows();
@@ -127,9 +127,11 @@ int main()
 
 	for (auto k = 0; k < tsim_f; ++k)
 	{
-		double desired_vel = vel_trg_vec_input(k) * 10.; // max(vel_.) is 1.
+		double desired_vel = 2.; //(vel_trg_vec_input(k) + 1.) * 10.; // max(vel_.) is 1.
 		double desired_steer = steer_sin_vec_input(k) * 0.1;
 
+
+		// Replace num den constant by the states [current vel, current steering states]
 		std::pair<double, double> num_den_pairs_G{ desired_vel, desired_steer };
 		delay_compensator_ey.simulateOneStep(desired_steer, num_den_pairs_G, y_ey);
 
@@ -140,6 +142,9 @@ int main()
 //	ns_utils::print("Simulation results for delay observer of ey");
 	ns_eigen_utils::printEigenMat(sim_results);
 	writeToFile(output_path, sim_results, "sim_results_dist_compensator_ey");
+	writeToFile(output_path, vel_sqr_vec_input, "vel_trg_vec_input");
+	writeToFile(output_path, steer_sin_vec_input, "steer_sin_vec_input");
+	writeToFile(output_path, time_vec, "time_vec");
 
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
