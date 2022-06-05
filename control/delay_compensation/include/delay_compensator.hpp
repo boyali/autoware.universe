@@ -60,9 +60,9 @@ public:
 	void print() const;
 
 	// simulate  one-step and get the outputs.
-	std::array<double, 4> simulateOneStep(double const& input,
-	                                      std::pair<double, double> const& num_den_args_of_G,
-	                                      std::array<double, 4>& y_outputs);
+	void simulateOneStep(double const& input,
+	                     std::pair<double, double> const& num_den_args_of_G,
+	                     std::array<double, 4>& y_outputs);
 
 private:
 	double dt_{ 0.1 };
@@ -96,9 +96,9 @@ private:
 	ns_control_toolbox::tf2ss QGinv_ss_{};
 
 	// Internal states.
-	state_vec_type u_Q_uf_xu0_qfilter_{ state_vec_type::Zero() }; // u--> Q(s) -->ufiltered
-	state_vec_type u_G_y_xu0_gsystem_{ state_vec_type::Zero() }; // u--> G(s)-->y (i,e ey, eyaw ..)
-	state_vec_type yQG_udu_xu0_qg_inv_system_{ state_vec_type::Zero() }; // y--> Q(s)/G(s) --> u-du
+	Eigen::MatrixXd u_Q_uf_xu0_qfilter_{ state_vec_type::Zero() }; // u--> Q(s) -->ufiltered
+	Eigen::MatrixXd u_G_y_xu0_gsystem_{ state_vec_type::Zero() }; // u--> G(s)-->y (i,e ey, eyaw ..)
+	Eigen::MatrixXd yQG_udu_xu0_qg_inv_system_{ state_vec_type::Zero() }; // y--> Q(s)/G(s) --> u-du
 
 	// Placeholders for Ad, Bd, Cd, Dd.
 	Eigen::MatrixXd Ad_{};
@@ -196,9 +196,9 @@ void DelayCompensator<Norder>::print() const
  * [out] y3: ydu = G(s)*du where ydu is the response of the system to du.
  * */
 template<int Norder>
-std::array<double, 4> DelayCompensator<Norder>::simulateOneStep(double const& input,
-                                                                std::pair<double, double> const& num_den_args_of_G,
-                                                                std::array<double, 4>& y_outputs)
+void DelayCompensator<Norder>::simulateOneStep(double const& input,
+                                               std::pair<double, double> const& num_den_args_of_G,
+                                               std::array<double, 4>& y_outputs)
 {
 	// Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
 	if (num_den_constant_names_G_.first != "1")
@@ -209,7 +209,7 @@ std::array<double, 4> DelayCompensator<Norder>::simulateOneStep(double const& in
 		Gtf_.update_num_coef(num_const_g);
 		QGinv_tf_.update_den_coef(num_const_g); // since they are inverted.
 
-		ns_utils::print("input  : ", input, numkey, " : ", num_const_g);
+		// ns_utils::print("input  : ", input, numkey, " : ", num_const_g);
 	}
 
 	if (num_den_constant_names_G_.second != "1")
@@ -220,7 +220,7 @@ std::array<double, 4> DelayCompensator<Norder>::simulateOneStep(double const& in
 		Gtf_.update_den_coef(den_const_g);
 		QGinv_tf_.update_num_coef(den_const_g); // since they are inverted.
 
-		ns_utils::print("input  : ", input, denkey, " : ", den_const_g);
+		// ns_utils::print("input  : ", input, denkey, " : ", den_const_g);
 	}
 
 	// If any of num den constant changes, update the state-space models.
@@ -232,9 +232,17 @@ std::array<double, 4> DelayCompensator<Norder>::simulateOneStep(double const& in
 	}
 
 	// Simulate Qs, Gs, Qs/Gs/
-	// set u (last row).
-	u_Q_uf_xu0_qfilter_.bottomRows(1)(0, 0) = input;
-	Qfilter_ss_.simulateOneStep(u_Q_uf_xu0_qfilter_);
+	// set input u (last row) of Q(s).
+	u_Q_uf_xu0_qfilter_.bottomRows(1)(0, 0) = input; // steering, gas sent to the vehicle.
+	Qfilter_ss_.simulateOneStep(u_Q_uf_xu0_qfilter_); // Output is filtered input uf.
+
+	// set u of G(s) : u--> G(s) --> y (ey, eyaw. ..).
+	u_G_y_xu0_gsystem_.bottomRows(1)(0, 0) = input;
+	Gss_.simulateOneStep(u_G_y_xu0_gsystem_); // output is y (i.e ey, eyaw, ...).
+
+	// set input y of Q(s)/ G(s) : y --> Q(s)/ G(s) --> u-du (original input - disturbance input).
+	yQG_udu_xu0_qg_inv_system_.bottomRows(1)(0, 0) = u_G_y_xu0_gsystem_.bottomRows(1)(0, 0);
+	QGinv_ss_.simulateOneStep(yQG_udu_xu0_qg_inv_system_); // output is u-du.
 
 	// Get outputs.
 	/**
@@ -245,22 +253,21 @@ std::array<double, 4> DelayCompensator<Norder>::simulateOneStep(double const& in
 	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 	 * */
 
-	y_outputs[0] = u_Q_uf_xu0_qfilter_.bottomRows(1)(0, 0);
+	y_outputs[0] = u_Q_uf_xu0_qfilter_.bottomRows(1)(0, 0); // ufiltered
+	y_outputs[1] = yQG_udu_xu0_qg_inv_system_.bottomRows(1)(0, 0); // u-du
+	y_outputs[2] = y_outputs[0] - y_outputs[1]; // du
+	y_outputs[3] = u_G_y_xu0_gsystem_.bottomRows(1)(0, 0); // for time being y of u-->G(s)-->y
+
 
 	// Get Ad_, Bd_, Cd_,Dd_ from QGinv_ss_.
 	// getSSsystem(QGinv_ss_);
 
 	// Print matrices.
-//	ns_eigen_utils::printEigenMat(Ad_, "Ad:");
-//	ns_eigen_utils::printEigenMat(Bd_, "Bd:");
-//	ns_eigen_utils::printEigenMat(Cd_, "Cd:");
-//	ns_eigen_utils::printEigenMat(Dd_, "Dd:");
+	//	ns_eigen_utils::printEigenMat(Ad_, "Ad:");
+	//	ns_eigen_utils::printEigenMat(Bd_, "Bd:");
+	//	ns_eigen_utils::printEigenMat(Cd_, "Cd:");
+	//	ns_eigen_utils::printEigenMat(Dd_, "Dd:");
 
-
-	// ns_utils::print("input  : ", input, numkey, " : ", num_const_g, ", ", denkey, " : ", den_const_g);
-	y_outputs = std::array<double, 4>{ 1, 2, 3, 4 };
-
-	return std::array<double, 4>{};
 
 }
 

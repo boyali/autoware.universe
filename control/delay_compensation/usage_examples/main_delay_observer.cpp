@@ -47,10 +47,10 @@ int main()
 
 
 	// Specialized Qfilters for ey and eyaw.
-	Qfilter <order_ey> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
-	Qfilter <order_e_yaw> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
-	Qfilter <order_delta> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
-	Qfilter <order_delta> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
+	Qfilter<order_ey> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
+	Qfilter<order_e_yaw> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
+	Qfilter<order_delta> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
+	Qfilter<order_delta> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
 
 #ifndef NDEBUG
 
@@ -83,10 +83,10 @@ int main()
 	act::tf Gey({ 1. }, den_tf_factor(), 1., 1.);
 
 	// We store the factored num and denominators:  a(var1) * num / b(var1)*den where num-den are constants.
-	std::pair <std::string_view, std::string_view> param_names{ "v", "delta" };
+	std::pair<std::string_view, std::string_view> param_names{ "v", "delta" };
 
 	// Using unordered map to store functions.
-	std::unordered_map <std::string_view, func_type<double>> f_variable_num_den_funcs{};
+	std::unordered_map<std::string_view, func_type<double>> f_variable_num_den_funcs{};
 
 	// auto maplen = f_variable_num_den_funcs.size();
 	f_variable_num_den_funcs["v"] = [](auto const& x) -> double
@@ -100,7 +100,7 @@ int main()
 
 	// Create time-delay compensator for ey system.
 
-	DelayCompensator <order_ey>
+	DelayCompensator<order_ey>
 			delay_compensator_ey(qfilter_ey_data, model_data, dt);
 
 	delay_compensator_ey.print();
@@ -131,19 +131,15 @@ int main()
 		double desired_steer = steer_sin_vec_input(k) * 0.1;
 
 		std::pair<double, double> num_den_pairs_G{ desired_vel, desired_steer };
-
 		delay_compensator_ey.simulateOneStep(desired_steer, num_den_pairs_G, y_ey);
 
-		// sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(x.data());
+		sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(y_ey.data());
 	}
 	ns_utils::print("Time for sim takes : ", ns_utils::toc(timer_dc_sim), " ms");
 
 //	ns_utils::print("Simulation results for delay observer of ey");
-//	ns_eigen_utils::printEigenMat(sim_results);
-//	writeToFile(output_path, sim_results, "sim_results_DO_ey");
-
-	ns_utils::print(f_variable_num_den_funcs[param_names.first](10.));
-	ns_utils::print(f_variable_num_den_funcs[param_names.second](10.));
+	ns_eigen_utils::printEigenMat(sim_results);
+	writeToFile(output_path, sim_results, "sim_results_dist_compensator_ey");
 
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
