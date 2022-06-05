@@ -30,7 +30,7 @@ int main()
 
 	// Create an inverse vehicle model for these signal channels with Q-filters.
 	// First create Q-filter for ey.
-	double cut_off_frequency_ey = 20.; // [Hz]
+	double cut_off_frequency_ey = 3.; // [Hz]
 	double cut_off_frequency_eyaw = 15.; // [Hz]
 	double cut_off_frequency_delta = 10.;
 	double cut_off_frequency_speed = 10.; // for longitudinal control.
@@ -80,7 +80,7 @@ int main()
 	auto den_tf_factor = m_den1 * m_den2;
 
 	//act::tf Gey({ 1. }, den_tf_factor(), 5., 2.);
-	act::tf Gey({ 1. }, den_tf_factor(), 2., 1.); // num, den, num constant, den constant
+	act::tf Gey({ 1. }, den_tf_factor(), 1., 1.); // num, den, num constant, den constant
 
 	// We store the factored num and denominators:  a(var1) * num / b(var1)*den where num-den are constants.
 	std::pair<std::string_view, std::string_view> param_names{ "v", "delta" };

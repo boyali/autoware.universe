@@ -250,7 +250,7 @@ void DelayCompensator<Norder>::simulateOneStep(double const& input,
 
 	// set input y of Q(s)/ G(s) : y --> Q(s)/ G(s) --> u-du (original input - disturbance input).
 
-	auto y2 = QGinv_ss_.simulateOneStep(yQGinv_udu_xu0_qg_inv_system_, input); // output is u-du.
+	auto y1 = QGinv_ss_.simulateOneStep(yQGinv_udu_xu0_qg_inv_system_, input); // output is u-du.
 
 	ns_utils::print("Current velocity and steering :", num_den_args_of_G.first, input);
 	ns_utils::print("Current V^2 and cos(delta)^2  : ", pair_func_map_["v"](num_den_args_of_G.first),
@@ -271,10 +271,10 @@ void DelayCompensator<Norder>::simulateOneStep(double const& input,
 	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 	 * */
 
-	y_outputs[0] = u_Q_uf_xu0_qfilter_.bottomRows(1)(0, 0); // ufiltered
-	y_outputs[1] = yQGinv_udu_xu0_qg_inv_system_.bottomRows(1)(0, 0); // u-du
+	y_outputs[0] = y0; // ufiltered
+	y_outputs[1] = y1; // u-du
 	y_outputs[2] = y_outputs[0] - y_outputs[1]; // du
-	y_outputs[3] = u_G_y_xu0_gsystem_.bottomRows(1)(0, 0); // for time being y of u-->G(s)-->y
+	y_outputs[3] = y3; // for time being y of u-->G(s)-->y
 
 
 	// Get Ad_, Bd_, Cd_,Dd_ from QGinv_ss_.

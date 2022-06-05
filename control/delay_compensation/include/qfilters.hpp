@@ -16,6 +16,7 @@
 #define DELAY_COMPENSATION_QFILTERS_HPP
 
 #include <memory>
+#include <cmath>
 #include "autoware_control_toolbox.hpp"
 #include "utils_delay_observer/delay_compensation_utils.hpp"
 #include "vehicle_models/vehicle_definitions.hpp"
