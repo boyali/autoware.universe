@@ -233,13 +233,13 @@ std::array<double, 4> DelayCompensator<Norder>::simulateOneStep(double const& in
 	}
 
 	// Get Ad_, Bd_, Cd_,Dd_ from QGinv_ss_.
-	getSSsystem(QGinv_ss_);
+	// getSSsystem(QGinv_ss_);
 
 	// Print matrices.
-	ns_eigen_utils::printEigenMat(Ad_, "Ad:");
-	ns_eigen_utils::printEigenMat(Bd_, "Bd:");
-	ns_eigen_utils::printEigenMat(Cd_, "Cd:");
-	ns_eigen_utils::printEigenMat(Dd_, "Dd:");
+//	ns_eigen_utils::printEigenMat(Ad_, "Ad:");
+//	ns_eigen_utils::printEigenMat(Bd_, "Bd:");
+//	ns_eigen_utils::printEigenMat(Cd_, "Cd:");
+//	ns_eigen_utils::printEigenMat(Dd_, "Dd:");
 
 
 	// ns_utils::print("input  : ", input, numkey, " : ", num_const_g, ", ", denkey, " : ", den_const_g);
