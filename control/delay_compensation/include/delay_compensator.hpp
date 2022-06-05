@@ -42,7 +42,7 @@ class CDOB_PUBLIC DelayCompensator : public DelayCompensatorBaseTypes<Norder>
 {
 public:
 
-	using state_vec_type = Eigen::Matrix<double, Norder + 1, 1>; // state of [A, B; C, D] system : xu
+	using state_vec_type = Eigen::Matrix<double, Norder, 1>; // state of [A, B; C, D] system : xu
 	using mat_Atype = Eigen::Matrix<double, Norder, Norder>;
 	using mat_Btype = Eigen::Matrix<double, Norder, 1>;
 	using mat_Ctype = Eigen::Matrix<double, 1, Norder>;
@@ -233,16 +233,13 @@ void DelayCompensator<Norder>::simulateOneStep(double const& input,
 
 	// Simulate Qs, Gs, Qs/Gs/
 	// set input u (last row) of Q(s).
-	u_Q_uf_xu0_qfilter_.bottomRows(1)(0, 0) = input; // steering, gas sent to the vehicle.
-	Qfilter_ss_.simulateOneStep(u_Q_uf_xu0_qfilter_); // Output is filtered input uf.
-
-	// set u of G(s) : u--> G(s) --> y (ey, eyaw. ..).
-	u_G_y_xu0_gsystem_.bottomRows(1)(0, 0) = input;
+	// u_Q_uf_xu0_qfilter_.bottomRows(1)(0, 0) = input; // steering, gas sent to the vehicle.
+	auto y0 = Qfilter_ss_.simulateOneStep(u_Q_uf_xu0_qfilter_, input); // Output is filtered input uf.
 
 //	ns_utils::print("xuG before system: ");
 //	ns_eigen_utils::printEigenMat(u_G_y_xu0_gsystem_);
 
-	Gss_.simulateOneStep(u_G_y_xu0_gsystem_); // output is y (i.e ey, eyaw, ...).
+	auto y3 = Gss_.simulateOneStep(u_G_y_xu0_gsystem_, input); // output is y (i.e ey, eyaw, ...).
 
 //	ns_utils::print("xuG after system: ");
 //	ns_eigen_utils::printEigenMat(u_G_y_xu0_gsystem_);
@@ -252,8 +249,8 @@ void DelayCompensator<Norder>::simulateOneStep(double const& input,
 //	Gss_.print_discrete_system();
 
 	// set input y of Q(s)/ G(s) : y --> Q(s)/ G(s) --> u-du (original input - disturbance input).
-	yQGinv_udu_xu0_qg_inv_system_.bottomRows(1)(0, 0) = input;
-	QGinv_ss_.simulateOneStep(yQGinv_udu_xu0_qg_inv_system_); // output is u-du.
+
+	auto y2 = QGinv_ss_.simulateOneStep(yQGinv_udu_xu0_qg_inv_system_, input); // output is u-du.
 
 	ns_utils::print("Current velocity and steering :", num_den_args_of_G.first, input);
 	ns_utils::print("Current V^2 and cos(delta)^2  : ", pair_func_map_["v"](num_den_args_of_G.first),
