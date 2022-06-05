@@ -17,6 +17,11 @@
 
 int main()
 {
+	// To save and analyze the outputs.
+	ns_utils::print(fs::current_path());
+	ns_utils::print(fs::path("..") / "logs");
+	fs::path output_path{ "../logs" };
+
 	// Create a dummy output signal for ey, epsi and delta.
 	double tfinal{ 10. };     // signal length in time
 	unsigned int frequency{ 40 };   // Hz
@@ -109,12 +114,43 @@ int main()
 	qfilter_ey.reset_initial_state_x0();
 	qfilter_epsi.reset_initial_state_x0();
 
+	// Create a matrix to store and save the sim results.
+	size_t Nfinal{ 100 };
+	Eigen::MatrixXd q_simresults_fromABCD(Nfinal, 3);
+	Eigen::MatrixXd q_simresults_fromACT(Nfinal, 3);
 
-	for (auto k = 0; k < 100; ++k)
+	q_simresults_fromABCD.setZero();
+	q_simresults_fromACT.setZero();
+
+	Eigen::MatrixXd ey_xu(order_ey + 1, 1); // [A, B;C D] matrix state
+	Eigen::MatrixXd epsi_xu(order_e_yaw + 1, 1); //
+
+	ey_xu.setZero();
+	epsi_xu.setZero();
+
+	/**
+	 * For autoware_control_toolbox sim, we need to give xu as a state of [A, B;C D] system.
+	 * xu --> [A, B;C D] -- xy
+	 **/
+
+	for (auto k = 0; k < 50; ++k)
 	{
 		double& uk = ulong(k);
 		double&& yk_ey = qfilter_ey.y_hx(uk);
 		double&& yk_epsi = qfilter_epsi.y_hx(uk);
+
+		q_simresults_fromABCD.row(k) << uk, yk_ey, yk_epsi;
+		// q_simresults_fromACT.row(k) << uk, yk_ey, yk_epsi;
+
+		// set u get y
+		ey_xu.bottomRows(1)(0, 0) = uk;
+		epsi_xu.bottomRows(1)(0, 0) = uk;
+
+		qfilter_ey.simulateOneStep(ey_xu);
+		qfilter_epsi.simulateOneStep(epsi_xu);
+
+		q_simresults_fromACT.row(k) << uk, ey_xu.bottomRows(1)(0, 0), epsi_xu.bottomRows(1)(0, 0);
+
 
 		ns_utils::print(" u, yey, yepsi : ", ulong(k), ",", yk_ey, ",", yk_epsi, "\n");
 	}
@@ -124,6 +160,9 @@ int main()
 	 *   steering --> Vehicle Model --> ey, epsi, delta ---> Q * inverse vehicle model
 	 *   ....  ey, epsi, delta ---> Q * inverse vehicle model --> ey, epsi, delta to subtract from refs.
 	 * */
+
+	writeToFile(output_path, q_simresults_fromABCD, "q_simresults_fromABCD");
+	writeToFile(output_path, q_simresults_fromACT, "q_simresults_fromACT");
 
 	auto pade0 = ns_control_toolbox::pade(0, 1);
 	pade0.print();

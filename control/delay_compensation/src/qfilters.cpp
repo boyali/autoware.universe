@@ -52,7 +52,6 @@ QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> const& cutOffFrequ
 
 
 	// Calculate the transfer function.
-	// Calculate the transfer function.
 	ns_control_toolbox::tf_factor denominator{ std::vector<double>{ time_constant_tau_, 1. }}; // (s+1)
 
 	// Take power of the denominator.
@@ -60,7 +59,7 @@ QFilterBase::QFilterBase(StrongTypeDef<double, s_cut_off_tag> const& cutOffFrequ
 
 	// Create the transfer function from a numerator an denominator.
 	tf_ = ns_control_toolbox::tf{ std::vector<double>{ 1 }, denominator() };
-	ss_ = ns_control_toolbox::tf2ss(tf_, dt); // Convert to state space.
+	ss_ = ns_control_toolbox::tf2ss(tf_, dt); // Convert to state space: Provide time step for discretization.
 
 
 	// DEBUG
@@ -100,7 +99,7 @@ QFilterBase::QFilterBase(QFilterBase::t_timeConst const& timeConst, int const& o
 
 	// Create the transfer function from a numerator an denominator.
 	tf_ = ns_control_toolbox::tf{ std::vector<double>{ 1 }, denominator() };
-	ss_ = ns_control_toolbox::tf2ss(tf_, dt); // Convert to state space.
+	ss_ = ns_control_toolbox::tf2ss(tf_, dt); // Convert to state space: Provide a time-step for discretization.
 
 }
 
