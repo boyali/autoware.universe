@@ -127,8 +127,12 @@ int main()
 
 	// Simulate the vehicle model.
 	auto tsim_f = time_vec.rows();
-	Eigen::MatrixXd sim_results(tsim_f, 4);
-	sim_results.setZero();
+
+	Eigen::MatrixXd sim_results_dc(tsim_f, 4);
+	sim_results_dc.setZero();
+
+	Eigen::MatrixXd sim_results_vh(tsim_f, 4);
+	sim_results_vh.setZero();
 
 	// State placeholder array
 	std::array<double, 4> xnonlin_v{}; // ey, epsi, delta, V
@@ -161,13 +165,15 @@ int main()
 		                                     num_den_pairs_G,
 		                                     y_ey);
 
-		sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(y_ey.data());
+		sim_results_dc.row(k) = Eigen::Matrix<double, 1, 4>::Map(y_ey.data());
+		sim_results_vh.row(k) = Eigen::Matrix<double, 1, 4>::Map(xnonlin_v.data());
 	}
 	ns_utils::print("Time for sim takes : ", ns_utils::toc(timer_dc_sim), " ms");
 
 //	ns_utils::print("Simulation results for delay observer of ey");
-	ns_eigen_utils::printEigenMat(sim_results);
-	writeToFile(output_path, sim_results, "sim_results_dist_compensator_ey");
+	ns_eigen_utils::printEigenMat(sim_results_dc);
+	writeToFile(output_path, sim_results_dc, "sim_results_dist_compensator_ey");
+	writeToFile(output_path, sim_results_vh, "sim_results_nonlin_vehicle");
 	writeToFile(output_path, vel_sqr_vec_input, "vel_trg_vec_input");
 	writeToFile(output_path, steer_sin_vec_input, "steer_sin_vec_input");
 	writeToFile(output_path, time_vec, "time_vec");
