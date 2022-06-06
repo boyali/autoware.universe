@@ -165,7 +165,7 @@ void DelayCompensator::simulateOneStep(double const& previous_input,
 	auto&& du = y0 - y1;
 
 	// Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
-	x0_gsystem_.setZero();
+	// x0_gsystem_.setZero();
 	auto y3 = Gss_.simulateOneStep(x0_gsystem_, du); // output is y (i.e ey, eyaw, ...).
 
 
@@ -173,10 +173,10 @@ void DelayCompensator::simulateOneStep(double const& previous_input,
 	ns_utils::print("Current V^2 and cos(delta)^2  : ", pair_func_map_["v"](num_den_args_of_G.first),
 	                pair_func_map_["delta"](num_den_args_of_G.second), "\n");
 
-	ns_utils::print("Current Q/G Model");
-	QGinv_tf_.print();
-	QGinv_ss_.print();
-	QGinv_ss_.print_discrete_system();
+//	ns_utils::print("Current Q/G Model");
+//	QGinv_tf_.print();
+//	QGinv_ss_.print();
+//	QGinv_ss_.print_discrete_system();
 
 
 	// Get outputs.
