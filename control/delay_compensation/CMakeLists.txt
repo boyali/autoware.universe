@@ -179,5 +179,8 @@ ament_auto_add_executable(main_ode usage_examples/main_ode.cpp)
 target_link_libraries(main_ode ${CDOB})
 
 ## ODE integration
-ament_auto_add_executable(main_delay_observer usage_examples/main_delay_observer.cpp)
-target_link_libraries(main_delay_observer ${CDOB})
+ament_auto_add_executable(main_delay_compensator usage_examples/main_delay_compensator.cpp)
+target_link_libraries(main_delay_compensator ${CDOB})
+
+ament_auto_add_executable(main_dc_with_vehicle usage_examples/main_delay_compensator_with_vehicle.cpp)
+target_link_libraries(main_dc_with_vehicle ${CDOB})

@@ -73,7 +73,7 @@ private:
 	ns_control_toolbox::tf2ss deadtime_steering_model_{};
 
 	// Initial state
-	std::array<double, 4> x0_{ 0., 0., 0., 20. }; // this state is updated.
+	std::array<double, 4> x0_{ 0., 0., 0., 10. }; // this state is updated.
 
 	// delayed input states.
 	Eigen::MatrixXd xv0_{ Eigen::MatrixXd::Zero(2, 1) }; // delayed speed input states
