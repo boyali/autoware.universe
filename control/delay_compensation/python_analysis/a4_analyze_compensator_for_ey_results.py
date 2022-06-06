@@ -40,6 +40,7 @@ if __name__ == '__main__':
 
     # Outputs of the delay compensator
     ycompensator = np.loadtxt(data_path + "/" + "sim_results_dist_compensator_ey.txt")
+    ynonlin_vehicle = np.loadtxt(data_path + "/" + "sim_results_nonlin_vehicle.txt")
 
     ## Figure inputs
     fig, ax = plt.subplots(2, 1)
@@ -51,11 +52,10 @@ if __name__ == '__main__':
 
     # ax[2].plot(time_vec, vel_sqr_vec_input)
     # ax[2].set_title(" Velocity Square State")
-    # plt.tight_layout()
-
+    plt.tight_layout()
     plt.show()
 
-    # Figure OUTPUTS
+    # Figure OUTPUTS of delay compensator
     fig, ax = plt.subplots(4, 1)
     ax[0].plot(time_vec, steer_sin_vec_input * steering_scale, label="steering sent")
     ax[0].plot(time_vec, ycompensator[:, 0], label="steering filtered")
@@ -68,12 +68,31 @@ if __name__ == '__main__':
     ax[2].set_title("du")
 
     ax[3].plot(time_vec, ycompensator[:, 3])
-    ax[3].set_title("ey")
+    ax[3].set_title("ey from du")
 
     plt.tight_layout()
     # plt.legend()
     plt.show()
 
+    ## PLOT VEHICLE
+
+    fig, ax = plt.subplots(4, 1)
+    ax[0].plot(time_vec, steer_sin_vec_input * steering_scale, label="steering sent")
+    ax[0].plot(time_vec, ynonlin_vehicle[:, 0], label="steering filtered")
+    ax[0].set_title("Vehicle Lateral Error")
+
+    ax[1].plot(time_vec, ynonlin_vehicle[:, 1])
+    ax[1].set_title("Vehicle Heading Error")
+
+    ax[2].plot(time_vec, ynonlin_vehicle[:, 2])
+    ax[2].set_title("Vehicle Steering State")
+
+    ax[3].plot(time_vec, ynonlin_vehicle[:, 3])
+    ax[3].set_title(" Vehicle Speed")
+
+    plt.tight_layout()
+    # plt.legend()
+    plt.show()
     a = 1
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
