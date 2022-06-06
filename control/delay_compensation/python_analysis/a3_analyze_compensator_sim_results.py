@@ -42,16 +42,16 @@ if __name__ == '__main__':
     ycompensator = np.loadtxt(data_path + "/" + "sim_results_dist_compensator_ey.txt")
 
     ## Figure inputs
-    fig, ax = plt.subplots(3, 1)
+    fig, ax = plt.subplots(2, 1)
     ax[0].plot(time_vec, steer_sin_vec_input * steering_scale, label="steering sent")
     ax[1].set_title(" Steering State")
 
     ax[1].plot(time_vec, vel_trg_vec_input)
     ax[1].set_title(" Velocity Triangle State")
 
-    ax[2].plot(time_vec, vel_sqr_vec_input)
-    ax[2].set_title(" Velocity Square State")
-    plt.tight_layout()
+    # ax[2].plot(time_vec, vel_sqr_vec_input)
+    # ax[2].set_title(" Velocity Square State")
+    # plt.tight_layout()
 
     plt.show()
 
