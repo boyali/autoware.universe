@@ -21,6 +21,7 @@ namespace act = ns_control_toolbox;
 
 int main()
 {
+	// Simulation parameters
 	// Create a dummy output signal for ey, epsi and delta.
 	fs::path output_path{ "../logs" };
 	double tfinal{ 10. };     // signal length in time
@@ -71,9 +72,13 @@ int main()
 	 *  ey(s) = V^2 / (cos(delta)^2 * Ls^2 *(tau*s + 1))
 	 * */
 
+	double wheelbase{ 2.9 };
+	double tau_vel{ 0.1 };
 	double tau_steer{ 0.3 };
-	double wheelbase{ 2.9 }; // L in vehicle model.
+	double dead_time_steer{ 0.2 };
+	double dead_time_vel{ 0.0 };
 
+	// Create a linear vehicle model for the delay compensator.
 	// Parameter names are the arguments of num den variable functions.
 	act::tf_factor m_den1{{ wheelbase, 0, 0 }}; // L*s^2
 	act::tf_factor m_den2{{ tau_steer, 1 }}; // (tau*s + 1)
@@ -101,8 +106,14 @@ int main()
 	// Create time-delay compensator for ey system.
 
 	DelayCompensator delay_compensator_ey(qfilter_ey_data, model_data, dt);
-
 	delay_compensator_ey.print();
+
+	// Create a nonlinear delayed vehicle model.
+	// Generate a nonlinear vehicle vector.
+	NonlinearVehicleKinematicModel nonlinear_model(wheelbase,
+	                                               tau_vel, tau_steer,
+	                                               dead_time_vel, dead_time_steer, dt);
+
 
 	// Simulate the delay compensator.
 	// Generate test signal
@@ -120,19 +131,30 @@ int main()
 	sim_results.setZero();
 
 	// State placeholder array
-	std::array<double, 4> y_ey{};
+	std::array<double, 4> xnonlin_v{}; // ey, epsi, delta, V
+	std::array<double, 5> y_ey{}; // output of delay compensator for ey.
 
 	const double timer_dc_sim = ns_utils::tic();
 
-	for (auto k = 0; k < tsim_f; ++k)
+	for (auto k = 1; k < tsim_f; ++k)
 	{
-		double desired_vel = 2.; //(vel_trg_vec_input(k) + 1.) * 10.; // max(vel_.) is 1.
-		double desired_steer = steer_sin_vec_input(k) * 0.1;
+		// Previous commands sent to the vehicle - To get a vehicle state
+		auto uk_str_prev = steer_sin_vec_input(k - 1) * 0.1;
+		auto uk_vel_prev = (vel_trg_vec_input(k - 1) + 1.) * 10.; // max(vel_.) is 1.
+
+		// Current commands
+		auto uk_str_cur = steer_sin_vec_input(k) * 0.1;
+		auto uk_vel_cur = (vel_trg_vec_input(k) + 1.) * 10.; // max(vel_.) is 1.
+
+		// Simulate Nonlinear Vehicle
+		xnonlin_v = nonlinear_model.simulateOneStep(uk_vel_prev, uk_str_prev);
+		auto steer_current = xnonlin_v[2];
+		auto v_current = xnonlin_v[3];
 
 
 		// Replace num den constant by the states [current vel, current steering states]
-		std::pair<double, double> num_den_pairs_G{ desired_vel, desired_steer };
-		delay_compensator_ey.simulateOneStep(desired_steer, num_den_pairs_G, y_ey);
+		std::pair<double, double> num_den_pairs_G{ v_current, steer_current };
+		delay_compensator_ey.simulateOneStep(uk_str_prev, num_den_pairs_G, y_ey);
 
 		sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(y_ey.data());
 	}
