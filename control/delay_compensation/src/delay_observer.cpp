@@ -45,6 +45,7 @@ DelayCompensator::DelayCompensator(s_filter_data const& qfilter_data,
 	Qfilter_ss_.print();
 
 	// Compute the state-space model of the system model G(s).
+	Gtf_.print();
 	Gss_ = ns_control_toolbox::tf2ss(Gtf_, dt);
 
 	// Compute Q/G
