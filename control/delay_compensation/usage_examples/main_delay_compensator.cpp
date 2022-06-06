@@ -138,7 +138,7 @@ int main()
 
 		// Replace num den constant by the states [current vel, current steering states]
 		std::pair<double, double> num_den_pairs_G{ desired_vel, desired_steer };
-		delay_compensator_ey.simulateOneStep(desired_steer, num_den_pairs_G, y_ey);
+		//delay_compensator_ey.simulateOneStep(desired_steer, num_den_pairs_G, y_ey);
 
 		sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(y_ey.data());
 	}

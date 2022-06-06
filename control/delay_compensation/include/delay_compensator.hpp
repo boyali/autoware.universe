@@ -43,9 +43,17 @@ public:
 	void print() const;
 
 	// simulate  one-step and get the outputs.
-	void simulateOneStep(double const& input,
-	                     std::pair<double, double> const& num_den_args_of_G,
-	                     std::array<double, 5>& y_outputs);
+	/**
+	 * @brief Simulates one-step and produces the outputs.
+	 * @param previous_input: previous input sent to the vehicle
+	 * @param measured_model_state: the state that tracks a reference (i.e ey, eyaw, eV).
+	 * @param num_den_args_of_G: the model states that define the transfer function, i.e (V^2/(cos(delta)*s + 1).
+	 * @param outputs from the delay compensator.
+	 * */
+	void simulateOneStep(double const& previous_input, /** previous input*/
+	                     double const& measured_model_state,
+	                     std::pair<double, double> const& num_den_args_of_G, /** model parameters*/
+	                     std::array<double, 4>& y_outputs);
 
 private:
 	double dt_{ 0.1 };
@@ -92,12 +100,11 @@ private:
 	/**
 	 * @brief Outputs of the delay compensator.
 	 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
-	 * y1: simulated system output u-->G(s)*u--> y where u is the input sent to the system, y might be (ey, delta, V)
 	 * y2: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
 	 * y2: du = y0 - y1 where du is the estimated disturbance input
 	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 	 * */
-	std::array<double, 5> y_outputs_{};
+	std::array<double, 4> y_outputs_{};
 
 	// Member functions.
 	void getSSsystem(ns_control_toolbox::tf2ss const& ss);

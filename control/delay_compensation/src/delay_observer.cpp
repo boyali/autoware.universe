@@ -95,19 +95,20 @@ void DelayCompensator::print() const
 }
 
 /**
- * @brief Given an input "u" that sent to the system and system response "y", computes four outputs by means of the
+ * @brief Given an previous_input "u" that sent to the system and system response "y", computes four outputs by means of the
  * internal models for the filter Qf, for the system model G(s) for the Q-filtered inverse model.
- * [in] u : control input for this system (delta:steering in lateral control).
+ * [in] u : control previous_input for this system (delta:steering in lateral control).
  * [in] ym: measured response i.e ey, eyaw, edelta, eV.
- * [out] y0: u_filtered,Q(s)*u where u is the input sent to the system.
+ * [out] y0: u_filtered,Q(s)*u where u is the previous_input sent to the system.
  * [out] y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
- * [out] y2: du = y0 - y1 where du is the estimated disturbance input
+ * [out] y2: du = y0 - y1 where du is the estimated disturbance previous_input
  * [out] y3: ydu = G(s)*du where ydu is the response of the system to du.
  * */
 
-void DelayCompensator::simulateOneStep(double const& input,
+void DelayCompensator::simulateOneStep(double const& previous_input,
+                                       double const& measured_model_state,
                                        std::pair<double, double> const& num_den_args_of_G,
-                                       std::array<double, 5>& y_outputs)
+                                       std::array<double, 4>& y_outputs)
 {
 	// Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
 	if (num_den_constant_names_G_.first != "1")
@@ -118,7 +119,7 @@ void DelayCompensator::simulateOneStep(double const& input,
 		Gtf_.update_num_coef(num_const_g);
 		QGinv_tf_.update_den_coef(num_const_g); // since they are inverted.
 
-		// ns_utils::print("input  : ", input, numkey, " : ", num_const_g);
+		// ns_utils::print("previous_input  : ", previous_input, numkey, " : ", num_const_g);
 	}
 
 	if (num_den_constant_names_G_.second != "1")
@@ -129,7 +130,7 @@ void DelayCompensator::simulateOneStep(double const& input,
 		Gtf_.update_den_coef(den_const_g);
 		QGinv_tf_.update_num_coef(den_const_g); // since they are inverted.
 
-		// ns_utils::print("input  : ", input, denkey, " : ", den_const_g);
+		// ns_utils::print("previous_input  : ", previous_input, denkey, " : ", den_const_g);
 	}
 
 	// If any of num den constant changes, update the state-space models.
@@ -141,18 +142,15 @@ void DelayCompensator::simulateOneStep(double const& input,
 	}
 
 	// Simulate Qs, Gs, Qs/Gs/
-	// set input u of Q(s) to get the filtered output. u--> Q(s) -->uf
+	// set previous_input u of Q(s) to get the filtered output. u--> Q(s) -->uf
 	// steering, gas sent to the vehicle.
-	auto y0 = Qfilter_ss_.simulateOneStep(x0_qfilter_, input); // Output is filtered input uf.
+	auto y0 = Qfilter_ss_.simulateOneStep(x0_qfilter_, previous_input); // Output is filtered previous_input uf.
 
 	//	ns_utils::print("xuG before system: ");
 	//	ns_eigen_utils::printEigenMat(x0_gsystem_);
 
-	auto y1 = Gss_.simulateOneStep(x0_gsystem_, input); // output is y (i.e ey, eyaw, ...).
-
-
-	// set input y of Q(s)/ G(s) : y --> Q(s)/ G(s) --> u-du (original input - disturbance input).
-	auto y2 = QGinv_ss_.simulateOneStep(x0_inv_system_, y1); // output is u-du.
+	// set previous_input y of Q(s)/ G(s) : y --> Q(s)/ G(s) --> u-du (original previous_input - disturbance previous_input).
+	auto y1 = QGinv_ss_.simulateOneStep(x0_inv_system_, measured_model_state); // output is u-du.
 
 	//	ns_utils::print("xuG after system: ");
 	//	ns_eigen_utils::printEigenMat(x0_gsystem_);
@@ -162,12 +160,13 @@ void DelayCompensator::simulateOneStep(double const& input,
 	//	Gss_.print_discrete_system();
 
 	// Get difference of uf-(u-du) ~=du
-	auto&& du = y0 - y2;
+	auto&& du = y0 - y1;
 
-	// Send du to the G(s) as the input du --> G(s) --> dyu to obtain compensation signal.
-	double y3 = 0.;
+	// Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
+	auto y3 = Gss_.simulateOneStep(x0_gsystem_, du); // output is y (i.e ey, eyaw, ...).
 
-	ns_utils::print("Current velocity and steering :", num_den_args_of_G.first, input);
+
+	ns_utils::print("Current velocity and steering :", num_den_args_of_G.first, previous_input);
 	ns_utils::print("Current V^2 and cos(delta)^2  : ", pair_func_map_["v"](num_den_args_of_G.first),
 	                pair_func_map_["delta"](num_den_args_of_G.second), "\n");
 
@@ -180,16 +179,15 @@ void DelayCompensator::simulateOneStep(double const& input,
 	// Get outputs.
 	/**
 	 * @brief Outputs of the delay compensator.
-	 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
-	 * y1: simulated system output u-->G(s)*u--> y where u is the input sent to the system, y might be (ey, delta, V)
-	 * y2: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
-	 * y2: du = y0 - y2 where du is the estimated disturbance input
+	 * y0: u_filtered,Q(s)*u where u is the previous_input sent to the system.
+	 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+	 * y2: du = y0 - y2 where du is the estimated disturbance previous_input
 	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 	 * */
 
 	y_outputs[0] = y0; // ufiltered
 	y_outputs[1] = y1; // u-du
-	y_outputs[2] = y_outputs[0] - y_outputs[2]; // du
+	y_outputs[2] = du; // du
 	y_outputs[3] = y3; // for time being y of u-->G(s)-->y
 
 
