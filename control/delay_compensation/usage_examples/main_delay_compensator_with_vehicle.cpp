@@ -31,7 +31,7 @@ int main()
 
 	// Create an inverse vehicle model for these signal channels with Q-filters.
 	// First create Q-filter for ey.
-	double cut_off_frequency_ey = 20.; // [Hz]
+	double cut_off_frequency_ey = 2.; // [Hz]
 	double cut_off_frequency_eyaw = 15.; // [Hz]
 	double cut_off_frequency_delta = 10.;
 	double cut_off_frequency_speed = 10.; // for longitudinal control.
@@ -132,7 +132,7 @@ int main()
 
 	// State placeholder array
 	std::array<double, 4> xnonlin_v{}; // ey, epsi, delta, V
-	std::array<double, 5> y_ey{}; // output of delay compensator for ey.
+	std::array<double, 4> y_ey{}; // output of delay compensator for ey.
 
 	const double timer_dc_sim = ns_utils::tic();
 
@@ -143,18 +143,23 @@ int main()
 		auto uk_vel_prev = (vel_trg_vec_input(k - 1) + 1.) * 10.; // max(vel_.) is 1.
 
 		// Current commands
-		auto uk_str_cur = steer_sin_vec_input(k) * 0.1;
-		auto uk_vel_cur = (vel_trg_vec_input(k) + 1.) * 10.; // max(vel_.) is 1.
+		// auto uk_str_cur = steer_sin_vec_input(k) * 0.1;
+		// auto uk_vel_cur = (vel_trg_vec_input(k) + 1.) * 10.; // max(vel_.) is 1.
 
 		// Simulate Nonlinear Vehicle
 		xnonlin_v = nonlinear_model.simulateOneStep(uk_vel_prev, uk_str_prev);
+
+		auto measured_model_state = xnonlin_v[0]; // ey here
 		auto steer_current = xnonlin_v[2];
 		auto v_current = xnonlin_v[3];
 
 
 		// Replace num den constant by the states [current vel, current steering states]
 		std::pair<double, double> num_den_pairs_G{ v_current, steer_current };
-		delay_compensator_ey.simulateOneStep(uk_str_prev, num_den_pairs_G, y_ey);
+		delay_compensator_ey.simulateOneStep(uk_str_prev,
+		                                     measured_model_state,
+		                                     num_den_pairs_G,
+		                                     y_ey);
 
 		sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(y_ey.data());
 	}
