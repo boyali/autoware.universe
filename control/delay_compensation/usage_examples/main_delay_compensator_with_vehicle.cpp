@@ -31,10 +31,10 @@ int main()
 
 	// Create an inverse vehicle model for these signal channels with Q-filters.
 	// First create Q-filter for ey.
-	double cut_off_frequency_ey = 2.; // [Hz]
-	double cut_off_frequency_eyaw = 15.; // [Hz]
-	double cut_off_frequency_delta = 10.;
-	double cut_off_frequency_speed = 10.; // for longitudinal control.
+	double cut_off_frequency_ey = 8.; // [Hz]
+	double cut_off_frequency_eyaw = 8.; // [Hz]
+	double cut_off_frequency_delta = 8.;
+	double cut_off_frequency_speed = 8.; // for longitudinal control.
 
 	int const order_ey = 3;    // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
 	int const order_e_yaw = 2;    // order of the filter for yaw error.
