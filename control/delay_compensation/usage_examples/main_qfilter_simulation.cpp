@@ -122,8 +122,8 @@ int main()
 	q_simresults_fromABCD.setZero();
 	q_simresults_fromACT.setZero();
 
-	Eigen::MatrixXd ey_xu(order_ey + 1, 1); // [A, B;C D] matrix state
-	Eigen::MatrixXd epsi_xu(order_e_yaw + 1, 1); //
+	Eigen::MatrixXd ey_xu(order_ey, 1); // [A, B;C D] matrix state
+	Eigen::MatrixXd epsi_xu(order_e_yaw, 1); //
 
 	ey_xu.setZero();
 	epsi_xu.setZero();
@@ -140,16 +140,12 @@ int main()
 		double&& yk_epsi = qfilter_epsi.y_hx(uk);
 
 		q_simresults_fromABCD.row(k) << uk, yk_ey, yk_epsi;
-		// q_simresults_fromACT.row(k) << uk, yk_ey, yk_epsi;
 
-		// set u get y
-		ey_xu.bottomRows(1)(0, 0) = uk;
-		epsi_xu.bottomRows(1)(0, 0) = uk;
 
-		qfilter_ey.simulateOneStep(ey_xu);
-		qfilter_epsi.simulateOneStep(epsi_xu);
+		auto yey0 = qfilter_ey.simulateOneStep(ey_xu, uk);
+		auto yeyaw0 = qfilter_epsi.simulateOneStep(epsi_xu, uk);
 
-		q_simresults_fromACT.row(k) << uk, ey_xu.bottomRows(1)(0, 0), epsi_xu.bottomRows(1)(0, 0);
+		q_simresults_fromACT.row(k) << uk, yey0, yeyaw0;
 
 
 		ns_utils::print(" u, yey, yepsi : ", ulong(k), ",", yk_ey, ",", yk_epsi, "\n");

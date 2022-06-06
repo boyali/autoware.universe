@@ -86,7 +86,7 @@ public:
 	double y_hx(double const& u);
 
 	// Simulate single step delegated to the SS member.
-	void simulateOneStep(Eigen::MatrixXd& xu);
+	double simulateOneStep(Eigen::MatrixXd& x0, double const& u);
 
 
 	// Other methods
@@ -160,10 +160,10 @@ void Qfilter<Norder, state_t>::reset_initial_state_x0()
 }
 
 template<int Norder, typename state_t>
-void Qfilter<Norder, state_t>::simulateOneStep(Eigen::MatrixXd& xu)
+double Qfilter<Norder, state_t>::simulateOneStep(Eigen::MatrixXd& x0, double const& u)
 {
 	// Takes xu returns xy.
-	ss_.simulateOneStep(xu);
+	return ss_.simulateOneStep(x0, u);
 }
 
 /**
