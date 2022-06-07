@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
     <name>delay_compensation</name>
     <version>0.1.0</version>
     <description>The Communication Delay Observer Based Compensator Package</description>
@@ -7,13 +8,11 @@
     <author email="boyali@gmail.com">Ali Boyali</author>
     <license>Apache License 2.0</license>
 
-    <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>ament_cmake_auto</buildtool_depend>
     <buildtool_depend>autoware_cmake</buildtool_depend>
 
-    <depend>rclcpp</depend>
     <depend>vehicle_info_util</depend>
     <depend>autoware_control_toolbox</depend>
-    <depend>rclcpp_components</depend>
 
     <test_depend>ament_cmake_gtest</test_depend>
     <test_depend>ament_lint_auto</test_depend>
