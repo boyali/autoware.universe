@@ -23,20 +23,20 @@ int main()
 {
 	// Simulation parameters
 	// Create a dummy output signal for ey, epsi and delta.
-	fs::path output_path{ "../logs" };
-	double tfinal{ 10. };     // signal length in time
+	fs::path     output_path{ "../logs" };
+	double       tfinal{ 10. };     // signal length in time
 	unsigned int frequency{ 40 };   // Hz
-	double dt{ 1. / frequency };
+	double       dt{ 1. / frequency };
 
 
 	// Create an inverse vehicle model for these signal channels with Q-filters.
 	// First create Q-filter for ey.
-	double cut_off_frequency_ey = 8.; // [Hz]
-	double cut_off_frequency_eyaw = 8.; // [Hz]
+	double cut_off_frequency_ey    = 8.; // [Hz]
+	double cut_off_frequency_eyaw  = 8.; // [Hz]
 	double cut_off_frequency_delta = 8.;
 	double cut_off_frequency_speed = 8.; // for longitudinal control.
 
-	int const order_ey = 3;    // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
+	int const order_ey    = 3;    // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
 	int const order_e_yaw = 2;    // order of the filter for yaw error.
 	int const order_delta = 1;    // order of stereing model.
 
@@ -48,12 +48,11 @@ int main()
 
 
 	// Specialized Qfilters for ey and eyaw.
-	Qfilter<order_ey> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
+	Qfilter<order_ey>    qfilter_ey{ sf_cutoff_ey, order_ey, dt };
 	Qfilter<order_e_yaw> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
 	Qfilter<order_delta> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
 	Qfilter<order_delta> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
 
-#ifndef NDEBUG
 
 	/***
 	 *   @brief 		Create and simulate an inverse vehicle model.
@@ -82,7 +81,7 @@ int main()
 	// Parameter names are the arguments of num den variable functions.
 	act::tf_factor m_den1{{ wheelbase, 0, 0 }}; // L*s^2
 	act::tf_factor m_den2{{ tau_steer, 1 }}; // (tau*s + 1)
-	auto den_tf_factor = m_den1 * m_den2;
+	auto           den_tf_factor = m_den1 * m_den2;
 
 	//act::tf Gey({ 1. }, den_tf_factor(), 5., 2.);
 	act::tf Gey({ 1. }, den_tf_factor(), 1., 1.); // num, den, num constant, den constant
@@ -111,8 +110,8 @@ int main()
 	// Create a nonlinear delayed vehicle model.
 	// Generate a nonlinear vehicle vector.
 	NonlinearVehicleKinematicModel nonlinear_model(wheelbase,
-	                                               tau_vel, tau_steer,
-	                                               dead_time_vel, dead_time_steer, dt);
+			tau_vel, tau_steer,
+			dead_time_vel, dead_time_steer, dt);
 
 
 	// Simulate the delay compensator.
@@ -121,9 +120,9 @@ int main()
 
 	// Control signals
 	double signal_frequency{ 1. / (2. * M_PI) };
-	auto vel_sqr_vec_input = ns_control_toolbox::make_square_signal(time_vec, signal_frequency);
-	auto vel_trg_vec_input = ns_control_toolbox::make_triangle_signal(time_vec, 5);
-	auto steer_sin_vec_input = ns_control_toolbox::make_sinus_signal(time_vec, signal_frequency);
+	auto   vel_sqr_vec_input   = ns_control_toolbox::make_square_signal(time_vec, signal_frequency);
+	auto   vel_trg_vec_input   = ns_control_toolbox::make_triangle_signal(time_vec, 5);
+	auto   steer_sin_vec_input = ns_control_toolbox::make_sinus_signal(time_vec, signal_frequency);
 
 	// Simulate the vehicle model.
 	auto tsim_f = time_vec.rows();
@@ -154,16 +153,16 @@ int main()
 		xnonlin_v = nonlinear_model.simulateOneStep(uk_vel_prev, uk_str_prev);
 
 		auto measured_model_state = xnonlin_v[0]; // ey here
-		auto steer_current = xnonlin_v[2];
-		auto v_current = xnonlin_v[3];
+		auto steer_current        = xnonlin_v[2];
+		auto v_current            = xnonlin_v[3];
 
 
 		// Replace num den constant by the states [current vel, current steering states]
 		std::pair<double, double> num_den_pairs_G{ v_current, steer_current };
 		delay_compensator_ey.simulateOneStep(uk_str_prev,
-		                                     measured_model_state,
-		                                     num_den_pairs_G,
-		                                     y_ey);
+				measured_model_state,
+				num_den_pairs_G,
+				y_ey);
 
 		sim_results_dc.row(k) = Eigen::Matrix<double, 1, 4>::Map(y_ey.data());
 		sim_results_vh.row(k) = Eigen::Matrix<double, 1, 4>::Map(xnonlin_v.data());
@@ -180,9 +179,6 @@ int main()
 
 
 	std::cout << "In the DEBUG mode ... " << std::endl;
-#else
-	std::cout << "In the RELEASE mode " << std::endl;
-#endif
 
 	return 0;
 }
