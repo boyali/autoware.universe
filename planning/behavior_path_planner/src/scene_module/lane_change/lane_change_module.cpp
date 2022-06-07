@@ -237,6 +237,20 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
     return reference_path;
   }
 
+  if (reference_path.points.empty()) {
+    reference_path = util::getCenterLinePath(
+      *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
+      common_parameters.forward_path_length, common_parameters);
+  }
+
+  double optional_lengths{0.0};
+  const auto isInIntersection = util::checkLaneIsInIntersection(
+    *route_handler, reference_path, current_lanes, optional_lengths);
+  if (isInIntersection) {
+    reference_path = util::getCenterLinePath(
+      *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
+      common_parameters.forward_path_length, common_parameters, optional_lengths);
+  }
   const double buffer =
     common_parameters.backward_length_buffer_for_end_of_lane;  // buffer for min_lane_change_length
   const int num_lane_change =
@@ -244,12 +258,10 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
   const double lane_change_buffer =
     num_lane_change * (common_parameters.minimum_lane_change_length + buffer);
 
-  reference_path = util::getCenterLinePath(
-    *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
-    common_parameters.forward_path_length, common_parameters);
   reference_path = util::setDecelerationVelocity(
     *route_handler, reference_path, current_lanes, parameters_.lane_change_prepare_duration,
     lane_change_buffer);
+
   reference_path.drivable_area = util::generateDrivableArea(
     current_lanes, common_parameters.drivable_area_resolution, common_parameters.vehicle_length,
     planner_data_);
@@ -338,8 +350,9 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
 
     // select valid path
     valid_paths = lane_change_utils::selectValidPaths(
-      lane_change_paths, current_lanes, check_lanes, route_handler->getOverallGraph(), current_pose,
-      route_handler->isInGoalRouteSection(current_lanes.back()), route_handler->getGoalPose());
+      lane_change_paths, current_lanes, check_lanes, *route_handler->getOverallGraphPtr(),
+      current_pose, route_handler->isInGoalRouteSection(current_lanes.back()),
+      route_handler->getGoalPose());
 
     if (valid_paths.empty()) {
       return std::make_pair(false, false);

@@ -16,7 +16,11 @@
 #include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+#endif
 
 #include <algorithm>
 #include <memory>
@@ -375,7 +379,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId DetectionAreaModule::insertStop
 {
   auto output_path = path;
 
-  const auto insert_idx = stop_point.first + 1;
+  size_t insert_idx = static_cast<size_t>(stop_point.first + 1);
   const auto stop_pose = stop_point.second;
 
   // To PathPointWithLaneId
@@ -384,14 +388,8 @@ autoware_auto_planning_msgs::msg::PathWithLaneId DetectionAreaModule::insertStop
   stop_point_with_lane_id.point.pose = stop_pose;
   stop_point_with_lane_id.point.longitudinal_velocity_mps = 0.0;
 
-  // Insert stop point
-  output_path.points.insert(output_path.points.begin() + insert_idx, stop_point_with_lane_id);
-
-  // Insert 0 velocity after stop point
-  for (size_t j = insert_idx; j < output_path.points.size(); ++j) {
-    output_path.points.at(j).point.longitudinal_velocity_mps = 0.0;
-  }
-
+  // Insert stop point or replace with zero velocity
+  planning_utils::insertVelocity(output_path, stop_point_with_lane_id, 0.0, insert_idx);
   return output_path;
 }
 

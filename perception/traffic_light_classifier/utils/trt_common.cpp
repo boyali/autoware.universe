@@ -14,6 +14,14 @@
 
 #include <trt_common.hpp>
 
+#if (defined(_MSC_VER) or (defined(__GNUC__) and (7 <= __GNUC_MAJOR__)))
+#include <filesystem>
+namespace fs = ::std::filesystem;
+#else
+#include <experimental/filesystem>
+namespace fs = ::std::experimental::filesystem;
+#endif
+
 #include <functional>
 #include <string>
 
@@ -29,33 +37,33 @@ void check_error(const ::cudaError_t e, decltype(__FILE__) f, decltype(__LINE__)
   }
 }
 
-TrtCommon::TrtCommon(std::string model_path, std::string cache_dir, std::string precision)
+TrtCommon::TrtCommon(std::string model_path, std::string precision)
 : model_file_path_(model_path),
-  cache_dir_(cache_dir),
   precision_(precision),
   input_name_("input_0"),
   output_name_("output_0"),
   is_initialized_(false),
   max_batch_size_(1)
 {
+  runtime_ = UniquePtr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
 }
 
 void TrtCommon::setup()
 {
-  const boost::filesystem::path path(model_file_path_);
+  const fs::path path(model_file_path_);
   std::string extension = path.extension().string();
 
-  if (boost::filesystem::exists(path)) {
+  if (fs::exists(path)) {
     if (extension == ".engine") {
       loadEngine(model_file_path_);
     } else if (extension == ".onnx") {
-      std::string cache_engine_path = cache_dir_ + "/" + path.stem().string() + ".engine";
-      const boost::filesystem::path cache_path(cache_engine_path);
-      if (boost::filesystem::exists(cache_path)) {
-        loadEngine(cache_engine_path);
+      fs::path cache_engine_path{model_file_path_};
+      cache_engine_path.replace_extension("engine");
+      if (fs::exists(cache_engine_path)) {
+        loadEngine(cache_engine_path.string());
       } else {
         logger_.log(nvinfer1::ILogger::Severity::kINFO, "start build engine");
-        buildEngineFromOnnx(model_file_path_, cache_engine_path);
+        buildEngineFromOnnx(model_file_path_, cache_engine_path.string());
         logger_.log(nvinfer1::ILogger::Severity::kINFO, "end build engine");
       }
     } else {
@@ -79,9 +87,8 @@ bool TrtCommon::loadEngine(std::string engine_file_path)
   std::stringstream engine_buffer;
   engine_buffer << engine_file.rdbuf();
   std::string engine_str = engine_buffer.str();
-  runtime_ = UniquePtr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
   engine_ = UniquePtr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(
-    reinterpret_cast<const void *>(engine_str.data()), engine_str.size(), nullptr));
+    reinterpret_cast<const void *>(engine_str.data()), engine_str.size()));
   return true;
 }
 
@@ -110,19 +117,23 @@ bool TrtCommon::buildEngineFromOnnx(std::string onnx_file_path, std::string outp
     return false;
   }
 
-  engine_ = UniquePtr<nvinfer1::ICudaEngine>(builder->buildEngineWithConfig(*network, *config));
+  auto plan = UniquePtr<nvinfer1::IHostMemory>(builder->buildSerializedNetwork(*network, *config));
+  if (!plan) {
+    return false;
+  }
+  engine_ =
+    UniquePtr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(plan->data(), plan->size()));
   if (!engine_) {
     return false;
   }
 
   // save engine
-  nvinfer1::IHostMemory * data = engine_->serialize();
   std::ofstream file;
   file.open(output_engine_file_path, std::ios::binary | std::ios::out);
   if (!file.is_open()) {
     return false;
   }
-  file.write((const char *)data->data(), data->size());
+  file.write((const char *)plan->data(), plan->size());
   file.close();
 
   return true;

@@ -388,24 +388,27 @@ TODO
 
 ### Avoidance path generation
 
-| Name                                       | Unit   | Type   | Description                                                                                                 | Default value |
-| :----------------------------------------- | :----- | :----- | :---------------------------------------------------------------------------------------------------------- | :------------ |
-| resample_interval_for_planning             | [m]    | double | Path resample interval for avoidance planning path.                                                         | 0.3           |
-| resample_interval_for_output               | [m]    | double | Path resample interval for output path. Too short interval increases computational cost for latter modules. | 3.0           |
-| lateral_collision_margin                   | [m]    | double | The lateral distance between ego and avoidance targets.                                                     | 1.5           |
-| lateral_collision_safety_buffer            | [m]    | double | Creates an additional gap that will prevent the vehicle from getting to near to the obstacle                | 0.5           |
-| longitudinal_collision_margin_min_distance | [m]    | double | when complete avoidance motion, there is a distance margin with the object for longitudinal direction.      | 0.0           |
-| longitudinal_collision_margin_time         | [s]    | double | when complete avoidance motion, there is a time margin with the object for longitudinal direction.          | 0.0           |
-| prepare_time                               | [s]    | double | Avoidance shift starts from point ahead of this time x ego_speed to avoid sudden path change.               | 1.0           |
-| min_prepare_distance                       | [m]    | double | Minimum distance for "prepare_time" x "ego_speed".                                                          | 1.0           |
-| nominal_lateral_jerk                       | [m/s3] | double | Avoidance path is generated with this jerk when there is enough distance from ego.                          | 0.3           |
-| max_lateral_jerk                           | [m/s3] | double | Avoidance path gets sharp up to this jerk limit when there is not enough distance from ego.                 | 2.0           |
-| min_avoidance_distance                     | [m]    | double | Minimum distance of avoidance path (i.e. this distance is needed even if its lateral jerk is very low)      | 10.0          |
-| min_nominal_avoidance_speed                | [m/s]  | double | Minimum speed for jerk calculation in a nominal situation (\*1).                                            | 5.0           |
-| min_sharp_avoidance_speed                  | [m/s]  | double | Minimum speed for jerk calculation in a sharp situation (\*1).                                              | 1.0           |
-| max_right_shift_length                     | [m]    | double | Maximum shift length for right direction                                                                    | 5.0           |
-| max_left_shift_length                      | [m]    | double | Maximum shift length for left direction                                                                     | 5.0           |
-| road_shoulder_safety_margin                | [m]    | double | Prevents the generated path to come too close to the road shoulders.                                        | 0.5           |
+| Name                                       | Unit   | Type   | Description                                                                                                                 | Default value |
+| :----------------------------------------- | :----- | :----- | :-------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| resample_interval_for_planning             | [m]    | double | Path resample interval for avoidance planning path.                                                                         | 0.3           |
+| resample_interval_for_output               | [m]    | double | Path resample interval for output path. Too short interval increases computational cost for latter modules.                 | 3.0           |
+| lateral_collision_margin                   | [m]    | double | The lateral distance between ego and avoidance targets.                                                                     | 1.5           |
+| lateral_collision_safety_buffer            | [m]    | double | Creates an additional gap that will prevent the vehicle from getting to near to the obstacle                                | 0.5           |
+| longitudinal_collision_margin_min_distance | [m]    | double | when complete avoidance motion, there is a distance margin with the object for longitudinal direction.                      | 0.0           |
+| longitudinal_collision_margin_time         | [s]    | double | when complete avoidance motion, there is a time margin with the object for longitudinal direction.                          | 0.0           |
+| prepare_time                               | [s]    | double | Avoidance shift starts from point ahead of this time x ego_speed to avoid sudden path change.                               | 1.0           |
+| min_prepare_distance                       | [m]    | double | Minimum distance for "prepare_time" x "ego_speed".                                                                          | 1.0           |
+| nominal_lateral_jerk                       | [m/s3] | double | Avoidance path is generated with this jerk when there is enough distance from ego.                                          | 0.3           |
+| max_lateral_jerk                           | [m/s3] | double | Avoidance path gets sharp up to this jerk limit when there is not enough distance from ego.                                 | 2.0           |
+| min_avoidance_distance                     | [m]    | double | Minimum distance of avoidance path (i.e. this distance is needed even if its lateral jerk is very low)                      | 10.0          |
+| min_nominal_avoidance_speed                | [m/s]  | double | Minimum speed for jerk calculation in a nominal situation (\*1).                                                            | 5.0           |
+| min_sharp_avoidance_speed                  | [m/s]  | double | Minimum speed for jerk calculation in a sharp situation (\*1).                                                              | 1.0           |
+| max_right_shift_length                     | [m]    | double | Maximum shift length for right direction                                                                                    | 5.0           |
+| max_left_shift_length                      | [m]    | double | Maximum shift length for left direction                                                                                     | 5.0           |
+| road_shoulder_safety_margin                | [m]    | double | Prevents the generated path to come too close to the road shoulders.                                                        | 0.5           |
+| avoidance_execution_lateral_threshold      | [m]    | double | The lateral distance deviation threshold between the current path and suggested avoidance point to execute avoidance. (\*2) | 0.5           |
+
+(\*2) If there are multiple vehicles in a row to be avoided, no new avoidance path will be generated unless their lateral margin difference exceeds this value.
 
 ### Speed limit modification
 
@@ -434,14 +437,6 @@ TODO
 | print_debug_info     | [-]  | double | Flag to print debug info (set false as default since it takes considerable cost).     | false         |
 
 ## Future extensions / Unimplemented parts
-
-- **Design of the limit distance of the avoidance width**
-
-  - Currently, the avoidance width limit is given as a fixed value as a parameter for both left and right. Therefore, even if there is a wall, this module generates an avoidance path towards the wall. It is needed to calculate the area that the vehicle can move and generate an avoidance path within the area.
-
-- **Dynamic calculation of avoidance width**
-
-  - The length of the avoidance shift needs to be adjusted according to the situation. For example, the length of the margin between the ego and the target object can be large if the another lane is clear and safe. In another case, it may be small if there are other vehicles in the oncoming lane. The ability to set such an appropriate avoidance margin has not yet been implemented, and currently the largest margin is always used for the avoidance.
 
 - **Planning on the intersection**
   - If it is known that the ego vehicle is going to stop in the middle of avoidance execution (for example, at a red traffic light), sometimes the avoidance should not be executed until the vehicle is ready to move. This is because it is impossible to predict how the environment will change during the stop.　 This is especially important at intersections.

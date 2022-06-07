@@ -99,7 +99,9 @@ public:
 public:
   struct PlannerParam
   {
-    IntersectionModule::PlannerParam intersection_param;
+    double decel_velocity;
+    double detection_area_length;
+    double stop_line_margin;
     double stop_duration_sec;
   };
 
@@ -117,6 +119,7 @@ public:
     tier4_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
   int64_t lane_id_;

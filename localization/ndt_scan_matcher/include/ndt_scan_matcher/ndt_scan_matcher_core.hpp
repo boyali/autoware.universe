@@ -36,11 +36,22 @@
 
 #include <fmt/format.h>
 #include <tf2/transform_datatypes.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+#else
+#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
+#endif
 
 #include <array>
 #include <deque>
@@ -52,6 +63,10 @@
 #include <vector>
 
 enum class NDTImplementType { PCL_GENERIC = 0, PCL_MODIFIED = 1, OMP = 2 };
+enum class ConvergedParamType {
+  TRANSFORM_PROBABILITY = 0,
+  NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
+};
 
 template <typename PointSource, typename PointTarget>
 std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> getNDT(
@@ -113,6 +128,13 @@ private:
     const std::string & target_frame, const std::string & source_frame,
     const geometry_msgs::msg::TransformStamped::SharedPtr & transform_stamped_ptr);
 
+  bool validateTimeStampDifference(
+    const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
+    const double time_tolerance_sec);
+  bool validatePositionDifference(
+    const geometry_msgs::msg::Point & target_point,
+    const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
+
   void timerDiagnostic();
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
@@ -127,6 +149,8 @@ private:
     initial_pose_with_covariance_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr transform_probability_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
+    nearest_voxel_transformation_likelihood_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Int32Stamped>::SharedPtr iteration_num_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
     initial_to_result_distance_pub_;
@@ -152,8 +176,14 @@ private:
   std::string base_frame_;
   std::string ndt_base_frame_;
   std::string map_frame_;
+
+  ConvergedParamType converged_param_type_;
   double converged_param_transform_probability_;
+  double converged_param_nearest_voxel_transformation_likelihood_;
+
   int initial_estimate_particles_num_;
+  double initial_pose_timeout_sec_;
+  double initial_pose_distance_tolerance_m_;
   float inversion_vector_threshold_;
   float oscillation_threshold_;
   std::array<double, 36> output_pose_covariance_;

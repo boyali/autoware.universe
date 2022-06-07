@@ -15,6 +15,8 @@
 #ifndef DETECTION_BY_TRACKER__DETECTION_BY_TRACKER_CORE_HPP_
 #define DETECTION_BY_TRACKER__DETECTION_BY_TRACKER_CORE_HPP_
 
+#include "detection_by_tracker/debugger.hpp"
+
 #include <euclidean_cluster/euclidean_cluster.hpp>
 #include <euclidean_cluster/utils.hpp>
 #include <euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp>
@@ -31,7 +33,13 @@
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/convert.h>
 #include <tf2/transform_datatypes.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -69,6 +77,7 @@ private:
   TrackerHandler tracker_handler_;
   std::shared_ptr<ShapeEstimator> shape_estimator_;
   std::shared_ptr<euclidean_cluster::EuclideanClusterInterface> cluster_;
+  std::shared_ptr<Debugger> debugger_;
 
   void onObjects(
     const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_msg);

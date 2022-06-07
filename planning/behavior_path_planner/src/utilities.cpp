@@ -34,18 +34,19 @@ double quantize(const double val, const double resolution)
 }
 
 void updateMinMaxPosition(
-  const Eigen::Vector2d & point, double & min_x, double & min_y, double & max_x, double & max_y)
+  const Eigen::Vector2d & point, boost::optional<double> & min_x, boost::optional<double> & min_y,
+  boost::optional<double> & max_x, boost::optional<double> & max_y)
 {
-  min_x = std::min(min_x, point.x());
-  min_y = std::min(min_y, point.y());
-  max_x = std::max(max_x, point.x());
-  max_y = std::max(max_y, point.y());
+  min_x = min_x ? std::min(min_x.get(), point.x()) : point.x();
+  min_y = min_y ? std::min(min_y.get(), point.y()) : point.y();
+  max_x = max_x ? std::max(max_x.get(), point.x()) : point.x();
+  max_y = max_y ? std::max(max_y.get(), point.y()) : point.y();
 }
 
 bool sumLengthFromTwoPoints(
   const Eigen::Vector2d & base_point, const Eigen::Vector2d & target_point,
-  const double length_threshold, double & sum_length, double & min_x, double & min_y,
-  double & max_x, double & max_y)
+  const double length_threshold, double & sum_length, boost::optional<double> & min_x,
+  boost::optional<double> & min_y, boost::optional<double> & max_x, boost::optional<double> & max_y)
 {
   const double norm_length = (base_point - target_point).norm();
   sum_length += norm_length;
@@ -80,10 +81,10 @@ std::array<double, 4> getLaneletScope(
       }};
 
   // calculate min/max x and y
-  double min_x = current_pose.position.x;
-  double min_y = current_pose.position.y;
-  double max_x = current_pose.position.x;
-  double max_y = current_pose.position.y;
+  boost::optional<double> min_x;
+  boost::optional<double> min_y;
+  boost::optional<double> max_x;
+  boost::optional<double> max_y;
 
   for (const auto & get_bound_func : get_bound_funcs) {
     // search nearest point index to current pose
@@ -199,7 +200,13 @@ std::array<double, 4> getLaneletScope(
     }
   }
 
-  return {min_x, min_y, max_x, max_y};
+  if (!min_x || !min_y || !max_x || !max_y) {
+    const double x = current_pose.position.x;
+    const double y = current_pose.position.y;
+    return {x, y, x, y};
+  }
+
+  return {min_x.get(), min_y.get(), max_x.get(), max_y.get()};
 }
 }  // namespace drivable_area_utils
 
@@ -352,7 +359,7 @@ PredictedPath convertToPredictedPath(
 {
   PredictedPath predicted_path{};
   predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
-  predicted_path.path.reserve(path.points.size());
+  predicted_path.path.reserve(std::min(path.points.size(), static_cast<size_t>(100)));
   if (path.points.empty()) {
     return predicted_path;
   }
@@ -1129,10 +1136,22 @@ OccupancyGrid generateDrivableArea(
   const double width = max_x - min_x;
   const double height = max_y - min_y;
 
-  lanelet::ConstLanelets drivable_lanes = lanes;
-  if (containsGoal(lanes, route_handler->getGoalLaneId())) {
-    const auto lanes_after_goal = route_handler->getLanesAfterGoal(vehicle_length);
-    drivable_lanes.insert(drivable_lanes.end(), lanes_after_goal.begin(), lanes_after_goal.end());
+  lanelet::ConstLanelets drivable_lanes;
+  {  // add lanes which covers initial and final footprints
+    // 1. add preceding lanes before current pose
+    const auto lanes_before_current_pose =
+      route_handler->getLanesBeforePose(current_pose->pose, vehicle_length);
+    drivable_lanes.insert(
+      drivable_lanes.end(), lanes_before_current_pose.begin(), lanes_before_current_pose.end());
+
+    // 2. add lanes
+    drivable_lanes.insert(drivable_lanes.end(), lanes.begin(), lanes.end());
+
+    // 3. add succeeding lanes after goal
+    if (containsGoal(lanes, route_handler->getGoalLaneId())) {
+      const auto lanes_after_goal = route_handler->getLanesAfterGoal(vehicle_length);
+      drivable_lanes.insert(drivable_lanes.end(), lanes_after_goal.begin(), lanes_after_goal.end());
+    }
   }
 
   OccupancyGrid occupancy_grid;
@@ -1208,7 +1227,10 @@ OccupancyGrid generateDrivableArea(
     }
 
     // Closing
-    constexpr int num_iter = 10;  // TODO(Horibe) Think later.
+    // NOTE: Because of the discretization error, there may be some discontinuity between two
+    // successive lanelets in the drivable area. This issue is dealt with by the erode/dilate
+    // process.
+    constexpr int num_iter = 1;
     cv::Mat cv_erode, cv_dilate;
     cv::erode(cv_image, cv_erode, cv::Mat(), cv::Point(-1, -1), num_iter);
     cv::dilate(cv_erode, cv_dilate, cv::Mat(), cv::Point(-1, -1), num_iter);
@@ -1463,10 +1485,10 @@ double getDistanceToShoulderBoundary(
 }
 
 double getArcLengthToTargetLanelet(
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelet & target_lane,
+  const lanelet::ConstLanelets & lanelet_sequence, const lanelet::ConstLanelet & target_lane,
   const Pose & pose)
 {
-  const auto arc_pose = lanelet::utils::getArcCoordinates(current_lanes, pose);
+  const auto arc_pose = lanelet::utils::getArcCoordinates(lanelet_sequence, pose);
 
   const auto target_center_line = target_lane.centerline().basicLineString();
 
@@ -1490,8 +1512,8 @@ double getArcLengthToTargetLanelet(
     back_pose.orientation = tf2::toMsg(tf_quat);
   }
 
-  const auto arc_front = lanelet::utils::getArcCoordinates(current_lanes, front_pose);
-  const auto arc_back = lanelet::utils::getArcCoordinates(current_lanes, back_pose);
+  const auto arc_front = lanelet::utils::getArcCoordinates(lanelet_sequence, front_pose);
+  const auto arc_back = lanelet::utils::getArcCoordinates(lanelet_sequence, back_pose);
 
   return std::max(
     std::min(arc_front.length - arc_pose.length, arc_back.length - arc_pose.length), 0.0);
@@ -1594,19 +1616,47 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
     return {};  // TODO(Horibe) What should be returned?
   }
 
-  // For current_lanes with desired length
-  lanelet::ConstLanelets current_lanes = route_handler->getLaneletSequence(
+  // For lanelet_sequence with desired length
+  lanelet::ConstLanelets lanelet_sequence = route_handler->getLaneletSequence(
     current_lane, pose->pose, p.backward_path_length, p.forward_path_length);
 
   *centerline_path = getCenterLinePath(
-    *route_handler, current_lanes, pose->pose, p.backward_path_length, p.forward_path_length, p);
+    *route_handler, lanelet_sequence, pose->pose, p.backward_path_length, p.forward_path_length, p);
 
   centerline_path->header = route_handler->getRouteHeader();
 
   centerline_path->drivable_area = util::generateDrivableArea(
-    current_lanes, p.drivable_area_resolution, p.vehicle_length, planner_data);
+    lanelet_sequence, p.drivable_area_resolution, p.vehicle_length, planner_data);
 
   return centerline_path;
+}
+
+// TODO(Azu) Some parts of is the same with generateCenterLinePath. Therefore it might be better if
+// we can refactor some of the code for better readability
+lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
+  const std::shared_ptr<const PlannerData> & planner_data)
+{
+  const auto & p = planner_data->parameters;
+  const auto & route_handler = planner_data->route_handler;
+  const auto & ego_pose = planner_data->self_pose->pose;
+
+  lanelet::ConstLanelet current_lane;
+  if (!route_handler->getClosestLaneletWithinRoute(ego_pose, &current_lane)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+      "failed to find closest lanelet within route!!!");
+    return {};
+  }
+
+  const auto current_lanes = route_handler->getLaneletSequence(
+    current_lane, ego_pose, p.backward_path_length, p.forward_path_length);
+  lanelet::ConstLineStrings3d linestring_shared;
+  for (const auto & lane : current_lanes) {
+    lanelet::ConstLineStrings3d furthest_line = route_handler->getFurthestLinestring(lane);
+    linestring_shared.insert(linestring_shared.end(), furthest_line.begin(), furthest_line.end());
+  }
+
+  return linestring_shared;
 }
 
 PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)
@@ -1638,7 +1688,7 @@ void shiftPose(Pose * pose, double shift_length)
 PathWithLaneId getCenterLinePath(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & lanelet_sequence,
   const Pose & pose, const double backward_path_length, const double forward_path_length,
-  const BehaviorPathPlannerParameters & parameter)
+  const BehaviorPathPlannerParameters & parameter, double optional_length)
 {
   PathWithLaneId reference_path;
 
@@ -1651,8 +1701,8 @@ PathWithLaneId getCenterLinePath(
   const double s_backward = std::max(0., s - backward_path_length);
   double s_forward = s + forward_path_length;
 
-  const double buffer =
-    parameter.backward_length_buffer_for_end_of_lane;  // buffer for min_lane_change_length
+  const double buffer = parameter.backward_length_buffer_for_end_of_lane +
+                        optional_length;  // buffer for min_lane_change_length
   const int num_lane_change =
     std::abs(route_handler.getNumLaneToPreferredLane(lanelet_sequence.back()));
   const double lane_length = lanelet::utils::getLaneletLength2d(lanelet_sequence);
@@ -1670,6 +1720,84 @@ PathWithLaneId getCenterLinePath(
   }
 
   return route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
+}
+
+bool checkLaneIsInIntersection(
+  const RouteHandler & route_handler, const PathWithLaneId & reference_path,
+  const lanelet::ConstLanelets & lanelet_sequence, double & additional_length_to_add)
+{
+  if (lanelet_sequence.size() < 2) {
+    return false;
+  }
+
+  const auto & path_points = reference_path.points;
+  auto end_of_route_pose = path_points.back().point.pose;
+
+  lanelet::ConstLanelet check_lane;
+  if (!lanelet::utils::query::getClosestLanelet(lanelet_sequence, end_of_route_pose, &check_lane)) {
+    return false;
+  }
+
+  lanelet::ConstLanelets lane_change_prohibited_lanes{check_lane};
+
+  const auto checking_rev_iter = std::find_if(
+    lanelet_sequence.crbegin(), lanelet_sequence.crend(),
+    [&check_lane](const lanelet::ConstLanelet & lanelet) noexcept {
+      return lanelet.id() == check_lane.id();
+    });
+  if (checking_rev_iter == lanelet_sequence.crend()) {
+    return false;
+  }
+
+  const auto prev_lane = std::next(checking_rev_iter);
+  if (prev_lane == lanelet_sequence.crend()) {
+    return false;
+  }
+
+  const auto lanes = route_handler.getNextLanelets(*prev_lane);
+  const auto isHaveNeighborWithTurnDirection = [&](const lanelet::ConstLanelets & lanes) noexcept {
+    return std::any_of(lanes.cbegin(), lanes.cend(), [](const lanelet::ConstLanelet & lane) {
+      return lane.hasAttribute("turn_direction");
+    });
+  };
+  if (!isHaveNeighborWithTurnDirection(lanes)) {
+    return false;
+  }
+
+  const auto checkAttribute = [](const lanelet::ConstLineString3d & linestring) noexcept {
+    const auto & attribute_name = lanelet::AttributeNamesString::LaneChange;
+    if (linestring.hasAttribute(attribute_name)) {
+      const auto attr = linestring.attribute(attribute_name);
+      if (attr.value() == std::string("yes")) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const auto isLaneChangeAttributeYes =
+    [checkAttribute](const lanelet::ConstLanelet & lanelet) noexcept {
+      return (checkAttribute(lanelet.rightBound()) || checkAttribute(lanelet.leftBound()));
+    };
+
+  for (auto prev_ll_itr = prev_lane; prev_ll_itr != lanelet_sequence.crend(); ++prev_ll_itr) {
+    if (!isLaneChangeAttributeYes(*prev_ll_itr)) {
+      lane_change_prohibited_lanes.push_back(*prev_ll_itr);
+    } else {
+      break;
+    }
+  }
+
+  std::reverse(lane_change_prohibited_lanes.begin(), lane_change_prohibited_lanes.end());
+  const auto prohibited_arc_coordinate =
+    lanelet::utils::getArcCoordinates(lane_change_prohibited_lanes, end_of_route_pose);
+
+  constexpr double small_earlier_stopping_buffer = 0.2;
+  additional_length_to_add =
+    prohibited_arc_coordinate.length +
+    small_earlier_stopping_buffer;  // additional a slight "buffer so that vehicle stop earlier"
+
+  return true;
 }
 
 PathWithLaneId setDecelerationVelocity(

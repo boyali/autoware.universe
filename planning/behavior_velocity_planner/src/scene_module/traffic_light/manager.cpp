@@ -77,6 +77,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path)
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
+  visualization_msgs::msg::MarkerArray virtual_wall_marker_array;
   tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
   autoware_auto_perception_msgs::msg::LookingTrafficSignal tl_state;
 
@@ -111,11 +112,15 @@ void TrafficLightModuleManager::modifyPathVelocity(
     for (const auto & marker : traffic_light_scene_module->createDebugMarkerArray().markers) {
       debug_marker_array.markers.push_back(marker);
     }
+    for (const auto & marker : traffic_light_scene_module->createVirtualWallMarkerArray().markers) {
+      virtual_wall_marker_array.markers.push_back(marker);
+    }
   }
   if (!stop_reason_array.stop_reasons.empty()) {
     pub_stop_reason_->publish(stop_reason_array);
   }
   pub_debug_->publish(debug_marker_array);
+  pub_virtual_wall_->publish(virtual_wall_marker_array);
   pub_tl_state_->publish(tl_state);
 }
 
@@ -123,7 +128,7 @@ void TrafficLightModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & traffic_light_reg_elem :
-       getTrafficLightRegElemsOnPath(path, planner_data_->lanelet_map)) {
+       getTrafficLightRegElemsOnPath(path, planner_data_->route_handler_->getLaneletMapPtr())) {
     const auto stop_line = traffic_light_reg_elem.first->stopLine();
 
     if (!stop_line) {
@@ -147,7 +152,8 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 TrafficLightModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lanelet_id_set = getLaneletIdSetOnPath(path, planner_data_->lanelet_map);
+  const auto lanelet_id_set =
+    getLaneletIdSetOnPath(path, planner_data_->route_handler_->getLaneletMapPtr());
 
   return [lanelet_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return lanelet_id_set.count(scene_module->getModuleId()) == 0;
