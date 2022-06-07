@@ -1,82 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(delay_compensation)
 
-# Example https://github.com/tier4/autoware.universe/blob/b6beeece906024794c708c1d4dc6051cd5e270fc/control/trajectory_follower/CMakeLists.txt#L105
-# require that dependencies from package.xml be available
-
-# Release, Debug, RelWithDebInfo, MinSizeRel
-set(CMAKE_BUILD_TYPE "Debug")
-
-
-if (NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 17)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_EXTENSIONS OFF)
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif ()
-
-
-#set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-
-# Clang tidy
-if (TIDY_WITH_CLANG)
-    string(
-            CONCAT CMAKE_CXX_CLANG_TIDY
-            "clang-tidy;"
-            "-checks=-*,"
-            "bugprone-*,"
-            "cert-*,"
-            "cppcoreguidelines-*,"
-            "clang-analyze-*,"
-            "google-*,"
-            "hicpp-*,"
-            "modernize-*,"
-            "performance-*,"
-            "readability-*")
-endif ()
-
-
-if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(
-            -Wall
-            -Wextra
-            -Wpedantic
-            # -Wno-unused-parameter
-            # -Wconversion
-            -Wdouble-promotion
-            # -Wfloat-equal
-            -Waddress
-            -fvisibility=default # visibility hidden or default is set here.
-    )
-endif ()
-
-
-## Dependencies
 find_package(autoware_cmake REQUIRED)
 autoware_package()
-find_package(ament_cmake_auto REQUIRED)
 
-#ament_auto_find_build_dependencies()
-
-##  ----------------- Required Packages ---------------------------------------
-find_package(Eigen3 REQUIRED)
-find_package(fmt REQUIRED)
-find_package(Boost REQUIRED)
-
-if (${Eigen3_FOUND})
-    message("Eigen FOUND ...")
-endif (${Eigen3_FOUND})
-
-if (${fmt_FOUND})
-    message("FMT FOUND ...")
-    include_directories(fmt_INCLUDE_DIRS)
-endif (${fmt_FOUND})
-
-if (${Boost_FOUND})
-    #    include_directories(Boost_INCLUDE_DIRS)
-    message("Boost Found")
-endif (${Boost_FOUND})
 
 ## ----------------- Library headers and sources -------------------------------
 set(CDOB_LIB_INCLUDE_DIRS
@@ -118,21 +45,8 @@ ament_auto_add_library(${CDOB_LIB} SHARED
         ${CDOB_LIB_HEADERS}
         )
 
-target_link_libraries(${CDOB_LIB}
-        ${EIGEN3_LIBRARIES})
+target_compile_options(${CDOB_LIB} PRIVATE -Wno-error=old-style-cast)
 
-install(DIRECTORY include
-        DESTINATION include)
-
-install(TARGETS ${CDOB_LIB}
-        EXPORT ${CDOB_LIB}
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION
-        INCLUDES DESTINATION include
-        )
-
-# autoware_set_compile_options(${CDOB_LIB})
 
 ## ----------------- Library Tests----------------------------------------------
 
@@ -141,29 +55,11 @@ if (BUILD_TESTING)
     ament_lint_auto_find_test_dependencies()
     find_package(ament_cmake_gtest REQUIRED)
 
-    #    ament_add_gtest(
-    #            communication_delay_observer_based_control_tests
-    #            src/...
-    #            test/src/...)
-    #
-    #    target_include_directories(communication_delay_observer_based_control_tests PRIVATE include test/include)
-    #    target_link_libraries(mpc_nonlinear_tests communication_delay_observer_based_control_tests ...
-    #            ... ${EIGEN3_LIBRARIES})
-    #    ament_target_dependencies(${CDOB_TEST_NODES} fake_test_node)
-    #    autoware_set_compile_options(${CDOB_TEST_NODES})
-    #    target_link_libraries(${CDOB_TEST_NODES} ${LATLON_MUXER_NODE} ${LATERAL_CONTROLLER_NODE} ${LONGITUDINAL_CONTROLLER_NODE})
-
 endif ()
 
 # -------------  PROTOTYPES ____________________________
-# ament package generation and installing
 ament_auto_package(INSTALL_TO_SHARE)
-# ament_auto_package(INSTALL_TO_SHARE config launch)
 
-
-#target_compile_options(${CDOB_LIB} PUBLIC "-O0" PRIVATE -Wall)
-#ament_auto_package(CONFIG_EXTRAS_POST "${CDOB_LIB}-extras.cmake")
-# --------------- Other Installation Macros ------------
 
 ##  Usage Examples
 ## Type erasure example
