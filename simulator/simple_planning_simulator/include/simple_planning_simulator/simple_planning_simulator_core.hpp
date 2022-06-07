@@ -106,7 +106,7 @@ private:
 class MeasurementNoiseGenerator
 {
 public:
-  MeasurementNoiseGenerator() {}
+  MeasurementNoiseGenerator() = default;
 
   std::shared_ptr<std::mt19937> rand_engine_;
   std::shared_ptr<std::normal_distribution<>> pos_dist_;
