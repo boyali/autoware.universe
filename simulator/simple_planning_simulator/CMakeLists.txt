@@ -18,7 +18,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
         src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared.cpp
         # DISTURBANCE MODIFICATIONS
         src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_disturbance.cpp
-        #        src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared_dist.cpp
+        src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared_dist.cpp
         src/disturbance_generators/disturbance_generators.cpp
         )
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${tf2_INCLUDE_DIRS})
