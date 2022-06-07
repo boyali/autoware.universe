@@ -23,6 +23,7 @@
 #include "eigen3/Eigen/Core"
 #include "common//types.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
+#include "disturbance_generators/disturbance_generators.hpp"
 
 
 class SimModelDelaySteerAcc_Dist : public SimModelInterface
@@ -81,12 +82,12 @@ private:
 	const float64_t steer_rate_lim_;  //!< @brief steering angular velocity limit [rad/s]
 	const float64_t wheelbase_;       //!< @brief vehicle wheelbase length [m]
 
-	std::deque <float64_t> acc_input_queue_;    //!< @brief buffer for accel command
-	std::deque <float64_t> steer_input_queue_;  //!< @brief buffer for steering command
-	const float64_t        acc_delay_;                //!< @brief time delay for accel command [s]
-	const float64_t        acc_time_constant_;        //!< @brief time constant for accel dynamics
-	const float64_t        steer_delay_;              //!< @brief time delay for steering command [s]
-	const float64_t        steer_time_constant_;      //!< @brief time constant for steering dynamics
+	std::deque<float64_t> acc_input_queue_;    //!< @brief buffer for accel command
+	std::deque<float64_t> steer_input_queue_;  //!< @brief buffer for steering command
+	const float64_t       acc_delay_;                //!< @brief time delay for accel command [s]
+	const float64_t       acc_time_constant_;        //!< @brief time constant for accel dynamics
+	const float64_t       steer_delay_;              //!< @brief time delay for steering command [s]
+	const float64_t       steer_time_constant_;      //!< @brief time constant for steering dynamics
 
 	/**
 	 * @brief set queue buffer for input command

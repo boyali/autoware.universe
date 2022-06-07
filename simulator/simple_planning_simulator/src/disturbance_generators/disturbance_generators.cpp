@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//  http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -47,8 +47,8 @@ InputDisturbance_TimeDelayPade::InputDisturbance_TimeDelayPade(DelayModelSISO de
 void InputDisturbance_TimeDelayPade::checkTimeAndUpdateModel()
 {
 	// Change the current time delay model, if the change event time arrived.
-	auto                          tp_now{ std::chrono::steady_clock::now() };
-	auto                          && diff = tp_now - tp_previous_;
+	auto tp_now{ std::chrono::steady_clock::now() };
+	auto&& diff = tp_now - tp_previous_;
 	std::chrono::duration<double> time_since_previous_time_point{ diff };
 
 	// Change random seed
@@ -65,8 +65,8 @@ void InputDisturbance_TimeDelayPade::checkTimeAndUpdateModel()
 		 * Any method or randomization can be used to generate a new Td value.
 		 * */
 
-		auto meanTd             = delay_model_.getMeanTimeDelay();
-		auto && sinus_magnitude = time_delay_fluctuation_percentage_ * meanTd;
+		auto meanTd = delay_model_.getMeanTimeDelay();
+		auto&& sinus_magnitude = time_delay_fluctuation_percentage_ * meanTd;
 
 		double Td_new =
 				       delay_model_.getMeanTimeDelay() + sinus_magnitude * sin(w_of_sin_ * time_from_beginning.count());

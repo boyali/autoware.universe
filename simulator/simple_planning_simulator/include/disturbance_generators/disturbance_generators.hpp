@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//  http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -380,12 +380,12 @@ struct IDisturbanceCollection
 	// ~IDisturbanceCollection() = default;
 
 	// Input disturbances time-varying time-delay.
-	std::shared_ptr <IDisturbanceInterface_TimeDelay> steering_inputDisturbance_time_delay_ptr_;
-	std::shared_ptr <IDisturbanceInterface_TimeDelay> acc_inputDisturbance_time_delay_ptr_;
-	std::shared_ptr <IDisturbanceInterface_DeadZone>  steering_dedzone_ptr_;
+	std::shared_ptr<IDisturbanceInterface_TimeDelay> steering_inputDisturbance_time_delay_ptr_;
+	std::shared_ptr<IDisturbanceInterface_TimeDelay> acc_inputDisturbance_time_delay_ptr_;
+	std::shared_ptr<IDisturbanceInterface_DeadZone>  steering_dedzone_ptr_;
 
 	// Output disturbances
-	std::shared_ptr <IOutputDisturbance_Interface> road_slope_outputDisturbance_ptr_;
+	std::shared_ptr<IOutputDisturbance_Interface> road_slope_outputDisturbance_ptr_;
 //	disturbanceInterface yawMoment_sudden_yaw_outputDisturbance;
 //	disturbanceInterface roadTireSlipVariation_outputDisturbance;
 
