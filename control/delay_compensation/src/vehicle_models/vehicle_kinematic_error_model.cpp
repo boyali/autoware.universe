@@ -13,27 +13,28 @@
 // limitations under the License.
 
 #include "vehicle_models/vehicle_kinematic_error_model.hpp"
+#include "autoware_control_toolbox.hpp"
 
 NonlinearVehicleKinematicModel::NonlinearVehicleKinematicModel(double const& wheelbase,
-                                                               double const& tau_vel,
-                                                               double const& tau_steer,
-                                                               double const& deadtime_vel,
-                                                               double const& deadtime_steer,
-                                                               double const& dt)
+		double const& tau_vel,
+		double const& tau_steer,
+		double const& deadtime_vel,
+		double const& deadtime_steer,
+		double const& dt)
 		: wheelbase_{ wheelbase },
 		  tau_steer_{ tau_steer },
 		  tau_vel_{ tau_vel },
 		  dead_time_steer_{ deadtime_steer },
 		  dead_time_vel_{ deadtime_vel }, dt_{ dt }
 {
-	size_t const order_pade = 2;
-	auto tf_steer_input = ns_control_toolbox::pade(deadtime_steer, order_pade);
-	auto tf_vel_input = ns_control_toolbox::pade(deadtime_vel, order_pade);
+	size_t const order_pade     = 2;
+	auto         tf_steer_input = ns_control_toolbox::pade(deadtime_steer, order_pade);
+	auto         tf_vel_input   = ns_control_toolbox::pade(deadtime_vel, order_pade);
 
 	if (!ns_utils::isEqual(deadtime_vel, 0.))
 	{
 		is_discretisize_vel_delay_ = true;
-		deadtime_velocity_model_ = ns_control_toolbox::tf2ss(tf_vel_input, dt);
+		deadtime_velocity_model_   = ns_control_toolbox::tf2ss(tf_vel_input, dt);
 
 		ns_utils::print("deadtime vel model");
 		deadtime_velocity_model_.print_discrete_system();
@@ -42,7 +43,7 @@ NonlinearVehicleKinematicModel::NonlinearVehicleKinematicModel(double const& whe
 	if (!ns_utils::isEqual(deadtime_steer, 0.))
 	{
 		is_discretisize_steering_delay_ = true;
-		deadtime_steering_model_ = ns_control_toolbox::tf2ss(tf_steer_input, dt);
+		deadtime_steering_model_        = ns_control_toolbox::tf2ss(tf_steer_input, dt);
 
 		ns_utils::print("deadtime steer model");
 		deadtime_steering_model_.print_discrete_system();
@@ -66,10 +67,10 @@ void NonlinearVehicleKinematicModel::getInitialStates(std::array<double, 4>& x0)
  *@brief Integrates the nonlinear dynamics one-step.
  * */
 std::array<double, 4> NonlinearVehicleKinematicModel::simulateOneStep(const double& desired_velocity,
-                                                                      double const& desired_steering)
+		double const& desired_steering)
 {
 
-	auto Vd = desired_velocity;
+	auto Vd      = desired_velocity;
 	auto delta_d = desired_steering;
 
 	if (is_discretisize_vel_delay_)
@@ -127,10 +128,10 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateOneStep(const doub
 
 
 // Get the previous states.
-	auto&& ey0 = x0_[0];
-	auto&& eyaw0 = x0_[1];
+	auto&& ey0    = x0_[0];
+	auto&& eyaw0  = x0_[1];
 	auto&& delta0 = x0_[2];
-	auto&& V0 = x0_[3];
+	auto&& V0     = x0_[3];
 
 	x0_[0] = ey0 + dt_ * V0 * sin(eyaw0);
 	x0_[1] = eyaw0 + dt_ * (V0 / wheelbase_) * (tan(delta0) - tan(delta_d));

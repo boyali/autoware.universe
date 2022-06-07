@@ -10,6 +10,7 @@
 
     <buildtool_depend>ament_cmake_auto</buildtool_depend>
     <buildtool_depend>autoware_cmake</buildtool_depend>
+    <buildtool_depend>eigen</buildtool_depend>
 
     <depend>vehicle_info_util</depend>
     <depend>autoware_control_toolbox</depend>
