@@ -53,8 +53,11 @@ endif ()
 
 
 ## Dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
+find_package(ament_cmake REQUIRED)
+
+#ament_auto_find_build_dependencies()
 
 ##  ----------------- Required Packages ---------------------------------------
 find_package(Eigen3 REQUIRED)
