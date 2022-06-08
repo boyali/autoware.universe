@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(delay_compensator)
+project(communication_delay_compensator)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -61,7 +61,7 @@ install(TARGETS ${CDOB_LIB}
         INCLUDES DESTINATION include
         )
 ## -----------------  DELAY COMPENSATION NODE ----------------------------------------
-set(DELAY_COMPENSATION_NODE delay_compensation_node)
+set(DELAY_COMPENSATION_NODE communication_delay_compensator)
 ament_auto_add_library(${DELAY_COMPENSATION_NODE} SHARED
         include/delay_compensator_node.hpp
         src/delay_compensator_node.cpp

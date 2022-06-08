@@ -17,6 +17,7 @@
 #include "vehicle_models/vehicle_kinematic_error_model.hpp"
 #include "utils_delay_observer/delay_compensation_utils.hpp"
 
+
 namespace act = ns_control_toolbox;
 
 int main()
