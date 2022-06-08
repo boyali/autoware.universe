@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP
-#define DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP
+#ifndef COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP
+#define COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP
 
 #include <vector>
 #include <string>
@@ -31,23 +31,23 @@
  * @brief Implemented to test the current packages and inverted model performance.
  * */
 class CDOB_PUBLIC NonlinearVehicleKinematicModel
-{
+	{
 public:
 
 	// Constructors.
 	NonlinearVehicleKinematicModel() = default;
 
 	NonlinearVehicleKinematicModel(double const& wheelbase,
-	                               double const& tau_vel,
-	                               double const& tau_steer,
-	                               double const& deadtime_vel,
-	                               double const& deadtime_steer,
-	                               double const& dt);
+			double const& tau_vel,
+			double const& tau_steer,
+			double const& deadtime_vel,
+			double const& deadtime_steer,
+			double const& dt);
 
 
 	// Public methods.
 	std::array<double, 4> simulateOneStep(const double& desired_velocity,
-	                                      double const& desired_steering);
+			double const& desired_steering);
 
 	void getInitialStates(std::array<double, 4>& x0);
 
@@ -79,7 +79,7 @@ private:
 	Eigen::MatrixXd xv0_{ Eigen::MatrixXd::Zero(2, 1) }; // delayed speed input states
 	Eigen::MatrixXd xs0_{ Eigen::MatrixXd::Zero(2, 1) }; // delayed steeering input states.
 
-};
+	};
 
 
-#endif //DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP
+#endif //COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP

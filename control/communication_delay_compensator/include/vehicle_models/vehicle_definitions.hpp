@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DELAY_COMPENSATOR__VEHICLE_DEFINITIONS_HPP
-#define DELAY_COMPENSATOR__VEHICLE_DEFINITIONS_HPP
+#ifndef COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_DEFINITIONS_HPP
+#define COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_DEFINITIONS_HPP
 
 #include "eigen3/Eigen/Core"
 #include "utils_delay_observer/delay_compensation_utils.hpp"
@@ -41,4 +41,4 @@ using func_type = std::function<T(T)>;
 
 //constexpr Eigen::Index STATE_DIM = 3;
 //constexpr Eigen::Index INPUT_DIM = 1;
-#endif //DELAY_COMPENSATOR__VEHICLE_DEFINITIONS_HPP
+#endif //COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_DEFINITIONS_HPP

@@ -12,7 +12,7 @@ set(CDOB_LIB_INCLUDE_DIRS
 set(CDOB_LIB delay_compensation_lib)
 
 set(CDOB_LIB_SOURCE
-        src/delay_compensator_core.cpp
+        src/communication_delay_compensator_core.cpp
         src/utils_delay_observer/delay_compensation_utils.cpp
         src/qfilters.cpp
         src/utils_delay_observer/delay_compensation_utils.cpp
@@ -23,7 +23,7 @@ set(CDOB_LIB_SOURCE
         )
 
 set(CDOB_LIB_HEADERS
-        include/delay_compensator_core.hpp
+        include/communication_delay_compensator_core.hpp
         include/visibility_control.hpp
         include/utils_delay_observer/delay_compensation_utils.hpp
         include/qfilters.hpp
@@ -63,13 +63,13 @@ install(TARGETS ${CDOB_LIB}
 ## -----------------  DELAY COMPENSATION NODE ----------------------------------------
 set(DELAY_COMPENSATION_NODE communication_delay_compensator)
 ament_auto_add_library(${DELAY_COMPENSATION_NODE} SHARED
-        include/delay_compensator_node.hpp
-        src/delay_compensator_node.cpp
+        include/communication_delay_compensator_node.hpp
+        src/communication_delay_compensator_node.cpp
         )
 
 
 rclcpp_components_register_node(${DELAY_COMPENSATION_NODE}
-        PLUGIN "autoware::motion::control::observer::delay_compensation_nodes::DelayCompensationNode"
+        PLUGIN "autoware::motion::control::observer::CommunicationDelayCompensatorNode"
         EXECUTABLE ${DELAY_COMPENSATION_NODE}_exe
         )
 
