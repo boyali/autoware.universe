@@ -23,17 +23,17 @@
 #include "visibility_control.hpp"
 
 
-struct CDOB_PUBLIC s_cut_off_tag
-{
-};
+struct s_cut_off_tag
+	{
+	};
 
-struct CDOB_PUBLIC s_time_const_tag
-{
-};
+struct s_time_const_tag
+	{
+	};
 
 
-class CDOB_PUBLIC QFilterBase
-{
+class QFilterBase
+	{
 public:
 	using t_cutOffFreq = StrongTypeDef<double, s_cut_off_tag>;
 	using t_timeConst = StrongTypeDef<double, s_time_const_tag>;
@@ -62,18 +62,18 @@ public:
 	}
 
 protected:
-	int order_{ 1 }; // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
-	double cut_off_frequency_{}; // Cut-off frequency in Hz.
-	double time_constant_tau_{};
-	double dt_{}; // time step for filter discretization.
-	ns_control_toolbox::tf tf_{}; // Transfer function of the q-filter.
+	int                       order_{ 1 }; // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
+	double                    cut_off_frequency_{}; // Cut-off frequency in Hz.
+	double                    time_constant_tau_{};
+	double                    dt_{}; // time step for filter discretization.
+	ns_control_toolbox::tf    tf_{}; // Transfer function of the q-filter.
 	ns_control_toolbox::tf2ss ss_{}; // State space representation of the q-filter.
 
-};
+	};
 
 template<int Norder, typename state_t = Eigen::Matrix<double, Norder, 1>>
-class CDOB_PUBLIC Qfilter : public QFilterBase
-{
+class Qfilter : public QFilterBase
+	{
 public:
 
 	using QFilterBase::QFilterBase;
@@ -103,7 +103,7 @@ private:
 	state_t x0_{ state_t::Zero() }; // Filter current state
 
 
-};
+	};
 
 /**
  * @brief given an control signal, computes xdot = f(x, u), x0 is stored as a state in.
@@ -171,20 +171,20 @@ double Qfilter<Norder, state_t>::simulateOneStep(Eigen::MatrixXd& x0, double con
  */
 
 struct CDOB_PUBLIC s_filter_data
-{
+	{
 	s_filter_data() = default;
 
 	explicit s_filter_data(QFilterBase const& Qf);
 
 	// Data members.
-	int order{};
-	double time_constant{}; // @brief tau in 1/(tau*s + 1)^n.
-	double cut_off_frq{}; // in Hz.
+	int                    order{};
+	double                 time_constant{}; // @brief tau in 1/(tau*s + 1)^n.
+	double                 cut_off_frq{}; // in Hz.
 	ns_control_toolbox::tf TF{};
-};
+	};
 
-struct CDOB_PUBLIC s_model_g_data
-{
+struct s_model_g_data
+	{
 	using pairs_t = std::pair<std::string_view, std::string_view>;
 	using pairs_func_maps_t = std::unordered_map<std::string_view, func_type<double>>;
 	using tf = ns_control_toolbox::tf;
@@ -193,19 +193,16 @@ struct CDOB_PUBLIC s_model_g_data
 	s_model_g_data() = default;
 
 	s_model_g_data(pairs_t params_names,
-	               pairs_func_maps_t funcs,
-	               tf Gs);
+			pairs_func_maps_t funcs,
+			tf Gs);
 
 
 	// Data members.
-	pairs_t num_den_coeff_names{};
+	pairs_t           num_den_coeff_names{};
 	pairs_func_maps_t funcs{};
 
 	tf TF{};
 
-};
-
-
-//
+	};
 
 #endif //DELAY_COMPENSATION_QFILTERS_HPP

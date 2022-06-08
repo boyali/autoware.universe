@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "delay_compensator.hpp"
+#include "delay_compensator_core.hpp"
 #include "qfilters.hpp"
 #include "vehicle_models/vehicle_kinematic_error_model.hpp"
 #include "utils_delay_observer/delay_compensation_utils.hpp"

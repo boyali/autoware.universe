@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(delay_compensation)
+project(delay_compensator)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -12,7 +12,7 @@ set(CDOB_LIB_INCLUDE_DIRS
 set(CDOB_LIB delay_compensation_lib)
 
 set(CDOB_LIB_SOURCE
-        src/delay_observer.cpp
+        src/delay_compensator_core.cpp
         src/utils_delay_observer/delay_compensation_utils.cpp
         src/qfilters.cpp
         src/utils_delay_observer/delay_compensation_utils.cpp
@@ -23,7 +23,7 @@ set(CDOB_LIB_SOURCE
         )
 
 set(CDOB_LIB_HEADERS
-        include/delay_compensator.hpp
+        include/delay_compensator_core.hpp
         include/visibility_control.hpp
         include/utils_delay_observer/delay_compensation_utils.hpp
         include/qfilters.hpp
@@ -46,7 +46,6 @@ ament_auto_add_library(${CDOB_LIB} SHARED
         )
 
 target_compile_options(${CDOB_LIB} PRIVATE -Wno-error=old-style-cast)
-
 
 ## ----------------- Library Tests----------------------------------------------
 
