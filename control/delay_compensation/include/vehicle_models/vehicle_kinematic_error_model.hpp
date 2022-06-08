@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DELAY_COMPENSATION_VEHICLE_KINEMATIC_ERROR_MODEL_HPP
-#define DELAY_COMPENSATION_VEHICLE_KINEMATIC_ERROR_MODEL_HPP
+#ifndef DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP
+#define DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP
 
 #include <vector>
 #include <string>
@@ -82,4 +82,4 @@ private:
 };
 
 
-#endif //DELAY_COMPENSATION_VEHICLE_KINEMATIC_ERROR_MODEL_HPP
+#endif //DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP

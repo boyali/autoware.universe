@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DELAY_COMPENSATION__DELAY_OBSERVER_H
-#define DELAY_COMPENSATION__DELAY_OBSERVER_H
+#ifndef DELAY_COMPENSATOR__DELAY_OBSERVER_HPP
+#define DELAY_COMPENSATOR__DELAY_OBSERVER_HPP
 
 #include <cmath>
 #include <iostream>
@@ -112,4 +112,4 @@ private:
 	};
 
 
-#endif // DELAY_COMPENSATION__DELAY_OBSERVER_H
+#endif // DELAY_COMPENSATOR__DELAY_OBSERVER_HPP

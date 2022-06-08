@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DELAY_COMPENSATION_QFILTERS_HPP
-#define DELAY_COMPENSATION_QFILTERS_HPP
+#ifndef DELAY_COMPENSATOR__QFILTERS_HPP
+#define DELAY_COMPENSATOR__QFILTERS_HPP
 
 #include <memory>
 #include <cmath>
@@ -205,4 +205,4 @@ struct s_model_g_data
 
 	};
 
-#endif //DELAY_COMPENSATION_QFILTERS_HPP
+#endif //DELAY_COMPENSATOR__QFILTERS_HPP
