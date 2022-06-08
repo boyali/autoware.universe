@@ -69,7 +69,7 @@ ament_auto_add_library(${DELAY_COMPENSATION_NODE} SHARED
 
 
 rclcpp_components_register_node(${DELAY_COMPENSATION_NODE}
-        PLUGIN "CommunicationDelayCompensatorNode"
+        PLUGIN "autoware::motion::control::observer::CommunicationDelayCompensatorNode"
         EXECUTABLE ${DELAY_COMPENSATION_NODE}_exe
         )
 ## ----------------- Library Tests----------------------------------------------
