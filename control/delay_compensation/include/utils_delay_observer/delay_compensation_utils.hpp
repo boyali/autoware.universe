@@ -13,8 +13,8 @@
 // limitations under the License.
 
 
-#ifndef DELAY_COMPENSATION_DELAY_COMPENSATION_UTILS_HPP
-#define DELAY_COMPENSATION_DELAY_COMPENSATION_UTILS_HPP
+#ifndef DELAY_COMPENSATOR__DELAY_COMPENSATION_UTILS_HPP
+#define DELAY_COMPENSATOR__DELAY_COMPENSATION_UTILS_HPP
 
 #include <utility>
 #include <type_traits>
@@ -123,4 +123,4 @@ void writeToFile(const fs::path& outputPath, std::vector<T> var, std::string var
 }
 
 
-#endif //DELAY_COMPENSATION_DELAY_COMPENSATION_UTILS_HPP
+#endif //DELAY_COMPENSATOR__DELAY_COMPENSATION_UTILS_HPP

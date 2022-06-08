@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DELAY_COMPENSATION_VEHICLE_DEFINITIONS_HPP
-#define DELAY_COMPENSATION_VEHICLE_DEFINITIONS_HPP
+#ifndef DELAY_COMPENSATOR__VEHICLE_DEFINITIONS_HPP
+#define DELAY_COMPENSATOR__VEHICLE_DEFINITIONS_HPP
 
 #include "eigen3/Eigen/Core"
 #include "utils_delay_observer/delay_compensation_utils.hpp"
@@ -23,10 +23,10 @@
  * @brief Kinematic Vehicle Lateral Error Model state and control definitions.
  * */
 enum class CDOB_PUBLIC KinematicErrorDims : int
-{
+	{
 	STATE_DIM = 3,
 	INPUT_DIM = 1
-};
+	};
 
 using state_vector_vehicle_t = Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::STATE_DIM), 1>;
 using input_vector_vehicle_t = Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::INPUT_DIM), 1>;
@@ -41,4 +41,4 @@ using func_type = std::function<T(T)>;
 
 //constexpr Eigen::Index STATE_DIM = 3;
 //constexpr Eigen::Index INPUT_DIM = 1;
-#endif //DELAY_COMPENSATION_VEHICLE_DEFINITIONS_HPP
+#endif //DELAY_COMPENSATOR__VEHICLE_DEFINITIONS_HPP
