@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "delay_compensator.hpp"
+#include "delay_compensator_core.hpp"
 #include "qfilters.hpp"
 
 int main()
@@ -23,42 +23,42 @@ int main()
 	fs::path output_path{ "../logs" };
 
 	// Create a dummy output signal for ey, epsi and delta.
-	double tfinal{ 10. };     // signal length in time
+	double       tfinal{ 10. };     // signal length in time
 	unsigned int frequency{ 40 };   // Hz
-	double dt{ 1. / frequency };
+	double       dt{ 1. / frequency };
 
 	Eigen::Index num_of_time_points = static_cast<Eigen::Index>(tfinal / dt ) + 1;
-	auto time_vector = Eigen::VectorXd::LinSpaced(num_of_time_points, 0., tfinal);
+	auto         time_vector        = Eigen::VectorXd::LinSpaced(num_of_time_points, 0., tfinal);
 
 	// a sinus signal
 	double fhz_eysin = 0.1;
-	double w_eysin = 2 * M_PI * fhz_eysin; // [rad/sec]
-	auto ey_sin = Eigen::VectorXd(time_vector.unaryExpr([&](auto const& t)
-	                                                    {
-		                                                    return sin(w_eysin * t);
-	                                                    }));
+	double w_eysin   = 2 * M_PI * fhz_eysin; // [rad/sec]
+	auto   ey_sin    = Eigen::VectorXd(time_vector.unaryExpr([&](auto const& t)
+	{
+		return sin(w_eysin * t);
+	}));
 
 	// Create an inverse vehicle model for these signal channels with Q-filters.
 	// First create Q-filter for ey.
 	double cut_off_frequency_ey = 20.; // [Hz]
 	double time_constant_tau_ey = 0.1; // [sec] (time constant of the filter)
 
-	const int order_ey = 3;    // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
+	const int order_ey    = 3;    // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
 	const int order_e_yaw = 2;    // order of the filter for yaw error.
 
 
 
 	// Base class construction.
 	StrongTypeDef<double, s_cut_off_tag> sf_cutoff{ cut_off_frequency_ey };
-	QFilterBase qfilter_cutoff(sf_cutoff, order_ey, dt); // 3rd order low-pass filter
+	QFilterBase                          qfilter_cutoff(sf_cutoff, order_ey, dt); // 3rd order low-pass filter
 
 
 	StrongTypeDef<double, s_time_const_tag> stconstant{ time_constant_tau_ey };
-	QFilterBase qfilter_tconst(stconstant, order_ey, dt); // 3rd order low-pass filter
+	QFilterBase                             qfilter_tconst(stconstant, order_ey, dt); // 3rd order low-pass filter
 
 
 	// Specialized qfilters for ey and eyaw.
-	Qfilter<order_ey> qfilter_ey{ sf_cutoff, order_ey, dt };
+	Qfilter<order_ey>    qfilter_ey{ sf_cutoff, order_ey, dt };
 	Qfilter<order_e_yaw> qfilter_epsi{ sf_cutoff, order_e_yaw, dt };
 
 #ifndef NDEBUG
@@ -104,7 +104,7 @@ int main()
 	double u{ 1. };
 	// dt = 1;
 
-	auto yey = qfilter_ey.y_hx(u);
+	auto yey   = qfilter_ey.y_hx(u);
 	auto yepsi = qfilter_epsi.y_hx(u);
 
 	ns_utils::print("Filter outputs ey, epsi : ", yey, "~", yepsi, "\n");
@@ -115,7 +115,7 @@ int main()
 	qfilter_epsi.reset_initial_state_x0();
 
 	// Create a matrix to store and save the sim results.
-	size_t Nfinal{ 100 };
+	size_t          Nfinal{ 100 };
 	Eigen::MatrixXd q_simresults_fromABCD(Nfinal, 3);
 	Eigen::MatrixXd q_simresults_fromACT(Nfinal, 3);
 
@@ -135,14 +135,14 @@ int main()
 
 	for (auto k = 0; k < 50; ++k)
 	{
-		double& uk = ulong(k);
-		double&& yk_ey = qfilter_ey.y_hx(uk);
+		double& uk       = ulong(k);
+		double&& yk_ey   = qfilter_ey.y_hx(uk);
 		double&& yk_epsi = qfilter_epsi.y_hx(uk);
 
 		q_simresults_fromABCD.row(k) << uk, yk_ey, yk_epsi;
 
 
-		auto yey0 = qfilter_ey.simulateOneStep(ey_xu, uk);
+		auto yey0   = qfilter_ey.simulateOneStep(ey_xu, uk);
 		auto yeyaw0 = qfilter_epsi.simulateOneStep(epsi_xu, uk);
 
 		q_simresults_fromACT.row(k) << uk, yey0, yeyaw0;

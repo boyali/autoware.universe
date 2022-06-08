@@ -26,8 +26,8 @@
 // For internal states use state_T, for ABCD matrices use mat_eig_T.
 
 
-class CDOB_PUBLIC DelayCompensator
-{
+class DelayCompensator
+	{
 public:
 
 	using pairs_t = s_model_g_data::pairs_t;
@@ -38,7 +38,7 @@ public:
 	DelayCompensator() = default;
 
 	DelayCompensator(s_filter_data const& qfilter_data,
-	                 s_model_g_data& model_data, double const& dt);
+			s_model_g_data& model_data, double const& dt);
 
 	void print() const;
 
@@ -51,20 +51,20 @@ public:
 	 * @param outputs from the delay compensator.
 	 * */
 	void simulateOneStep(double const& previous_input, /** previous input*/
-	                     double const& measured_model_state,
-	                     std::pair<double, double> const& num_den_args_of_G, /** model parameters*/
-	                     std::array<double, 4>& y_outputs);
+			double const& measured_model_state,
+			std::pair<double, double> const& num_den_args_of_G, /** model parameters*/
+			std::array<double, 4>& y_outputs);
 
 private:
 	double dt_{ 0.1 };
 
 	// Associated Qfilter parameters
-	int q_order_{ 1 }; // @brief order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
+	int    q_order_{ 1 }; // @brief order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
 	double q_cut_off_frequency_{}; // @brief cut-off frequency in Hz.
 	double q_time_constant_tau_{};
 
 	// Qfilter transfer function.
-	ns_control_toolbox::tf Qfilter_tf_{}; // @brief Transfer function of the qfilter.
+	ns_control_toolbox::tf    Qfilter_tf_{}; // @brief Transfer function of the qfilter.
 	ns_control_toolbox::tf2ss Qfilter_ss_{}; //@brief State space model of the qfilter
 
 
@@ -79,11 +79,11 @@ private:
 	pairs_func_maps_t pair_func_map_{};
 
 	// Model transfer function.
-	ns_control_toolbox::tf Gtf_{};
+	ns_control_toolbox::tf    Gtf_{};
 	ns_control_toolbox::tf2ss Gss_;
 
 	// Q(s)/G(s)
-	ns_control_toolbox::tf QGinv_tf_{};
+	ns_control_toolbox::tf    QGinv_tf_{};
 	ns_control_toolbox::tf2ss QGinv_ss_{};
 
 	// Internal states.
@@ -109,7 +109,7 @@ private:
 	// Member functions.
 	void getSSsystem(ns_control_toolbox::tf2ss const& ss);
 
-};
+	};
 
 
 #endif // DELAY_COMPENSATION__DELAY_OBSERVER_H
