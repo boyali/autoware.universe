@@ -17,6 +17,8 @@
 
 #include <cmath>
 #include <iostream>
+#include <utility>
+#include <unordered_map>
 #include <eigen3/Eigen/Core>
 #include "visibility_control.hpp"
 #include "qfilters.hpp"
