@@ -47,6 +47,33 @@ ament_auto_add_library(${CDOB_LIB} SHARED
 
 target_compile_options(${CDOB_LIB} PRIVATE -Wno-error=old-style-cast)
 
+target_link_libraries(${CDOB_LIB}
+        ${EIGEN3_LIBRARIES})
+
+install(DIRECTORY include
+        DESTINATION include)
+
+install(TARGETS ${CDOB_LIB}
+        EXPORT ${CDOB_LIB}
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION
+        INCLUDES DESTINATION include
+        )
+## -----------------  DELAY COMPENSATION NODE ----------------------------------------
+set(DELAY_COMPENSATION_NODE delay_compensation_node)
+ament_auto_add_library(${DELAY_COMPENSATION_NODE} SHARED
+        include/delay_compensator_node.hpp
+        src/delay_compensator_node.cpp
+        )
+
+
+rclcpp_components_register_node(${DELAY_COMPENSATION_NODE}
+        PLUGIN "autoware::motion::control::observer::delay_compensation_nodes::DelayCompensationNode"
+        EXECUTABLE ${DELAY_COMPENSATION_NODE}_exe
+        )
+
+
 ## ----------------- Library Tests----------------------------------------------
 
 if (BUILD_TESTING)
