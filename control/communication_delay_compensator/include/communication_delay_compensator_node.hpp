@@ -34,39 +34,48 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 
-namespace autoware::motion::control::observer
-{
-	class CommunicationDelayCompensatorNode : public rclcpp::Node
-		{
-	public:
-		using float64_t = autoware::common::types::float64_t;
+//namespace autoware
+//{
+//	namespace motion
+//	{
+//		namespace control
+//		{
+//namespace observer
+//{
+class CommunicationDelayCompensatorNode : public rclcpp::Node
+	{
+public:
+	using float64_t = autoware::common::types::float64_t;
 
-		/**
-		 * @brief constructor
-		 */
-		explicit CommunicationDelayCompensatorNode(const rclcpp::NodeOptions& node_options);
+	/**
+	 * @brief constructor
+	 */
+	explicit CommunicationDelayCompensatorNode(const rclcpp::NodeOptions& node_options);
 
-		/**
-		 * @brief destructor
-		 */
-		virtual ~CommunicationDelayCompensatorNode();
+	/**
+	 * @brief destructor
+	 */
+	virtual ~CommunicationDelayCompensatorNode();
 
-	private:
-		// Data Members
-		//!< @brief timer to update after a given interval
-		rclcpp::TimerBase::SharedPtr m_timer_;
+private:
+	// Data Members
+	//!< @brief timer to update after a given interval
+	rclcpp::TimerBase::SharedPtr m_timer_;
 
-		// Node Methods
-		//!< initialize timer to work in real, simulation, and replay
-		void initTimer(float64_t period_s);
+	// Node Methods
+	//!< initialize timer to work in real, simulation, and replay
+	void initTimer(float64_t period_s);
 
-		/**
-		 * @brief compute and publish the compensating reference signals for the controllers with a
-		 * constant control period
-		 */
-		void onTimer();
-		};
+	/**
+	 * @brief compute and publish the compensating reference signals for the controllers with a
+	 * constant control period
+	 */
+	void onTimer();
+	};
 
-}  // namespace autoware::motion::control
+//			}  //namespace autoware
+//		} //namespace motion
+//	} //namespace control
+//} //namespace observer
 
 #endif  // COMMUNICATION_DELAY_COMPENSATOR__DELAY_COMPENSATOR_NODE_HPP
