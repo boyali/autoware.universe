@@ -90,7 +90,8 @@ using tier4_vehicle_msgs::srv::ControlModeRequest;
 class DeltaTime
 {
 public:
-  DeltaTime() : prev_updated_time_ptr_(nullptr) {}
+  DeltaTime()
+  : prev_updated_time_ptr_(nullptr) {}
   float64_t get_dt(const rclcpp::Time & now)
   {
     if (prev_updated_time_ptr_ == nullptr) {
@@ -193,7 +194,8 @@ private:
   float64_t y_stddev_;  //!< @brief y standard deviation for dummy covariance in map coordinate
 
   /* vehicle model */
-  enum class VehicleModelType {
+  enum class VehicleModelType
+  {
     IDEAL_STEER_ACC = 0,
     IDEAL_STEER_ACC_GEARED = 1,
     DELAY_STEER_ACC = 2,
