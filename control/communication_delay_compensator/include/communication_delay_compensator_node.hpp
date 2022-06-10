@@ -58,7 +58,8 @@ namespace observers
 
 		struct Parameters
 		{
-				float32_t wheel_base{};
+				float64_t wheel_base{};
+				float32_t cdob_ctrl_period{};
 		};
 
 		class CommunicationDelayCompensatorNode : public rclcpp::Node
@@ -73,11 +74,12 @@ namespace observers
 				/**
 				 * @brief destructor
 				 */
-				~CommunicationDelayCompensatorNode() override = default;
+				virtual ~CommunicationDelayCompensatorNode() = default;
 
 		private:
 				// Data Members
 				Parameters params_{};
+
 				//!< @brief timer to update after a given interval
 				rclcpp::TimerBase::SharedPtr timer_;
 

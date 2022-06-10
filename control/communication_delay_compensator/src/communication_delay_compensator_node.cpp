@@ -27,8 +27,8 @@ namespace observers
 			// 			params_.wheel_base = vehicle_info.wheel_base_m;
 
 			/* set up ros system */
-			float64_t duration{ 50 };  // ms
-			initTimer(duration);
+			params_.cdob_ctrl_period = declare_parameter<float64_t>("cdob_ctrl_period");  // reads sec
+			initTimer(params_.cdob_ctrl_period);
 
 			// Create Publishers
 			pub_delay_compensator_ = create_publisher<DelayCompensatatorMsg>(
@@ -37,25 +37,20 @@ namespace observers
 			// Create subscriptions
 			sub_control_cmds_ = create_subscription<ControlCommand>("~/input/control_cmd", rclcpp::QoS{ 1 },
 			                                                        std::bind(&observers::CommunicationDelayCompensatorNode::onControlCommands,
-			                                                                  this,
-			                                                                  std::placeholders::_1));
+			                                                                  this, std::placeholders::_1));
 
 			sub_current_velocity_ptr_ = create_subscription<VelocityMsg>("~/input/current_odometry", rclcpp::QoS{ 1 },
-			                                                             std::bind
-				                                                             (&observers::CommunicationDelayCompensatorNode::onCurrentVelocity,
-				                                                              this,
-				                                                              std::placeholders::_1));
+			                                                             std::bind(&observers::CommunicationDelayCompensatorNode::onCurrentVelocity,
+			                                                                       this, std::placeholders::_1));
 
 			sub_current_steering_ptr_ = create_subscription<SteeringReport>("~/input/steering_state", rclcpp::QoS{ 1 },
-			                                                                std::bind
-				                                                                (&observers::CommunicationDelayCompensatorNode::onCurrentSteering,
-				                                                                 this,
-				                                                                 std::placeholders::_1));
+			                                                                std::bind(&observers::CommunicationDelayCompensatorNode::onCurrentSteering,
+			                                                                          this, std::placeholders::_1));
 		}
 
 		void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
 		{
-			const auto period_ns = std::chrono::duration_cast<std::chrono::milliseconds>(
+			const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
 				std::chrono::duration<float64_t>(period_s));
 
 			timer_ = rclcpp::create_timer(
@@ -78,14 +73,16 @@ namespace observers
 
 			ns_utils::print("ACT On timer method ");
 
-			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "onTimerCommands");
+			// RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "On Timer");
 		}
 
 		void CommunicationDelayCompensatorNode::onControlCommands(const ControlCommand::SharedPtr msg)
 		{
 			current_ctrl_ptr_ = std::make_shared<ControlCommand>(*msg);
 			ns_utils::print("ACT On control method ");
+			ns_utils::print("Read parameter control period :", params_.cdob_ctrl_period);
 			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "onControlCommands");
+
 		}
 
 		void CommunicationDelayCompensatorNode::onCurrentVelocity(const VelocityMsg::SharedPtr msg)
@@ -93,14 +90,17 @@ namespace observers
 			current_velocity_ptr = std::make_shared<VelocityMsg>(*msg);
 
 			ns_utils::print("ACT On velocity method ");
-			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "onControlCommands");
+			ns_utils::print("Read parameter control period :", params_.cdob_ctrl_period);
+			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "On Velocity");
 
 		}
 
 		void CommunicationDelayCompensatorNode::publishCompensationReferences()
 		{
-			current_delay_references_->heading_angle_error_compensation_ref = 1.0;
-			current_delay_references_->lateral_deviation_error_compensation_ref = 2.0;
+			DelayCompensatatorMsg new_msg{};
+			new_msg.lateral_deviation_error_compensation_ref = 1.0;
+
+			current_delay_references_ = std::make_shared<DelayCompensatatorMsg>(new_msg);
 
 			pub_delay_compensator_->publish(*current_delay_references_);
 

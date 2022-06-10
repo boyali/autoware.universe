@@ -1,13 +1,13 @@
 /**:
   ros__parameters:
     # -- System --
-    ctrl_period: 0.03     # sampling period.
+    cdob_ctrl_period: 0.03     # sampling period.
 
-    # -- Q-filters --
-    qfilter_frq_lateral_error_: 10.  #qfilter frequency in Hz for lateral error
-    qfilter_frq_heading_error_: 10.  #qfilter frequency in Hz for heading error
-    qfilter_frq_steering_error_: 10.  #qfilter frequency in Hz for steering tracking error
-    qfilter_frq_velocity_error_: 10.  #qfilter frequency in Hz for steering tracking error
+    #    # -- Q-filters --
+    #    qfilter_frq_lateral_error_: 10.  #qfilter frequency in Hz for lateral error
+    #    qfilter_frq_heading_error_: 10.  #qfilter frequency in Hz for heading error
+    #    qfilter_frq_steering_error_: 10.  #qfilter frequency in Hz for steering tracking error
+    #    qfilter_frq_velocity_error_: 10.  #qfilter frequency in Hz for steering tracking error
 
 
     # -- Vehicle Model Selection -- Currently we have only one.
