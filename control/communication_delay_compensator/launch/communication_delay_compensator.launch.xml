@@ -16,8 +16,9 @@
         <param from="$(var communication_delay_compensator_param_path)"/>
         <!--        <param from="$(var vehicle_info_param_file)"/>-->
 
-        <remap from="~/input/control_cmd" to="/control/trajectory_follower/control_cmd"/>-->
-        <remap from="~/input/steering_state" to="/vehicle/status/steering_status"/>-->
+        <remap from="~/input/control_cmd" to="/control/trajectory_follower/control_cmd"/>
+        <remap from="~/input/steering_state" to="/vehicle/status/steering_status"/>
+        <remap from="~/input/current_odometry" to="/localization/kinematic_state"/>
         <remap from="~/output/communication_delay_compensation_refs" to="observers/time_delay_compensator/delay_refs"/>
 
         <!--        <remap from="~/input/reference_trajectory" to="$(var input/reference_trajectory)"/>-->
