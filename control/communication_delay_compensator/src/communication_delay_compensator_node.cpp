@@ -23,11 +23,11 @@ namespace observers
 
 			// Read vehicle model parameters
 			// Implement Reading Global and Local Variables.
-// 			const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
-// 			params_.wheel_base = vehicle_info.wheel_base_m;
+			// 			const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
+			// 			params_.wheel_base = vehicle_info.wheel_base_m;
 
 			/* set up ros system */
-			float64_t duration{ 50 };  // ms
+			float64_t duration{ 0.03 };  // ms
 			initTimer(duration);
 
 			// Create Publishers
@@ -55,7 +55,7 @@ namespace observers
 
 		void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
 		{
-			const auto period_ns = std::chrono::duration_cast<std::chrono::milliseconds>(
+			const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
 				std::chrono::duration<float64_t>(period_s));
 
 			timer_ = rclcpp::create_timer(
