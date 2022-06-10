@@ -140,6 +140,10 @@ LateralController::LateralController(const rclcpp::NodeOptions & node_options)
     "~/output/predicted_trajectory", 1);
   m_pub_diagnostic = create_publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>(
     "~/output/diagnostic", 1);
+
+  m_pub_ctrl_error_report =
+    create_publisher<ControllerErrorReport>("~/output/lateral_controller_error_report", 1);
+
   m_sub_ref_path = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "~/input/reference_trajectory", rclcpp::QoS{1},
     std::bind(&LateralController::onTrajectory, this, _1));
@@ -208,6 +212,16 @@ void LateralController::onTimer()
       get_logger(), *get_clock(), 5000 /*ms*/, "MPC is not solved. publish 0 velocity.");
     ctrl_cmd = getStopControlCommand();
   }
+
+  // Get the errors computed and publish.
+  float64_t lateral_error{};
+  float64_t heading_error{};
+  m_mpc.getComputedErrors(lateral_error, heading_error);
+  ControllerErrorReport ctrl_error_report{};
+
+  ctrl_error_report.lateral_deviation_read = lateral_error;
+  ctrl_error_report.heading_angle_error_read = heading_error;
+  m_pub_ctrl_error_report->publish(ctrl_error_report);
 
   m_ctrl_cmd_prev = ctrl_cmd;
   publishCtrlCmd(ctrl_cmd);

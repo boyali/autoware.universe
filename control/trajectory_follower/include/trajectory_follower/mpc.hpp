@@ -126,6 +126,7 @@ struct MPCData
   float64_t lateral_err;
   float64_t yaw_err;
 };
+
 /**
  * Matrices used for MPC optimization
  */
@@ -426,6 +427,9 @@ public:
    * @brief set the RCLCPP clock to use for time keeping
    */
   inline void setClock(rclcpp::Clock::SharedPtr clock) { m_clock = clock; }
+
+  void getComputedErrors(float64_t & lateral_error, float64_t & heading_error);
+  
 };  // class MPC
 }  // namespace trajectory_follower
 }  // namespace control

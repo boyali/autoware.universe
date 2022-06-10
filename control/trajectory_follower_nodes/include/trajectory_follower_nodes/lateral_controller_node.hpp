@@ -38,6 +38,7 @@
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
+#include "autoware_auto_vehicle_msgs/msg/controller_error_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "geometry_msgs/msg/pose.hpp"
@@ -60,6 +61,7 @@ namespace trajectory_follower_nodes
 {
 using autoware::common::types::bool8_t;
 using autoware::common::types::float64_t;
+using autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
 
 class TRAJECTORY_FOLLOWER_PUBLIC LateralController : public rclcpp::Node
@@ -84,6 +86,9 @@ private:
   //!< @brief topic publisher for control diagnostic
   rclcpp::Publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>::SharedPtr
     m_pub_diagnostic;
+  //!< @brief topic publisher for the errors computed by the controller.
+  rclcpp::Publisher<ControllerErrorReport>::SharedPtr
+    m_pub_ctrl_error_report;
   //!< @brief topic subscription for reference waypoints
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_sub_ref_path;
   //!< @brief subscription for current velocity
