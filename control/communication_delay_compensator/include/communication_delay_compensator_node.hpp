@@ -27,6 +27,12 @@
 // Autoware Headers
 #include "common/types.hpp"
 
+#include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+#include "tf2_msgs/msg/tf_message.hpp"
+
 // LIBRARY HEADERS
 #include "autoware_control_toolbox.hpp"
 #include "visibility_control.hpp"
@@ -37,38 +43,52 @@
 
 namespace observers
 {
-	using namespace std::chrono_literals;
+using namespace std::chrono_literals;
+using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
 
-	class CommunicationDelayCompensatorNode : public rclcpp::Node
-		{
-	public:
-		using float64_t = autoware::common::types::float64_t;
+class CommunicationDelayCompensatorNode : public rclcpp::Node
+{
+public:
+  using float64_t = autoware::common::types::float64_t;
 
-		/**
-		 * @brief constructor
-		 */
-		explicit CommunicationDelayCompensatorNode(const rclcpp::NodeOptions& node_options);
+  /**
+   * @brief constructor
+   */
+  explicit CommunicationDelayCompensatorNode(const rclcpp::NodeOptions & node_options);
 
-		/**
-		 * @brief destructor
-		 */
-		~CommunicationDelayCompensatorNode() override = default;
+  /**
+   * @brief destructor
+   */
+  ~CommunicationDelayCompensatorNode() override = default;
 
-	private:
-		// Data Members
-		//!< @brief timer to update after a given interval
-		rclcpp::TimerBase::SharedPtr timer_;
+private:
+  // Data Members
+  //!< @brief timer to update after a given interval
+  rclcpp::TimerBase::SharedPtr timer_;
 
-		// Node Methods
-		//!< initialize timer to work in real, simulation, and replay
-		void initTimer(float64_t period_s);
+  rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
+    sub_control_cmds_;
 
-		/**
-		 * @brief compute and publish the compensating reference signals for the controllers with a
-		 * constant control period
-		 */
-		void onTimer();
-		};
+  // Pointers to the ROS topics.
+  // pointers for ros topic
+  std::shared_ptr<nav_msgs::msg::Odometry> current_velocity_ptr{nullptr};
+  std::shared_ptr<ControlCommand> current_ctrl_ptr_{nullptr};
 
-} // namespace observers
+  // Node Methods
+  //!< initialize timer to work in real, simulation, and replay
+  void initTimer(float64_t period_s);
+
+  /**
+   * @brief compute and publish the compensating reference signals for the controllers with a
+   * constant control period
+   */
+  void onTimer();
+
+  /**
+   * @brief  subscription callbacks
+   */
+  void onControlCommands(const ControlCommand::SharedPtr msg);
+};
+
+}  // namespace observers
 #endif  // COMMUNICATION_DELAY_COMPENSATOR__COMMUNICATION_DELAY_COMPENSATOR_NODE_HPP
