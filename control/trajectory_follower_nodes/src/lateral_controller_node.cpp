@@ -213,14 +213,12 @@ void LateralController::onTimer()
     ctrl_cmd = getStopControlCommand();
   }
 
-  // Get the errors computed and publish.
-  float64_t lateral_error{};
-  float64_t heading_error{};
-  m_mpc.getComputedErrors(lateral_error, heading_error);
+  // Get the errors computed and publish. 
+  auto const & lat_and_yaw_error_pair = m_mpc.getComputedErrors();
   ControllerErrorReport ctrl_error_report{};
 
-  ctrl_error_report.lateral_deviation_read = lateral_error;
-  ctrl_error_report.heading_angle_error_read = heading_error;
+  ctrl_error_report.lateral_deviation_read = lat_and_yaw_error_pair.first;
+  ctrl_error_report.heading_angle_error_read = lat_and_yaw_error_pair.second;
   publishErrors(ctrl_error_report);
 
   m_ctrl_cmd_prev = ctrl_cmd;
