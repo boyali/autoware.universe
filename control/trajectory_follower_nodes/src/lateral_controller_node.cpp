@@ -221,7 +221,7 @@ void LateralController::onTimer()
 
   ctrl_error_report.lateral_deviation_read = lateral_error;
   ctrl_error_report.heading_angle_error_read = heading_error;
-  m_pub_ctrl_error_report->publish(ctrl_error_report);
+  publishErrors(ctrl_error_report);
 
   m_ctrl_cmd_prev = ctrl_cmd;
   publishCtrlCmd(ctrl_cmd);
@@ -369,6 +369,12 @@ void LateralController::publishCtrlCmd(
   ctrl_cmd.stamp = this->now();
   m_pub_ctrl_cmd->publish(ctrl_cmd);
   m_steer_cmd_prev = ctrl_cmd.steering_tire_angle;
+}
+
+void LateralController::publishErrors(ControllerErrorReport msg)
+{
+  msg.stamp = this->now();
+  m_pub_ctrl_error_report->publish(msg);
 }
 
 void LateralController::publishPredictedTraj(

@@ -182,6 +182,13 @@ private:
   void publishCtrlCmd(autoware_auto_control_msgs::msg::AckermannLateralCommand cmd);
 
   /**
+   * @brief publish control errors
+   * @param [in] cmd published errors (lateral and heading)
+   */
+  void publishErrors(ControllerErrorReport msg);
+
+
+  /**
    * @brief publish predicted future trajectory
    * @param [in] predicted_traj published predicted trajectory
    */
