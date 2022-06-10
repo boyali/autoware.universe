@@ -794,6 +794,13 @@ bool8_t MPC::isValid(const MPCMatrix & m) const
 
   return true;
 }
+
+void MPC::getComputedErrors(float64_t & lateral_error, float64_t & heading_error)
+{
+  lateral_error = m_lateral_error_prev;
+  heading_error = m_yaw_error_prev;
+}
+
 }  // namespace trajectory_follower
 }  // namespace control
 }  // namespace motion
