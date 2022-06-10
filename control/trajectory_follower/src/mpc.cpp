@@ -279,6 +279,10 @@ bool8_t MPC::getData(
   data->yaw_err = autoware::common::helper_functions::wrap_angle(
     to_angle(current_pose.orientation) - to_angle(data->nearest_pose.orientation));
 
+  // Save the  errors to report.
+  m_lateral_error_to_report = data->lateral_err;
+  m_yaw_error_to_report = data->yaw_err;
+
   /* get predicted steer */
   if (!m_steer_prediction_prev) {
     m_steer_prediction_prev = std::make_shared<float64_t>(current_steer.steering_tire_angle);
@@ -795,10 +799,11 @@ bool8_t MPC::isValid(const MPCMatrix & m) const
   return true;
 }
 
-void MPC::getComputedErrors(float64_t & lateral_error, float64_t & heading_error)
+std::pair<float64_t, float64_t> MPC::getComputedErrors()
 {
-  lateral_error = m_lateral_error_prev;
-  heading_error = m_yaw_error_prev;
+ 
+
+  return std::pair<float64_t, float64_t>({m_lateral_error_to_report, m_yaw_error_to_report});
 }
 
 }  // namespace trajectory_follower

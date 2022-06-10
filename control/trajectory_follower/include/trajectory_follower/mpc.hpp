@@ -170,8 +170,15 @@ private:
   float64_t m_raw_steer_cmd_pprev = 0.0;
   //!< @brief previous lateral error for derivative
   float64_t m_lateral_error_prev = 0.0;
-  //!< @brief previous lateral error for derivative
+  //!< @brief previous yaw error for derivative
   float64_t m_yaw_error_prev = 0.0;
+
+  //!< @brief previous lateral error to report
+  float64_t m_lateral_error_to_report{};
+
+  //!< @brief previous headin error to report
+  float64_t m_yaw_error_to_report{};
+
   //!< @brief previous predicted steering
   std::shared_ptr<float64_t> m_steer_prediction_prev;
   //!< @brief previous computation time
@@ -428,8 +435,8 @@ public:
    */
   inline void setClock(rclcpp::Clock::SharedPtr clock) { m_clock = clock; }
 
-  void getComputedErrors(float64_t & lateral_error, float64_t & heading_error);
-  
+  std::pair<float64_t, float64_t>  getComputedErrors();
+
 };  // class MPC
 }  // namespace trajectory_follower
 }  // namespace control
