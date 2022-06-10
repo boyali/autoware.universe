@@ -46,6 +46,19 @@ namespace observers
 			sub_current_steering_ptr_ = create_subscription<SteeringReport>("~/input/steering_state", rclcpp::QoS{ 1 },
 			                                                                std::bind(&observers::CommunicationDelayCompensatorNode::onCurrentSteering,
 			                                                                          this, std::placeholders::_1));
+
+			sub_current_long_error_ptr_ =
+				create_subscription<ControllerErrorReportMsg>("~/input/long_errors", rclcpp::QoS{ 1 },
+				                                              std::bind
+					                                              (&observers::CommunicationDelayCompensatorNode::onCurrentLongitudinalError,
+					                                               this, std::placeholders::_1));
+
+			sub_current_lat_errors_ptr_ =
+				create_subscription<ControllerErrorReportMsg>("~/input/lat_errors", rclcpp::QoS{ 1 },
+				                                              std::bind
+					                                              (&observers::CommunicationDelayCompensatorNode::onCurrentLateralErrors,
+					                                               this, std::placeholders::_1));
+
 		}
 
 		void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
@@ -61,7 +74,7 @@ namespace observers
 		{
 			// RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "In the delay compensator node ");
 
-			// RCLCPP_INFO_THROTTLE(this->get_logger(), clk, 1000, "Hello world");
+			RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Hello world");
 
 			// RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), steady_clock, 1000, "Hello World!");
 
@@ -89,9 +102,32 @@ namespace observers
 		{
 			current_velocity_ptr = std::make_shared<VelocityMsg>(*msg);
 
-			ns_utils::print("ACT On velocity method ");
-			ns_utils::print("Read parameter control period :", params_.cdob_ctrl_period);
+// 			ns_utils::print("ACT On velocity method ");
+// 			ns_utils::print("Read parameter control period :", params_.cdob_ctrl_period);
 			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "On Velocity");
+
+		}
+
+		void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(ControllerErrorReportMsg::SharedPtr const msg)
+		{
+			current_longitudinal_errors_ = std::make_shared<ControllerErrorReportMsg>(*msg);
+
+			auto vel_error = static_cast<double>(current_longitudinal_errors_->velocity_error_read);
+			RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Longitudinal Error");
+			ns_utils::print("Longitudinal velocity error :", vel_error);
+			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "On Longitudinal Errors");
+
+		}
+
+		void CommunicationDelayCompensatorNode::onCurrentLateralErrors(ControllerErrorReportMsg::SharedPtr const msg)
+		{
+			current_lateral_errors_ = std::make_shared<ControllerErrorReportMsg>(*msg);
+
+			auto lat_error = static_cast<double>(current_lateral_errors_->lateral_deviation_read);
+			auto heading_error = static_cast<double>(current_lateral_errors_->heading_angle_error_read);
+			ns_utils::print("Current lateral errors : ", lat_error, heading_error);
+
+			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "On Lateral Errors");
 
 		}
 

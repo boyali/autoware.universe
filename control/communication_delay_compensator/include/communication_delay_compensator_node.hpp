@@ -53,6 +53,12 @@ namespace observers
 		using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
 		// using DelayCompensatatorMsg = tier4_vehicle_msgs::msg::DelayCompensators;
 		using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
+
+		/**
+		 * @brief longitudinal_controller reports vcurrent - vtarget.
+		 * lateral_controller reports current_yaw - target_yaw and current_lat_distance - target_lat_distance
+		 *
+		 * */
 		using ControllerErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
 
 		using VelocityMsg = nav_msgs::msg::Odometry;
@@ -98,6 +104,12 @@ namespace observers
 				//!< @brief subscription for current velocity
 				rclcpp::Subscription<SteeringReport>::SharedPtr sub_current_steering_ptr_;
 
+				//!< @brief subscription for current velocity error.
+				rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_long_error_ptr_;
+
+				//!< @brief subscription for current lateral and heading errors.
+				rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_lat_errors_ptr_;
+
 				// Publishers
 				rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr pub_delay_compensator_;
 
@@ -107,6 +119,8 @@ namespace observers
 				std::shared_ptr<ControlCommand> current_ctrl_ptr_{ nullptr };
 				std::shared_ptr<SteeringReport> current_steering_ptr_{ nullptr };
 				std::shared_ptr<DelayCompensatatorMsg> current_delay_references_{ nullptr };
+				std::shared_ptr<ControllerErrorReportMsg> current_lateral_errors_{ nullptr };
+				std::shared_ptr<ControllerErrorReportMsg> current_longitudinal_errors_{ nullptr };
 
 				// Node Methods
 				//!< initialize timer to work in real, simulation, and replay
@@ -132,6 +146,16 @@ namespace observers
 				 * @brief  subscription callbacks
 				 */
 				void onCurrentSteering(const SteeringReport::SharedPtr msg);
+
+				/**
+				 * @brief  subscription to computed velocity error
+				 */
+				void onCurrentLongitudinalError(const ControllerErrorReportMsg::SharedPtr msg);
+
+				/**
+				 * @brief  subscription to lateral reference errors ey, eyaw.
+				 */
+				void onCurrentLateralErrors(const ControllerErrorReportMsg::SharedPtr msg);
 
 				/**
 				 * @brief publish message.
