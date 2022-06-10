@@ -130,10 +130,12 @@ void SimModelDelaySteerAccGeared_Dist::update(const float64_t& dt)
 	}
 
 	// Apply deadzone to steering
-	auto&& steer_deviation       = steer_delayed - state_(IDX::STEER);
+	auto&& steer_deviation = steer_delayed - state_(IDX::STEER);
+
 	auto&& delta_steer_deadzoned =
 			    disturbance_collection_.steering_dedzone_ptr_->getDisturbedInput(steer_deviation);
-	auto&& steer_deadzoned       = delta_steer_deadzoned + state_(IDX::STEER);
+
+	auto&& steer_deadzoned = delta_steer_deadzoned + state_(IDX::STEER);
 
 	delayed_input(IDX_U::STEER_DES) = steer_deadzoned;
 	delayed_input(IDX_U::ACCX_DES)  = acc_delayed + acc_slope_dist;
