@@ -16,53 +16,72 @@
 
 namespace observers
 {
-CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
-  const rclcpp::NodeOptions & node_options)
-: Node("lateral_controller", node_options)
-{
-  using std::placeholders::_1;
+		CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(const rclcpp::NodeOptions& node_options)
+			: Node("communication_delay_compensator", node_options)
+		{
+			using std::placeholders::_1;
 
-  /* set up ros system */
-  float64_t duration{50};  // ms
-  initTimer(duration);
+			/* set up ros system */
+			float64_t duration{ 50 };  // ms
+			initTimer(duration);
 
-  // Create subscriptions
-  sub_control_cmds_ = create_subscription<autoware_auto_control_msgs::msg::LongitudinalCommand>(
-    "~/input/longitudinal/control_cmd", rclcpp::QoS{1},
-    std::bind(&CommunicationDelayCompensatorNode::onControlCommands, this, std::placeholders::_1));
-}
+			// Create Publishers
+			pub_delay_compensator_ = create_publisher<DelayCompensatatorMsg>(
+				"~/output/communication_delay_compensation_refs", 1);
 
-void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
-{
-  const auto period_ns = std::chrono::duration_cast<std::chrono::milliseconds>(
-    std::chrono::duration<float64_t>(period_s));
+			// Create subscriptions
+			sub_control_cmds_ = create_subscription<ControlCommand>("~/input/control_cmd", rclcpp::QoS{ 1 },
+			                                                        std::bind(&observers::CommunicationDelayCompensatorNode::onControlCommands,
+			                                                                  this,
+			                                                                  std::placeholders::_1));
+		}
 
-  timer_ = rclcpp::create_timer(
-    this, get_clock(), period_ns, std::bind(&CommunicationDelayCompensatorNode::onTimer, this));
-}
+		void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
+		{
+			const auto period_ns = std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::duration<float64_t>(period_s));
 
-void CommunicationDelayCompensatorNode::onTimer()
-{
-  // RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "In the delay compensator node ");
+			timer_ = rclcpp::create_timer(
+				this, get_clock(), period_ns, std::bind(&CommunicationDelayCompensatorNode::onTimer, this));
+		}
 
-  // RCLCPP_INFO_THROTTLE(this->get_logger(), clk, 1000, "Hello world");
+		void CommunicationDelayCompensatorNode::onTimer()
+		{
+			// RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "In the delay compensator node ");
 
-  // RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), steady_clock, 1000, "Hello World!");
+			// RCLCPP_INFO_THROTTLE(this->get_logger(), clk, 1000, "Hello world");
 
-  // RCLCPP_ERROR(get_logger(), "Trajectory is invalid!, stop computing.");
+			// RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), steady_clock, 1000, "Hello World!");
 
-  // RCLCPP_DEBUG(get_logger(), "MPC does not have a QP solver");
+			// RCLCPP_ERROR(get_logger(), "Trajectory is invalid!, stop computing.");
 
-  ns_utils::print("In On timer method ");
+			// RCLCPP_DEBUG(get_logger(), "MPC does not have a QP solver");
 
-  RCLCPP_WARN_THROTTLE(
-    get_logger(), *get_clock(), 1000 /*ms*/, "waiting for vehicle measured steering message ...");
-}
+			ns_utils::print("ACT On timer method ");
 
-void CommunicationDelayCompensatorNode::onControlCommands(const ControlCommand::SharedPtr msg)
-{
-  current_ctrl_ptr_ = std::make_shared<ControlCommand>(*msg);
-}
+			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "onTimerCommands");
+		}
+
+		void CommunicationDelayCompensatorNode::onControlCommands(const ControlCommand::SharedPtr msg)
+		{
+			current_ctrl_ptr_ = std::make_shared<ControlCommand>(*msg);
+			// ns_utils::print("ACT On control method ");
+			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "onControlCommands");
+		}
+
+		void CommunicationDelayCompensatorNode::onCurrentVelocity(const VelocityMsg::SharedPtr msg)
+		{
+			current_velocity_ptr = std::make_shared<VelocityMsg>(*msg);
+
+			// ns_utils::print("ACT On velocity method ");
+			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "onControlCommands");
+
+		}
+
+		CommunicationDelayCompensatorNode::~CommunicationDelayCompensatorNode()
+		{
+
+		}
 
 }  // namespace observers
 #include "rclcpp_components/register_node_macro.hpp"
