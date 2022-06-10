@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMMUNICATION_DELAY_OBSERVER_BASED_CONTROL_VISIBILITY_CONTROL_HPP
-#define COMMUNICATION_DELAY_OBSERVER_BASED_CONTROL_VISIBILITY_CONTROL_HPP
+#ifndef COMMUNICATION_DELAY_COMPENSATOR__VISIBILITY_CONTROL_HPP
+#define COMMUNICATION_DELAY_COMPENSATOR__VISIBILITY_CONTROL_HPP
 
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(__WIN32)
@@ -34,4 +34,4 @@
 #error "Unsupported Build Configuration"
 #endif
 
-#endif // COMMUNICATION_DELAY_OBSERVER_BASED_CONTROL_VISIBILITY_CONTROL_HPP
+#endif // COMMUNICATION_DELAY_COMPENSATOR__VISIBILITY_CONTROL_HPP
