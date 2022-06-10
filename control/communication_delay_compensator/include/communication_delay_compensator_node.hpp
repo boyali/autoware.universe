@@ -26,9 +26,11 @@
 
 // Autoware Headers
 #include "common/types.hpp"
+#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
+#include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_msgs/msg/tf_message.hpp"
@@ -48,11 +50,20 @@ namespace observers
 		using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
 		using DelayCompensatatorMsg = tier4_vehicle_msgs::msg::DelayCompensators;
 		using VelocityMsg = nav_msgs::msg::Odometry;
+		using vehicle_info_util::VehicleInfoUtil;
+		using autoware_auto_vehicle_msgs::msg::SteeringReport;
+
+		using float64_t = autoware::common::types::float64_t;
+		using float32_t = autoware::common::types::float32_t;
+
+		struct Parameters
+		{
+				float32_t wheel_base{};
+		};
 
 		class CommunicationDelayCompensatorNode : public rclcpp::Node
 		{
 		public:
-				using float64_t = autoware::common::types::float64_t;
 
 				/**
 				 * @brief constructor
@@ -62,10 +73,11 @@ namespace observers
 				/**
 				 * @brief destructor
 				 */
-				~CommunicationDelayCompensatorNode() override;
+				~CommunicationDelayCompensatorNode() override = default;
 
 		private:
 				// Data Members
+				Parameters params_{};
 				//!< @brief timer to update after a given interval
 				rclcpp::TimerBase::SharedPtr timer_;
 
@@ -75,6 +87,9 @@ namespace observers
 				//!< @brief subscription for current velocity
 				rclcpp::Subscription<VelocityMsg>::SharedPtr sub_current_velocity_ptr_;
 
+				//!< @brief subscription for current velocity
+				rclcpp::Subscription<SteeringReport>::SharedPtr sub_current_steering_ptr_;
+
 				// Publishers
 				rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr pub_delay_compensator_;
 
@@ -82,6 +97,8 @@ namespace observers
 				// pointers for ros topic
 				std::shared_ptr<nav_msgs::msg::Odometry> current_velocity_ptr{ nullptr };
 				std::shared_ptr<ControlCommand> current_ctrl_ptr_{ nullptr };
+				std::shared_ptr<SteeringReport> current_steering_ptr_{ nullptr };
+				std::shared_ptr<DelayCompensatatorMsg> current_delay_references_{ nullptr };
 
 				// Node Methods
 				//!< initialize timer to work in real, simulation, and replay
@@ -102,6 +119,16 @@ namespace observers
 				 * @brief  subscription callbacks
 				 */
 				void onCurrentVelocity(const VelocityMsg::SharedPtr msg);
+
+				/**
+				 * @brief  subscription callbacks
+				 */
+				void onCurrentSteering(const SteeringReport::SharedPtr msg);
+
+				/**
+				 * @brief publish message.
+				 * */
+				void publishCompensationReferences();
 		};
 
 }  // namespace observers
