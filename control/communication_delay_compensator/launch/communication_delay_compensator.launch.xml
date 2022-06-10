@@ -19,6 +19,9 @@
         <remap from="~/input/control_cmd" to="/control/trajectory_follower/control_cmd"/>
         <remap from="~/input/steering_state" to="/vehicle/status/steering_status"/>
         <remap from="~/input/current_odometry" to="/localization/kinematic_state"/>
+        <remap from="~/input/long_errors"
+               to="/control/trajectory_follower/longitudinal/longitudinal_controller_error_report"/>
+        <remap from="~/input/lat_errors" to="/control/trajectory_follower/lateral/lateral_controller_error_report"/>
         <remap from="~/output/communication_delay_compensation_refs" to="observers/time_delay_compensator/delay_refs"/>
 
         <!--        <remap from="~/input/reference_trajectory" to="$(var input/reference_trajectory)"/>-->
