@@ -84,7 +84,7 @@ namespace observers
 		void CommunicationDelayCompensatorNode::onControlCommands(const ControlCommand::SharedPtr msg)
 		{
 			current_ctrl_ptr_ = std::make_shared<ControlCommand>(*msg);
-			// ns_utils::print("ACT On control method ");
+			ns_utils::print("ACT On control method ");
 			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "onControlCommands");
 		}
 
@@ -92,7 +92,7 @@ namespace observers
 		{
 			current_velocity_ptr = std::make_shared<VelocityMsg>(*msg);
 
-			// ns_utils::print("ACT On velocity method ");
+			ns_utils::print("ACT On velocity method ");
 			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "onControlCommands");
 
 		}
@@ -107,7 +107,7 @@ namespace observers
 		}
 		void CommunicationDelayCompensatorNode::onCurrentSteering(const SteeringReport::SharedPtr msg)
 		{
-
+			ns_utils::print("ACT On steering method ");
 			current_steering_ptr_ = std::make_shared<SteeringReport>(*msg);
 		}
 
