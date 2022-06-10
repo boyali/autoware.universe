@@ -69,7 +69,7 @@ ament_auto_add_library(${DELAY_COMPENSATION_NODE} SHARED
 
 
 rclcpp_components_register_node(${DELAY_COMPENSATION_NODE}
-        PLUGIN "autoware::motion::control::observer::CommunicationDelayCompensatorNode"
+        PLUGIN "observers::CommunicationDelayCompensatorNode"
         EXECUTABLE ${DELAY_COMPENSATION_NODE}_exe
         )
 ## ----------------- Library Tests----------------------------------------------
@@ -78,7 +78,6 @@ if (BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
     ament_lint_auto_find_test_dependencies()
     find_package(ament_cmake_gtest REQUIRED)
-
 endif ()
 
 # -------------  PROTOTYPES ____________________________

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMMUNICATION_DELAY_COMPENSATOR__DELAY_COMPENSATOR_NODE_HPP
-#define COMMUNICATION_DELAY_COMPENSATOR__DELAY_COMPENSATOR_NODE_HPP
+#ifndef COMMUNICATION_DELAY_COMPENSATOR__COMMUNICATION_DELAY_COMPENSATOR_NODE_HPP
+#define COMMUNICATION_DELAY_COMPENSATOR__COMMUNICATION_DELAY_COMPENSATOR_NODE_HPP
 
 // Base Headers
 
@@ -28,14 +28,17 @@
 #include "common/types.hpp"
 
 // LIBRARY HEADERS
+#include "autoware_control_toolbox.hpp"
 #include "visibility_control.hpp"
 
 // ROS headers
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 
-namespace autoware::motion::control::observer
+namespace observers
 {
+	using namespace std::chrono_literals;
+
 	class CommunicationDelayCompensatorNode : public rclcpp::Node
 		{
 	public:
@@ -49,12 +52,12 @@ namespace autoware::motion::control::observer
 		/**
 		 * @brief destructor
 		 */
-		virtual ~CommunicationDelayCompensatorNode();
+		~CommunicationDelayCompensatorNode() override = default;
 
 	private:
 		// Data Members
 		//!< @brief timer to update after a given interval
-		rclcpp::TimerBase::SharedPtr m_timer_;
+		rclcpp::TimerBase::SharedPtr timer_;
 
 		// Node Methods
 		//!< initialize timer to work in real, simulation, and replay
@@ -67,6 +70,5 @@ namespace autoware::motion::control::observer
 		void onTimer();
 		};
 
-} // namespace autoware::motion::control::observer
-
-#endif  // COMMUNICATION_DELAY_COMPENSATOR__DELAY_COMPENSATOR_NODE_HPP
+} // namespace observers
+#endif  // COMMUNICATION_DELAY_COMPENSATOR__COMMUNICATION_DELAY_COMPENSATOR_NODE_HPP

@@ -14,7 +14,7 @@
 
 #include "communication_delay_compensator_node.hpp"
 
-namespace autoware::motion::control::observer
+namespace observers
 {
 	CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
 			const rclcpp::NodeOptions& node_options)
@@ -29,10 +29,10 @@ namespace autoware::motion::control::observer
 
 	void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
 	{
-		const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+		const auto period_ns = std::chrono::duration_cast<std::chrono::milliseconds>(
 				std::chrono::duration<float64_t>(period_s));
 
-		m_timer_ = rclcpp::create_timer(
+		timer_ = rclcpp::create_timer(
 				this, get_clock(), period_ns, std::bind(&CommunicationDelayCompensatorNode::onTimer, this));
 	}
 
@@ -48,13 +48,15 @@ namespace autoware::motion::control::observer
 
 		// RCLCPP_DEBUG(get_logger(), "MPC does not have a QP solver");
 
+		ns_utils::print("In On timer method ");
+
 		RCLCPP_WARN_THROTTLE(
 				get_logger(), *get_clock(), 1000 /*ms*/,
 				"waiting for vehicle measured steering message ...");
 	}
 
-} // namespace autoware::motion::control::observer
 
+} // namespace observers
 #include "rclcpp_components/register_node_macro.hpp"
 
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::motion::control::observer::CommunicationDelayCompensatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(observers::CommunicationDelayCompensatorNode)
