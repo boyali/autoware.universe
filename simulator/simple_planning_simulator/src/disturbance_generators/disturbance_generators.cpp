@@ -66,7 +66,7 @@ void InputDisturbance_TimeDelayPade::checkTimeAndUpdateModel()
     auto && sinus_magnitude = time_delay_fluctuation_percentage_ * meanTd;
 
     double Td_new = delay_model_.getMeanTimeDelay() +
-      sinus_magnitude * sin(w_of_sin_ * time_from_beginning.count());
+                    sinus_magnitude * sin(w_of_sin_ * time_from_beginning.count());
 
     // Update
     delay_model_.updateModel(Td_new);
@@ -261,8 +261,8 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double & delta_u)
     double m_slope_sample = sampler_m_(generator_);
     double b_deadzone_thr = sampler_b_(generator_);
 
-    ns_utils::print(
-      "In deadzone sampling, sampled slope and deadzone ", m_slope_sample, b_deadzone_thr);
+    /*     ns_utils::print(
+          "In deadzone sampling, sampled slope and deadzone ", m_slope_sample, b_deadzone_thr); */
 
     if (delta_u > b_deadzone_thr) {
       current_mr_slope_ = m_slope_sample;
@@ -288,7 +288,7 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double & delta_u)
       delta_v = 0.;
     }
 
-  } else { // omit sinusoidal part.
+  } else {  // omit sinusoidal part.
     if (delta_u > current_br_threshold_) {
       // delta_v = current_mr_slope_ * (delta_u - current_br_threshold_);
       delta_v = current_mr_slope_ * delta_u;
