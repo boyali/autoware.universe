@@ -30,11 +30,14 @@
 
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
-#include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_msgs/msg/tf_message.hpp"
+
 #include "tier4_vehicle_msgs/msg/delay_compensators_stamped.hpp"
+#include  "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
+#include "autoware_auto_vehicle_msgs/msg/controller_error_report.hpp"
 
 // LIBRARY HEADERS
 #include "autoware_control_toolbox.hpp"
@@ -48,7 +51,10 @@ namespace observers
 {
 		using namespace std::chrono_literals;
 		using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
-		using DelayCompensatatorMsg = tier4_vehicle_msgs::msg::DelayCompensators;
+		// using DelayCompensatatorMsg = tier4_vehicle_msgs::msg::DelayCompensators;
+		using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
+		using ControllerErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
+
 		using VelocityMsg = nav_msgs::msg::Odometry;
 		using vehicle_info_util::VehicleInfoUtil;
 		using autoware_auto_vehicle_msgs::msg::SteeringReport;
