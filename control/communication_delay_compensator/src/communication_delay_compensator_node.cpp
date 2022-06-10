@@ -21,6 +21,11 @@ namespace observers
 		{
 			using std::placeholders::_1;
 
+			// Read vehicle model parameters
+			// Implement Reading Global and Local Variables.
+// 			const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
+// 			params_.wheel_base = vehicle_info.wheel_base_m;
+
 			/* set up ros system */
 			float64_t duration{ 50 };  // ms
 			initTimer(duration);
@@ -34,6 +39,18 @@ namespace observers
 			                                                        std::bind(&observers::CommunicationDelayCompensatorNode::onControlCommands,
 			                                                                  this,
 			                                                                  std::placeholders::_1));
+
+			sub_current_velocity_ptr_ = create_subscription<VelocityMsg>("~/input/current_odometry", rclcpp::QoS{ 1 },
+			                                                             std::bind
+				                                                             (&observers::CommunicationDelayCompensatorNode::onCurrentVelocity,
+				                                                              this,
+				                                                              std::placeholders::_1));
+
+			sub_current_steering_ptr_ = create_subscription<SteeringReport>("~/input/steering_state", rclcpp::QoS{ 1 },
+			                                                                std::bind
+				                                                                (&observers::CommunicationDelayCompensatorNode::onCurrentSteering,
+				                                                                 this,
+				                                                                 std::placeholders::_1));
 		}
 
 		void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
@@ -57,6 +74,8 @@ namespace observers
 
 			// RCLCPP_DEBUG(get_logger(), "MPC does not have a QP solver");
 
+			publishCompensationReferences();
+
 			ns_utils::print("ACT On timer method ");
 
 			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "onTimerCommands");
@@ -78,9 +97,18 @@ namespace observers
 
 		}
 
-		CommunicationDelayCompensatorNode::~CommunicationDelayCompensatorNode()
+		void CommunicationDelayCompensatorNode::publishCompensationReferences()
+		{
+			current_delay_references_->heading_angle_error_compensation_ref = 1.0;
+			current_delay_references_->lateral_deviation_error_compensation_ref = 2.0;
+
+			pub_delay_compensator_->publish(*current_delay_references_);
+
+		}
+		void CommunicationDelayCompensatorNode::onCurrentSteering(const SteeringReport::SharedPtr msg)
 		{
 
+			current_steering_ptr_ = std::make_shared<SteeringReport>(*msg);
 		}
 
 }  // namespace observers

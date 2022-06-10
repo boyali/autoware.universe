@@ -81,7 +81,9 @@ if (BUILD_TESTING)
 endif ()
 
 # -------------  PROTOTYPES ____________________________
-ament_auto_package(INSTALL_TO_SHARE)
+ament_auto_package(INSTALL_TO_SHARE
+        launch
+        param)
 
 
 ##  Usage Examples
