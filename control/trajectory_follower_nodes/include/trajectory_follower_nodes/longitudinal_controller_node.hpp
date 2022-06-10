@@ -33,6 +33,7 @@
 #include "autoware_auto_control_msgs/msg/longitudinal_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
+#include "autoware_auto_vehicle_msgs/msg/controller_error_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -55,6 +56,7 @@ using autoware::common::types::bool8_t;
 using autoware::common::types::float64_t;
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
 namespace motion_common = ::autoware::motion::motion_common;
+using autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
 
 /// \class LongitudinalController
 /// \brief The node class used for generating longitudinal control commands (velocity/acceleration)
@@ -92,6 +94,7 @@ private:
     m_pub_slope;
   rclcpp::Publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>::SharedPtr
     m_pub_debug;
+  rclcpp::Publisher<ControllerErrorReport>::SharedPtr m_pub_ctrl_error_report;
   rclcpp::TimerBase::SharedPtr m_timer_control;
 
   rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr m_tf_sub;
@@ -151,6 +154,8 @@ private:
   float64_t m_current_vel_threshold_pid_integrate;
   bool8_t m_enable_brake_keeping_before_stop;
   float64_t m_brake_keeping_acc;
+
+  float64_t m_current_velocity_error_to_report{};
 
   // smooth stop
   trajectory_follower::SmoothStop m_smooth_stop;
@@ -269,6 +274,12 @@ private:
    * @param [in] control_data data for control calculation
    */
   void publishDebugData(const Motion & ctrl_cmd, const ControlData & control_data);
+
+  /**
+   * @brief publish control errors
+   * @param [in] cmd published errors (velocity)
+   */
+  void publishErrors(ControllerErrorReport msg);
 
   /**
    * @brief calculate time between current and previous one

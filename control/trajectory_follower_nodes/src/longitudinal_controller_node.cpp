@@ -182,6 +182,9 @@ LongitudinalController::LongitudinalController(const rclcpp::NodeOptions & node_
   m_pub_debug = create_publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>(
     "~/output/diagnostic", rclcpp::QoS{1});
 
+   m_pub_ctrl_error_report =
+    create_publisher<ControllerErrorReport>("~/output/longitudinal_controller_error_report", 1);
+
   // Timer
   {
     const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -387,6 +390,12 @@ void LongitudinalController::callbackTimerControl()
 
   // publish control command
   publishCtrlCmd(ctrl_cmd, control_data.current_motion.vel);
+
+  // publish error report
+  ControllerErrorReport error_report{};
+  error_report.velocity_error_read = m_current_velocity_error_to_report;
+
+  publishErrors(error_report);
 
   // publish debug data
   publishDebugData(ctrl_cmd, control_data);
@@ -625,6 +634,13 @@ void LongitudinalController::publishCtrlCmd(const Motion & ctrl_cmd, float64_t c
 
   m_prev_ctrl_cmd = ctrl_cmd;
 }
+
+void LongitudinalController::LongitudinalController::publishErrors(ControllerErrorReport msg)
+{
+  msg.stamp = this->now();
+  m_pub_ctrl_error_report->publish(msg);
+}
+
 
 void LongitudinalController::publishDebugData(
   const Motion & ctrl_cmd, const ControlData & control_data)
@@ -880,6 +896,9 @@ float64_t LongitudinalController::applyVelocityFeedback(
   const float64_t target_vel_abs = std::fabs(target_motion.vel);
   const bool8_t enable_integration = (current_vel_abs > m_current_vel_threshold_pid_integrate);
   const float64_t error_vel_filtered = m_lpf_vel_error->filter(target_vel_abs - current_vel_abs);
+
+  // velocity error to report
+  m_current_velocity_error_to_report = current_vel - target_motion.vel;
 
   std::vector<float64_t> pid_contributions(3);
   const float64_t pid_acc =
