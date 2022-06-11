@@ -75,55 +75,60 @@ namespace observers
 
 			if (!isDataReady())
 			{
-				RCLCPP_WARN(get_logger(), "Not enough data to compute delay compensation");
+				RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Not enough data to compute delay compensation");
 				return;
 
 			}
 
+			// Publish delay compensation reference.
+			publishCompensationReferences();
+
+			// Debug
 			// RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "In the delay compensator node ");
 
 			RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Hello world");
 
 			// RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), steady_clock, 1000, "Hello World!");
-
 			// RCLCPP_ERROR(get_logger(), "Trajectory is invalid!, stop computing.");
-
 			// RCLCPP_DEBUG(get_logger(), "MPC does not have a QP solver");
-
-			publishCompensationReferences();
-
-			ns_utils::print("ACT On timer method ");
-
-			// RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "On Timer");
+			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Timer");
+			// ns_utils::print("ACT On timer method ");
+			// end of debug
 		}
 
 		void CommunicationDelayCompensatorNode::onControlCommands(const ControlCommand::SharedPtr msg)
 		{
 			current_ctrl_ptr_ = std::make_shared<ControlCommand>(*msg);
-			ns_utils::print("ACT On control method ");
-			ns_utils::print("Read parameter control period :", params_.cdob_ctrl_period);
-			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "onControlCommands");
 
+
+			// Debug
+			// ns_utils::print("ACT On control method ");
+			// ns_utils::print("Read parameter control period :", params_.cdob_ctrl_period);
+			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "onControlCommands");
+			// end of debug
 		}
 
 		void CommunicationDelayCompensatorNode::onCurrentVelocity(const VelocityMsg::SharedPtr msg)
 		{
+
 			current_velocity_ptr = std::make_shared<VelocityMsg>(*msg);
 
-// 			ns_utils::print("ACT On velocity method ");
-// 			ns_utils::print("Read parameter control period :", params_.cdob_ctrl_period);
-			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "On Velocity");
-
+			// ns_utils::print("ACT On velocity method ");
+			// ns_utils::print("Read parameter control period :", params_.cdob_ctrl_period);
+			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Velocity");
 		}
 
 		void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(ControllerErrorReportMsg::SharedPtr const msg)
 		{
 			current_longitudinal_errors_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
-			auto vel_error = static_cast<double>(current_longitudinal_errors_->velocity_error_read);
+
+			// Debug
+			// auto vel_error = static_cast<double>(current_longitudinal_errors_->velocity_error_read);
+			// ns_utils::print("Longitudinal velocity error :", vel_error);
+
 			RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Longitudinal Error");
-			ns_utils::print("Longitudinal velocity error :", vel_error);
-			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "On Longitudinal Errors");
+			// end of debug
 
 		}
 
@@ -131,11 +136,13 @@ namespace observers
 		{
 			current_lateral_errors_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
-			auto lat_error = static_cast<double>(current_lateral_errors_->lateral_deviation_read);
-			auto heading_error = static_cast<double>(current_lateral_errors_->heading_angle_error_read);
-			ns_utils::print("Current lateral errors : ", lat_error, heading_error);
+			// Debug
+			// auto lat_error = static_cast<double>(current_lateral_errors_->lateral_deviation_read);
+			// auto heading_error = static_cast<double>(current_lateral_errors_->heading_angle_error_read);
 
-			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500 /*ms*/, "On Lateral Errors");
+			// ns_utils::print("Current lateral errors : ", lat_error, heading_error);
+			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Lateral Errors");
+			// end of debug.
 
 		}
 
@@ -151,32 +158,36 @@ namespace observers
 		}
 		void CommunicationDelayCompensatorNode::onCurrentSteering(const SteeringReport::SharedPtr msg)
 		{
-			ns_utils::print("ACT On steering method ");
+
 			current_steering_ptr_ = std::make_shared<SteeringReport>(*msg);
+
+			// Debug
+			RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
+			                               "[communication_delay] On Steering  ...");
+			// ns_utils::print("ACT On steering method ");
+			// end of debug
 		}
+
 		bool8_t CommunicationDelayCompensatorNode::isDataReady()
 		{
 			if (!current_velocity_ptr)
 			{
-				RCLCPP_WARN_SKIPFIRST_THROTTLE(
-					get_logger(), *get_clock(), (1000ms).count(),
-					"[mpc_nonlinear] Waiting for the velocity measurement ...");
+				RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
+				                               "[mpc_nonlinear] Waiting for the velocity measurement ...");
 				return false;
 			}
 
 			if (!current_steering_ptr_)
 			{
-				RCLCPP_WARN_SKIPFIRST_THROTTLE(
-					get_logger(), *get_clock(), (1000ms).count(),
-					"[mpc_nonlinear] Waiting for the steering measutmenr ...");
+				RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
+				                               "[mpc_nonlinear] Waiting for the steering measurement ...");
 				return false;
 			}
 
 			if (!current_ctrl_ptr_)
 			{
-				RCLCPP_WARN_SKIPFIRST_THROTTLE(
-					get_logger(), *get_clock(), (1000ms).count(),
-					"[mpc_nonlinear] Waiting for the control command ...");
+				RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
+				                               "[mpc_nonlinear] Waiting for the control command ...");
 				return false;
 			}
 
