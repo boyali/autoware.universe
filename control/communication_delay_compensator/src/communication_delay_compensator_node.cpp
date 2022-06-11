@@ -24,13 +24,15 @@ namespace observers
 			// Read vehicle model parameters
 			// Implement Reading Global and Local Variables.
 			// 			const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
-			// 			params_.wheel_base = vehicle_info.wheel_base_m;
+			// 			params_node_.wheel_base = vehicle_info.wheel_base_m;
 
 			/* Set up ros system timer and read the parameters */
-			params_.cdob_ctrl_period = declare_parameter<float64_t>("cdob_ctrl_period");  // reads sec
-			initTimer(params_.cdob_ctrl_period);
+			/* get parameter updates */
+			readAndLoadParameters();
 
-			// m_wheel_base = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo().wheel_base_m;
+			params_node_.wheel_base = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo().wheel_base_m;
+			initTimer(params_node_.cdob_ctrl_period);
+
 
 			// Create Publishers
 			pub_delay_compensator_ = create_publisher<DelayCompensatatorMsg>(
@@ -61,6 +63,11 @@ namespace observers
 					                                              (&observers::CommunicationDelayCompensatorNode::onCurrentLateralErrors,
 					                                               this, std::placeholders::_1));
 
+			// Dynamic Parameter Update.
+			is_parameters_set_res_ =
+				this->add_on_set_parameters_callback(std::bind(&CommunicationDelayCompensatorNode::onParameterUpdate,
+				                                               this, _1));
+
 		}
 
 		void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
@@ -86,15 +93,53 @@ namespace observers
 			publishCompensationReferences();
 
 			// Debug
-			// RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "In the delay compensator node ");
-
-			RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Hello world");
+			// RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Hello world");
 
 			// RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), steady_clock, 1000, "Hello World!");
 			// RCLCPP_ERROR(get_logger(), "Trajectory is invalid!, stop computing.");
 			// RCLCPP_DEBUG(get_logger(), "MPC does not have a QP solver");
 			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Timer");
+
+			RCLCPP_INFO_THROTTLE(
+				get_logger(), *get_clock(), (1000ms).count(), "Control frequency  %4.2f ",
+				params_node_.cdob_ctrl_period);
+
+			RCLCPP_INFO_THROTTLE(
+				get_logger(), *get_clock(), (1000ms).count(), "Qfilter ey order %4.2i ",
+				params_node_.qfilter_lateral_error_order);
+
+			RCLCPP_INFO_THROTTLE(
+				get_logger(), *get_clock(), (1000ms).count(), "Qfilter eyaw order %4.2i ",
+				params_node_.qfilter_heading_error_order);
+
+			RCLCPP_INFO_THROTTLE(
+				get_logger(), *get_clock(), (1000ms).count(), "Qfilter steering order %4.2i ",
+				params_node_.qfilter_steering_order);
+
+			RCLCPP_INFO_THROTTLE(
+				get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity order %4.2i ",
+				params_node_.qfilter_velocity_error_order);
+
+			RCLCPP_INFO_THROTTLE(
+				get_logger(), *get_clock(), (1000ms).count(), "Qfilter ey frq %4.2f ",
+				params_node_.qfilter_lateral_error_freq);
+
+			RCLCPP_INFO_THROTTLE(
+				get_logger(), *get_clock(), (1000ms).count(), "Qfilter eyaw frq %4.2f ",
+				params_node_.qfilter_heading_error_freq);
+
+			RCLCPP_INFO_THROTTLE(
+				get_logger(), *get_clock(), (1000ms).count(), "Qfilter steering frq %4.2f ",
+				params_node_.qfilter_steering_freq);
+
+			RCLCPP_INFO_THROTTLE(
+				get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity frq %4.2f ",
+				params_node_.qfilter_velocity_error_freq);
+
 			// ns_utils::print("ACT On timer method ");
+// 			ns_utils::print("Params wheelbase ", params_node_.wheel_base);
+// 			ns_utils::print("Params qfilter ey order ", params_node_.qfilter_lateral_error_order);
+// 			ns_utils::print("Params qfilter_velocity_error_freq ", params_node_.qfilter_velocity_error_freq);
 			// end of debug
 		}
 
@@ -105,7 +150,7 @@ namespace observers
 
 			// Debug
 			// ns_utils::print("ACT On control method ");
-			// ns_utils::print("Read parameter control period :", params_.cdob_ctrl_period);
+			// ns_utils::print("Read parameter control period :", params_node_.cdob_ctrl_period);
 			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "onControlCommands");
 			// end of debug
 		}
@@ -116,7 +161,7 @@ namespace observers
 			current_velocity_ptr = std::make_shared<VelocityMsg>(*msg);
 
 			// ns_utils::print("ACT On velocity method ");
-			// ns_utils::print("Read parameter control period :", params_.cdob_ctrl_period);
+			// ns_utils::print("Read parameter control period :", params_node_.cdob_ctrl_period);
 			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Velocity");
 		}
 
@@ -192,6 +237,67 @@ namespace observers
 			}
 
 			return true;
+		}
+
+		void CommunicationDelayCompensatorNode::readAndLoadParameters()
+		{
+
+			try
+			{
+
+				// Read the filter orders.
+				params_node_.cdob_ctrl_period = declare_parameter<float64_t>("cdob_ctrl_period");  // reads sec.
+				params_node_.qfilter_lateral_error_order = declare_parameter<int>("qfilter_lateral_error_order");
+				params_node_.qfilter_heading_error_order = declare_parameter<int>("qfilter_heading_error_order");
+				params_node_.qfilter_steering_order = declare_parameter<int>("qfilter_steering_order");
+				params_node_.qfilter_velocity_error_order = declare_parameter<int>("qfilter_velocity_error_order");
+
+				// Read the filter cut-oof frequencies.
+				params_node_.qfilter_lateral_error_freq = declare_parameter<float64_t>("qfilter_lateral_error_freq");
+				params_node_.qfilter_heading_error_freq = declare_parameter<float64_t>("qfilter_heading_error_freq");
+				params_node_.qfilter_steering_freq = declare_parameter<float64_t>("qfilter_steering_freq");
+				params_node_.qfilter_velocity_error_freq = declare_parameter<float64_t>("qfilter_velocity_error_freq");
+
+			}
+
+			catch (const rclcpp::exceptions::InvalidParameterTypeException& e)
+			{
+
+			}
+
+		}
+
+		rcl_interfaces::msg::SetParametersResult CommunicationDelayCompensatorNode::onParameterUpdate(const
+		                                                                                              std::vector<rclcpp::Parameter>& parameters)
+		{
+			rcl_interfaces::msg::SetParametersResult result;
+			result.successful = true;
+			result.reason = "success";
+
+			try
+			{
+				update_param(parameters, "cdob_ctrl_period", params_node_.cdob_ctrl_period);
+
+				update_param(parameters, "qfilter_lateral_error_order", params_node_.qfilter_lateral_error_order);
+				update_param(parameters, "qfilter_heading_error_order", params_node_.qfilter_heading_error_order);
+				update_param(parameters, "qfilter_steering_order", params_node_.qfilter_steering_order);
+				update_param(parameters, "qfilter_velocity_error_order", params_node_.qfilter_velocity_error_order);
+
+				update_param(parameters, "qfilter_lateral_error_freq", params_node_.qfilter_lateral_error_freq);
+				update_param(parameters, "qfilter_heading_error_freq", params_node_.qfilter_heading_error_freq);
+				update_param(parameters, "qfilter_steering_freq", params_node_.qfilter_steering_freq);
+				update_param(parameters, "qfilter_velocity_error_freq", params_node_.qfilter_velocity_error_freq);
+
+			}
+
+				// transaction succeeds, now assign values
+			catch (const rclcpp::exceptions::InvalidParameterTypeException& e)
+			{
+				result.successful = false;
+				result.reason = e.what();
+			}
+
+			return result;
 		}
 
 }  // namespace observers

@@ -77,7 +77,7 @@ namespace observers
 		struct Parameters
 		{
 				float64_t wheel_base{};
-				float32_t cdob_ctrl_period{};
+				float32_t cdob_ctrl_period{ 0.05 };
 
 				// Qfilter orders .
 				int qfilter_lateral_error_order{ 3 };
@@ -92,6 +92,21 @@ namespace observers
 				float64_t qfilter_velocity_error_freq{ 5 };
 
 		};
+
+		template<typename T>
+		void update_param(const std::vector<rclcpp::Parameter>& parameters,
+		                  const std::string& name,
+		                  T& value)
+		{
+			auto it = std::find_if(
+				parameters.cbegin(), parameters.cend(),
+				[&name](const rclcpp::Parameter& parameter)
+				{ return parameter.get_name() == name; });
+			if (it != parameters.cend())
+			{
+				value = static_cast<T>(it->template get_value<T>());
+			}
+		}
 
 		// The node class.
 		class CommunicationDelayCompensatorNode : public rclcpp::Node
@@ -110,7 +125,7 @@ namespace observers
 
 		private:
 				// Data Members
-				Parameters params_{};
+				Parameters params_node_{};
 
 				//!< @brief timer to update after a given interval
 				rclcpp::TimerBase::SharedPtr timer_;
@@ -161,39 +176,52 @@ namespace observers
 				void onTimer();
 
 				/**
-				 * @brief  subscription callbacks
+				 * @brief Subscription callbacks
 				 */
 				void onControlCommands(const ControlCommand::SharedPtr msg);
 
 				/**
-				 * @brief  subscription callbacks
+				 * @brief Subscription callbacks
 				 */
 				void onCurrentVelocity(const VelocityMsg::SharedPtr msg);
 
 				/**
-				 * @brief  subscription callbacks
+				 * @brief Subscription callbacks
 				 */
 				void onCurrentSteering(const SteeringReport::SharedPtr msg);
 
 				/**
-				 * @brief  subscription to computed velocity error
+				 * @brief Subscription to computed velocity error
 				 */
 				void onCurrentLongitudinalError(const ControllerErrorReportMsg::SharedPtr msg);
 
 				/**
-				 * @brief  subscription to lateral reference errors ey, eyaw.
+				 * @brief Subscription to lateral reference errors ey, eyaw.
 				 */
 				void onCurrentLateralErrors(const ControllerErrorReportMsg::SharedPtr msg);
 
 				/**
-				 * @brief publish message.
+				 * @brief Publish message.
 				 * */
 				void publishCompensationReferences();
 
 				/**
-				 * @brief publish message.
+				 * @brief Check if data flows.
 				 * */
 				bool8_t isDataReady();
+
+				/**
+				 * @brief Default parameters of the parameters.
+				 * */
+
+				void readAndLoadParameters();
+
+				/**
+				 * @brief Dynamic update of the parameters.
+				 * */
+				OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
+				rcl_interfaces::msg::SetParametersResult onParameterUpdate(const std::vector<rclcpp::Parameter>& parameters);
+
 		};
 
 }  // namespace observers
