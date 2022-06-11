@@ -17,27 +17,26 @@
 #include "vehicle_models/vehicle_kinematic_error_model.hpp"
 #include "utils_delay_observer/delay_compensation_utils.hpp"
 
-
 namespace act = ns_control_toolbox;
 
 int main()
 {
 	// Simulation parameters
 	// Create a dummy output signal for ey, epsi and delta.
-	fs::path     output_path{ "../logs" };
-	double       tfinal{ 10. };     // signal length in time
+	fs::path output_path{ "../logs" };
+	double tfinal{ 10. };     // signal length in time
 	unsigned int frequency{ 40 };   // Hz
-	double       dt{ 1. / frequency };
+	double dt{ 1. / frequency };
 
 
 	// Create an inverse vehicle model for these signal channels with Q-filters.
 	// First create Q-filter for ey.
-	double cut_off_frequency_ey    = 20.; // [Hz]
-	double cut_off_frequency_eyaw  = 15.; // [Hz]
+	double cut_off_frequency_ey = 20.; // [Hz]
+	double cut_off_frequency_eyaw = 15.; // [Hz]
 	double cut_off_frequency_delta = 10.;
 	double cut_off_frequency_speed = 10.; // for longitudinal control.
 
-	int const order_ey    = 3;    // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
+	int const order_ey = 3;    // order of the filter (denominator) as power ; 1/(tau*s + 1) ^ order.
 	int const order_e_yaw = 2;    // order of the filter for yaw error.
 	int const order_delta = 1;    // order of stereing model.
 
@@ -49,7 +48,7 @@ int main()
 
 
 	// Specialized Qfilters for ey and eyaw.
-	Qfilter<order_ey>    qfilter_ey{ sf_cutoff_ey, order_ey, dt };
+	Qfilter<order_ey> qfilter_ey{ sf_cutoff_ey, order_ey, dt };
 	Qfilter<order_e_yaw> qfilter_epsi{ sf_cutoff_eyaw, order_e_yaw, dt };
 	Qfilter<order_delta> qfilter_delta{ sf_cutoff_delta, order_delta, dt };
 	Qfilter<order_delta> qfilter_speed{ sf_cutoff_speed, order_delta, dt };
@@ -81,7 +80,7 @@ int main()
 	// Parameter names are the arguments of num den variable functions.
 	act::tf_factor m_den1{{ wheelbase, 0, 0 }}; // L*s^2
 	act::tf_factor m_den2{{ tau_steer, 1 }}; // (tau*s + 1)
-	auto           den_tf_factor = m_den1 * m_den2;
+	auto den_tf_factor = m_den1 * m_den2;
 
 	//act::tf Gey({ 1. }, den_tf_factor(), 5., 2.);
 	act::tf Gey({ 1. }, den_tf_factor(), 1., 1.); // num, den, num constant, den constant
@@ -104,7 +103,7 @@ int main()
 
 	// Create time-delay compensator for ey system.
 
-	DelayCompensator delay_compensator_ey(qfilter_ey_data, model_data, dt);
+	CommunicationDelayCompensatorCore delay_compensator_ey(qfilter_ey_data, model_data, dt);
 	delay_compensator_ey.print();
 
 	// Create a nonlinear delayed vehicle model.
@@ -116,12 +115,12 @@ int main()
 
 	// Control signals
 	double signal_frequency{ 1. / (2. * M_PI) };
-	auto   vel_sqr_vec_input   = ns_control_toolbox::make_square_signal(time_vec, signal_frequency);
-	auto   vel_trg_vec_input   = ns_control_toolbox::make_triangle_signal(time_vec, 5);
-	auto   steer_sin_vec_input = ns_control_toolbox::make_sinus_signal(time_vec, signal_frequency);
+	auto vel_sqr_vec_input = ns_control_toolbox::make_square_signal(time_vec, signal_frequency);
+	auto vel_trg_vec_input = ns_control_toolbox::make_triangle_signal(time_vec, 5);
+	auto steer_sin_vec_input = ns_control_toolbox::make_sinus_signal(time_vec, signal_frequency);
 
 	// Simulate the vehicle model.
-	auto            tsim_f = time_vec.rows();
+	auto tsim_f = time_vec.rows();
 	Eigen::MatrixXd sim_results(tsim_f, 4);
 	sim_results.setZero();
 
@@ -132,7 +131,7 @@ int main()
 
 	for (auto k = 0; k < tsim_f; ++k)
 	{
-		double desired_vel   = 2.; //(vel_trg_vec_input(k) + 1.) * 10.; // max(vel_.) is 1.
+		double desired_vel = 2.; //(vel_trg_vec_input(k) + 1.) * 10.; // max(vel_.) is 1.
 		double desired_steer = steer_sin_vec_input(k) * 0.1;
 
 
@@ -150,7 +149,6 @@ int main()
 	writeToFile(output_path, vel_sqr_vec_input, "vel_trg_vec_input");
 	writeToFile(output_path, steer_sin_vec_input, "steer_sin_vec_input");
 	writeToFile(output_path, time_vec, "time_vec");
-
 
 	return 0;
 }

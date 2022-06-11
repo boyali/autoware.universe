@@ -40,12 +40,16 @@
 #include "autoware_auto_vehicle_msgs/msg/controller_error_report.hpp"
 
 // LIBRARY HEADERS
-#include "autoware_control_toolbox.hpp"
-#include "visibility_control.hpp"
+// #include "autoware_control_toolbox.hpp"
+// #include "utils_delay_observer/delay_compensation_utils.hpp"
+// #include "qfilters.hpp"
+#include "communication_delay_compensator_core.hpp"
+
 
 // ROS headers
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
+#include "communication_delay_compensator_core.hpp"
 
 namespace observers
 {
@@ -113,6 +117,9 @@ namespace observers
 
 				// Publishers
 				rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr pub_delay_compensator_;
+
+				// Data Members for the delay-compensation.
+				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_core_{};
 
 				// Pointers to the ROS topics.
 				// Pointers for ros topic
