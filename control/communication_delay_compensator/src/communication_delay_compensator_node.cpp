@@ -26,9 +26,11 @@ namespace observers
 			// 			const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
 			// 			params_.wheel_base = vehicle_info.wheel_base_m;
 
-			/* set up ros system */
+			/* Set up ros system timer and read the parameters */
 			params_.cdob_ctrl_period = declare_parameter<float64_t>("cdob_ctrl_period");  // reads sec
 			initTimer(params_.cdob_ctrl_period);
+
+			// m_wheel_base = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo().wheel_base_m;
 
 			// Create Publishers
 			pub_delay_compensator_ = create_publisher<DelayCompensatatorMsg>(

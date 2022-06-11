@@ -73,12 +73,27 @@ namespace observers
 		using autoware::common::types::float32_t;
 		using autoware::common::types::bool8_t;
 
+		// Parameters to pass around.
 		struct Parameters
 		{
 				float64_t wheel_base{};
 				float32_t cdob_ctrl_period{};
+
+				// Qfilter orders .
+				int qfilter_lateral_error_order{ 3 };
+				int qfilter_heading_error_order{ 2 };
+				int qfilter_steering_order{ 1 };
+				int qfilter_velocity_error_order{ 1 };
+
+				// Qfilter cut-off frequencies Hz. (low-pass).
+				float64_t qfilter_lateral_error_freq{ 5 };
+				float64_t qfilter_heading_error_freq{ 5 };
+				float64_t qfilter_steering_freq{ 5 };
+				float64_t qfilter_velocity_error_freq{ 5 };
+
 		};
 
+		// The node class.
 		class CommunicationDelayCompensatorNode : public rclcpp::Node
 		{
 		public:
