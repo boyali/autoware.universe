@@ -150,9 +150,7 @@ namespace observers
 		{
 			DelayCompensatatorMsg new_msg{};
 			new_msg.lateral_deviation_error_compensation_ref = 1.0;
-
 			current_delay_references_ = std::make_shared<DelayCompensatatorMsg>(new_msg);
-
 			pub_delay_compensator_->publish(*current_delay_references_);
 
 		}
