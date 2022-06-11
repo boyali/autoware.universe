@@ -72,6 +72,14 @@ namespace observers
 
 		void CommunicationDelayCompensatorNode::onTimer()
 		{
+
+			if (!isDataReady())
+			{
+				RCLCPP_WARN(get_logger(), "Not enough data to compute delay compensation");
+				return;
+
+			}
+
 			// RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "In the delay compensator node ");
 
 			RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Hello world");
@@ -145,6 +153,34 @@ namespace observers
 		{
 			ns_utils::print("ACT On steering method ");
 			current_steering_ptr_ = std::make_shared<SteeringReport>(*msg);
+		}
+		bool8_t CommunicationDelayCompensatorNode::isDataReady()
+		{
+			if (!current_velocity_ptr)
+			{
+				RCLCPP_WARN_SKIPFIRST_THROTTLE(
+					get_logger(), *get_clock(), (1000ms).count(),
+					"[mpc_nonlinear] Waiting for the velocity measurement ...");
+				return false;
+			}
+
+			if (!current_steering_ptr_)
+			{
+				RCLCPP_WARN_SKIPFIRST_THROTTLE(
+					get_logger(), *get_clock(), (1000ms).count(),
+					"[mpc_nonlinear] Waiting for the steering measutmenr ...");
+				return false;
+			}
+
+			if (!current_ctrl_ptr_)
+			{
+				RCLCPP_WARN_SKIPFIRST_THROTTLE(
+					get_logger(), *get_clock(), (1000ms).count(),
+					"[mpc_nonlinear] Waiting for the control command ...");
+				return false;
+			}
+
+			return true;
 		}
 
 }  // namespace observers

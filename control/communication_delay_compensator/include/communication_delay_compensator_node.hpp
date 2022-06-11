@@ -65,8 +65,9 @@ namespace observers
 		using vehicle_info_util::VehicleInfoUtil;
 		using autoware_auto_vehicle_msgs::msg::SteeringReport;
 
-		using float64_t = autoware::common::types::float64_t;
-		using float32_t = autoware::common::types::float32_t;
+		using autoware::common::types::float64_t;
+		using autoware::common::types::float32_t;
+		using autoware::common::types::bool8_t;
 
 		struct Parameters
 		{
@@ -86,7 +87,7 @@ namespace observers
 				/**
 				 * @brief destructor
 				 */
-				virtual ~CommunicationDelayCompensatorNode() = default;
+				~CommunicationDelayCompensatorNode() override = default;
 
 		private:
 				// Data Members
@@ -114,10 +115,15 @@ namespace observers
 				rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr pub_delay_compensator_;
 
 				// Pointers to the ROS topics.
-				// pointers for ros topic
+				// Pointers for ros topic
+				// Pointers to the model state variables inputs
 				std::shared_ptr<nav_msgs::msg::Odometry> current_velocity_ptr{ nullptr };
-				std::shared_ptr<ControlCommand> current_ctrl_ptr_{ nullptr };
 				std::shared_ptr<SteeringReport> current_steering_ptr_{ nullptr };
+
+				// Pointer to the model inputs
+				std::shared_ptr<ControlCommand> current_ctrl_ptr_{ nullptr };
+
+				// Pointers to the compensator outputs.
 				std::shared_ptr<DelayCompensatatorMsg> current_delay_references_{ nullptr };
 				std::shared_ptr<ControllerErrorReportMsg> current_lateral_errors_{ nullptr };
 				std::shared_ptr<ControllerErrorReportMsg> current_longitudinal_errors_{ nullptr };
@@ -161,6 +167,11 @@ namespace observers
 				 * @brief publish message.
 				 * */
 				void publishCompensationReferences();
+
+				/**
+				 * @brief publish message.
+				 * */
+				bool8_t isDataReady();
 		};
 
 }  // namespace observers
