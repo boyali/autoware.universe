@@ -93,6 +93,17 @@ namespace observers
 				// and their functions.
 				pairs_func_maps_t pair_func_map_{}; // @brief locate functions of indexed variable name.
 
+
+				// Data members, place holders.
+				/**
+				 * @brief Outputs of the delay compensator.
+				 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+				 * y2: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+				 * y2: du = y0 - y1 where du is the estimated disturbance input
+				 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+				 * */
+				std::array<double, 4> y_outputs_{};
+
 		};
 } // namespace observers
 
