@@ -68,6 +68,8 @@ namespace observers
 				this->add_on_set_parameters_callback(std::bind(&CommunicationDelayCompensatorNode::onParameterUpdate,
 				                                               this, _1));
 
+			// Set the delay compensator for each tracking purpose.
+			setSteeringCDOBcompensator();
 		}
 
 		void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
@@ -135,6 +137,15 @@ namespace observers
 			RCLCPP_INFO_THROTTLE(
 				get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity frq %4.2f ",
 				params_node_.qfilter_velocity_error_freq);
+
+			if (delay_compensator_steering_error_)
+			{
+				delay_compensator_steering_error_->print();
+			}
+			else
+			{
+				ns_utils::print("Unique pointer is not set ");
+			}
 
 			// ns_utils::print("ACT On timer method ");
 // 			ns_utils::print("Params wheelbase ", params_node_.wheel_base);
@@ -312,6 +323,54 @@ namespace observers
 			}
 
 			return result;
+		}
+
+		/**
+		 * @brief Set steering tracking q-filter and 1st order steering linear model.
+		 * */
+		void CommunicationDelayCompensatorNode::setSteeringCDOBcompensator()
+		{
+			// Create a qfilter from the given order for the steering system.
+			auto const& order_of_q = params_node_.qfilter_steering_order;
+			auto const& cut_off_frq_in_hz_q = params_node_.qfilter_steering_freq;
+			auto const&& w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q; // in [rad/sec]
+
+			float64_t time_constant_of_qfilter{};
+
+			try
+			{
+				time_constant_of_qfilter = 1.0 / w_c_of_q;
+			}
+
+			catch (const std::invalid_argument& ia)
+			{
+				RCLCPP_ERROR(get_logger(), "[setSteeringCDOBcompensator] Invalid argument exception : %s", ia.what());
+
+				// throw std::invalid_argument("The cut-off frequency cannot be zero.");
+				// std::cerr << "Invalid argument: " << ia.what() << '\n';
+			}
+
+			// --------------- Qfilter Construction --------------------------------------
+			// Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
+			// Calculate the transfer function.
+			ns_control_toolbox::tf_factor denominator{ std::vector<double>{ time_constant_of_qfilter, 1. }}; // (tau*s+1)
+
+			// Take power of the denominator.
+			denominator.power(static_cast<unsigned int>(order_of_q));
+
+			// Create the transfer function from a numerator an denominator.
+			auto q_tf = ns_control_toolbox::tf{ std::vector<double>{ 1 }, denominator() };
+
+			// --------------- System Model Construction --------------------------------------
+			// There is no dynamical parameter but tau might be changing if we use the adaptive control approach.
+
+			auto g_tf = tf_t({ 1. }, { params_node_.steering_tau, 1. });
+			CommunicationDelayCompensatorCore delay_compensator_steering(q_tf, g_tf, params_node_.cdob_ctrl_period);
+
+			// Store as an unique ptr.
+			delay_compensator_steering_error_ = std::make_unique<CommunicationDelayCompensatorCore>
+				(delay_compensator_steering);
+
 		}
 
 }  // namespace observers

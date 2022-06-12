@@ -69,10 +69,6 @@ namespace observers
 		using vehicle_info_util::VehicleInfoUtil;
 		using autoware_auto_vehicle_msgs::msg::SteeringReport;
 
-		using autoware::common::types::float64_t;
-		using autoware::common::types::float32_t;
-		using autoware::common::types::bool8_t;
-
 		// Parameters to pass around.
 		struct Parameters
 		{
@@ -153,7 +149,10 @@ namespace observers
 				rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr pub_delay_compensator_;
 
 				// Data Members for the delay-compensation.
-				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_core_{};
+				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_lat_error_{}; // set nullptr.
+				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_heading_error_{};
+				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_steering_error_{};
+				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_velocity_error_{};
 
 				// Pointers to the ROS topics.
 				// Pointers for ros topic
@@ -226,10 +225,12 @@ namespace observers
 				OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
 				rcl_interfaces::msg::SetParametersResult onParameterUpdate(const std::vector<rclcpp::Parameter>& parameters);
 
-
 				/**
-				 * @brief Set lateral error q-filter and lateral error linear model.
+				 * @brief Set steering tracking q-filter and 1st order steering linear model.
 				 * */
+
+				void setSteeringCDOBcompensator();
+
 		};
 
 }  // namespace observers
