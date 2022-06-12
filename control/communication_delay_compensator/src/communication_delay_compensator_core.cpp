@@ -37,7 +37,7 @@ observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
 	q_g_inv_tf_ = q_filter_tf_ * g_inv;
 
 	// Compute the state-space model of QGinv(s)
-	q_g_inv_ss_ = ss_t(q_g_inv_tf_, dt_);
+	q_g_inv_ss_ = ss_t(q_g_inv_tf_, dt_); // Do not forget to enter the time step dt.
 
 }
 

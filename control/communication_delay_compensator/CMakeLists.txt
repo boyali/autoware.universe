@@ -11,17 +11,6 @@ set(CDOB_LIB_INCLUDE_DIRS
 
 set(CDOB_LIB delay_compensation_lib)
 
-set(CDOB_LIB_SOURCE
-        src/communication_delay_compensator_core.cpp
-        src/utils_delay_observer/delay_compensation_utils.cpp
-        src/qfilters.cpp
-        src/utils_delay_observer/delay_compensation_utils.cpp
-        src/vehicle_models/vehicle_kinematic_error_model.cpp
-
-        # Integration
-        src/integration/integrate_eigen_states.cpp
-        )
-
 set(CDOB_LIB_HEADERS
         include/communication_delay_compensator_core.hpp
         include/visibility_control.hpp
@@ -30,15 +19,29 @@ set(CDOB_LIB_HEADERS
         include/utils_delay_observer/delay_compensation_utils.hpp
         include/vehicle_models/vehicle_definitions.hpp
         include/vehicle_models/vehicle_kinematic_error_model.hpp
+        include/adaptive_parameter_estimators/adaptive_parameter_estimation.hpp
 
         #Integration
         include/external/eigen_integration_helper.hpp
         include/integration/integrate_eigen_states.hpp
         )
 
+
+set(CDOB_LIB_SOURCE
+        src/communication_delay_compensator_core.cpp
+        src/utils_delay_observer/delay_compensation_utils.cpp
+        src/qfilters.cpp
+        src/utils_delay_observer/delay_compensation_utils.cpp
+        src/vehicle_models/vehicle_kinematic_error_model.cpp
+        src/adaptive_parameter_estimators/adaptive_parameter_estimation.cpp
+
+        # Integration
+        src/integration/integrate_eigen_states.cpp
+        )
+
+
 set(CDOB_LIB_INCLUDE_DIRS
         include)
-
 
 ament_auto_add_library(${CDOB_LIB} SHARED
         ${CDOB_LIB_SOURCE}
@@ -67,6 +70,8 @@ ament_auto_add_library(${DELAY_COMPENSATION_NODE} SHARED
         src/communication_delay_compensator_node.cpp
         )
 
+target_link_libraries(${DELAY_COMPENSATION_NODE}
+        ${CDOB})
 
 rclcpp_components_register_node(${DELAY_COMPENSATION_NODE}
         PLUGIN "observers::CommunicationDelayCompensatorNode"
