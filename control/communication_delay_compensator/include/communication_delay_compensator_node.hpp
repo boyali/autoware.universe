@@ -49,7 +49,7 @@
 // ROS headers
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
-#include "communication_delay_compensator_core.hpp"
+#include "rcl_interfaces/msg/set_parameters_result.hpp"
 
 namespace observers
 {
