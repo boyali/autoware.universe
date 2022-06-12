@@ -14,8 +14,90 @@
 
 #include "communication_delay_compensator_core.hpp"
 
-CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(s_filter_data const& qfilter_data,
-                                                                     s_model_g_data& model_data, double const& dt) :
+/**
+ * @brief Communication Delay Compensator Core.
+ * */
+
+observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(tf_t& qfilter,
+                                                                                tf_t& g_system_model,
+                                                                                double const& dt) :
+	q_filter_tf_{ qfilter },
+	g_tf_(g_system_model),
+	dt_{ dt }
+{
+	// Compute the state spaces which can simulate the system given a u, x0.
+	q_filter_ss_ = ss_t(q_filter_tf_, dt_);
+	g_ss_ = ss_t(g_tf_, dt_);
+
+	// Compute Q(ss)/G(ss)
+	auto g_inv = std::move(g_system_model);
+	g_inv.inv(); // invert tempG
+
+	// Q(s)/G*s)
+	q_g_inv_tf_ = q_filter_tf_ * g_inv;
+
+	// Compute the state-space model of QGinv(s)
+	q_g_inv_ss_ = ss_t(q_g_inv_tf_, dt_);
+
+}
+
+/**
+ * @brief Summarizes the communication delay compensator.
+ * */
+void observers::CommunicationDelayCompensatorCore::print() const
+{
+	ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
+	ns_utils::print("Qfilter Model : \n");
+	q_filter_tf_.print();
+
+	ns_utils::print("Forward model G(s) : \n\n");
+	g_tf_.print();
+
+	ns_utils::print("G(s) num and den constant names :", num_den_constant_names_g_.first,
+	                num_den_constant_names_g_.second, "\n");
+
+	ns_utils::print("Forward model Q/G(s) :  \n");
+	q_g_inv_tf_.print();
+
+	ns_utils::print("Q/G(s) num and den constant names :", num_den_constant_names_g_inv_.first,
+	                num_den_constant_names_g_inv_.second);
+
+	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
+	ns_utils::print("Qfilter State-Space: ");
+	q_filter_ss_.print_discrete_system();
+
+	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
+	ns_utils::print("System G(s) State-Space: ");
+	g_ss_.print_discrete_system();
+
+	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
+	ns_utils::print("System Q(s)/G(s) State-Space: ");
+	q_g_inv_ss_.print_discrete_system();
+
+}
+
+/**
+* @brief if there are dynamic parameters multiplying a^2* num/ (cos(b)* den) we can define using it.
+ * a and b must be a function. These parameters belong to the G(s) system model.
+* */
+void observers::CommunicationDelayCompensatorCore::setDynamicParams_num_den(observers::pairs_string_view_t& param_names,
+                                                                            observers::pairs_func_maps_t& param_funcs)
+{
+
+	// Set G(s) parameters.
+	num_den_constant_names_g_ = param_names;
+	pair_func_map_ = param_funcs;
+
+	// Invert the names for 1/G(s).
+	num_den_constant_names_g_inv_ =
+		pairs_string_view_t(num_den_constant_names_g_.second, num_den_constant_names_g_.first);
+
+}
+
+/// -------------- AS A PROTOTYPE NOT USED in the NODE ---------------------------------
+DelayCompensatorCore_PrototypeExample::DelayCompensatorCore_PrototypeExample(s_filter_data const& qfilter_data,
+                                                                             s_model_g_data& model_data,
+                                                                             double const& dt) :
 	dt_{ dt }, q_order_{ qfilter_data.order },
 	q_cut_off_frequency_{ qfilter_data.cut_off_frq },
 	q_time_constant_tau_{ qfilter_data.time_constant },
@@ -60,7 +142,7 @@ CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(s_filter_da
 
 }
 
-void CommunicationDelayCompensatorCore::print() const
+void DelayCompensatorCore_PrototypeExample::print() const
 {
 	ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
 	ns_utils::print("Qfilter Model : \n");
@@ -103,10 +185,10 @@ void CommunicationDelayCompensatorCore::print() const
  * [out] y3: ydu = G(s)*du where ydu is the response of the system to du.
  * */
 
-void CommunicationDelayCompensatorCore::simulateOneStep(double const& previous_input,
-                                                        double const& measured_model_state,
-                                                        std::pair<double, double> const& num_den_args_of_G,
-                                                        std::array<double, 4>& y_outputs)
+void DelayCompensatorCore_PrototypeExample::simulateOneStep(double const& previous_input,
+                                                            double const& measured_model_state,
+                                                            std::pair<double, double> const& num_den_args_of_G,
+                                                            std::array<double, 4>& y_outputs)
 {
 	// Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
 	if (num_den_constant_names_G_.first != "1")
@@ -204,7 +286,7 @@ void CommunicationDelayCompensatorCore::simulateOneStep(double const& previous_i
 
 }
 
-void CommunicationDelayCompensatorCore::getSSsystem(ns_control_toolbox::tf2ss const& ss)
+void DelayCompensatorCore_PrototypeExample::getSSsystem(ns_control_toolbox::tf2ss const& ss)
 {
 
 	Ad_ = ss.Ad();
@@ -213,3 +295,4 @@ void CommunicationDelayCompensatorCore::getSSsystem(ns_control_toolbox::tf2ss co
 	Dd_ = ss.Dd();
 
 }
+

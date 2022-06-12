@@ -82,7 +82,7 @@ int main()
 	act::tf_factor m_den2{{ tau_steer, 1 }}; // (tau*s + 1)
 	auto den_tf_factor = m_den1 * m_den2;
 
-	//act::tf Gey({ 1. }, den_tf_factor(), 5., 2.);
+	//act::tf_t Gey({ 1. }, den_tf_factor(), 5., 2.);
 	act::tf Gey({ 1. }, den_tf_factor(), 1., 1.); // num, den, num constant, den constant
 
 	// We store the factored num and denominators:  a(var1) * num / b(var1)*den where num-den are constants.
@@ -103,7 +103,7 @@ int main()
 
 	// Create time-delay compensator for ey system.
 
-	CommunicationDelayCompensatorCore delay_compensator_ey(qfilter_ey_data, model_data, dt);
+	DelayCompensatorCore_PrototypeExample delay_compensator_ey(qfilter_ey_data, model_data, dt);
 	delay_compensator_ey.print();
 
 	// Create a nonlinear delayed vehicle model.

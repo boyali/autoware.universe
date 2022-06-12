@@ -25,11 +25,84 @@
 // Delay Compensation Libraries.
 #include "qfilters.hpp"
 
-// class __attribute__((__visibility__("default"))) CommunicationDelayCompensatorCore
+// Autoware libs
+#include "common/types.hpp"
+
+namespace observers
+{
+
+		using autoware::common::types::float64_t;
+		using autoware::common::types::float32_t;
+		using autoware::common::types::bool8_t;
+		using tf_t = ns_control_toolbox::tf;
+		using ss_t = ns_control_toolbox::tf2ss;
+
+		/**
+		 * @brief We store dynamical parameters of a transfer function with the following pair types.
+		 *
+		 * An example to usage: if G(s) = a^2 (s +1 ) / b (s-1) we store [a, and b] as string and their functions
+		 * [squaring, identity].
+		 *
+		 * */
+		using pairs_string_view_t = std::pair<std::string_view, std::string_view>;
+		using pairs_func_maps_t = std::unordered_map<std::string_view, func_type<double>>;
+
+		/**
+		 * @brief Communication Delay Compensator Core.
+		 * */
+
+		class CommunicationDelayCompensatorCore
+		{
+		public:
+
+				CommunicationDelayCompensatorCore() = default;
+				CommunicationDelayCompensatorCore(tf_t& qfilter,
+				                                  tf_t& g_system_model,
+				                                  double const& dt);
+
+				void print() const; // @brief  Prints the configuration.
+
+				/**
+				 * @brief if there are dynamic parameters multiplying a* num/ (b* den) we can define using it.
+				 * */
+
+				void setDynamicParams_num_den(pairs_string_view_t& param_names, pairs_func_maps_t& param_funcs);
+
+		private:
+				// Qfilter transfer function.
+				tf_t q_filter_tf_{}; // @brief Transfer function of the qfilter.
+				tf_t g_tf_{}; // @brief state dynamics
+				float64_t dt_{};
+
+				//  Compensator state-space
+				ss_t q_filter_ss_{}; //@brief State space model of the qfilter
+				ss_t g_ss_;
+
+				// Q(s)/G(s)
+				tf_t q_g_inv_tf_{};
+				ss_t q_g_inv_ss_{};
+
+				// Dynamical parameters and their functions.
+				/**
+				 * @brief  Associated model parameters as multiplication factors for num and den of G and Q/G.
+				 * i.e G(s) = f(V) num/ (g(delta) den). V and delta are the arguments stored in the pairs_t.
+				 * */
+				pairs_string_view_t num_den_constant_names_g_{ "1", "1" };
+				pairs_string_view_t num_den_constant_names_g_inv_{ "1", "1" };
+
+				// and their functions.
+				pairs_func_maps_t pair_func_map_{}; // @brief locate functions of indexed variable name.
+
+		};
+} // namespace observers
+
+
+
+/// -------------- AS A PROTOTYPE NOT USED in the NODE ---------------------------------
+
+// class __attribute__((__visibility__("default"))) DelayCompensatorCore_PrototypeExample
 // For internal states use state_T, for ABCD matrices use mat_eig_T.
-
-
-class CommunicationDelayCompensatorCore
+class DelayCompensatorCore_PrototypeExample
 {
 public:
 
@@ -37,9 +110,9 @@ public:
 		using pairs_func_maps_t = s_model_g_data::pairs_func_maps_t;
 
 		// Constructors. s_ for struct.
-		CommunicationDelayCompensatorCore() = default;
-		CommunicationDelayCompensatorCore(s_filter_data const& qfilter_data,
-		                                  s_model_g_data& model_data, double const& dt);
+		DelayCompensatorCore_PrototypeExample() = default;
+		DelayCompensatorCore_PrototypeExample(s_filter_data const& qfilter_data,
+		                                      s_model_g_data& model_data, double const& dt);
 
 		void print() const;
 
@@ -67,7 +140,6 @@ private:
 		// Qfilter transfer function.
 		ns_control_toolbox::tf Qfilter_tf_{}; // @brief Transfer function of the qfilter.
 		ns_control_toolbox::tf2ss Qfilter_ss_{}; //@brief State space model of the qfilter
-
 
 		/**
 		 * @brief  Associated model parameters as multiplication factors for num and den of G and Q/G.
