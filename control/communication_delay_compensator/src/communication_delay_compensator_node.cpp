@@ -258,6 +258,10 @@ namespace observers
 				params_node_.qfilter_steering_freq = declare_parameter<float64_t>("qfilter_steering_freq");
 				params_node_.qfilter_velocity_error_freq = declare_parameter<float64_t>("qfilter_velocity_error_freq");
 
+				// First order state dynamics parameters.
+				params_node_.steering_tau = declare_parameter<float64_t>("steering_time_constant_");
+				params_node_.velocity_tau = declare_parameter<float64_t>("velocity_time_constant_");
+
 			}
 
 			catch (const rclcpp::exceptions::InvalidParameterTypeException& e)
@@ -287,6 +291,9 @@ namespace observers
 				update_param(parameters, "qfilter_heading_error_freq", params_node_.qfilter_heading_error_freq);
 				update_param(parameters, "qfilter_steering_freq", params_node_.qfilter_steering_freq);
 				update_param(parameters, "qfilter_velocity_error_freq", params_node_.qfilter_velocity_error_freq);
+
+				update_param(parameters, "steering_time_constant_", params_node_.steering_tau);
+				update_param(parameters, "velocity_time_constant_", params_node_.velocity_tau);
 
 			}
 

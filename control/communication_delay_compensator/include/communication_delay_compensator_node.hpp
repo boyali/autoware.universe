@@ -91,6 +91,10 @@ namespace observers
 				float64_t qfilter_steering_freq{ 5 };
 				float64_t qfilter_velocity_error_freq{ 5 };
 
+				// First order vehicle state models.
+				float64_t steering_tau{ 0.3 };
+				float64_t velocity_tau{ 0.3 };
+
 		};
 
 		template<typename T>
@@ -222,6 +226,10 @@ namespace observers
 				OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
 				rcl_interfaces::msg::SetParametersResult onParameterUpdate(const std::vector<rclcpp::Parameter>& parameters);
 
+
+				/**
+				 * @brief Set lateral error q-filter and lateral error linear model.
+				 * */
 		};
 
 }  // namespace observers
