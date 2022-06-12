@@ -5,7 +5,7 @@
 
     # -- Q-filters --
     qfilter_lateral_error_order: 25  # order of the filter transfer functions.
-    qfilter_heading_error_order: 22
+    qfilter_heading_error_order: 28
     qfilter_steering_order: 18
     qfilter_velocity_error_order: 17
 
