@@ -297,6 +297,13 @@ namespace observers
 				result.reason = e.what();
 			}
 
+			for (const auto& param : parameters)
+			{
+				RCLCPP_INFO(this->get_logger(), "%s", param.get_name().c_str());
+				RCLCPP_INFO(this->get_logger(), "%s", param.get_type_name().c_str());
+				RCLCPP_INFO(this->get_logger(), "%s", param.value_to_string().c_str());
+			}
+
 			return result;
 		}
 

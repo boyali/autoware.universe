@@ -4,10 +4,10 @@
     cdob_ctrl_period: 0.08     # sampling period.
 
     # -- Q-filters --
-    qfilter_lateral_error_order: 25  # order of the filter transfer functions.
-    qfilter_heading_error_order: 28
-    qfilter_steering_order: 18
-    qfilter_velocity_error_order: 17
+    qfilter_lateral_error_order: 3  # order of the filter transfer functions.
+    qfilter_heading_error_order: 2
+    qfilter_steering_order: 1
+    qfilter_velocity_error_order: 1
 
     qfilter_lateral_error_freq: 8.  #qfilter frequency in Hz for lateral error
     qfilter_heading_error_freq: 8.  #qfilter frequency in Hz for heading error
