@@ -44,7 +44,7 @@
 // #include "utils_delay_observer/delay_compensation_utils.hpp"
 // #include "qfilters.hpp"
 #include "communication_delay_compensator_core.hpp"
-
+#include "node_denifitions/node_definitions.hpp"
 
 // ROS headers
 #include "rclcpp/rclcpp.hpp"
