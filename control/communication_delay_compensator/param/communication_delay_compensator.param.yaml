@@ -16,5 +16,7 @@
 
 
     # -- Vehicle Model Selection -- Currently we have only one.
+    steering_time_constant_: 0.3 # first order steering model time-constant  delta_dot = -1/tau *delta + 1/tau * u
+    velocity_time_constant_: 0.2 # first order velocity model time-constant
 
 
