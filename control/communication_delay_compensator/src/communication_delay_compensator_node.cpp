@@ -449,16 +449,16 @@ namespace observers
 				cdob_steering_error_y_outputs_[1] + cdob_steering_error_y_outputs_[2];;
 
 			// Estimate steering model : tau.
-			// auto u_nondelay = current_delay_debug_msg_->steering_nondelay_u_estimated;
-			// auto y_nondelay = current_steering - current_delay_debug_msg_->steering_ydu;
+			auto u_nondelay = current_delay_debug_msg_->steering_nondelay_u_estimated;
+			auto current_steering_nondelayed = current_steering - current_delay_debug_msg_->steering_ydu;
 
-			steering_param_estimator_->updateEstimates(current_steering, u_prev);
+			steering_param_estimator_->updateEstimates(current_steering_nondelayed, u_nondelay);
 
 			float64_t tau_a_steering{};
 			float64_t tau_b_steering{};
 
 			steering_param_estimator_->getCurrentEstimates_ab(tau_a_steering, tau_b_steering);
-			current_delay_debug_msg_->steering_tau_a = tau_a_steering;
+			current_delay_debug_msg_->steering_tau_a = -1. * tau_a_steering;
 			current_delay_debug_msg_->steering_tau_b = tau_b_steering;
 
 

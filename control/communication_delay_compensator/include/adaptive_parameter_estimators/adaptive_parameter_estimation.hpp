@@ -43,13 +43,13 @@ namespace observers
 		private:
 				float64_t dt_{};
 				float64_t const am_{ 1. };
-				float64_t beta_{ 0.01 }; // forgetting factor
+				float64_t beta_{ 0.0 }; // forgetting factor
 				float64_t epsilon_{ 0.1 }; // smoothing factor.
-				float64_t M0_{ 2. }; // constraint on parameters dot product
+				float64_t M0_{ 200. }; // constraint on parameters dot product
 
 				// Covariance resetting
 				float64_t rho_0{ 0.5 };
-				float64_t rho_1{ 1000 };
+				float64_t rho_1{ 1e5 };
 
 				// Parameter maximum and minimums.
 				float64_t amax_{};
