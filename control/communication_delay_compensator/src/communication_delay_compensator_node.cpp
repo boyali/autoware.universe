@@ -449,8 +449,8 @@ namespace observers
 				cdob_steering_error_y_outputs_[1] + cdob_steering_error_y_outputs_[2];;
 
 			// Estimate steering model : tau.
-			auto u_nondelay = current_delay_debug_msg_->steering_nondelay_u_estimated;
-			auto y_nondelay = current_steering - current_delay_debug_msg_->steering_ydu;
+			// auto u_nondelay = current_delay_debug_msg_->steering_nondelay_u_estimated;
+			// auto y_nondelay = current_steering - current_delay_debug_msg_->steering_ydu;
 
 			steering_param_estimator_->updateEstimates(current_steering, u_prev);
 

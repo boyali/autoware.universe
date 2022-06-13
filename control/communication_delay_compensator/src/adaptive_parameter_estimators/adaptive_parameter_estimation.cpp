@@ -93,20 +93,21 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 
 	// Compute the current error.
 	// TODO: replace it with the sufficient richness conditions.
-	double eps_pe = 1e-10;
+	double eps_pe = 1e-2;
 	if (std::fabs(x) > eps_pe && std::fabs(u) > eps_pe)
 	{
 		auto ns = u; // normalization factor
-		auto ms = 1. + ns * ns * 9.;
+		auto ms = 1.; // + ns * ns * 9.;
 
 		// update ehat;
-		ehat0_ = x - xhat0_ - zhat0_;
+		ehat0_ = x - xhat0_; //  - zhat0_;
 
 		// update parameter estimates.
 		Eigen::Matrix<double, 2, 1> theta_dot = P_ * ehat0_ * phi_;
 		auto Pdot = Z_; // prepare a zero matrix.
 
 		// ------------------ Projection Block --------------------------------
+
 		auto const&& normalized_parameters = C0_ * theta_ab_ + C1_;
 		auto grad_g = theta_ab_; // gradient of constraint equation theta**2 -M<0
 
@@ -120,7 +121,7 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 
 		if (!(condition_1 || condition_2))
 		{
-			auto ctheta = (normalized_parameters.lpNorm<2>() - 1) / epsilon_;
+			float64_t ctheta = 1.; // (normalized_parameters.lpNorm<2>() - 1) / epsilon_;
 
 			// Project theta_dot.
 			theta_dot.noalias() = (I_
@@ -178,6 +179,12 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 		ns_utils::print("\nEstimated ahat : ", am_ - theta_ab_(0, 0));
 		ns_utils::print("\nEstimated bhat : ", theta_ab_(1, 0));
 		ns_eigen_utils::printEigenMat(P_);
+
+		ns_utils::print("\n C0 : ");
+		ns_eigen_utils::printEigenMat(C0_);
+
+		ns_utils::print("\n C1 : ");
+		ns_eigen_utils::printEigenMat(C1_);
 
 	}
 	else
