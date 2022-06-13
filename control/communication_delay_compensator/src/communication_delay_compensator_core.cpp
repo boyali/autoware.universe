@@ -128,7 +128,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 		g_tf_.update_num_coef(num_const_g);
 		q_g_inv_tf_.update_den_coef(num_const_g); // since they are inverted.
 
-		ns_utils::print("previous_input  : ", previous_input, numkey, " : ", num_const_g);
+		// ns_utils::print("previous_input  : ", previous_input, numkey, " : ", num_const_g);
 	}
 
 	if (num_den_constant_names_g_.second != "1")
@@ -139,7 +139,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 		g_tf_.update_den_coef(den_const_g);
 		q_g_inv_tf_.update_num_coef(den_const_g); // since they are inverted.
 
-		ns_utils::print("previous_input  : ", previous_input, denkey, " : ", den_const_g);
+		// ns_utils::print("previous_input  : ", previous_input, denkey, " : ", den_const_g);
 	}
 
 	// If any of num den constant changes, update the state-space models.
@@ -206,8 +206,8 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 	y_outputs_[3] = y3; // du->Q(s)/G(s)--> y_du (reference correction).
 
 	// Debug
-	ns_utils::print("measured state : ", measured_model_state);
-	ns_utils::print("simulated y0, y1, y2, y3 : ", y0, y1, du, y3);
+	// 	ns_utils::print("measured state : ", measured_model_state);
+	// 	ns_utils::print("simulated y0, y1, y2, y3 : ", y0, y1, du, y3);
 
 }
 

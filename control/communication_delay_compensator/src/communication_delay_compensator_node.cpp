@@ -46,6 +46,9 @@ namespace observers
 			pub_delay_compensator_ = create_publisher<DelayCompensatatorMsg>(
 				"~/output/communication_delay_compensation_refs", 1);
 
+			pub_delay_compensator_debug_ = create_publisher<DelayCompensatorDebugMsg>(
+				"~/output/communication_delay_compensation_debug", 1);
+
 			// Create subscriptions
 			sub_control_cmds_ = create_subscription<ControlCommand>("~/input/control_cmd", rclcpp::QoS{ 1 },
 			                                                        std::bind(&observers::CommunicationDelayCompensatorNode::onControlCommands,
@@ -106,13 +109,17 @@ namespace observers
 			}
 
 			DelayCompensatatorMsg compensation_msg{};
+			current_delay_references_msg_ = std::make_shared<DelayCompensatatorMsg>(compensation_msg);
+
+			DelayCompensatorDebugMsg compensation_debug_msg{};
+			current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(compensation_debug_msg);
 
 			// Compute the steering compensation values.
-			stepSteeringCDOBcompensator(compensation_msg);
+			stepSteeringCDOBcompensator();
 
 
 			// Publish delay compensation reference.
-			publishCompensationReferences(compensation_msg);
+			publishCompensationReferences();
 
 			// Debug
 			// RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Hello world");
@@ -225,12 +232,12 @@ namespace observers
 
 		}
 
-		void CommunicationDelayCompensatorNode::publishCompensationReferences(DelayCompensatatorMsg const& msg)
+		void CommunicationDelayCompensatorNode::publishCompensationReferences()
 		{
 
 			// new_msg.lateral_deviation_error_compensation_ref = 1.0;
-			current_delay_references_ = std::make_shared<DelayCompensatatorMsg>(msg);
-			pub_delay_compensator_->publish(*current_delay_references_);
+			pub_delay_compensator_->publish(*current_delay_references_msg_);
+			pub_delay_compensator_debug_->publish(*current_delay_debug_msg_);
 
 		}
 		void CommunicationDelayCompensatorNode::onCurrentSteering(const SteeringReport::SharedPtr msg)
@@ -394,17 +401,19 @@ namespace observers
 
 		}
 
-		void CommunicationDelayCompensatorNode::stepSteeringCDOBcompensator(DelayCompensatatorMsg&)
+		void CommunicationDelayCompensatorNode::stepSteeringCDOBcompensator()
 		{
 			// Get the previous steering control value sent to the vehicle.
 			auto u_prev = previous_ctrl_ptr_->lateral.steering_tire_angle;
 
 			// Get the current measured steering value.
 			auto current_steering = current_steering_ptr_->steering_tire_angle;
-			// simOneStep(prev_u, current_x, varying_param_if_exist, y_outputs_to_collect).
+
+			// reset the stored outputs to zero.
+			// std::fill(cdob_steering_error_y_outputs_.begin(), cdob_steering_error_y_outputs_.end(), 0.);
 
 			delay_compensator_steering_error_->simulateOneStep(u_prev, current_steering);
-			// cdob_steering_error_y_outputs_ = delay_compensator_steering_error_->getOutputs();
+			cdob_steering_error_y_outputs_ = delay_compensator_steering_error_->getOutputs();
 
 
 			/**
@@ -414,11 +423,18 @@ namespace observers
 		 * y2: du = y0 - y1 where du is the estimated disturbance input
 		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 		 * */
-			// msg.steering_error_compensation_ref = cdob_steering_error_y_outputs_[2];
+			current_delay_references_msg_->steering_error_compensation_ref = cdob_steering_error_y_outputs_[2];
+
+
+			// Set debug message.
+			current_delay_debug_msg_->steering_uf = cdob_steering_error_y_outputs_[0];
+			current_delay_debug_msg_->steering_u_du = cdob_steering_error_y_outputs_[1];
+			current_delay_debug_msg_->steering_du = cdob_steering_error_y_outputs_[2];
+			current_delay_debug_msg_->steering_ydu = cdob_steering_error_y_outputs_[3];
 
 
 			// Debug
-			ns_utils::print("previous input : ", u_prev, current_steering);
+			//ns_utils::print("previous input : ", u_prev, current_steering);
 		}
 
 }  // namespace observers
