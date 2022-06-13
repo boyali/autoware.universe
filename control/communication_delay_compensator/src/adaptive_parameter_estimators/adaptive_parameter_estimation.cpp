@@ -93,14 +93,14 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 
 	// Compute the current error.
 	// TODO: replace it with the sufficient richness conditions.
-	double eps_pe = 1e-2;
+	double eps_pe = 1e-4;
 	if (std::fabs(x) > eps_pe && std::fabs(u) > eps_pe)
 	{
-		auto ns = u; // normalization factor
-		auto ms = 1.; // + ns * ns * 9.;
+		auto ns = u * u + x * x; // normalization factor
+		auto ms = 1. + ns;
 
 		// update ehat;
-		ehat0_ = x - xhat0_; //  - zhat0_;
+		ehat0_ = x - xhat0_ - zhat0_;
 
 		// update parameter estimates.
 		Eigen::Matrix<double, 2, 1> theta_dot = P_ * ehat0_ * phi_;
@@ -108,26 +108,30 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 
 		// ------------------ Projection Block --------------------------------
 
-		auto const&& normalized_parameters = C0_ * theta_ab_ + C1_;
+		// auto const&& normalized_parameters = C0_ * theta_ab_ + C1_;
 		auto grad_g = theta_ab_; // gradient of constraint equation theta**2 -M<0
 
-		auto normalized_theta_dot_product = normalized_parameters.transpose() * normalized_parameters;
-
-		bool const&& condition_1 = normalized_theta_dot_product < M0_;
+		// auto normalized_theta_dot_product = normalized_parameters.transpose() * normalized_parameters;
+		auto theta_ab_mag = theta_ab_.transpose() * theta_ab_;
+		bool const&& condition_1 = theta_ab_.transpose() * theta_ab_ < M0_;
 
 		auto const&& Pg = theta_dot.transpose() * grad_g;
 		bool const
-			&& condition_2 = (ns_utils::isEqual(static_cast<double>(normalized_theta_dot_product), M0_)) && (Pg <= 0.);
+			&& condition_2 = (ns_utils::isEqual(static_cast<double>(theta_ab_mag), M0_)) && (Pg <= 0.);
+
+		// define a smoothing func.
+		float64_t ctheta{};
 
 		if (!(condition_1 || condition_2))
 		{
-			float64_t ctheta = 1.; // (normalized_parameters.lpNorm<2>() - 1) / epsilon_;
+			ctheta = (theta_ab_mag.lpNorm<2>() - amax_ * amax_) / (epsilon_ * amax_ * amax_);
 
 			// Project theta_dot.
 			theta_dot.noalias() = (I_
 				- ctheta * P_ * (grad_g * grad_g.transpose()) / (grad_g.transpose() * P_ * grad_g)) * theta_dot;
 
 			// Do nothing to Pdot leave it as zero.
+			ns_utils::print("c(theta) : ", ctheta);
 		}
 		else
 		{
@@ -156,19 +160,22 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 		auto phi_x_dot = -am_ * phi_(0, 0) + x;
 		auto phi_u_dot = -am_ * phi_(1, 0) + u;
 
-		phi_(0, 0) = phi_(0, 0) + dt_ * phi_x_dot;
-		phi_(1, 0) = phi_(1, 0) + dt_ * phi_u_dot;
+		phi_(0, 0) = phi_(0, 0) + dt_ * phi_x_dot; // x(s) / (s + am)
+		phi_(1, 0) = phi_(1, 0) + dt_ * phi_u_dot; // u(s) / (s + am)
 
 		// update zhat
 		auto zhat_dot = -zhat0_ * am_ + ehat0_ * ns * ns;
 		zhat0_ = zhat0_ + dt_ * zhat_dot;
 
 		// update xhat0_;
-		auto xhat0_dot = -am_ * x + theta_ab_(0, 0) * x + theta_ab_(1, 0) * u;
-		xhat0_ = xhat0_ + dt_ * xhat0_dot;
+		// auto xhat0_dot = -am_ * x + theta_ab_(0, 0) * x + theta_ab_(1, 0) * u;
+		xhat0_ = theta_ab_(0, 0) * phi_(0, 0) + theta_ab_(1, 0) * phi_(1, 0);
 
 		// debug
 		ns_utils::print("ms : ", ms);
+
+		ns_utils::print("\nNormalized Parameters : ");
+		ns_eigen_utils::printEigenMat(theta_ab_mag);
 
 		ns_utils::print("\nCovariance Matrix : ");
 		ns_eigen_utils::printEigenMat(P_);
@@ -180,11 +187,13 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 		ns_utils::print("\nEstimated bhat : ", theta_ab_(1, 0));
 		ns_eigen_utils::printEigenMat(P_);
 
-		ns_utils::print("\n C0 : ");
-		ns_eigen_utils::printEigenMat(C0_);
 
-		ns_utils::print("\n C1 : ");
-		ns_eigen_utils::printEigenMat(C1_);
+
+// 		ns_utils::print("\n C0 : ");
+// 		ns_eigen_utils::printEigenMat(C0_);
+//
+// 		ns_utils::print("\n C1 : ");
+// 		ns_eigen_utils::printEigenMat(C1_);
 
 	}
 	else
