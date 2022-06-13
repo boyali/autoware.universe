@@ -21,6 +21,14 @@ namespace observers
 		{
 			using std::placeholders::_1;
 
+			size_t n_delay_compensator_output = 4;
+			cdob_lateral_error_y_outputs_.reserve(n_delay_compensator_output);
+			cdob_heading_error_y_outputs_.reserve(n_delay_compensator_output);
+			cdob_steering_error_y_outputs_.reserve(n_delay_compensator_output);
+			cdob_velocity_error_y_outputs_.reserve(n_delay_compensator_output);
+
+			// Reserve internal results vectors.
+
 			// Read vehicle model parameters
 			// Implement Reading Global and Local Variables.
 			// 			const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
@@ -91,8 +99,20 @@ namespace observers
 
 			}
 
+			if (!previous_ctrl_ptr_)
+			{
+				ControlCommand zero_cmd{};
+				previous_ctrl_ptr_ = std::make_shared<ControlCommand>(zero_cmd);
+			}
+
+			DelayCompensatatorMsg compensation_msg{};
+
+			// Compute the steering compensation values.
+			stepSteeringCDOBcompensator(compensation_msg);
+
+
 			// Publish delay compensation reference.
-			publishCompensationReferences();
+			publishCompensationReferences(compensation_msg);
 
 			// Debug
 			// RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Hello world");
@@ -138,14 +158,14 @@ namespace observers
 				get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity frq %4.2f ",
 				params_node_.qfilter_velocity_error_freq);
 
-			if (delay_compensator_steering_error_)
-			{
-				delay_compensator_steering_error_->print();
-			}
-			else
-			{
-				ns_utils::print("Unique pointer is not set ");
-			}
+// 			if (delay_compensator_steering_error_)
+// 			{
+// 				delay_compensator_steering_error_->print();
+// 			}
+// 			else
+// 			{
+// 				ns_utils::print("Unique pointer is not set ");
+// 			}
 
 			// ns_utils::print("ACT On timer method ");
 // 			ns_utils::print("Params wheelbase ", params_node_.wheel_base);
@@ -156,6 +176,7 @@ namespace observers
 
 		void CommunicationDelayCompensatorNode::onControlCommands(const ControlCommand::SharedPtr msg)
 		{
+			previous_ctrl_ptr_ = current_ctrl_ptr_;
 			current_ctrl_ptr_ = std::make_shared<ControlCommand>(*msg);
 
 
@@ -204,11 +225,11 @@ namespace observers
 
 		}
 
-		void CommunicationDelayCompensatorNode::publishCompensationReferences()
+		void CommunicationDelayCompensatorNode::publishCompensationReferences(DelayCompensatatorMsg const& msg)
 		{
-			DelayCompensatatorMsg new_msg{};
-			new_msg.lateral_deviation_error_compensation_ref = 1.0;
-			current_delay_references_ = std::make_shared<DelayCompensatatorMsg>(new_msg);
+
+			// new_msg.lateral_deviation_error_compensation_ref = 1.0;
+			current_delay_references_ = std::make_shared<DelayCompensatatorMsg>(msg);
 			pub_delay_compensator_->publish(*current_delay_references_);
 
 		}
@@ -371,6 +392,33 @@ namespace observers
 			delay_compensator_steering_error_ = std::make_unique<CommunicationDelayCompensatorCore>
 				(delay_compensator_steering);
 
+		}
+
+		void CommunicationDelayCompensatorNode::stepSteeringCDOBcompensator(DelayCompensatatorMsg&)
+		{
+			// Get the previous steering control value sent to the vehicle.
+			auto u_prev = previous_ctrl_ptr_->lateral.steering_tire_angle;
+
+			// Get the current measured steering value.
+			auto current_steering = current_steering_ptr_->steering_tire_angle;
+			// simOneStep(prev_u, current_x, varying_param_if_exist, y_outputs_to_collect).
+
+// 			delay_compensator_steering_error_->simulateOneStep(u_prev, current_steering);
+// 			cdob_steering_error_y_outputs_ = delay_compensator_steering_error_->getOutputs();
+
+
+			/**
+		 * @brief Outputs of the delay compensator.
+		 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+		 * y2: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+		 * y2: du = y0 - y1 where du is the estimated disturbance input
+		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+		 * */
+// 			msg.steering_error_compensation_ref = cdob_steering_error_y_outputs_[2];
+
+
+			// Debug
+			ns_utils::print("previous input : ", u_prev, current_steering);
 		}
 
 }  // namespace observers

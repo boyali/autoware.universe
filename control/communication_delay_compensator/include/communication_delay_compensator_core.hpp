@@ -50,6 +50,24 @@ namespace observers
 
 				void setDynamicParams_num_den(pairs_string_view_t& param_names, pairs_func_maps_t& param_funcs);
 
+				// Simulate  one-step and get the outputs.
+				/**
+				 * @brief Simulates one-step and produces the outputs.
+				 * @param previous_input: previous input sent to the vehicle
+				 * @param measured_model_state: the state that tracks a reference (i.e ey, eyaw, eV).
+				 * @param num_den_args_of_g: the model states that define the transfer function, i.e (V^2/(cos(delta)*s + 1).
+				 * @param outputs from the delay compensator.
+				 * */
+				void simulateOneStep(float64_t const& previous_input, /** previous input*/
+				                     float64_t const& measured_model_state, /* The input cause this measurement*/
+				                     std::pair<float64_t, float64_t> const& num_den_args_of_g = { 1.,
+				                                                                                  1. }    /** model parameters*/);
+
+				std::vector<float64_t> getOutputs() const
+				{
+					return y_outputs_;
+				}
+
 		private:
 				// Qfilter transfer function.
 				tf_t q_filter_tf_{}; // @brief Transfer function of the qfilter.
@@ -73,19 +91,26 @@ namespace observers
 				pairs_string_view_t num_den_constant_names_g_inv_{ "1", "1" };
 
 				// and their functions.
-				pairs_func_maps_t pair_func_map_{}; // @brief locate functions of indexed variable name.
+				pairs_func_maps_t pair_func_map_{};
+				// @brief locate functions of indexed variable name.
 
+
+
+				// Internal states.
+				Eigen::MatrixXd x0_qfilter_{}; // u--> Q(s) -->ufiltered
+				Eigen::MatrixXd x0_gsystem_{}; // u--> G(s)-->y (i,e ey, eyaw ..)
+				Eigen::MatrixXd x0_inv_system_{}; // y--> Q(s)/G(s) --> u-du
 
 				// Data members, place holders.
 				/**
-				 * @brief Outputs of the delay compensator.
+				 * @brief Outputs of the delay compensator. std::array<float64_t, 4> y_outputs_{};
 				 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
 				 * y2: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
 				 * y2: du = y0 - y1 where du is the estimated disturbance input
 				 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 				 * */
-				std::array<double, 4> y_outputs_{};
 
+				std::vector<float64_t> y_outputs_;
 		};
 } // namespace observers
 
