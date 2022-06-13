@@ -203,7 +203,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 	y_outputs_[0] = y0; // ufiltered
 	y_outputs_[1] = y1; // u-du
 	y_outputs_[2] = du; // du
-	y_outputs_[3] = y3; // for time being y of u-->G(s)-->y
+	y_outputs_[3] = y3; // du->Q(s)/G(s)--> y_du (reference correction).
 
 	// Debug
 	ns_utils::print("measured state : ", measured_model_state);
