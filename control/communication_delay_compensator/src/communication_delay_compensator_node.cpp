@@ -250,21 +250,21 @@ namespace observers
 			if (!current_velocity_ptr)
 			{
 				RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
-				                               "[mpc_nonlinear] Waiting for the velocity measurement ...");
+				                               "[communication_delay] Waiting for the velocity measurement ...");
 				return false;
 			}
 
 			if (!current_steering_ptr_)
 			{
 				RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
-				                               "[mpc_nonlinear] Waiting for the steering measurement ...");
+				                               "[communication_delay] Waiting for the steering measurement ...");
 				return false;
 			}
 
 			if (!current_ctrl_ptr_)
 			{
 				RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
-				                               "[mpc_nonlinear] Waiting for the control command ...");
+				                               "[communication_delay] Waiting for the control command ...");
 				return false;
 			}
 
@@ -403,8 +403,8 @@ namespace observers
 			auto current_steering = current_steering_ptr_->steering_tire_angle;
 			// simOneStep(prev_u, current_x, varying_param_if_exist, y_outputs_to_collect).
 
-// 			delay_compensator_steering_error_->simulateOneStep(u_prev, current_steering);
-// 			cdob_steering_error_y_outputs_ = delay_compensator_steering_error_->getOutputs();
+			delay_compensator_steering_error_->simulateOneStep(u_prev, current_steering);
+			// cdob_steering_error_y_outputs_ = delay_compensator_steering_error_->getOutputs();
 
 
 			/**
@@ -414,7 +414,7 @@ namespace observers
 		 * y2: du = y0 - y1 where du is the estimated disturbance input
 		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 		 * */
-// 			msg.steering_error_compensation_ref = cdob_steering_error_y_outputs_[2];
+			// msg.steering_error_compensation_ref = cdob_steering_error_y_outputs_[2];
 
 
 			// Debug

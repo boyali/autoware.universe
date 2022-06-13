@@ -4,6 +4,19 @@ project(communication_delay_compensator)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+#if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+#    add_compile_options(
+#            -Wall
+#            -Wextra
+#            -Wpedantic
+#            # -Wno-unused-parameter
+#            # -Wconversion
+#            -Wdouble-promotion
+#            # -Wfloat-equal
+#            -Waddress
+#            -fvisibility=default) # visibility hidden or default is set here.
+#endif ()
+
 
 ## ----------------- Library headers and sources -------------------------------
 set(CDOB_LIB_INCLUDE_DIRS

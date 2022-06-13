@@ -27,6 +27,10 @@ observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
 {
 	y_outputs_.reserve(4);
 
+	x0_qfilter_.setZero();
+	x0_gsystem_.setZero();
+	x0_inv_system_.setZero();
+
 	// Compute the state spaces which can simulate the system given a u, x0.
 	q_filter_ss_ = ss_t(q_filter_tf_, dt_);
 	g_ss_ = ss_t(g_tf_, dt_);
@@ -44,6 +48,16 @@ observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
 	// Set default function mapping to identity if there is not varying parameters in the num and den.
 	pair_func_map_["1"] = [](auto const& x) -> double
 	{ return x; }; // to prevent zero division.
+
+
+	// Initialize the Eigen vectors.
+	auto qfilter_order = std::max(q_filter_tf_.num().size(), q_filter_tf_.den().size());
+	auto system_model_order = std::max(g_tf_.num().size(), g_tf_.den().size());
+	auto inverse_system_order = std::max(q_g_inv_tf_.num().size(), q_g_inv_tf_.den().size());
+
+	x0_qfilter_ = Eigen::MatrixXd(qfilter_order, 1);
+	x0_gsystem_ = Eigen::MatrixXd(system_model_order, 1);
+	x0_inv_system_ = Eigen::MatrixXd(inverse_system_order, 1);
 
 }
 
@@ -114,7 +128,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 		g_tf_.update_num_coef(num_const_g);
 		q_g_inv_tf_.update_den_coef(num_const_g); // since they are inverted.
 
-		// ns_utils::print("previous_input  : ", previous_input, numkey, " : ", num_const_g);
+		ns_utils::print("previous_input  : ", previous_input, numkey, " : ", num_const_g);
 	}
 
 	if (num_den_constant_names_g_.second != "1")
@@ -125,7 +139,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 		g_tf_.update_den_coef(den_const_g);
 		q_g_inv_tf_.update_num_coef(den_const_g); // since they are inverted.
 
-		// ns_utils::print("previous_input  : ", previous_input, denkey, " : ", den_const_g);
+		ns_utils::print("previous_input  : ", previous_input, denkey, " : ", den_const_g);
 	}
 
 	// If any of num den constant changes, update the state-space models.
@@ -138,8 +152,9 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 
 	// Simulate Qs, Gs, Qs/Gs/
 	// set previous_input u of Q(s) to get the filtered output. u--> Q(s) -->uf
-	// steering, gas sent to the vehicle.
-	auto y0 = q_filter_ss_.simulateOneStep(x0_qfilter_, previous_input); // Output is filtered previous_input uf.
+	// Steering, gas sent to the vehicle. 	Output is filtered previous_input uf.
+	auto y0 = q_filter_ss_.simulateOneStep(x0_qfilter_, static_cast<double>(previous_input));
+
 
 	//	ns_utils::print("xuG before system: ");
 	//	ns_eigen_utils::printEigenMat(x0_gsystem_);
@@ -165,14 +180,14 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 	auto y3 = g_ss_.simulateOneStep(x0_gsystem_, du); // output is y (i.e ey, eyaw, ...).
 
 
-	ns_utils::print("Current velocity and steering :", num_den_args_of_g.first, previous_input);
-	ns_utils::print("Current V^2 and cos(delta)^2  : ", pair_func_map_["v"](num_den_args_of_g.first),
-	                pair_func_map_["delta"](num_den_args_of_g.second), "\n");
-
-//	ns_utils::print("Current Q/G Model");
-//	QGinv_tf_.print();
-//	QGinv_ss_.print();
-//	QGinv_ss_.print_discrete_system();
+// 	ns_utils::print("Current velocity and steering :", num_den_args_of_g.first, previous_input);
+// 	ns_utils::print("Current V^2 and cos(delta)^2  : ", pair_func_map_["v"](num_den_args_of_g.first),
+// 	                pair_func_map_["delta"](num_den_args_of_g.second), "\n");
+//
+// 	ns_utils::print("Current Q/G Model");
+// 	q_g_inv_tf_.print();
+// 	q_g_inv_ss_.print();
+// 	q_g_inv_ss_.print_discrete_system();
 
 
 	// Get outputs.
@@ -184,10 +199,15 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 	 * */
 
+	y_outputs_ = std::vector<float64_t>(4, 0.);
 	y_outputs_[0] = y0; // ufiltered
 	y_outputs_[1] = y1; // u-du
 	y_outputs_[2] = du; // du
 	y_outputs_[3] = y3; // for time being y of u-->G(s)-->y
+
+	// Debug
+	ns_utils::print("measured state : ", measured_model_state);
+	ns_utils::print("simulated y0, y1, y2, y3 : ", y0, y1, du, y3);
 
 }
 
