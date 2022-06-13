@@ -25,6 +25,8 @@ observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
 	g_tf_(g_system_model),
 	dt_{ dt }
 {
+	y_outputs_.reserve(4);
+
 	// Compute the state spaces which can simulate the system given a u, x0.
 	q_filter_ss_ = ss_t(q_filter_tf_, dt_);
 	g_ss_ = ss_t(g_tf_, dt_);
@@ -38,6 +40,10 @@ observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
 
 	// Compute the state-space model of QGinv(s)
 	q_g_inv_ss_ = ss_t(q_g_inv_tf_, dt_); // Do not forget to enter the time step dt.
+
+	// Set default function mapping to identity if there is not varying parameters in the num and den.
+	pair_func_map_["1"] = [](auto const& x) -> double
+	{ return x; }; // to prevent zero division.
 
 }
 
@@ -91,6 +97,97 @@ void observers::CommunicationDelayCompensatorCore::setDynamicParams_num_den(obse
 	// Invert the names for 1/G(s).
 	num_den_constant_names_g_inv_ =
 		pairs_string_view_t(num_den_constant_names_g_.second, num_den_constant_names_g_.first);
+
+}
+void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t const& previous_input,
+                                                                   float64_t const& measured_model_state,
+                                                                   std::pair<float64_t, float64_t> const&
+                                                                   num_den_args_of_g)
+{
+
+	// Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
+	if (num_den_constant_names_g_.first != "1")
+	{
+		auto&& numkey = num_den_constant_names_g_.first; // Corresponds to v in ey model.
+		auto&& num_const_g = pair_func_map_[numkey](num_den_args_of_g.first);
+
+		g_tf_.update_num_coef(num_const_g);
+		q_g_inv_tf_.update_den_coef(num_const_g); // since they are inverted.
+
+		// ns_utils::print("previous_input  : ", previous_input, numkey, " : ", num_const_g);
+	}
+
+	if (num_den_constant_names_g_.second != "1")
+	{
+		auto&& denkey = num_den_constant_names_g_.second; // Corresponds to delta in ey model.
+		auto&& den_const_g = pair_func_map_[denkey](num_den_args_of_g.second);
+
+		g_tf_.update_den_coef(den_const_g);
+		q_g_inv_tf_.update_num_coef(den_const_g); // since they are inverted.
+
+		// ns_utils::print("previous_input  : ", previous_input, denkey, " : ", den_const_g);
+	}
+
+	// If any of num den constant changes, update the state-space models.
+	if (num_den_constant_names_g_.first != "1" || num_den_constant_names_g_.second != "1")
+	{
+		// Update Gss accordingly from the TF version.
+		g_ss_.updateStateSpace(g_tf_);
+		q_g_inv_ss_.updateStateSpace(q_g_inv_tf_);
+	}
+
+	// Simulate Qs, Gs, Qs/Gs/
+	// set previous_input u of Q(s) to get the filtered output. u--> Q(s) -->uf
+	// steering, gas sent to the vehicle.
+	auto y0 = q_filter_ss_.simulateOneStep(x0_qfilter_, previous_input); // Output is filtered previous_input uf.
+
+	//	ns_utils::print("xuG before system: ");
+	//	ns_eigen_utils::printEigenMat(x0_gsystem_);
+
+	//  simulate y --> Q(s)/ G(s) --> u-du (original previous_input - disturbance previous_input).
+	auto clamped_tracking_state = ns_utils::clamp(measured_model_state, -1.1, 1.1);
+
+	// x0_inv_system_.setZero();
+	auto y1 = q_g_inv_ss_.simulateOneStep(x0_inv_system_, clamped_tracking_state); // output is u-du.
+
+	//	ns_utils::print("xuG after system: ");
+	//	ns_eigen_utils::printEigenMat(x0_gsystem_);
+
+	//	ns_utils::print("Current G Model");
+	//	Gtf_.print();
+	//	Gss_.print_discrete_system();
+
+	// Get difference of uf-(u-du) ~=du
+	auto&& du = y0 - y1;
+
+	// Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
+	// x0_gsystem_.setZero();
+	auto y3 = g_ss_.simulateOneStep(x0_gsystem_, du); // output is y (i.e ey, eyaw, ...).
+
+
+	ns_utils::print("Current velocity and steering :", num_den_args_of_g.first, previous_input);
+	ns_utils::print("Current V^2 and cos(delta)^2  : ", pair_func_map_["v"](num_den_args_of_g.first),
+	                pair_func_map_["delta"](num_den_args_of_g.second), "\n");
+
+//	ns_utils::print("Current Q/G Model");
+//	QGinv_tf_.print();
+//	QGinv_ss_.print();
+//	QGinv_ss_.print_discrete_system();
+
+
+	// Get outputs.
+	/**
+	 * @brief Outputs of the delay compensator.
+	 * y0: u_filtered,Q(s)*u where u is the previous_input sent to the system.
+	 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+	 * y2: du = y0 - y2 where du is the estimated disturbance previous_input
+	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+	 * */
+
+	y_outputs_[0] = y0; // ufiltered
+	y_outputs_[1] = y1; // u-du
+	y_outputs_[2] = du; // du
+	y_outputs_[3] = y3; // for time being y of u-->G(s)-->y
 
 }
 

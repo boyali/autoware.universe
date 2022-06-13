@@ -13,3 +13,17 @@
 // limitations under the License.
 
 #include "adaptive_parameter_estimators/adaptive_parameter_estimation.hpp"
+// observers::AdaptiveParameterEstimatorFirstOrderSystem::AdaptiveParameterEstimatorFirstOrderSystem()
+// {
+//
+// }
+
+void observers::AdaptiveParameterEstimatorFirstOrderSystem::Jacobian(autoware::common::types::float64_t const&
+/*ymeasured*/, autoware::common::types::float64_t const& /*ypredicted*/)
+{
+
+}
+void observers::AdaptiveParameterEstimatorFirstOrderSystem::projectParameters()
+{
+
+}

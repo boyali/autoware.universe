@@ -27,7 +27,7 @@ namespace observers
 		class AdaptiveParameterEstimatorFirstOrderSystem
 		{
 		public:
-				AdaptiveParameterEstimatorFirstOrderSystem();
+				AdaptiveParameterEstimatorFirstOrderSystem() = default;
 		private:
 				float64_t dt_{};
 
@@ -39,13 +39,13 @@ namespace observers
 				std::array<float64_t, 2> theta_params_predicted_{}; // xdot = -a*x + bu where a and b ara unknown.
 
 				// Value of Jacobian with respec to the parameters
-				void Jacobian(float64_t const& ymeasured, float64_t const& ypredicted)
+				void Jacobian(float64_t const& ymeasured, float64_t const& ypredicted);
 
 				// Class methods.
 				/**
 				 * @brief project a parameter on to a convex set, using vector projection methods.
 				 * */
-				void projetParameters();
+				void projectParameters();
 
 		};
 } // namespace observers

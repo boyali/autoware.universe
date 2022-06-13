@@ -162,6 +162,7 @@ namespace observers
 
 				// Pointer to the model inputs
 				std::shared_ptr<ControlCommand> current_ctrl_ptr_{ nullptr };
+				std::shared_ptr<ControlCommand> previous_ctrl_ptr_{ nullptr };
 
 				// Pointers to the compensator outputs.
 				std::shared_ptr<DelayCompensatatorMsg> current_delay_references_{ nullptr };
@@ -206,7 +207,7 @@ namespace observers
 				/**
 				 * @brief Publish message.
 				 * */
-				void publishCompensationReferences();
+				void publishCompensationReferences(DelayCompensatatorMsg const& msg);
 
 				/**
 				 * @brief Check if data flows.
@@ -230,6 +231,23 @@ namespace observers
 				 * */
 
 				void setSteeringCDOBcompensator();
+				void stepSteeringCDOBcompensator(DelayCompensatatorMsg& msg);  // oneStep integrator.
+
+				/**
+				 * @brief placeholders for delay compensator outputs.
+				 * */
+
+				/**
+				 * @brief Outputs of the delay compensator.
+				 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+				 * y2: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+				 * y2: du = y0 - y1 where du is the estimated disturbance input
+				 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+				 * */
+				std::vector<float64_t> cdob_lateral_error_y_outputs_{};
+				std::vector<float64_t> cdob_heading_error_y_outputs_{};
+				std::vector<float64_t> cdob_steering_error_y_outputs_{};
+				std::vector<float64_t> cdob_velocity_error_y_outputs_{};
 
 		};
 
