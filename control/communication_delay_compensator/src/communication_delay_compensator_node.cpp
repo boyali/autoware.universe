@@ -81,6 +81,9 @@ namespace observers
 
 			// Set the delay compensator for each tracking purpose.
 			setSteeringCDOBcompensator();
+			setHeadingErrorCDOBcompensator();
+			setLateralErrorCDOBcompensator();
+			setVelocityErrorCDOBcompensator();
 
 		}
 
@@ -116,7 +119,7 @@ namespace observers
 			current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(compensation_debug_msg);
 
 			// Compute the steering compensation values.
-			stepSteeringCDOBcompensator();
+			computeSteeringCDOBcompensator();
 
 
 			// Publish delay compensation reference.
@@ -402,7 +405,12 @@ namespace observers
 
 		}
 
-		void CommunicationDelayCompensatorNode::stepSteeringCDOBcompensator()
+		/**
+		 * @brief Computes a corrective reference signal to subtract from the current steering error reference in the form
+		 * of  r_steering_corrected = r_steering - cdob_corrrection. Additional variables are computed for debugging
+		 * purpose.
+		 * */
+		void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
 		{
 			// Get the previous steering control value sent to the vehicle.
 			auto u_prev = previous_ctrl_ptr_->lateral.steering_tire_angle;
@@ -437,6 +445,37 @@ namespace observers
 
 			// Debug
 			//ns_utils::print("previous input : ", u_prev, current_steering);
+		}
+
+		void CommunicationDelayCompensatorNode::setHeadingErrorCDOBcompensator()
+		{
+
+		}
+
+		/**
+		 * @brief Computes a corrective reference signal to subtract from the current heading error reference in the form
+		 * of  r_heading_corrected = r_heading - cdob_corrrection. Additional variables are computed for debugging purpose.
+		 * */
+		void CommunicationDelayCompensatorNode::computeHeadingCDOBcompensator()
+		{
+
+		}
+
+		void CommunicationDelayCompensatorNode::setLateralErrorCDOBcompensator()
+		{
+
+		}
+		void CommunicationDelayCompensatorNode::computeLateralCDOBcompensator()
+		{
+
+		}
+		void CommunicationDelayCompensatorNode::setVelocityErrorCDOBcompensator()
+		{
+
+		}
+		void CommunicationDelayCompensatorNode::computeVelocityCDOBcompensator()
+		{
+
 		}
 
 }  // namespace observers
