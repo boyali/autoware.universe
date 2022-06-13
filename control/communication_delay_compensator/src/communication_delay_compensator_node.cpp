@@ -419,7 +419,7 @@ namespace observers
 			/**
 		 * @brief Outputs of the delay compensator.
 		 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
-		 * y2: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+		 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
 		 * y2: du = y0 - y1 where du is the estimated disturbance input
 		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 		 * */
@@ -432,6 +432,8 @@ namespace observers
 			current_delay_debug_msg_->steering_du = cdob_steering_error_y_outputs_[2];
 			current_delay_debug_msg_->steering_ydu = cdob_steering_error_y_outputs_[3];
 
+			current_delay_debug_msg_->steering_nondelay_u_estimated =
+				cdob_steering_error_y_outputs_[1] + cdob_steering_error_y_outputs_[2];;
 
 			// Debug
 			//ns_utils::print("previous input : ", u_prev, current_steering);

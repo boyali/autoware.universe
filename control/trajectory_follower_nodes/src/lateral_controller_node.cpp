@@ -183,6 +183,7 @@ void LateralController::onTimer()
   autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd;
   autoware_auto_planning_msgs::msg::Trajectory predicted_traj;
   autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic diagnostic;
+  ControllerErrorReport ctrl_error_report{};
 
   if (!m_is_ctrl_cmd_prev_initialized) {
     m_ctrl_cmd_prev = getInitialControlCommand();
@@ -204,6 +205,7 @@ void LateralController::onTimer()
     publishCtrlCmd(m_ctrl_cmd_prev);
     publishPredictedTraj(predicted_traj);
     publishDiagnostic(diagnostic);
+    publishErrors(ctrl_error_report);
     return;
   }
 
@@ -213,9 +215,8 @@ void LateralController::onTimer()
     ctrl_cmd = getStopControlCommand();
   }
 
-  // Get the errors computed and publish. 
+  // Get the errors computed and publish.
   auto const & lat_and_yaw_error_pair = m_mpc.getComputedErrors();
-  ControllerErrorReport ctrl_error_report{};
 
   ctrl_error_report.lateral_deviation_read = lat_and_yaw_error_pair.first;
   ctrl_error_report.heading_angle_error_read = lat_and_yaw_error_pair.second;
