@@ -37,6 +37,7 @@
 
 #include "tier4_vehicle_msgs/msg/delay_compensators_stamped.hpp"
 #include  "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
+#include  "autoware_auto_vehicle_msgs/msg/delay_compensation_debug.hpp"
 #include "autoware_auto_vehicle_msgs/msg/controller_error_report.hpp"
 
 // LIBRARY HEADERS
@@ -57,6 +58,7 @@ namespace observers
 		using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
 		// using DelayCompensatatorMsg = tier4_vehicle_msgs::msg::DelayCompensators;
 		using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
+		using DelayCompensatorDebugMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationDebug;
 
 		/**
 		 * @brief longitudinal_controller reports vcurrent - vtarget.
@@ -147,6 +149,7 @@ namespace observers
 
 				// Publishers
 				rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr pub_delay_compensator_;
+				rclcpp::Publisher<DelayCompensatorDebugMsg>::SharedPtr pub_delay_compensator_debug_;
 
 				// Data Members for the delay-compensation.
 				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_lat_error_{}; // set nullptr.
@@ -165,9 +168,12 @@ namespace observers
 				std::shared_ptr<ControlCommand> previous_ctrl_ptr_{ nullptr };
 
 				// Pointers to the compensator outputs.
-				std::shared_ptr<DelayCompensatatorMsg> current_delay_references_{ nullptr };
+				std::shared_ptr<DelayCompensatatorMsg> current_delay_references_msg_{ nullptr };
 				std::shared_ptr<ControllerErrorReportMsg> current_lateral_errors_{ nullptr };
 				std::shared_ptr<ControllerErrorReportMsg> current_longitudinal_errors_{ nullptr };
+
+				// Debug messages
+				std::shared_ptr<DelayCompensatorDebugMsg> current_delay_debug_msg_{ nullptr };
 
 				// Node Methods
 				//!< initialize timer to work in real, simulation, and replay
@@ -207,7 +213,7 @@ namespace observers
 				/**
 				 * @brief Publish message.
 				 * */
-				void publishCompensationReferences(DelayCompensatatorMsg const& msg);
+				void publishCompensationReferences();
 
 				/**
 				 * @brief Check if data flows.
@@ -231,7 +237,7 @@ namespace observers
 				 * */
 
 				void setSteeringCDOBcompensator();
-				void stepSteeringCDOBcompensator(DelayCompensatatorMsg& msg);  // oneStep integrator.
+				void stepSteeringCDOBcompensator();  // oneStep integrator.
 
 				/**
 				 * @brief placeholders for delay compensator outputs.

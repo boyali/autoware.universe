@@ -23,6 +23,8 @@
                to="/control/trajectory_follower/longitudinal/longitudinal_controller_error_report"/>
         <remap from="~/input/lat_errors" to="/control/trajectory_follower/lateral/lateral_controller_error_report"/>
         <remap from="~/output/communication_delay_compensation_refs" to="observers/time_delay_compensator/delay_refs"/>
+        <remap from="~/output/communication_delay_compensation_debug"
+               to="observers/time_delay_compensator/delay_debug"/>
 
         <!--        <remap from="~/input/reference_trajectory" to="$(var input/reference_trajectory)"/>-->
         <!--        <remap from="~/input/control_raw" to="$(var input/control_raw)"/>-->
