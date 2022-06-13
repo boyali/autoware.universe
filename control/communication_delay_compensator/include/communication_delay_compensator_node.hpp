@@ -46,6 +46,7 @@
 // #include "qfilters.hpp"
 #include "communication_delay_compensator_core.hpp"
 #include "node_denifitions/node_definitions.hpp"
+#include "adaptive_parameter_estimators/adaptive_parameter_estimation.hpp"
 
 // ROS headers
 #include "rclcpp/rclcpp.hpp"
@@ -157,6 +158,9 @@ namespace observers
 				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_steering_error_{};
 				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_velocity_error_{};
 
+				// Pointers to parameter estimators.
+				std::unique_ptr<AdaptiveParameterEstimator> steering_param_estimator_{};
+
 				// Pointers to the ROS topics.
 				// Pointers for ros topic
 				// Pointers to the model state variables inputs
@@ -238,6 +242,7 @@ namespace observers
 
 				void setSteeringCDOBcompensator();
 				void stepSteeringCDOBcompensator();  // oneStep integrator.
+				void setSteeringModelEstimator(); // estimates time constant of the steering system.
 
 				/**
 				 * @brief placeholders for delay compensator outputs.

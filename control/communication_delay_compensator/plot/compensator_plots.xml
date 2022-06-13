@@ -1,19 +1,19 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
- <tabbed_widget name="Main Window" parent="main_window">
+ <tabbed_widget parent="main_window" name="Main Window">
   <Tab containers="1" tab_name="Steering Error vs Compensation Signal">
    <Container>
-    <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+    <DockSplitter count="2" sizes="0.500401;0.499599" orientation="-">
      <DockArea name="...">
-      <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-       <range top="0.100000" left="36.178809" bottom="-0.100000" right="67.591322"/>
+      <plot flip_y="false" style="Lines" mode="TimeSeries" flip_x="false">
+       <range right="27.237737" left="0.038262" bottom="-0.100000" top="0.100000"/>
        <limitY/>
        <curve name="/control/trajectory_follower/lateral/lateral_controller_error_report/steering_error_read" color="#1f77b4"/>
       </plot>
      </DockArea>
      <DockArea name="...">
-      <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-       <range top="0.078614" left="36.178809" bottom="-0.047313" right="67.591322"/>
+      <plot flip_y="false" style="Lines" mode="TimeSeries" flip_x="false">
+       <range right="27.237737" left="0.038262" bottom="-0.007338" top="-0.007338"/>
        <limitY/>
        <curve name="/observers/time_delay_compensator/delay_refs/steering_error_compensation_ref" color="#d62728"/>
       </plot>
@@ -23,35 +23,35 @@
   </Tab>
   <Tab containers="1" tab_name="Steering Debug">
    <Container>
-    <DockSplitter orientation="-" count="1" sizes="1">
-     <DockSplitter orientation="|" count="2" sizes="0.500234;0.499766">
-      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+    <DockSplitter count="1" sizes="1" orientation="-">
+     <DockSplitter count="2" sizes="0.500234;0.499766" orientation="|">
+      <DockSplitter count="2" sizes="0.500401;0.499599" orientation="-">
        <DockArea name="...">
-        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-         <range top="0.078614" left="36.178809" bottom="-0.047313" right="67.591322"/>
+        <plot flip_y="false" style="Lines" mode="TimeSeries" flip_x="false">
+         <range right="27.237737" left="0.038262" bottom="-0.007338" top="-0.007338"/>
          <limitY/>
          <curve name="/observers/time_delay_compensator/delay_debug/steering_du" color="#1ac938"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-         <range top="0.030671" left="36.178809" bottom="-0.386198" right="67.591322"/>
+        <plot flip_y="false" style="Lines" mode="TimeSeries" flip_x="false">
+         <range right="27.237737" left="0.038262" bottom="-0.007338" top="-0.007338"/>
          <limitY/>
          <curve name="/observers/time_delay_compensator/delay_debug/steering_uf" color="#f14cc1"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+      <DockSplitter count="2" sizes="0.500401;0.499599" orientation="-">
        <DockArea name="...">
-        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-         <range top="0.033792" left="36.178809" bottom="-0.394670" right="67.591322"/>
+        <plot flip_y="false" style="Lines" mode="TimeSeries" flip_x="false">
+         <range right="27.237737" left="0.038262" bottom="-0.100000" top="0.100000"/>
          <limitY/>
          <curve name="/observers/time_delay_compensator/delay_debug/steering_u_du" color="#ff7f0e"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-         <range top="0.055756" left="36.178809" bottom="-0.039039" right="67.591322"/>
+        <plot flip_y="false" style="Lines" mode="TimeSeries" flip_x="false">
+         <range right="27.237737" left="0.038262" bottom="-0.007338" top="-0.007338"/>
          <limitY/>
          <curve name="/observers/time_delay_compensator/delay_debug/steering_ydu" color="#9467bd"/>
         </plot>
@@ -63,10 +63,10 @@
   </Tab>
   <Tab containers="1" tab_name="Steering Disturbance Generator  Outputs">
    <Container>
-    <DockSplitter orientation="-" count="1" sizes="1">
+    <DockSplitter count="1" sizes="1" orientation="-">
      <DockArea name="...">
-      <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-       <range top="0.206017" left="36.178809" bottom="-0.330792" right="67.591322"/>
+      <plot flip_y="false" style="Lines" mode="TimeSeries" flip_x="false">
+       <range right="27.237737" left="0.038262" bottom="-0.007521" top="0.000183"/>
        <limitY/>
        <curve name="/simulation/output/disturbance_generator/steer_delayed_input" color="#17becf"/>
        <curve name="/simulation/output/disturbance_generator/steer_original_input" color="#1d1d08"/>
@@ -78,7 +78,29 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <currentTabIndex index="2"/>
+  <Tab containers="1" tab_name="Steering Model Identification">
+   <Container>
+    <DockSplitter count="1" sizes="1" orientation="-">
+     <DockSplitter count="2" sizes="0.500234;0.499766" orientation="|">
+      <DockArea name="...">
+       <plot flip_y="false" style="Lines" mode="TimeSeries" flip_x="false">
+        <range right="36.197902" left="0.038262" bottom="-0.747949" top="-0.333371"/>
+        <limitY/>
+        <curve name="/observers/time_delay_compensator/delay_debug/steering_tau_a" color="#1f77b4"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot flip_y="false" style="Lines" mode="TimeSeries" flip_x="false">
+        <range right="36.197902" left="0.038262" bottom="0.175035" top="0.218597"/>
+        <limitY/>
+        <curve name="/observers/time_delay_compensator/delay_debug/steering_tau_b" color="#d62728"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="3"/>
  </tabbed_widget>
  <use_relative_time_offset enabled="1"/>
  <!-- - - - - - - - - - - - - - - -->

@@ -26,55 +26,55 @@ void draw(const T& x, std::ostream& out, size_t indent)
 class Object
 {
 public:
-	template<typename T>
-	Object(T x) : self(std::make_shared<Model < T>>
+		template<typename T>
+		Object(T x) : self(std::make_shared<Model < T>>
 
-	(
-	std::move(x)
-	)) {}
+		(
+		std::move(x)
+		)) {}
 
-	// Make this a freestanding friend function (instead of a member)
-	// so that it shares the _exact_ same interface as other draw functions.
-	// We can now embed Objects in Objects.
-	friend void draw(const Object& x, std::ostream& out, size_t indent)
-	{
-		x.self->_draw(out, indent);
-	}
+		// Make this a freestanding friend function (instead of a member)
+		// so that it shares the _exact_ same interface as other draw functions.
+		// We can now embed Objects in Objects.
+		friend void draw(const Object& x, std::ostream& out, size_t indent)
+		{
+			x.self->_draw(out, indent);
+		}
 
 private:
-	// Here we define our interface.
-	struct Drawable
-	{
-		virtual ~Drawable() = default;  // virtual dtor needed for all interfaces
-		virtual void _draw(std::ostream&, size_t) const = 0;
-	};
-
-	// Here we define the model for a particular type T.
-	template<typename T>
-	struct Model final : Drawable
-	{
-		explicit Model(T x) : data(std::move(x))
+		// Here we define our interface.
+		struct Drawable
 		{
-		}
+				virtual ~Drawable() = default;  // virtual dtor needed for all interfaces
+				virtual void _draw(std::ostream&, size_t) const = 0;
+		};
 
-		void _draw(std::ostream& out, size_t indent) const override
+		// Here we define the model for a particular type T.
+		template<typename T>
+		struct Model final : Drawable
 		{
-			// This calls the correct draw() function for whatever type it happens to hold
-			draw(data, out, indent);
-		}
+				explicit Model(T x) : data(std::move(x))
+				{
+				}
 
-		T data;
-	};
+				void _draw(std::ostream& out, size_t indent) const override
+				{
+					// This calls the correct draw() function for whatever type it happens to hold
+					draw(data, out, indent);
+				}
 
-	// Making this a shared_ptr to const data has a few really nice properties:
-	// 1. We get automatic copy-on-write (CoW) semantics.
-	//    Making a copy of ourselves just bumps the reference count.
-	//
-	// 2. The default special functions (move, assignment, etc.) work great.
-	//    If this was a unique_ptr instead, we'd have to implement our own
-	//    copy operators for Object, and have a virtual copy() function for
-	//    Drawable.
-	std::shared_ptr<const Drawable> self;
+				T data;
+		};
+
+		// Making this a shared_ptr to const data has a few really nice properties:
+		// 1. We get automatic copy-on-write (CoW) semantics.
+		//    Making a copy of ourselves just bumps the reference count.
+		//
+		// 2. The default special functions (move, assignment, etc.) work great.
+		//    If this was a unique_ptr instead, we'd have to implement our own
+		//    copy operators for Object, and have a virtual copy() function for
+		//    Drawable.
+		std::shared_ptr<const Drawable> self;
 };
 
 
@@ -92,7 +92,7 @@ void draw(const Document& x, std::ostream& out, size_t indent)
 
 	out << indentString << "{" << std::endl;
 
-	for (const auto& e: x) draw(e, out, indent + 4);
+	for (const auto& e : x) draw(e, out, indent + 4);
 
 	out << indentString << "}" << std::endl;
 }
@@ -101,19 +101,19 @@ void draw(const Document& x, std::ostream& out, size_t indent)
 class Foo
 {
 public:
-	Foo() = default;
+		Foo() = default;
 
-	explicit Foo(int x_)
+		explicit Foo(int x_)
 			: x(x_)
-	{
-	}
+		{
+		}
 
-	int x = 42;
+		int x = 42;
 };
 
 void draw(const Foo& f, std::ostream& out, size_t indent)
 {
-	out << std::string(indent, ' ') << "I am a foo with value " << f.x << std::endl;
+	out << std::string(indent, ' ') << "I am_ a foo with value " << f.x << std::endl;
 }
 
 // Actual use:
@@ -131,7 +131,6 @@ int main()
 	d.push_back(d); // CoW!
 	d.push_back("Ta da!");
 	draw(d, std::cout, 0);
-
 
 	return 0;
 }
