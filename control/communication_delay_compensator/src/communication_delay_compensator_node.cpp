@@ -81,7 +81,7 @@ namespace observers
 
 			// Set the delay compensator for each tracking purpose.
 			setSteeringCDOBcompensator();
-			setSteeringModelEstimator();
+
 		}
 
 		void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
@@ -402,19 +402,6 @@ namespace observers
 
 		}
 
-		void CommunicationDelayCompensatorNode::setSteeringModelEstimator()
-		{
-			float64_t const amin = 2; // 1/tau_max
-			float64_t const amax = 10; // 1/tau_min
-
-			float64_t const bmin = 2; // 1/tau_max
-			float64_t const bmax = 10; // 1/tau_min
-
-			auto const& dt = params_node_.cdob_ctrl_period;
-			steering_param_estimator_ = std::make_unique<AdaptiveParameterEstimator>(amin, amax, bmin, bmax, dt);
-
-		}
-
 		void CommunicationDelayCompensatorNode::stepSteeringCDOBcompensator()
 		{
 			// Get the previous steering control value sent to the vehicle.
@@ -447,20 +434,6 @@ namespace observers
 
 			current_delay_debug_msg_->steering_nondelay_u_estimated =
 				cdob_steering_error_y_outputs_[1] + cdob_steering_error_y_outputs_[2];;
-
-			// Estimate steering model : tau.
-			auto u_nondelay = current_delay_debug_msg_->steering_nondelay_u_estimated;
-			auto current_steering_nondelayed = current_steering - current_delay_debug_msg_->steering_ydu;
-
-			steering_param_estimator_->updateEstimates(current_steering_nondelayed, u_nondelay);
-
-			float64_t tau_a_steering{};
-			float64_t tau_b_steering{};
-
-			steering_param_estimator_->getCurrentEstimates_ab(tau_a_steering, tau_b_steering);
-			current_delay_debug_msg_->steering_tau_a = -1. * tau_a_steering;
-			current_delay_debug_msg_->steering_tau_b = tau_b_steering;
-
 
 			// Debug
 			//ns_utils::print("previous input : ", u_prev, current_steering);
