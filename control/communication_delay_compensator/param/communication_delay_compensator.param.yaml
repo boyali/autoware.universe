@@ -1,10 +1,10 @@
 /**:
   ros__parameters:
     # -- System --
-    cdob_ctrl_period: 0.08     # sampling period.
+    cdob_ctrl_period: 0.03     # sampling period.
 
     # -- Q-filters --
-    qfilter_lateral_error_order: 4  # order of the filter transfer functions. >=3
+    qfilter_lateral_error_order: 3  # order of the filter transfer functions. >=3
     qfilter_heading_error_order: 2  # >=2
     qfilter_steering_order: 1
     qfilter_velocity_error_order: 1
