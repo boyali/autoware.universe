@@ -404,11 +404,13 @@ namespace observers
 
 		void CommunicationDelayCompensatorNode::setSteeringModelEstimator()
 		{
-			float64_t const amin = 2; // 1/tau_max
-			float64_t const amax = 10; // 1/tau_min
+			float64_t tau_min = 0.01;
+			float64_t tau_max = 1.;
+			float64_t const amin = 1. / tau_max; // 1/tau_max
+			float64_t const amax = 1. / tau_min; // 1/tau_min
 
-			float64_t const bmin = 2; // 1/tau_max
-			float64_t const bmax = 10; // 1/tau_min
+			float64_t const bmin = 1. / tau_max; // 1/tau_max
+			float64_t const bmax = 1. / tau_min; // 1/tau_min
 
 			auto const& dt = params_node_.cdob_ctrl_period;
 			steering_param_estimator_ = std::make_unique<AdaptiveParameterEstimator>(amin, amax, bmin, bmax, dt);

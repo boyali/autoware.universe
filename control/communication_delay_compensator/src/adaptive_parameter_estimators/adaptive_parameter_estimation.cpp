@@ -39,8 +39,8 @@ observers::AdaptiveParameterEstimator::AdaptiveParameterEstimator(float64_t cons
 	I_.setIdentity(); // Identity matrix
 	Z_.setZero(); // zero matrix.
 
-	theta_ab_(0, 0) = (amax_ + amin_) / 2.;
-	theta_ab_(1, 0) = (bmax_ + bmin_) / 2.;
+	theta_ab_(0, 0) = 10.; // (amax_ + amin_) / 2.;
+	theta_ab_(1, 0) = 10.; // (bmax_ + bmin_) / 2.;
 
 }
 
@@ -82,10 +82,10 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 {
 	// Compute the current error.
 	// TODO: replace it with the sufficient richness conditions.
-	double eps_pe = 1e-4;
-	if (std::fabs(x) > eps_pe && std::fabs(u) > eps_pe)
+	double eps_pe = 5e-2;
+	if (std::fabs(u) > eps_pe) // std::fabs(x) > eps_pe &&
 	{
-		auto ns = u * u + x * x; // normalization factor
+		auto ns = u * u; // + x * x; // normalization factor
 		auto ms = 1. + ns;
 
 		// update ehat;
@@ -96,7 +96,7 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 		auto Pdot = Z_; // prepare a zero matrix.
 
 		// ------------------ Projection Block --------------------------------
-		bool is_normalization_needed{ false };
+		// bool is_normalization_needed{ false };
 
 		// To compute a scaled constraint equation we first  scale the parameters.
 		/**
@@ -109,44 +109,58 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 		// Compute conditions for the normalization.
 		bool const&& condition_1 = scaled_params.transpose() * scaled_params < M0_;
 
-		auto const&& Pg = theta_dot.transpose() * scaled_params;
+		auto const& grad_theta = theta_ab_;
+		auto const&& Pg = theta_dot.transpose() * grad_theta;
+
 		bool const
 			&& condition_2 = (ns_utils::isEqual(static_cast<double>(scaled_param_norm), M0_)) && (Pg <= 0.);
 
-		auto grad_g = theta_ab_; // gradient of constraint equation theta**2 -M<0
+		// Evaluate the smoothing func.
+		float64_t ctheta = (scaled_params.lpNorm<2>() - 1.) / epsilon_;
 
-		// auto normalized_theta_dot_product = scaled_params.transpose() * scaled_params;
-		auto theta_ab_mag = theta_ab_.transpose() * theta_ab_;
-
-
-
-		// define a smoothing func.
-		float64_t ctheta{};
-
-		if (!(condition_1 || condition_2))
+		if ((condition_1 || condition_2))
 		{
-			ctheta = (theta_ab_mag.lpNorm<2>() - amax_ * amax_) / (epsilon_ * amax_ * amax_);
+			// is_normalization_needed = true;
+
+			// Apply projection to the parameter differential equations.
+
 
 			// Project theta_dot.
 			theta_dot.noalias() = (I_
-				- ctheta * P_ * (grad_g * grad_g.transpose()) / (grad_g.transpose() * P_ * grad_g)) * theta_dot;
+				- ctheta * P_ * (grad_theta * grad_theta.transpose()) / (grad_theta.transpose() * P_ * grad_theta)) * theta_dot;
 
 			// Do nothing to Pdot leave it as zero.
 			ns_utils::print("c(theta) : ", ctheta);
+
 		}
 		else
 		{
 			// Project Pdot.
-			Pdot = beta_ * P_ - P_ * phi_ * phi_.transpose() * P_ / (ms * ms);
+			Pdot = beta_ * P_ - ctheta * P_ * phi_ * phi_.transpose() * P_ / (ms * ms);
 		}
 
 		// ------------------ Projection Block Ends ---------------------------
 
-		// Update theta_ab.
-		theta_ab_.noalias() = theta_ab_ + dt_ * theta_dot;
+		// ------------------ Updated Block -----------------------------------
+		// update zhat
+		auto zhat_dot = -am_ * zhat0_ + ehat0_ * ns * ns;
+		zhat0_ = zhat0_ + dt_ * zhat_dot;
+
+		// update phi's
+		auto phi_x_dot = -am_ * phi_(0, 0) + x;
+		auto phi_u_dot = -am_ * phi_(1, 0) + u;
+
+		phi_(0, 0) = phi_(0, 0) + dt_ * phi_x_dot; // x(s) / (s + am)
+		phi_(1, 0) = phi_(1, 0) + dt_ * phi_u_dot; // u(s) / (s + am)
 
 		// Update the covariance.
 		P_.noalias() = P_ + Pdot * dt_;
+
+		// Update the parameter estimates: theta_ab.
+		theta_ab_.noalias() = theta_ab_ + dt_ * theta_dot;
+
+		// Update the state estimate xhat
+		xhat0_ = theta_ab_.transpose() * phi_;
 
 		// Reset the covariance matrix
 		auto eigs = P_.eigenvalues();
@@ -157,26 +171,12 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 			P_ = rho_0 * I_;
 		}
 
-		// update phis
-		auto phi_x_dot = -am_ * phi_(0, 0) + x;
-		auto phi_u_dot = -am_ * phi_(1, 0) + u;
-
-		phi_(0, 0) = phi_(0, 0) + dt_ * phi_x_dot; // x(s) / (s + am)
-		phi_(1, 0) = phi_(1, 0) + dt_ * phi_u_dot; // u(s) / (s + am)
-
-		// update zhat
-		auto zhat_dot = -zhat0_ * am_ + ehat0_ * ns * ns;
-		zhat0_ = zhat0_ + dt_ * zhat_dot;
-
 		// update xhat0_;
 		// auto xhat0_dot = -am_ * x + theta_ab_(0, 0) * x + theta_ab_(1, 0) * u;
 		xhat0_ = theta_ab_(0, 0) * phi_(0, 0) + theta_ab_(1, 0) * phi_(1, 0);
 
 		// debug
 		ns_utils::print("ms : ", ms);
-
-		ns_utils::print("\nNormalized Parameters : ");
-		ns_eigen_utils::printEigenMat(theta_ab_mag);
 
 		ns_utils::print("\nCovariance Matrix : ");
 		ns_eigen_utils::printEigenMat(P_);
@@ -187,7 +187,6 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 		ns_utils::print("\nEstimated ahat : ", am_ - theta_ab_(0, 0));
 		ns_utils::print("\nEstimated bhat : ", theta_ab_(1, 0));
 		ns_eigen_utils::printEigenMat(P_);
-
 
 
 // 		ns_utils::print("\n C0 : ");
@@ -206,14 +205,18 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 void observers::AdaptiveParameterEstimator::getCurrentEstimates_ab(autoware::common::types::float64_t& a_estimate,
                                                                    autoware::common::types::float64_t& b_estimate)
 {
-	if (!ns_utils::isEqual(am_ - theta_ab_(0, 0), 0.0))
-	{
-		a_estimate = 1. / (am_ - theta_ab_(0, 0));
-	}
+// 	if (!ns_utils::isEqual(am_ - theta_ab_(0, 0), 0.0))
+// 	{
+// 		a_estimate = 1. / (am_ - theta_ab_(0, 0));
+// 	}
+//
+// 	if (!ns_utils::isEqual(theta_ab_(1, 0), 0.0))
+// 	{
+// 		b_estimate = 1. / theta_ab_(1, 0);
+// 	}
 
-	if (!ns_utils::isEqual(theta_ab_(1, 0), 0.0))
-	{
-		b_estimate = 1. / theta_ab_(1, 0);
-	}
+	a_estimate = am_ - theta_ab_(0, 0);
+	b_estimate = theta_ab_(1, 0);
 
 }
+
