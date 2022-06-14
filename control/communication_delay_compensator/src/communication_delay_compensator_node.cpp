@@ -99,17 +99,10 @@ namespace observers
 		void CommunicationDelayCompensatorNode::onTimer()
 		{
 
-			// Create compensator messages.
-			DelayCompensatatorMsg compensation_msg{};
-			current_delay_references_msg_ = std::make_shared<DelayCompensatatorMsg>(compensation_msg);
-
-			DelayCompensatorDebugMsg compensation_debug_msg{};
-			current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(compensation_debug_msg);
-
 			if (!isDataReady())
 			{
 				RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Not enough data to compute delay compensation");
-				publishCompensationReferences();
+				// publishCompensationReferences();
 				return;
 			}
 
@@ -117,8 +110,16 @@ namespace observers
 			{
 				ControlCommand zero_cmd{};
 				previous_ctrl_ptr_ = std::make_shared<ControlCommand>(zero_cmd);
-				publishCompensationReferences();
+				// publishCompensationReferences();
 			}
+
+			// Create compensator messages.
+			DelayCompensatatorMsg compensation_msg{};
+			current_delay_references_msg_ = std::make_shared<DelayCompensatatorMsg>(compensation_msg);
+
+			DelayCompensatorDebugMsg compensation_debug_msg{};
+			current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(compensation_debug_msg);
+
 
 			// Compute the steering compensation values.
 			computeSteeringCDOBcompensator();
@@ -600,21 +601,21 @@ namespace observers
 			// --------------- Qfilter Construction --------------------------------------
 			// Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
 			// Calculate the transfer function.
-			ns_control_toolbox::tf_factor denominator{ std::vector < double > { time_constant_of_qfilter, 1. }}; // (tau*s+1)
+			ns_control_toolbox::tf_factor denominator{ std::vector<double>{ time_constant_of_qfilter, 1. }}; // (tau*s+1)
 
 			// Take power of the denominator.
 			denominator.power(static_cast<unsigned int>(order_of_q));
 
 			// Create the transfer function from a numerator an denominator.
-			auto q_tf = ns_control_toolbox::tf{ std::vector < double > { 1. }, denominator() };
+			auto q_tf = ns_control_toolbox::tf{ std::vector<double>{ 1. }, denominator() };
 
 			// --------------- System Model Construction --------------------------------------
 			// There are dynamically changing numerator and denominator coefficients.
 			// We store the factored num and denominators:  a(var1) * num / b(var1)*den where num-den are constants.
-			std::pair <std::string_view, std::string_view> param_names{ "v", "delta" };
+			std::pair<std::string_view, std::string_view> param_names{ "v", "delta" };
 
 			// Functions of v, and delta.
-			std::unordered_map <std::string_view, func_type<double>> f_variable_num_den_funcs{};
+			std::unordered_map<std::string_view, func_type<double>> f_variable_num_den_funcs{};
 
 			f_variable_num_den_funcs["v"] = [](auto const& x) -> double
 			{ return std::fabs(x) < 1. ? 1. : x * x; }; // to prevent zero division.
@@ -652,7 +653,7 @@ namespace observers
 			auto& current_speed_v = current_velocity_ptr->twist.twist.linear.x;
 
 			// Send the current states [v, delta] to the delay compensator.
-			std::pair <float64_t, float64_t> varying_params({ current_speed_v, current_steering });
+			std::pair<float64_t, float64_t> varying_params({ current_speed_v, current_steering });
 
 			// Get the current heading error computed by the controllers.
 			auto& current_lateral_error = current_lateral_errors_->lateral_deviation_read;

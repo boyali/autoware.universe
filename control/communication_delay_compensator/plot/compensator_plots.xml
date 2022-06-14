@@ -1,23 +1,23 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
  <tabbed_widget parent="main_window" name="Main Window">
-  <Tab tab_name="All Debugs" containers="1">
+  <Tab containers="1" tab_name="All Debugs">
    <Container>
-    <DockSplitter sizes="1" orientation="-" count="1">
-     <DockSplitter sizes="0.525195;0.474805" orientation="|" count="2">
-      <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
-       <DockSplitter sizes="0.542574;0.457426" orientation="|" count="2">
-        <DockSplitter sizes="0.500803;0.499197" orientation="-" count="2">
+    <DockSplitter sizes="1" count="1" orientation="-">
+     <DockSplitter sizes="0.524675;0.475325" count="2" orientation="|">
+      <DockSplitter sizes="0.500785;0.499215" count="2" orientation="-">
+       <DockSplitter sizes="0.542121;0.457879" count="2" orientation="|">
+        <DockSplitter sizes="0.500785;0.499215" count="2" orientation="-">
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="0.002925" right="0.989996" left="0.033964" top="0.002925"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="-0.564170" top="1.919445" right="60.593473" left="0.000141"/>
            <limitY/>
            <curve color="#1f77b4" name="/observers/time_delay_compensator/delay_debug/steering_du"/>
           </plot>
          </DockArea>
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="-0.000073" right="1.011665" left="0.000000" top="0.002998"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="-0.574236" top="0.035892" right="60.593473" left="0.000141"/>
            <limitY/>
            <curve color="#1ac938" name="/observers/time_delay_compensator/delay_debug/steering_uf"/>
            <curve color="#1f77b4" name="/simulation/output/disturbance_generator/steer_delayed_input"/>
@@ -27,52 +27,52 @@
           </plot>
          </DockArea>
         </DockSplitter>
-        <DockSplitter sizes="0.500803;0.499197" orientation="-" count="2">
+        <DockSplitter sizes="0.500785;0.499215" count="2" orientation="-">
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="-0.100000" right="0.989996" left="0.033964" top="0.100000"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="-2.225740" top="0.104526" right="60.593473" left="0.000141"/>
            <limitY/>
            <curve color="#d62728" name="/observers/time_delay_compensator/delay_debug/steering_u_du"/>
           </plot>
          </DockArea>
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="0.000344" right="0.989996" left="0.033964" top="0.000344"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="-0.026865" top="0.091402" right="60.593473" left="0.000141"/>
            <limitY/>
            <curve color="#ff7f0e" name="/observers/time_delay_compensator/delay_debug/steering_ydu"/>
           </plot>
          </DockArea>
         </DockSplitter>
        </DockSplitter>
-       <DockSplitter sizes="0.5;0.5" orientation="|" count="2">
-        <DockSplitter sizes="0.5;0.5" orientation="-" count="2">
+       <DockSplitter sizes="0.500496;0.499504" count="2" orientation="|">
+        <DockSplitter sizes="0.500787;0.499213" count="2" orientation="-">
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="0.002925" right="0.989996" left="0.033964" top="0.002925"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="-2456.350204" top="90.170844" right="60.593473" left="0.000141"/>
            <limitY/>
            <curve color="#1f77b4" name="/observers/time_delay_compensator/delay_debug/lat_du"/>
           </plot>
          </DockArea>
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="0.002925" right="0.989996" left="0.033964" top="0.002925"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="-0.513140" top="0.024299" right="60.593473" left="0.000141"/>
            <limitY/>
            <curve color="#17becf" name="/observers/time_delay_compensator/delay_debug/lat_uf"/>
            <curve color="#d62728" name="/observers/time_delay_compensator/delay_debug/lat_u_nondelay_u_estimated"/>
           </plot>
          </DockArea>
         </DockSplitter>
-        <DockSplitter sizes="0.5;0.5" orientation="-" count="2">
+        <DockSplitter sizes="0.500787;0.499213" count="2" orientation="-">
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="-0.100000" right="0.989996" left="0.033964" top="0.100000"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="-3.600871" top="2.930318" right="60.593473" left="0.000141"/>
            <limitY/>
            <curve color="#d62728" name="/observers/time_delay_compensator/delay_debug/heading_u_du"/>
           </plot>
          </DockArea>
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="0.000000" right="0.989996" left="0.033964" top="0.000000"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="-0.009510" top="0.003494" right="60.593473" left="0.000141"/>
            <limitY/>
            <curve color="#ff7f0e" name="/observers/time_delay_compensator/delay_debug/lat_ydu"/>
           </plot>
@@ -80,19 +80,19 @@
         </DockSplitter>
        </DockSplitter>
       </DockSplitter>
-      <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
-       <DockSplitter sizes="0.512596;0.487404" orientation="|" count="2">
-        <DockSplitter sizes="0.500803;0.499197" orientation="-" count="2">
+      <DockSplitter sizes="0.500785;0.499215" count="2" orientation="-">
+       <DockSplitter sizes="0.512035;0.487965" count="2" orientation="|">
+        <DockSplitter sizes="0.500785;0.499215" count="2" orientation="-">
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="0.002925" right="0.989996" left="0.033964" top="0.002925"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="-3.267517" top="3.606060" right="60.593473" left="0.000141"/>
            <limitY/>
            <curve color="#f14cc1" name="/observers/time_delay_compensator/delay_debug/heading_du"/>
           </plot>
          </DockArea>
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="-0.000073" right="1.011665" left="0.000000" top="0.002998"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="-0.574236" top="0.035892" right="60.593473" left="0.000141"/>
            <limitY/>
            <curve color="#17becf" name="/observers/time_delay_compensator/delay_debug/heading_uf"/>
            <curve color="#1f77b4" name="/simulation/output/disturbance_generator/steer_delayed_input"/>
@@ -102,48 +102,48 @@
           </plot>
          </DockArea>
         </DockSplitter>
-        <DockSplitter sizes="0.500803;0.499197" orientation="-" count="2">
+        <DockSplitter sizes="0.500785;0.499215" count="2" orientation="-">
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="-0.100000" right="0.989996" left="0.033964" top="0.100000"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="-3.600871" top="2.930318" right="60.593473" left="0.000141"/>
            <limitY/>
            <curve color="#9467bd" name="/observers/time_delay_compensator/delay_debug/heading_u_du"/>
           </plot>
          </DockArea>
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="0.000005" right="0.989996" left="0.033964" top="0.000005"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="-0.002514" top="0.002586" right="60.593473" left="0.000141"/>
            <limitY/>
            <curve color="#ff0021" name="/observers/time_delay_compensator/delay_debug/heading_ydu"/>
           </plot>
          </DockArea>
         </DockSplitter>
        </DockSplitter>
-       <DockSplitter sizes="0.502738;0.497262" orientation="|" count="2">
-        <DockSplitter sizes="0.5;0.5" orientation="-" count="2">
+       <DockSplitter sizes="0.503282;0.496718" count="2" orientation="|">
+        <DockSplitter sizes="0.500787;0.499213" count="2" orientation="-">
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="0.000000" right="1.000000" left="0.000000" top="1.000000"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="0.000000" top="1.000000" right="1.000000" left="0.000000"/>
            <limitY/>
           </plot>
          </DockArea>
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="0.000000" right="1.000000" left="0.000000" top="1.000000"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="0.000000" top="1.000000" right="1.000000" left="0.000000"/>
            <limitY/>
           </plot>
          </DockArea>
         </DockSplitter>
-        <DockSplitter sizes="0.5;0.5" orientation="-" count="2">
+        <DockSplitter sizes="0.500787;0.499213" count="2" orientation="-">
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="0.000000" right="1.000000" left="0.000000" top="1.000000"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="0.000000" top="1.000000" right="1.000000" left="0.000000"/>
            <limitY/>
           </plot>
          </DockArea>
          <DockArea name="...">
-          <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-           <range bottom="0.000000" right="1.000000" left="0.000000" top="1.000000"/>
+          <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+           <range bottom="0.000000" top="1.000000" right="1.000000" left="0.000000"/>
            <limitY/>
           </plot>
          </DockArea>
@@ -154,19 +154,19 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab tab_name="Steering Error vs Compensation Signal" containers="1">
+  <Tab containers="1" tab_name="Steering Error vs Compensation Signal">
    <Container>
-    <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
+    <DockSplitter sizes="0.500785;0.499215" count="2" orientation="-">
      <DockArea name="...">
-      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-       <range bottom="-0.100000" right="0.989949" left="0.033898" top="0.100000"/>
+      <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+       <range bottom="-0.330900" top="0.015540" right="60.593473" left="0.000141"/>
        <limitY/>
        <curve color="#1f77b4" name="/observers/time_delay_compensator/delay_refs/steering_error_read"/>
       </plot>
      </DockArea>
      <DockArea name="...">
-      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-       <range bottom="0.000344" right="0.989949" left="0.033898" top="0.000344"/>
+      <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+       <range bottom="-0.026865" top="0.091402" right="60.593473" left="0.000141"/>
        <limitY/>
        <curve color="#bcbd22" name="/observers/time_delay_compensator/delay_refs/steering_error_compensation_ref"/>
       </plot>
@@ -174,21 +174,21 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab tab_name="Steering Debug" containers="1">
+  <Tab containers="1" tab_name="Steering Debug">
    <Container>
-    <DockSplitter sizes="1" orientation="-" count="1">
-     <DockSplitter sizes="0.50026;0.49974" orientation="|" count="2">
-      <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
+    <DockSplitter sizes="1" count="1" orientation="-">
+     <DockSplitter sizes="0.50026;0.49974" count="2" orientation="|">
+      <DockSplitter sizes="0.500785;0.499215" count="2" orientation="-">
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-         <range bottom="0.002925" right="0.989996" left="0.033964" top="0.002925"/>
+        <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+         <range bottom="-0.564170" top="1.919445" right="60.593473" left="0.000141"/>
          <limitY/>
          <curve color="#1f77b4" name="/observers/time_delay_compensator/delay_debug/steering_du"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-         <range bottom="-0.000073" right="1.000839" left="0.004580" top="0.002998"/>
+        <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+         <range bottom="-0.574236" top="0.035892" right="60.593473" left="0.000141"/>
          <limitY/>
          <curve color="#1ac938" name="/observers/time_delay_compensator/delay_debug/steering_uf"/>
          <curve color="#1f77b4" name="/simulation/output/disturbance_generator/steer_delayed_input"/>
@@ -197,17 +197,17 @@
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
+      <DockSplitter sizes="0.5;0.5" count="2" orientation="-">
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-         <range bottom="-0.100000" right="0.989996" left="0.033964" top="0.100000"/>
+        <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+         <range bottom="-2.225740" top="0.104526" right="60.593473" left="0.000141"/>
          <limitY/>
          <curve color="#d62728" name="/observers/time_delay_compensator/delay_debug/steering_u_du"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-         <range bottom="0.000344" right="0.989996" left="0.033964" top="0.000344"/>
+        <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+         <range bottom="-0.026865" top="0.091402" right="60.593473" left="0.000141"/>
          <limitY/>
          <curve color="#ff7f0e" name="/observers/time_delay_compensator/delay_debug/steering_ydu"/>
         </plot>
@@ -217,12 +217,12 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab tab_name="Steering Disturbance Generator  Outputs" containers="1">
+  <Tab containers="1" tab_name="Steering Disturbance Generator  Outputs">
    <Container>
-    <DockSplitter sizes="1" orientation="-" count="1">
+    <DockSplitter sizes="1" count="1" orientation="-">
      <DockArea name="...">
-      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-       <range bottom="-0.000073" right="1.011665" left="0.000000" top="0.002998"/>
+      <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+       <range bottom="-0.574236" top="0.035892" right="60.593473" left="0.000141"/>
        <limitY/>
        <curve color="#1f77b4" name="/simulation/output/disturbance_generator/steer_delayed_input"/>
        <curve color="#d62728" name="/simulation/output/disturbance_generator/steer_original_input"/>
@@ -234,19 +234,19 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab tab_name="Steering Model Identification" containers="1">
+  <Tab containers="1" tab_name="Steering Model Identification">
    <Container>
-    <DockSplitter sizes="1" orientation="-" count="1">
-     <DockSplitter sizes="0.50026;0.49974" orientation="|" count="2">
+    <DockSplitter sizes="1" count="1" orientation="-">
+     <DockSplitter sizes="0.50026;0.49974" count="2" orientation="|">
       <DockArea name="...">
-       <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-        <range bottom="0.000000" right="1.000000" left="0.000000" top="1.000000"/>
+       <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+        <range bottom="-0.100000" top="0.100000" right="0.000000" left="0.000000"/>
         <limitY/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-        <range bottom="0.000000" right="1.000000" left="0.000000" top="1.000000"/>
+       <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+        <range bottom="-0.100000" top="0.100000" right="0.000000" left="0.000000"/>
         <limitY/>
        </plot>
       </DockArea>
@@ -254,12 +254,12 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab tab_name="Steering Time Delay Value" containers="1">
+  <Tab containers="1" tab_name="Steering Time Delay Value">
    <Container>
-    <DockSplitter sizes="1" orientation="-" count="1">
+    <DockSplitter sizes="1" count="1" orientation="-">
      <DockArea name="...">
-      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-       <range bottom="0.142392" right="1.000839" left="0.004580" top="0.342392"/>
+      <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+       <range bottom="0.227828" top="0.252519" right="60.593473" left="0.000141"/>
        <limitY/>
        <curve color="#d62728" name="/simulation/output/disturbance_generator/steer_time_delay_value"/>
       </plot>
@@ -267,19 +267,19 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab tab_name="Heading Error vs Compensation Signal" containers="1">
+  <Tab containers="1" tab_name="Heading Error vs Compensation Signal">
    <Container>
-    <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
+    <DockSplitter sizes="0.500785;0.499215" count="2" orientation="-">
      <DockArea name="...">
-      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-       <range bottom="-0.170087" right="0.989949" left="0.033898" top="0.029913"/>
+      <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+       <range bottom="-0.025096" top="0.021974" right="60.593473" left="0.000141"/>
        <limitY/>
        <curve color="#9467bd" name="/observers/time_delay_compensator/delay_refs/heading_angle_error_read"/>
       </plot>
      </DockArea>
      <DockArea name="...">
-      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-       <range bottom="0.000005" right="0.989949" left="0.033898" top="0.000005"/>
+      <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+       <range bottom="-0.002514" top="0.002586" right="60.593473" left="0.000141"/>
        <limitY/>
        <curve color="#17becf" name="/observers/time_delay_compensator/delay_refs/heading_angle_error_compensation_ref"/>
       </plot>
@@ -287,21 +287,21 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab tab_name="Heading Debug" containers="1">
+  <Tab containers="1" tab_name="Heading Debug">
    <Container>
-    <DockSplitter sizes="1" orientation="-" count="1">
-     <DockSplitter sizes="0.50026;0.49974" orientation="|" count="2">
-      <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
+    <DockSplitter sizes="1" count="1" orientation="-">
+     <DockSplitter sizes="0.50026;0.49974" count="2" orientation="|">
+      <DockSplitter sizes="0.500785;0.499215" count="2" orientation="-">
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-         <range bottom="0.002925" right="0.989996" left="0.033964" top="0.002925"/>
+        <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+         <range bottom="-3.267517" top="3.606060" right="60.593473" left="0.000141"/>
          <limitY/>
          <curve color="#f14cc1" name="/observers/time_delay_compensator/delay_debug/heading_du"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-         <range bottom="-0.000073" right="1.000839" left="0.004580" top="0.002998"/>
+        <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+         <range bottom="-0.574236" top="0.035892" right="60.593473" left="0.000141"/>
          <limitY/>
          <curve color="#17becf" name="/observers/time_delay_compensator/delay_debug/heading_uf"/>
          <curve color="#1f77b4" name="/simulation/output/disturbance_generator/steer_delayed_input"/>
@@ -309,17 +309,17 @@
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
+      <DockSplitter sizes="0.5;0.5" count="2" orientation="-">
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-         <range bottom="-0.100000" right="0.989996" left="0.033964" top="0.100000"/>
+        <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+         <range bottom="-3.600871" top="2.930318" right="60.593473" left="0.000141"/>
          <limitY/>
          <curve color="#9467bd" name="/observers/time_delay_compensator/delay_debug/heading_u_du"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-         <range bottom="0.000005" right="0.989996" left="0.033964" top="0.000005"/>
+        <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+         <range bottom="-0.002514" top="0.002586" right="60.593473" left="0.000141"/>
          <limitY/>
          <curve color="#bcbd22" name="/observers/time_delay_compensator/delay_debug/heading_ydu"/>
         </plot>
@@ -329,19 +329,19 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab tab_name="Lateral Error vs Compensation Signal" containers="1">
+  <Tab containers="1" tab_name="Lateral Error vs Compensation Signal">
    <Container>
-    <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
+    <DockSplitter sizes="0.500785;0.499215" count="2" orientation="-">
      <DockArea name="...">
-      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-       <range bottom="-0.095594" right="44.029990" left="0.033898" top="0.213481"/>
+      <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+       <range bottom="-0.106314" top="0.289397" right="60.593473" left="0.000141"/>
        <limitY/>
        <curve color="#f14cc1" name="/observers/time_delay_compensator/delay_refs/lateral_deviation_read"/>
       </plot>
      </DockArea>
      <DockArea name="...">
-      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-       <range bottom="-0.009456" right="44.029990" left="0.033898" top="0.009365"/>
+      <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+       <range bottom="-0.009510" top="0.003494" right="60.593473" left="0.000141"/>
        <limitY/>
        <curve color="#9467bd" name="/observers/time_delay_compensator/delay_refs/lateral_deviation_error_compensation_ref"/>
       </plot>
@@ -349,38 +349,38 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab tab_name="Lateral Debug" containers="1">
+  <Tab containers="1" tab_name="Lateral Debug">
    <Container>
-    <DockSplitter sizes="1" orientation="-" count="1">
-     <DockSplitter sizes="0.50026;0.49974" orientation="|" count="2">
-      <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
+    <DockSplitter sizes="1" count="1" orientation="-">
+     <DockSplitter sizes="0.50026;0.49974" count="2" orientation="|">
+      <DockSplitter sizes="0.500785;0.499215" count="2" orientation="-">
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-         <range bottom="-75.174988" right="36.269951" left="0.033964" top="96.249199"/>
+        <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+         <range bottom="-2456.350204" top="90.170844" right="60.593473" left="0.000141"/>
          <limitY/>
          <curve color="#1f77b4" name="/observers/time_delay_compensator/delay_debug/lat_du"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-         <range bottom="-0.329883" right="36.269951" left="0.033964" top="0.043556"/>
+        <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+         <range bottom="-0.513140" top="0.024299" right="60.593473" left="0.000141"/>
          <limitY/>
          <curve color="#17becf" name="/observers/time_delay_compensator/delay_debug/lat_uf"/>
          <curve color="#b41f1f" name="/observers/time_delay_compensator/delay_debug/lat_u_nondelay_u_estimated"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
+      <DockSplitter sizes="0.5;0.5" count="2" orientation="-">
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-         <range bottom="-96.223412" right="36.269951" left="0.033964" top="75.203644"/>
+        <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+         <range bottom="-90.166955" top="2456.345107" right="60.593473" left="0.000141"/>
          <limitY/>
          <curve color="#bcbd22" name="/observers/time_delay_compensator/delay_debug/lat_u_du"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
-         <range bottom="-0.009456" right="36.269951" left="0.033964" top="0.009365"/>
+        <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+         <range bottom="-0.009510" top="0.003494" right="60.593473" left="0.000141"/>
          <limitY/>
          <curve color="#ff7f0e" name="/observers/time_delay_compensator/delay_debug/lat_ydu"/>
         </plot>
@@ -390,14 +390,14 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <currentTabIndex index="8"/>
+  <currentTabIndex index="7"/>
  </tabbed_widget>
  <use_relative_time_offset enabled="1"/>
  <!-- - - - - - - - - - - - - - - -->
  <!-- - - - - - - - - - - - - - - -->
  <Plugins>
   <plugin ID="DataLoad CSV">
-   <default time_axis="" delimiter="0"/>
+   <default delimiter="0" time_axis=""/>
   </plugin>
   <plugin ID="DataLoad ROS2 bags">
    <use_header_stamp value="false"/>
