@@ -14,7 +14,6 @@
     qfilter_steering_freq: 5.  #qfilter frequency in Hz for steering tracking error
     qfilter_velocity_error_freq: 5.  #qfilter frequency in Hz for steering tracking error
 
-
     # -- Vehicle Model Selection -- Currently we have only one.
     steering_time_constant_: 0.3 # first order steering model time-constant  delta_dot = -1/tau *delta + 1/tau * u
     velocity_time_constant_: 0.2 # first order velocity model time-constant

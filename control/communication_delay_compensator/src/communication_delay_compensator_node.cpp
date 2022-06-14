@@ -123,6 +123,7 @@ namespace observers
 			// Compute the steering compensation values.
 			computeSteeringCDOBcompensator();
 			computeHeadingCDOBcompensator();
+			computeLateralCDOBcompensator();
 
 			// Publish delay compensation reference.
 			publishCompensationReferences();
@@ -384,7 +385,7 @@ namespace observers
 			// Create a qfilter from the given order for the steering system.
 			auto const& order_of_q = params_node_.qfilter_steering_order;
 			auto const& cut_off_frq_in_hz_q = params_node_.qfilter_steering_freq;
-			auto const&& w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q; // in [rad/sec]
+			auto&& w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q; // in [rad/sec]
 
 			// float64_t time_constant_of_qfilter{};
 			auto time_constant_of_qfilter = 1.0 / w_c_of_q;
@@ -433,10 +434,10 @@ namespace observers
 		void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
 		{
 			// Get the previous steering control value sent to the vehicle.
-			auto u_prev = previous_ctrl_ptr_->lateral.steering_tire_angle;
+			auto& u_prev = previous_ctrl_ptr_->lateral.steering_tire_angle;
 
 			// Get the current measured steering value.
-			auto current_steering = current_steering_ptr_->steering_tire_angle;
+			auto& current_steering = current_steering_ptr_->steering_tire_angle;
 
 			// reset the stored outputs to zero.
 			// std::fill(cdob_steering_error_y_outputs_.begin(), cdob_steering_error_y_outputs_.end(), 0.);
@@ -444,7 +445,6 @@ namespace observers
 			// Input is steering_input -> G(s) steering model --> next steering state.
 			delay_compensator_steering_error_->simulateOneStep(u_prev, current_steering);
 			cdob_steering_error_y_outputs_ = delay_compensator_steering_error_->getOutputs();
-
 
 			/**
 		 * @brief Outputs of the delay compensator.
@@ -477,15 +477,14 @@ namespace observers
 		 * */
 		void CommunicationDelayCompensatorNode::setHeadingErrorCDOBcompensator()
 		{
-
 			// Create a qfilter for he steering to heading transfer function.
 			// Compute the cut-off frequency in rad/sec.
 			auto const& order_of_q = params_node_.qfilter_heading_error_order;
 			auto const& cut_off_frq_in_hz_q = params_node_.qfilter_heading_error_freq;
-			auto const&& w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q; // in [rad/sec]
+			auto&& w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q; // in [rad/sec]
 
 			// float64_t time_constant_of_qfilter{};
-			auto time_constant_of_qfilter = 1.0 / w_c_of_q;
+			auto const& time_constant_of_qfilter = 1.0 / w_c_of_q;
 
 			// --------------- Qfilter Construction --------------------------------------
 			// Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
@@ -537,20 +536,19 @@ namespace observers
 		void CommunicationDelayCompensatorNode::computeHeadingCDOBcompensator()
 		{
 			// Get the previous steering control value sent to the vehicle.
-			auto u_prev = previous_ctrl_ptr_->lateral.steering_tire_angle;
+			auto& u_prev = previous_ctrl_ptr_->lateral.steering_tire_angle;
 
 			// Get the current measured steering value.
-			auto current_steering = current_steering_ptr_->steering_tire_angle;
+			auto& current_steering = current_steering_ptr_->steering_tire_angle;
 
 			// Get the current longitudinal speed.
-			auto current_speed_v = current_velocity_ptr->twist.twist.linear.x;
+			auto& current_speed_v = current_velocity_ptr->twist.twist.linear.x;
 
 			// Send the current states [v, delta] to the delay compensator.
 			std::pair<float64_t, float64_t> varying_params({ current_speed_v, current_steering });
 
-
 			// Get the current heading error computed by the controllers.
-			auto const& current_heading_error = current_lateral_errors_->heading_angle_error_read;
+			auto& current_heading_error = current_lateral_errors_->heading_angle_error_read;
 
 			// Input is steering_input -> G(s) heading error model --> next heading state.
 			delay_compensator_heading_error_->simulateOneStep(u_prev, current_heading_error, varying_params);
@@ -581,12 +579,102 @@ namespace observers
 
 		void CommunicationDelayCompensatorNode::setLateralErrorCDOBcompensator()
 		{
+			// Create a qfilter for he steering to heading transfer function.
+			// Compute the cut-off frequency in rad/sec.
+			auto const& order_of_q = params_node_.qfilter_lateral_error_order;
+			auto const& cut_off_frq_in_hz_q = params_node_.qfilter_lateral_error_freq;
+			auto&& w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q; // in [rad/sec]
+
+			// float64_t time_constant_of_qfilter{};
+			auto const& time_constant_of_qfilter = 1.0 / w_c_of_q;
+
+			// --------------- Qfilter Construction --------------------------------------
+			// Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
+			// Calculate the transfer function.
+			ns_control_toolbox::tf_factor denominator{ std::vector<double>{ time_constant_of_qfilter, 1. }}; // (tau*s+1)
+
+			// Take power of the denominator.
+			denominator.power(static_cast<unsigned int>(order_of_q));
+
+			// Create the transfer function from a numerator an denominator.
+			auto q_tf = ns_control_toolbox::tf{ std::vector<double>{ 1. }, denominator() };
+
+			// --------------- System Model Construction --------------------------------------
+			// There are dynamically changing numerator and denominator coefficients.
+			// We store the factored num and denominators:  a(var1) * num / b(var1)*den where num-den are constants.
+			std::pair<std::string_view, std::string_view> param_names{ "v", "delta" };
+
+			// Functions of v, and delta.
+			std::unordered_map<std::string_view, func_type<double>> f_variable_num_den_funcs{};
+
+			f_variable_num_den_funcs["v"] = [](auto const& x) -> double
+			{ return std::fabs(x) < 1. ? 1. : x * x; }; // to prevent zero division.
+
+			f_variable_num_den_funcs["delta"] = [](auto const& x) -> double
+			{ return std::cos(x) * std::cos(x); };
+
+			// Create G(s) without varying parameters using only the constant parts.
+			ns_control_toolbox::tf_factor m_den1{{ params_node_.wheel_base, 0, 0 }}; // L*s^2
+			ns_control_toolbox::tf_factor m_den2{{ params_node_.steering_tau, 1 }}; // (tau*s + 1)
+			auto den_tf_factor = m_den1 * m_den2; // Ls^2*(tau*s + 1)
+
+			// 1. / 1.*Ls^2*(tau*s + 1) where 1., 1. are replaced by the functions.
+			auto g_tf = tf_t({ 1. }, den_tf_factor(), 1., 1.); // num, den, num_constant, den_constant
+
+			CommunicationDelayCompensatorCore delay_compensator_lateral(q_tf, g_tf, params_node_.cdob_ctrl_period);
+
+			// Set the mapping functions of the delay compensator.
+			delay_compensator_lateral.setDynamicParams_num_den(param_names, f_variable_num_den_funcs);
+
+			// Store as an unique ptr.
+			delay_compensator_lat_error_ = std::make_unique<CommunicationDelayCompensatorCore>
+				(delay_compensator_lateral);
 
 		}
 		void CommunicationDelayCompensatorNode::computeLateralCDOBcompensator()
 		{
+			// Get the previous steering control value sent to the vehicle.
+			auto& u_prev = previous_ctrl_ptr_->lateral.steering_tire_angle;
 
+			// Get the current measured steering value.
+			auto& current_steering = current_steering_ptr_->steering_tire_angle;
+
+			// Get the current longitudinal speed.
+			auto& current_speed_v = current_velocity_ptr->twist.twist.linear.x;
+
+			// Send the current states [v, delta] to the delay compensator.
+			std::pair <float64_t, float64_t> varying_params({ current_speed_v, current_steering });
+
+			// Get the current heading error computed by the controllers.
+			auto& current_lateral_error = current_lateral_errors_->lateral_deviation_read;
+
+			// Input is steering_input -> G(s) heading error model --> next heading state.
+			delay_compensator_lat_error_->simulateOneStep(u_prev, current_lateral_error, varying_params);
+			cdob_lateral_error_y_outputs_ = delay_compensator_lat_error_->getOutputs();
+
+			/**
+		 * @brief Outputs of the delay compensator.
+		 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+		 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+		 * y2: du = y0 - y1 where du is the estimated disturbance input
+		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+		 * */
+			current_delay_references_msg_->lateral_deviation_read = current_lateral_error;
+			current_delay_references_msg_->lateral_deviation_error_compensation_ref = cdob_lateral_error_y_outputs_[3];
+
+			// Set debug message.
+			current_delay_debug_msg_->lat_uf = cdob_lateral_error_y_outputs_[0];
+			current_delay_debug_msg_->lat_u_du = cdob_lateral_error_y_outputs_[1];
+			current_delay_debug_msg_->lat_du = cdob_lateral_error_y_outputs_[2];
+			current_delay_debug_msg_->lat_ydu = cdob_lateral_error_y_outputs_[3];
+
+			current_delay_debug_msg_->lat_u_nondelay_u_estimated =
+				cdob_lateral_error_y_outputs_[1] + cdob_lateral_error_y_outputs_[2];
+
+			// Debug
+			//ns_utils::print("previous input : ", u_prev, current_steering);
 		}
+
 		void CommunicationDelayCompensatorNode::setVelocityErrorCDOBcompensator()
 		{
 
