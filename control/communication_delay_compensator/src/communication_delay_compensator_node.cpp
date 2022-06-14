@@ -183,9 +183,18 @@ namespace observers
 // 				ns_utils::print("Unique pointer is not set ");
 // 			}
 
-			if (delay_compensator_heading_error_)
+// 			if (delay_compensator_heading_error_)
+// 			{
+// 				delay_compensator_heading_error_->print();
+// 			}
+// 			else
+// 			{
+// 				ns_utils::print("Unique pointer is not set ");
+// 			}
+
+			if (delay_compensator_lat_error_)
 			{
-				delay_compensator_heading_error_->print();
+				delay_compensator_lat_error_->print();
 			}
 			else
 			{
@@ -591,21 +600,21 @@ namespace observers
 			// --------------- Qfilter Construction --------------------------------------
 			// Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
 			// Calculate the transfer function.
-			ns_control_toolbox::tf_factor denominator{ std::vector<double>{ time_constant_of_qfilter, 1. }}; // (tau*s+1)
+			ns_control_toolbox::tf_factor denominator{ std::vector < double > { time_constant_of_qfilter, 1. }}; // (tau*s+1)
 
 			// Take power of the denominator.
 			denominator.power(static_cast<unsigned int>(order_of_q));
 
 			// Create the transfer function from a numerator an denominator.
-			auto q_tf = ns_control_toolbox::tf{ std::vector<double>{ 1. }, denominator() };
+			auto q_tf = ns_control_toolbox::tf{ std::vector < double > { 1. }, denominator() };
 
 			// --------------- System Model Construction --------------------------------------
 			// There are dynamically changing numerator and denominator coefficients.
 			// We store the factored num and denominators:  a(var1) * num / b(var1)*den where num-den are constants.
-			std::pair<std::string_view, std::string_view> param_names{ "v", "delta" };
+			std::pair <std::string_view, std::string_view> param_names{ "v", "delta" };
 
 			// Functions of v, and delta.
-			std::unordered_map<std::string_view, func_type<double>> f_variable_num_den_funcs{};
+			std::unordered_map <std::string_view, func_type<double>> f_variable_num_den_funcs{};
 
 			f_variable_num_den_funcs["v"] = [](auto const& x) -> double
 			{ return std::fabs(x) < 1. ? 1. : x * x; }; // to prevent zero division.
@@ -614,7 +623,7 @@ namespace observers
 			{ return std::cos(x) * std::cos(x); };
 
 			// Create G(s) without varying parameters using only the constant parts.
-			ns_control_toolbox::tf_factor m_den1{{ params_node_.wheel_base, 0, 0 }}; // L*s^2
+			ns_control_toolbox::tf_factor m_den1{{ params_node_.wheel_base, 0., 0. }}; // L*s^2
 			ns_control_toolbox::tf_factor m_den2{{ params_node_.steering_tau, 1 }}; // (tau*s + 1)
 			auto den_tf_factor = m_den1 * m_den2; // Ls^2*(tau*s + 1)
 
