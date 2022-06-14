@@ -378,13 +378,14 @@ namespace observers
 			{
 				RCLCPP_ERROR(get_logger(), "[setSteeringCDOBcompensator] Invalid argument exception : %s", ia.what());
 
-				// throw std::invalid_argument("The cut-off frequency cannot be zero.");
+				throw std::invalid_argument("The cut-off frequency cannot be zero.");
 				// std::cerr << "Invalid argument: " << ia.what() << '\n';
 			}
 
 			// --------------- Qfilter Construction --------------------------------------
 			// Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
 			// Calculate the transfer function.
+
 			ns_control_toolbox::tf_factor denominator{ std::vector<double>{ time_constant_of_qfilter, 1. }}; // (tau*s+1)
 
 			// Take power of the denominator.
