@@ -99,29 +99,30 @@ namespace observers
 		void CommunicationDelayCompensatorNode::onTimer()
 		{
 
-			if (!isDataReady())
-			{
-				RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Not enough data to compute delay compensation");
-				return;
-
-			}
-
-			if (!previous_ctrl_ptr_)
-			{
-				ControlCommand zero_cmd{};
-				previous_ctrl_ptr_ = std::make_shared<ControlCommand>(zero_cmd);
-			}
-
+			// Create compensator messages.
 			DelayCompensatatorMsg compensation_msg{};
 			current_delay_references_msg_ = std::make_shared<DelayCompensatatorMsg>(compensation_msg);
 
 			DelayCompensatorDebugMsg compensation_debug_msg{};
 			current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(compensation_debug_msg);
 
+			if (!isDataReady())
+			{
+				RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Not enough data to compute delay compensation");
+				publishCompensationReferences();
+				return;
+			}
+
+			if (!previous_ctrl_ptr_)
+			{
+				ControlCommand zero_cmd{};
+				previous_ctrl_ptr_ = std::make_shared<ControlCommand>(zero_cmd);
+				publishCompensationReferences();
+			}
+
 			// Compute the steering compensation values.
 			computeSteeringCDOBcompensator();
 			computeHeadingCDOBcompensator();
-
 
 			// Publish delay compensation reference.
 			publishCompensationReferences();
@@ -170,6 +171,8 @@ namespace observers
 				get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity frq %4.2f ",
 				params_node_.qfilter_velocity_error_freq);
 
+
+
 // 			if (delay_compensator_steering_error_)
 // 			{
 // 				delay_compensator_steering_error_->print();
@@ -178,6 +181,15 @@ namespace observers
 // 			{
 // 				ns_utils::print("Unique pointer is not set ");
 // 			}
+
+			if (delay_compensator_heading_error_)
+			{
+				delay_compensator_heading_error_->print();
+			}
+			else
+			{
+				ns_utils::print("Unique pointer is not set ");
+			}
 
 			// ns_utils::print("ACT On timer method ");
 // 			ns_utils::print("Params wheelbase ", params_node_.wheel_base);
@@ -213,7 +225,6 @@ namespace observers
 		{
 			current_longitudinal_errors_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
-
 			// Debug
 			// auto vel_error = static_cast<double>(current_longitudinal_errors_->velocity_error_read);
 			// ns_utils::print("Longitudinal velocity error :", vel_error);
@@ -228,17 +239,23 @@ namespace observers
 			current_lateral_errors_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
 			// Debug
-			// auto lat_error = static_cast<double>(current_lateral_errors_->lateral_deviation_read);
-			// auto heading_error = static_cast<double>(current_lateral_errors_->heading_angle_error_read);
-
-			// ns_utils::print("Current lateral errors : ", lat_error, heading_error);
 			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Lateral Errors");
+
+// 			if (current_lateral_errors_)
+// 			{
+// 				auto lat_error = static_cast<double>(current_lateral_errors_->lateral_deviation_read);
+// 				auto heading_error = static_cast<double>(current_lateral_errors_->heading_angle_error_read);
+// 				ns_utils::print("Current lateral errors : ", lat_error, heading_error);
+// 			}
 			// end of debug.
 
 		}
 
 		void CommunicationDelayCompensatorNode::publishCompensationReferences()
 		{
+
+			current_delay_references_msg_->stamp = this->now();
+			current_delay_debug_msg_->stamp = this->now();
 
 			// new_msg.lateral_deviation_error_compensation_ref = 1.0;
 			pub_delay_compensator_->publish(*current_delay_references_msg_);
@@ -436,6 +453,9 @@ namespace observers
 		 * y2: du = y0 - y1 where du is the estimated disturbance input
 		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 		 * */
+
+			// Set delay_compensation_reference for the steering.
+			current_delay_references_msg_->steering_error_read = current_steering;
 			current_delay_references_msg_->steering_error_compensation_ref = cdob_steering_error_y_outputs_[2];
 
 			// Set debug message.
@@ -445,7 +465,7 @@ namespace observers
 			current_delay_debug_msg_->steering_ydu = cdob_steering_error_y_outputs_[3];
 
 			current_delay_debug_msg_->steering_nondelay_u_estimated =
-				cdob_steering_error_y_outputs_[1] + cdob_steering_error_y_outputs_[2];;
+				cdob_steering_error_y_outputs_[1] + cdob_steering_error_y_outputs_[2];
 
 			// Debug
 			//ns_utils::print("previous input : ", u_prev, current_steering);
@@ -487,7 +507,7 @@ namespace observers
 			std::unordered_map<std::string_view, func_type<double>> f_variable_num_den_funcs{};
 
 			f_variable_num_den_funcs["v"] = [](auto const& x) -> double
-			{ return std::fabs(x) < 0.5 ? 0.5 : x; }; // to prevent zero division.
+			{ return std::fabs(x) < 1. ? 1. : x; }; // to prevent zero division.
 
 			f_variable_num_den_funcs["delta"] = [](auto const& x) -> double
 			{ return std::cos(x) * std::cos(x); };
@@ -495,8 +515,9 @@ namespace observers
 			// Create G(s) without varying parameters using only the constant parts.
 			ns_control_toolbox::tf_factor m_den1{{ params_node_.wheel_base, 0 }}; // L*s
 			ns_control_toolbox::tf_factor m_den2{{ params_node_.steering_tau, 1 }}; // (tau*s + 1)
-			auto den_tf_factor = m_den1 * m_den2;
+			auto den_tf_factor = m_den1 * m_den2; // Ls*(tau*s + 1)
 
+			// 1. / 1.*Ls*(tau*s + 1) where 1., 1. are replaced by the functions.
 			auto g_tf = tf_t({ 1. }, den_tf_factor(), 1., 1.); // num, den, num_constant, den_constant
 
 			CommunicationDelayCompensatorCore delay_compensator_heading(q_tf, g_tf, params_node_.cdob_ctrl_period);
@@ -535,7 +556,6 @@ namespace observers
 			delay_compensator_heading_error_->simulateOneStep(u_prev, current_heading_error, varying_params);
 			cdob_heading_error_y_outputs_ = delay_compensator_heading_error_->getOutputs();
 
-
 			/**
 		 * @brief Outputs of the delay compensator.
 		 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
@@ -543,7 +563,8 @@ namespace observers
 		 * y2: du = y0 - y1 where du is the estimated disturbance input
 		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 		 * */
-			current_delay_references_msg_->steering_error_compensation_ref = cdob_heading_error_y_outputs_[2];
+			current_delay_references_msg_->heading_angle_error_read = current_heading_error;
+			current_delay_references_msg_->heading_angle_error_compensation_ref = cdob_heading_error_y_outputs_[2];
 
 			// Set debug message.
 			current_delay_debug_msg_->heading_uf = cdob_heading_error_y_outputs_[0];
@@ -552,7 +573,7 @@ namespace observers
 			current_delay_debug_msg_->heading_ydu = cdob_heading_error_y_outputs_[3];
 
 			current_delay_debug_msg_->heading_nondelay_u_estimated =
-				cdob_heading_error_y_outputs_[1] + cdob_heading_error_y_outputs_[2];;
+				cdob_heading_error_y_outputs_[1] + cdob_heading_error_y_outputs_[2];
 
 			// Debug
 			//ns_utils::print("previous input : ", u_prev, current_steering);

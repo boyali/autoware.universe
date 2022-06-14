@@ -82,17 +82,17 @@ void observers::CommunicationDelayCompensatorCore::print() const
 	ns_utils::print("Q/G(s) num and den constant names :", num_den_constant_names_g_inv_.first,
 	                num_den_constant_names_g_inv_.second);
 
-	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
-	ns_utils::print("Qfilter State-Space: ");
-	q_filter_ss_.print_discrete_system();
-
-	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
-	ns_utils::print("System G(s) State-Space: ");
-	g_ss_.print_discrete_system();
-
-	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
-	ns_utils::print("System Q(s)/G(s) State-Space: ");
-	q_g_inv_ss_.print_discrete_system();
+// 	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
+// 	ns_utils::print("Qfilter State-Space: ");
+// 	q_filter_ss_.print_discrete_system();
+//
+// 	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
+// 	ns_utils::print("System G(s) State-Space: ");
+// 	g_ss_.print_discrete_system();
+//
+// 	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
+// 	ns_utils::print("System Q(s)/G(s) State-Space: ");
+// 	q_g_inv_ss_.print_discrete_system();
 
 }
 
@@ -128,7 +128,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 		g_tf_.update_num_coef(num_const_g);
 		q_g_inv_tf_.update_den_coef(num_const_g); // since they are inverted.
 
-		ns_utils::print("previous_input  : ", previous_input, numkey, " : ", num_const_g);
+		// ns_utils::print("State and its function : ", numkey, " : ", num_const_g);
 	}
 
 	if (num_den_constant_names_g_.second != "1")
@@ -139,7 +139,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 		g_tf_.update_den_coef(den_const_g);
 		q_g_inv_tf_.update_num_coef(den_const_g); // since they are inverted.
 
-		ns_utils::print("previous_input  : ", previous_input, denkey, " : ", den_const_g);
+		// ns_utils::print("State and its function : ", denkey, " : ", den_const_g);
 	}
 
 	// If any of num den constant changes, update the state-space models.
@@ -149,7 +149,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 		g_ss_.updateStateSpace(g_tf_);
 		q_g_inv_ss_.updateStateSpace(q_g_inv_tf_);
 
-		ns_utils::print("G(s) and Q(s)/G(s) are updated");
+		// ns_utils::print("G(s) and Q(s)/G(s) are updated");
 	}
 
 	// Simulate Qs, Gs, Qs/Gs/
