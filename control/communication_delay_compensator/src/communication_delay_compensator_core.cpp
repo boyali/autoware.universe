@@ -128,7 +128,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 		g_tf_.update_num_coef(num_const_g);
 		q_g_inv_tf_.update_den_coef(num_const_g); // since they are inverted.
 
-		// ns_utils::print("previous_input  : ", previous_input, numkey, " : ", num_const_g);
+		ns_utils::print("previous_input  : ", previous_input, numkey, " : ", num_const_g);
 	}
 
 	if (num_den_constant_names_g_.second != "1")
@@ -139,7 +139,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 		g_tf_.update_den_coef(den_const_g);
 		q_g_inv_tf_.update_num_coef(den_const_g); // since they are inverted.
 
-		// ns_utils::print("previous_input  : ", previous_input, denkey, " : ", den_const_g);
+		ns_utils::print("previous_input  : ", previous_input, denkey, " : ", den_const_g);
 	}
 
 	// If any of num den constant changes, update the state-space models.
@@ -148,6 +148,8 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 		// Update Gss accordingly from the TF version.
 		g_ss_.updateStateSpace(g_tf_);
 		q_g_inv_ss_.updateStateSpace(q_g_inv_tf_);
+
+		ns_utils::print("G(s) and Q(s)/G(s) are updated");
 	}
 
 	// Simulate Qs, Gs, Qs/Gs/
@@ -155,15 +157,8 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 	// Steering, gas sent to the vehicle. 	Output is filtered previous_input uf.
 	auto y0 = q_filter_ss_.simulateOneStep(x0_qfilter_, static_cast<double>(previous_input));
 
-
-	//	ns_utils::print("xuG before system: ");
-	//	ns_eigen_utils::printEigenMat(x0_gsystem_);
-
-	//  simulate y --> Q(s)/ G(s) --> u-du (original previous_input - disturbance previous_input).
-	auto clamped_tracking_state = ns_utils::clamp(measured_model_state, -1.1, 1.1);
-
 	// x0_inv_system_.setZero();
-	auto y1 = q_g_inv_ss_.simulateOneStep(x0_inv_system_, clamped_tracking_state); // output is u-du.
+	auto y1 = q_g_inv_ss_.simulateOneStep(x0_inv_system_, measured_model_state); // output is u-du.
 
 	//	ns_utils::print("xuG after system: ");
 	//	ns_eigen_utils::printEigenMat(x0_gsystem_);

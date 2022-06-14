@@ -61,7 +61,7 @@ namespace observers
 				void simulateOneStep(float64_t const& previous_input, /** previous input*/
 				                     float64_t const& measured_model_state, /* The input cause this measurement*/
 				                     std::pair<float64_t, float64_t> const& num_den_args_of_g = { 1.,
-				                                                                                  1. }    /** model parameters*/);
+				                                                                                  1. }  /** model parameters*/);
 
 				std::vector<float64_t> getOutputs() const
 				{
