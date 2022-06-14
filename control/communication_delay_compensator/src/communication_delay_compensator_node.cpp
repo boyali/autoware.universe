@@ -456,7 +456,7 @@ namespace observers
 
 			// Set delay_compensation_reference for the steering.
 			current_delay_references_msg_->steering_error_read = current_steering;
-			current_delay_references_msg_->steering_error_compensation_ref = cdob_steering_error_y_outputs_[2];
+			current_delay_references_msg_->steering_error_compensation_ref = cdob_steering_error_y_outputs_[3];
 
 			// Set debug message.
 			current_delay_debug_msg_->steering_uf = cdob_steering_error_y_outputs_[0];
@@ -564,7 +564,7 @@ namespace observers
 		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 		 * */
 			current_delay_references_msg_->heading_angle_error_read = current_heading_error;
-			current_delay_references_msg_->heading_angle_error_compensation_ref = cdob_heading_error_y_outputs_[2];
+			current_delay_references_msg_->heading_angle_error_compensation_ref = cdob_heading_error_y_outputs_[3];
 
 			// Set debug message.
 			current_delay_debug_msg_->heading_uf = cdob_heading_error_y_outputs_[0];
