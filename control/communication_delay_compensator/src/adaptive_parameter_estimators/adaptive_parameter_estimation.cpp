@@ -13,16 +13,6 @@
 // limitations under the License.
 
 #include "adaptive_parameter_estimators/adaptive_parameter_estimation.hpp"
-// observers::AdaptiveParameterEstimator::AdaptiveParameterEstimator()
-// {
-//
-// }
-
-void observers::AdaptiveParameterEstimator::Jacobian(autoware::common::types::float64_t const&
-/*ymeasured*/, autoware::common::types::float64_t const& /*ypredicted*/)
-{
-
-}
 
 observers::AdaptiveParameterEstimator::AdaptiveParameterEstimator(float64_t const& amin,
                                                                   float64_t const& amax,
@@ -54,10 +44,10 @@ observers::AdaptiveParameterEstimator::AdaptiveParameterEstimator(float64_t cons
 
 }
 
-bool observers::AdaptiveParameterEstimator::isProjectionNeeded(Eigen::Matrix<double, 2, 1> const& Pe_phi)
+bool observers::AdaptiveParameterEstimator::isProjectionNeeded(Eigen::Matrix<double, 2, 1> const& theta_dot)
 {
 
-	// auto projection_results = Pe_phi;
+	// auto projection_results = theta_dot;
 
 	auto const&& normalized_parameters = C0_ * theta_ab_ + C1_;
 	auto grad_g = theta_ab_; // gradient of constraint equation theta**2 -M<0
@@ -66,7 +56,7 @@ bool observers::AdaptiveParameterEstimator::isProjectionNeeded(Eigen::Matrix<dou
 
 	bool const&& condition_1 = theta_dot_product < M0_;
 
-	auto const&& Pg = Pe_phi.transpose() * grad_g;
+	auto const&& Pg = theta_dot.transpose() * grad_g;
 	bool const&& condition_2 = (ns_utils::isEqual(static_cast<double>(theta_dot_product), M0_)) && (Pg <= 0.);
 
 // 	if (condition_1 || condition_2) // apply projection
@@ -76,7 +66,7 @@ bool observers::AdaptiveParameterEstimator::isProjectionNeeded(Eigen::Matrix<dou
 // 		auto ctheta = (normalized_parameters.norm() - 1) / epsilon_;
 //
 // 		projection_results =
-// 			(I_ - ctheta * P_ * (grad_g * grad_g.transpose()) / (grad_g.transpose() * P_ * grad_g)) * Pe_phi;
+// 			(I_ - ctheta * P_ * (grad_g * grad_g.transpose()) / (grad_g.transpose() * P_ * grad_g)) * theta_dot;
 //
 // 	}
 
@@ -90,7 +80,6 @@ bool observers::AdaptiveParameterEstimator::isProjectionNeeded(Eigen::Matrix<dou
 void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::types::float64_t const& x,
                                                             autoware::common::types::float64_t const& u)
 {
-
 	// Compute the current error.
 	// TODO: replace it with the sufficient richness conditions.
 	double eps_pe = 1e-4;
@@ -107,17 +96,29 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 		auto Pdot = Z_; // prepare a zero matrix.
 
 		// ------------------ Projection Block --------------------------------
+		bool is_normalization_needed{ false };
 
-		// auto const&& normalized_parameters = C0_ * theta_ab_ + C1_;
+		// To compute a scaled constraint equation we first  scale the parameters.
+		/**
+		 * @brief g(theta) < 0 where g(theta) is a convex constraint on the parameters.
+		 * */
+		auto const&& scaled_params = C0_ * theta_ab_ + C1_;
+		auto const&& scaled_param_norm = scaled_params.lpNorm<2>();
+
+
+		// Compute conditions for the normalization.
+		bool const&& condition_1 = scaled_params.transpose() * scaled_params < M0_;
+
+		auto const&& Pg = theta_dot.transpose() * scaled_params;
+		bool const
+			&& condition_2 = (ns_utils::isEqual(static_cast<double>(scaled_param_norm), M0_)) && (Pg <= 0.);
+
 		auto grad_g = theta_ab_; // gradient of constraint equation theta**2 -M<0
 
-		// auto normalized_theta_dot_product = normalized_parameters.transpose() * normalized_parameters;
+		// auto normalized_theta_dot_product = scaled_params.transpose() * scaled_params;
 		auto theta_ab_mag = theta_ab_.transpose() * theta_ab_;
-		bool const&& condition_1 = theta_ab_.transpose() * theta_ab_ < M0_;
 
-		auto const&& Pg = theta_dot.transpose() * grad_g;
-		bool const
-			&& condition_2 = (ns_utils::isEqual(static_cast<double>(theta_ab_mag), M0_)) && (Pg <= 0.);
+
 
 		// define a smoothing func.
 		float64_t ctheta{};

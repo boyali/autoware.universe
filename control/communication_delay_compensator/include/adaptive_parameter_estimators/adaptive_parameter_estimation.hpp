@@ -45,7 +45,7 @@ namespace observers
 				float64_t const am_{ 1. };
 				float64_t beta_{ 0.0 }; // forgetting factor
 				float64_t epsilon_{ 0.1 }; // smoothing factor.
-				float64_t M0_{ 200. }; // constraint on parameters dot product
+				float64_t M0_{ 1. }; // constraint on parameters dot product
 
 				// Covariance resetting
 				float64_t rho_0{ 0.5 };
@@ -65,7 +65,7 @@ namespace observers
 				Eigen::Matrix<double, 2, 2> P_;
 				Eigen::Matrix<double, 2, 2> C0_; // normalization factor  xhat = c0*x + c1 where xhat \in[-1, 1]
 				Eigen::Matrix<double, 2, 1> C1_;
-				Eigen::Matrix<double, 2, 1> phi_;
+				Eigen::Matrix<double, 2, 1> phi_; // Current filtered [x, u] with x/(s + am)
 				Eigen::Matrix<double, 2, 2> I_; // identity matrix
 				Eigen::Matrix<double, 2, 2> Z_; // zero matrix
 
@@ -76,14 +76,12 @@ namespace observers
 				 * */
 				Eigen::Matrix<double, 2, 1> theta_ab_; // xdot = -a*x + bu where a and b ara unknown.
 
-				// Value of Jacobian with respec to the parameters
-				void Jacobian(float64_t const& ymeasured, float64_t const& ypredicted);
 
 				// Class methods.
 				/**
 				 * @brief project a parameter on to a convex set, using vector projection methods.
 				 * */
-				bool isProjectionNeeded(Eigen::Matrix<double, 2, 1> const& Pe_phi);
+				bool isProjectionNeeded(Eigen::Matrix<double, 2, 1> const& theta_dot);
 
 		};
 } // namespace observers
