@@ -157,33 +157,17 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 	// Steering, gas sent to the vehicle. 	Output is filtered previous_input uf.
 	auto y0 = q_filter_ss_.simulateOneStep(x0_qfilter_, static_cast<double>(previous_input));
 
-	// x0_inv_system_.setZero();
+	// set the input to measured state of Q(s)/G(s) to get the input estimate.
+	// ey, eyaw, or eVel --> Q(s)/G(s) -->u - du
+	// x0_inv_system_.setZero(); //
 	auto y1 = q_g_inv_ss_.simulateOneStep(x0_inv_system_, measured_model_state); // output is u-du.
-
-	//	ns_utils::print("xuG after system: ");
-	//	ns_eigen_utils::printEigenMat(x0_gsystem_);
-
-	//	ns_utils::print("Current G Model");
-	//	Gtf_.print();
-	//	Gss_.print_discrete_system();
 
 	// Get difference of uf-(u-du) ~=du
 	auto&& du = y0 - y1;
 
 	// Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
-	// x0_gsystem_.setZero();
+	x0_gsystem_.setZero();
 	auto y3 = g_ss_.simulateOneStep(x0_gsystem_, du); // output is y (i.e ey, eyaw, ...).
-
-
-// 	ns_utils::print("Current velocity and steering :", num_den_args_of_g.first, previous_input);
-// 	ns_utils::print("Current V^2 and cos(delta)^2  : ", pair_func_map_["v"](num_den_args_of_g.first),
-// 	                pair_func_map_["delta"](num_den_args_of_g.second), "\n");
-//
-// 	ns_utils::print("Current Q/G Model");
-// 	q_g_inv_tf_.print();
-// 	q_g_inv_ss_.print();
-// 	q_g_inv_ss_.print_discrete_system();
-
 
 	// Get outputs.
 	/**
