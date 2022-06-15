@@ -126,6 +126,7 @@ namespace observers
 			computeSteeringCDOBcompensator();
 			computeHeadingCDOBcompensator();
 			computeLateralCDOBcompensator();
+			computeVelocityCDOBcompensator();
 
 			// Publish delay compensation reference.
 			publishCompensationReferences();
@@ -400,19 +401,6 @@ namespace observers
 
 			// float64_t time_constant_of_qfilter{};
 			auto time_constant_of_qfilter = 1.0 / w_c_of_q;
-
-// 			try
-// 			{
-// 				time_constant_of_qfilter = 1.0 / w_c_of_q;
-// 			}
-//
-// 			catch (const std::invalid_argument& ia)
-// 			{
-// 				RCLCPP_ERROR(get_logger(), "[setSteeringCDOBcompensator] Invalid argument exception : %s", ia.what());
-//
-// 				throw std::invalid_argument("The cut-off frequency cannot be zero.");
-// 				// std::cerr << "Invalid argument: " << ia.what() << '\n';
-// 			}
 
 			// --------------- Qfilter Construction --------------------------------------
 			// Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
@@ -689,10 +677,73 @@ namespace observers
 		void CommunicationDelayCompensatorNode::setVelocityErrorCDOBcompensator()
 		{
 
+			// Create a qfilter from the given order for the steering system.
+			auto const& order_of_q = params_node_.qfilter_velocity_error_order;
+			auto const& cut_off_frq_in_hz_q = params_node_.qfilter_velocity_error_freq;
+			auto&& w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q; // in [rad/sec]
+
+			// float64_t time_constant_of_qfilter{};
+			auto time_constant_of_qfilter = 1.0 / w_c_of_q;
+
+			// --------------- Qfilter Construction --------------------------------------
+			// Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
+			// Calculate the transfer function.
+			ns_control_toolbox::tf_factor denominator{ std::vector<double>{ time_constant_of_qfilter, 1. }}; // (tau*s+1)
+
+			// Take power of the denominator.
+			denominator.power(static_cast<unsigned int>(order_of_q));
+
+			// Create the transfer function from a numerator an denominator.
+			auto q_tf = ns_control_toolbox::tf{ std::vector<double>{ 1. }, denominator() };
+
+			// --------------- System Model Construction --------------------------------------
+			// There is no dynamical parameter but tau might be changing if we use the adaptive control approach.
+
+			auto g_tf = tf_t({ 1. }, { params_node_.velocity_tau, 1. });
+			CommunicationDelayCompensatorCore delay_compensator_velocity(q_tf, g_tf, params_node_.cdob_ctrl_period);
+
+			// Store as an unique ptr.
+			delay_compensator_velocity_error_ = std::make_unique<CommunicationDelayCompensatorCore>
+				(delay_compensator_velocity);
 		}
 		void CommunicationDelayCompensatorNode::computeVelocityCDOBcompensator()
 		{
+			// Get the previous steering control value sent to the vehicle.
+			auto& u_prev = previous_ctrl_ptr_->longitudinal.speed;
 
+			// Get the current measured steering value.
+			auto& current_velocity = current_velocity_ptr->twist.twist.linear.x;
+
+			// reset the stored outputs to zero.
+			// std::fill(cdob_steering_error_y_outputs_.begin(), cdob_steering_error_y_outputs_.end(), 0.);
+
+			// Input is steering_input -> G(s) steering model --> next steering state.
+			delay_compensator_velocity_error_->simulateOneStep(u_prev, current_velocity);
+			cdob_velocity_error_y_outputs_ = delay_compensator_velocity_error_->getOutputs();
+
+			/**
+		 * @brief Outputs of the delay compensator.
+		 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+		 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+		 * y2: du = y0 - y1 where du is the estimated disturbance input
+		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+		 * */
+
+			// Set delay_compensation_reference for the steering.
+			current_delay_references_msg_->velocity_error_read = current_longitudinal_errors_->velocity_error_read;
+			current_delay_references_msg_->steering_error_compensation_ref = cdob_velocity_error_y_outputs_[4];
+
+			// Set debug message.
+			current_delay_debug_msg_->vel_uf = cdob_velocity_error_y_outputs_[0];
+			current_delay_debug_msg_->vel_u_du = cdob_velocity_error_y_outputs_[1];
+			current_delay_debug_msg_->vel_du = cdob_velocity_error_y_outputs_[2];
+			current_delay_debug_msg_->vel_ydu = cdob_velocity_error_y_outputs_[3];
+
+			current_delay_debug_msg_->vel_u_nondelay_u_estimated =
+				cdob_velocity_error_y_outputs_[1] + cdob_velocity_error_y_outputs_[2];
+
+			// Debug
+			//ns_utils::print("previous input : ", u_prev, current_steering);
 		}
 
 }  // namespace observers
