@@ -16,7 +16,9 @@ autoware_package()
 #            -Waddress
 #            -fvisibility=default) # visibility hidden or default is set here.
 #endif ()
-
+#
+## Release, Debug, RelWithDebInfo, MinSizeRel
+#set(CMAKE_BUILD_TYPE "Debug")
 
 ## ----------------- Library headers and sources -------------------------------
 set(CDOB_LIB_INCLUDE_DIRS

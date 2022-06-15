@@ -19,11 +19,11 @@
  * */
 
 observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(tf_t& qfilter,
-                                                                                tf_t& g_system_model,
-                                                                                double const& dt) :
-	q_filter_tf_{ qfilter },
-	g_tf_(g_system_model),
-	dt_{ dt }
+		tf_t& g_system_model,
+		double const& dt) :
+		q_filter_tf_{ qfilter },
+		g_tf_(g_system_model),
+		dt_{ dt }
 {
 	// The vector that keeps the output of the compensator.
 	// y_outputs_.reserve(num_of_outputs);
@@ -36,7 +36,7 @@ observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
 
 	// Compute the state spaces which can simulate the system given a u, x0.
 	q_filter_ss_ = ss_t(q_filter_tf_, dt_);
-	g_ss_ = ss_t(g_tf_, dt_);
+	g_ss_        = ss_t(g_tf_, dt_);
 
 	// Compute Q(ss)/G(ss)
 	auto g_inv = std::move(g_system_model);
@@ -54,12 +54,12 @@ observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
 
 
 	// Initialize the Eigen vectors.
-	auto qfilter_order = std::max(q_filter_tf_.num().size(), q_filter_tf_.den().size());
-	auto system_model_order = std::max(g_tf_.num().size(), g_tf_.den().size());
+	auto qfilter_order        = std::max(q_filter_tf_.num().size(), q_filter_tf_.den().size());
+	auto system_model_order   = std::max(g_tf_.num().size(), g_tf_.den().size());
 	auto inverse_system_order = std::max(q_g_inv_tf_.num().size(), q_g_inv_tf_.den().size());
 
-	x0_qfilter_ = Eigen::MatrixXd(qfilter_order, 1);
-	x0_gsystem_ = Eigen::MatrixXd(system_model_order, 1);
+	x0_qfilter_    = Eigen::MatrixXd(qfilter_order, 1);
+	x0_gsystem_    = Eigen::MatrixXd(system_model_order, 1);
 	x0_inv_system_ = Eigen::MatrixXd(inverse_system_order, 1);
 
 }
@@ -77,13 +77,13 @@ void observers::CommunicationDelayCompensatorCore::print() const
 	g_tf_.print();
 
 	ns_utils::print("G(s) num and den constant names :", num_den_constant_names_g_.first,
-	                num_den_constant_names_g_.second, "\n");
+			num_den_constant_names_g_.second, "\n");
 
 	ns_utils::print("Forward model Q/G(s) :  \n");
 	q_g_inv_tf_.print();
 
 	ns_utils::print("Q/G(s) num and den constant names :", num_den_constant_names_g_inv_.first,
-	                num_den_constant_names_g_inv_.second);
+			num_den_constant_names_g_inv_.second);
 
 // 	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
 // 	ns_utils::print("Qfilter State-Space: ");
@@ -104,28 +104,29 @@ void observers::CommunicationDelayCompensatorCore::print() const
  * a and b must be a function. These parameters belong to the G(s) system model.
 * */
 void observers::CommunicationDelayCompensatorCore::setDynamicParams_num_den(observers::pairs_string_view_t& param_names,
-                                                                            observers::pairs_func_maps_t& param_funcs)
+		observers::pairs_func_maps_t& param_funcs)
 {
 
 	// Set G(s) parameters.
 	num_den_constant_names_g_ = param_names;
-	pair_func_map_ = param_funcs;
+	pair_func_map_            = param_funcs;
 
 	// Invert the names for 1/G(s).
 	num_den_constant_names_g_inv_ =
-		pairs_string_view_t(num_den_constant_names_g_.second, num_den_constant_names_g_.first);
+			pairs_string_view_t(num_den_constant_names_g_.second, num_den_constant_names_g_.first);
 
 }
+
 void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t const& previous_input,
-                                                                   float64_t const& measured_model_state,
-                                                                   std::pair<float64_t, float64_t> const&
-                                                                   num_den_args_of_g)
+		float64_t const& measured_model_state,
+		std::pair<float64_t, float64_t> const&
+		num_den_args_of_g)
 {
 
 	// Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
 	if (num_den_constant_names_g_.first != "1")
 	{
-		auto&& numkey = num_den_constant_names_g_.first; // Corresponds to v in ey model.
+		auto&& numkey      = num_den_constant_names_g_.first; // Corresponds to v in ey model.
 		auto&& num_const_g = pair_func_map_[numkey](num_den_args_of_g.first);
 
 		g_tf_.update_num_coef(num_const_g);
@@ -136,7 +137,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 
 	if (num_den_constant_names_g_.second != "1")
 	{
-		auto&& denkey = num_den_constant_names_g_.second; // Corresponds to delta in ey model.
+		auto&& denkey      = num_den_constant_names_g_.second; // Corresponds to delta in ey model.
 		auto&& den_const_g = pair_func_map_[denkey](num_den_args_of_g.second);
 
 		g_tf_.update_den_coef(den_const_g);
@@ -165,12 +166,16 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 	x0_inv_system_.setZero();
 	auto const&& y1 = q_g_inv_ss_.simulateOneStep(x0_inv_system_, measured_model_state); // output is u-du.
 
+
+
 	// Get difference of uf-(u-du) ~=du
 	auto const&& du = y0 - y1;
 
 	// Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
 	//x0_gsystem_.setZero();
 	auto const&& y3 = g_ss_.simulateOneStep(x0_gsystem_, du); // output is y (i.e ey, eyaw, ...).
+
+
 
 	// Get outputs.
 	/**
@@ -201,23 +206,23 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 
 /// -------------- AS A PROTOTYPE NOT USED in the NODE ---------------------------------
 DelayCompensatorCore_PrototypeExample::DelayCompensatorCore_PrototypeExample(s_filter_data const& qfilter_data,
-                                                                             s_model_g_data& model_data,
-                                                                             double const& dt) :
-	dt_{ dt }, q_order_{ qfilter_data.order },
-	q_cut_off_frequency_{ qfilter_data.cut_off_frq },
-	q_time_constant_tau_{ qfilter_data.time_constant },
-	Qfilter_tf_(qfilter_data.TF),
-	num_den_constant_names_G_{ model_data.num_den_coeff_names },
-	pair_func_map_{ model_data.funcs },
-	Gtf_(model_data.TF)
+		s_model_g_data& model_data,
+		double const& dt) :
+		dt_{ dt }, q_order_{ qfilter_data.order },
+		q_cut_off_frequency_{ qfilter_data.cut_off_frq },
+		q_time_constant_tau_{ qfilter_data.time_constant },
+		Qfilter_tf_(qfilter_data.TF),
+		num_den_constant_names_G_{ model_data.num_den_coeff_names },
+		pair_func_map_{ model_data.funcs },
+		Gtf_(model_data.TF)
 {
 
-	auto qfilter_order = Qfilter_tf_.order();
-	auto system_model_order = Gtf_.order();
+	auto qfilter_order        = Qfilter_tf_.order();
+	auto system_model_order   = Gtf_.order();
 	auto inverse_system_order = std::max(qfilter_order, system_model_order);
 
-	x0_qfilter_ = Eigen::MatrixXd(qfilter_order, 1);
-	x0_gsystem_ = Eigen::MatrixXd(system_model_order, 1);
+	x0_qfilter_    = Eigen::MatrixXd(qfilter_order, 1);
+	x0_gsystem_    = Eigen::MatrixXd(system_model_order, 1);
 	x0_inv_system_ = Eigen::MatrixXd(inverse_system_order, 1);
 
 	x0_qfilter_.setZero();
@@ -257,13 +262,13 @@ void DelayCompensatorCore_PrototypeExample::print() const
 	Gtf_.print();
 
 	ns_utils::print("G(s) num and den constant names :", num_den_constant_names_G_.first,
-	                num_den_constant_names_G_.second, "\n");
+			num_den_constant_names_G_.second, "\n");
 
 	ns_utils::print("Forward model Q/G(s) :  \n");
 	QGinv_tf_.print();
 
 	ns_utils::print("Q/G(s) num and den constant names :", num_den_constant_names_QGinv_.first,
-	                num_den_constant_names_QGinv_.second);
+			num_den_constant_names_QGinv_.second);
 
 	ns_utils::print("\n -------------- DISCRETE STATE-SPACE MODELS ----------\n");
 	ns_utils::print("Qfilter State-Space: ");
@@ -291,14 +296,14 @@ void DelayCompensatorCore_PrototypeExample::print() const
  * */
 
 void DelayCompensatorCore_PrototypeExample::simulateOneStep(double const& previous_input,
-                                                            double const& measured_model_state,
-                                                            std::pair<double, double> const& num_den_args_of_G,
-                                                            std::array<double, 4>& y_outputs)
+		double const& measured_model_state,
+		std::pair<double, double> const& num_den_args_of_G,
+		std::array<double, 4>& y_outputs)
 {
 	// Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
 	if (num_den_constant_names_G_.first != "1")
 	{
-		auto&& numkey = num_den_constant_names_G_.first; // Corresponds to v in ey model.
+		auto&& numkey      = num_den_constant_names_G_.first; // Corresponds to v in ey model.
 		auto&& num_const_g = pair_func_map_[numkey](num_den_args_of_G.first);
 
 		Gtf_.update_num_coef(num_const_g);
@@ -309,7 +314,7 @@ void DelayCompensatorCore_PrototypeExample::simulateOneStep(double const& previo
 
 	if (num_den_constant_names_G_.second != "1")
 	{
-		auto&& denkey = num_den_constant_names_G_.second; // Corresponds to delta in ey model.
+		auto&& denkey      = num_den_constant_names_G_.second; // Corresponds to delta in ey model.
 		auto&& den_const_g = pair_func_map_[denkey](num_den_args_of_G.second);
 
 		Gtf_.update_den_coef(den_const_g);
@@ -337,31 +342,37 @@ void DelayCompensatorCore_PrototypeExample::simulateOneStep(double const& previo
 	//  simulate y --> Q(s)/ G(s) --> u-du (original previous_input - disturbance previous_input).
 	// auto clamped_tracking_state = ns_utils::clamp(measured_model_state, -1.1, 1.1);
 
-	x0_inv_system_.setZero();
+	// x0_inv_system_.setZero();
+
+	auto xtemp = QGinv_ss_.Ad() * x0_inv_system_ + QGinv_ss_.Bd() * measured_model_state;
+	// ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xtemp));
+
 	auto y1 = QGinv_ss_.simulateOneStep(x0_inv_system_, measured_model_state); // output is u-du.
+	ns_eigen_utils::printEigenMat(x0_inv_system_);
 
-	//	ns_utils::print("xuG after system: ");
-	//	ns_eigen_utils::printEigenMat(x0_gsystem_);
 
-	//	ns_utils::print("Current G Model");
-	//	Gtf_.print();
-	//	Gss_.print_discrete_system();
+
+//	ns_utils::print("xuG after system: ");
+//	ns_eigen_utils::printEigenMat(x0_gsystem_);
+//
+//	ns_utils::print("Current G Model");
+//	Gtf_.print();
+//	Gss_.print_discrete_system();
 
 	// Get difference of uf-(u-du) ~=du
 	auto&& du = y0 - y1;
 
 	// Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
-	x0_gsystem_.setZero();
+	// x0_gsystem_.setZero();
 	auto y3 = Gss_.simulateOneStep(x0_gsystem_, du); // output is y (i.e ey, eyaw, ...).
-
 
 	ns_utils::print("Current velocity and steering :", num_den_args_of_G.first, previous_input);
 	ns_utils::print("Current V^2 and cos(delta)^2  : ", pair_func_map_["v"](num_den_args_of_G.first),
-	                pair_func_map_["delta"](num_den_args_of_G.second), "\n");
+			pair_func_map_["delta"](num_den_args_of_G.second), "\n");
 
 	ns_utils::print("Current Q/G Model");
 	QGinv_tf_.print();
-//	QGinv_ss_.print();
+	QGinv_ss_.print();
 	QGinv_ss_.print_discrete_system();
 
 
