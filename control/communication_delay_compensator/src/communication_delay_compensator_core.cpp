@@ -26,7 +26,8 @@ observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
 	dt_{ dt }
 {
 	// The vector that keeps the output of the compensator.
-	y_outputs_.reserve(num_of_outputs);
+	// y_outputs_.reserve(num_of_outputs);
+	y_outputs_ = std::vector<float64_t>(num_of_outputs, 0.);
 
 	// Internal states of the transfer functions in the form of x[k+1] = Ax[k] + Bu[k]
 	x0_qfilter_.setZero();
@@ -157,19 +158,19 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 	// Simulate Qs, Gs, Qs/Gs/
 	// set previous_input u of Q(s) to get the filtered output. u--> Q(s) -->uf
 	// Steering, gas sent to the vehicle. 	Output is filtered previous_input uf.
-	auto y0 = q_filter_ss_.simulateOneStep(x0_qfilter_, static_cast<double>(previous_input));
+	auto const&& y0 = q_filter_ss_.simulateOneStep(x0_qfilter_, static_cast<double>(previous_input));
 
 	// set the input to measured state of Q(s)/G(s) to get the input estimate.
 	// ey, eyaw, or eVel --> Q(s)/G(s) -->u - du
-	x0_inv_system_.setZero();
-	auto y1 = q_g_inv_ss_.simulateOneStep(x0_inv_system_, measured_model_state); // output is u-du.
+	// x0_inv_system_.setZero();
+	auto const&& y1 = q_g_inv_ss_.simulateOneStep(x0_inv_system_, measured_model_state); // output is u-du.
 
 	// Get difference of uf-(u-du) ~=du
-	auto&& du = y0 - y1;
+	auto const&& du = y0 - y1;
 
 	// Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
-	x0_gsystem_.setZero();
-	auto y3 = g_ss_.simulateOneStep(x0_gsystem_, du); // output is y (i.e ey, eyaw, ...).
+	// x0_gsystem_.setZero();
+	auto const&& y3 = g_ss_.simulateOneStep(x0_gsystem_, du); // output is y (i.e ey, eyaw, ...).
 
 	// Get outputs.
 	/**
@@ -180,16 +181,22 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 	 * */
 
-	y_outputs_ = std::vector<float64_t>(num_of_outputs, 0.);
+	std::fill(y_outputs_.begin(), y_outputs_.end(), 0.);
+	// y_outputs_ = std::vector<float64_t>(num_of_outputs, 0.);
+
 	y_outputs_[0] = y0; // ufiltered
 	y_outputs_[1] = y1; // u-du
 	y_outputs_[2] = du; // du
-	y_outputs_[3] = y3; // du->Q(s)/G(s)--> y_du (reference correction).
+	y_outputs_[3] = y3; // du->Q(s)/G(s)--> y_du
+
+	// reference correction.
+	y_outputs_[4] = measured_model_state + y3; // yu = y_measured - ydu + ydu where
+
 
 	// Debug
 	// 	ns_utils::print("measured state : ", measured_model_state);
 	// 	ns_utils::print("simulated y0, y1, y2, y3 : ", y0, y1, du, y3);
-
+	// ns_utils::print("simulated y0, y1, y2, y3, y4 : ", y0, y1, du, y3, y_outputs_[4]);
 }
 
 /// -------------- AS A PROTOTYPE NOT USED in the NODE ---------------------------------

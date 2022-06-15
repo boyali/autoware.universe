@@ -22,7 +22,7 @@ namespace observers
 			using std::placeholders::_1;
 
 			// Vectors that keeps output of the communication delay compensator objects.
-			size_t n_delay_compensator_output = 5;
+			size_t const n_delay_compensator_output = 5;
 			cdob_lateral_error_y_outputs_.reserve(n_delay_compensator_output);
 			cdob_heading_error_y_outputs_.reserve(n_delay_compensator_output);
 			cdob_steering_error_y_outputs_.reserve(n_delay_compensator_output);
@@ -207,15 +207,14 @@ namespace observers
 // 				ns_utils::print("Unique pointer is not set ");
 // 			}
 
-			if (delay_compensator_acc_error_)
-			{
-				delay_compensator_acc_error_->print();
-			}
-			else
-			{
-				ns_utils::print("Unique pointer is not set ");
-			}
-
+// 			if (delay_compensator_acc_error_)
+// 			{
+// 				delay_compensator_acc_error_->print();
+// 			}
+// 			else
+// 			{
+// 				ns_utils::print("Unique pointer is not set ");
+// 			}
 
 			// ns_utils::print("ACT On timer method ");
 // 			ns_utils::print("Params wheelbase ", params_node_.wheel_base);
@@ -486,6 +485,7 @@ namespace observers
 			current_delay_debug_msg_->steering_u_du = cdob_steering_error_y_outputs_[1];
 			current_delay_debug_msg_->steering_du = cdob_steering_error_y_outputs_[2];
 			current_delay_debug_msg_->steering_ydu = cdob_steering_error_y_outputs_[3];
+			current_delay_debug_msg_->steering_yu = cdob_steering_error_y_outputs_[4];
 
 			current_delay_debug_msg_->steering_nondelay_u_estimated =
 				cdob_steering_error_y_outputs_[1] + cdob_steering_error_y_outputs_[2];
@@ -592,6 +592,7 @@ namespace observers
 			current_delay_debug_msg_->heading_u_du = cdob_heading_error_y_outputs_[1];
 			current_delay_debug_msg_->heading_du = cdob_heading_error_y_outputs_[2];
 			current_delay_debug_msg_->heading_ydu = cdob_heading_error_y_outputs_[3];
+			current_delay_debug_msg_->heading_yu = cdob_heading_error_y_outputs_[4];
 
 			current_delay_debug_msg_->heading_nondelay_u_estimated =
 				cdob_heading_error_y_outputs_[1] + cdob_heading_error_y_outputs_[2];
@@ -690,6 +691,7 @@ namespace observers
 			current_delay_debug_msg_->lat_u_du = cdob_lateral_error_y_outputs_[1];
 			current_delay_debug_msg_->lat_du = cdob_lateral_error_y_outputs_[2];
 			current_delay_debug_msg_->lat_ydu = cdob_lateral_error_y_outputs_[3];
+			current_delay_debug_msg_->lat_yu = cdob_lateral_error_y_outputs_[4];
 
 			current_delay_debug_msg_->lat_u_nondelay_u_estimated =
 				cdob_lateral_error_y_outputs_[1] + cdob_lateral_error_y_outputs_[2];
@@ -762,6 +764,7 @@ namespace observers
 			current_delay_debug_msg_->vel_u_du = cdob_velocity_error_y_outputs_[1];
 			current_delay_debug_msg_->vel_du = cdob_velocity_error_y_outputs_[2];
 			current_delay_debug_msg_->vel_ydu = cdob_velocity_error_y_outputs_[3];
+			current_delay_debug_msg_->vel_yu = cdob_velocity_error_y_outputs_[4];
 
 			current_delay_debug_msg_->vel_u_nondelay_u_estimated =
 				cdob_velocity_error_y_outputs_[1] + cdob_velocity_error_y_outputs_[2];
@@ -833,6 +836,7 @@ namespace observers
 			current_delay_debug_msg_->acc_u_du = cdob_acc_error_y_outputs_[1];
 			current_delay_debug_msg_->acc_du = cdob_acc_error_y_outputs_[2];
 			current_delay_debug_msg_->acc_ydu = cdob_acc_error_y_outputs_[3];
+			current_delay_debug_msg_->acc_yu = cdob_acc_error_y_outputs_[4];
 
 			current_delay_debug_msg_->acc_u_nondelay_u_estimated =
 				cdob_acc_error_y_outputs_[1] + cdob_acc_error_y_outputs_[2];
