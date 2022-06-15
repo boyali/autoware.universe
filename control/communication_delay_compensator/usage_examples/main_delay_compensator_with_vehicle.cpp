@@ -31,7 +31,7 @@ int main()
 
 	// Create an inverse vehicle model for these signal channels with Q-filters.
 	// First create Q-filter for ey.
-	double cut_off_frequency_ey = 8.; // [Hz]
+	double cut_off_frequency_ey = 20.; // [Hz]
 	double cut_off_frequency_eyaw = 8.; // [Hz]
 	double cut_off_frequency_delta = 8.;
 	double cut_off_frequency_speed = 8.; // for longitudinal control.
@@ -74,7 +74,7 @@ int main()
 	double wheelbase{ 2.9 };
 	double tau_vel{ 0.1 };
 	double tau_steer{ 0.3 };
-	double dead_time_steer{ 0.2 };
+	double dead_time_steer{ 0.0 };
 	double dead_time_vel{ 0.0 };
 
 	// Create a linear vehicle model for the delay compensator.
@@ -143,7 +143,7 @@ int main()
 	{
 		// Previous commands sent to the vehicle - To get a vehicle state
 		auto uk_str_prev = steer_sin_vec_input(k - 1) * 0.1;
-		auto uk_vel_prev = (vel_trg_vec_input(k - 1) + 1.) * 10.; // max(vel_.) is 1.
+		auto uk_vel_prev = 10.; // (vel_trg_vec_input(k - 1) + 1.) * 10.; // max(vel_.) is 1.
 
 		// Current commands
 		// auto uk_str_cur = steer_sin_vec_input(k) * 0.1;

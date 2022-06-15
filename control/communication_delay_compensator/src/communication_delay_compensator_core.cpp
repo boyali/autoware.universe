@@ -335,9 +335,10 @@ void DelayCompensatorCore_PrototypeExample::simulateOneStep(double const& previo
 	//	ns_eigen_utils::printEigenMat(x0_gsystem_);
 
 	//  simulate y --> Q(s)/ G(s) --> u-du (original previous_input - disturbance previous_input).
-	auto clamped_tracking_state = ns_utils::clamp(measured_model_state, -1.1, 1.1);
+	// auto clamped_tracking_state = ns_utils::clamp(measured_model_state, -1.1, 1.1);
+
 	x0_inv_system_.setZero();
-	auto y1 = QGinv_ss_.simulateOneStep(x0_inv_system_, clamped_tracking_state); // output is u-du.
+	auto y1 = QGinv_ss_.simulateOneStep(x0_inv_system_, measured_model_state); // output is u-du.
 
 	//	ns_utils::print("xuG after system: ");
 	//	ns_eigen_utils::printEigenMat(x0_gsystem_);
@@ -358,10 +359,10 @@ void DelayCompensatorCore_PrototypeExample::simulateOneStep(double const& previo
 	ns_utils::print("Current V^2 and cos(delta)^2  : ", pair_func_map_["v"](num_den_args_of_G.first),
 	                pair_func_map_["delta"](num_den_args_of_G.second), "\n");
 
-//	ns_utils::print("Current Q/G Model");
-//	QGinv_tf_.print();
+	ns_utils::print("Current Q/G Model");
+	QGinv_tf_.print();
 //	QGinv_ss_.print();
-//	QGinv_ss_.print_discrete_system();
+	QGinv_ss_.print_discrete_system();
 
 
 	// Get outputs.
