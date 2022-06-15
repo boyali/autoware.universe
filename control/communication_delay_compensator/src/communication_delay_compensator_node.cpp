@@ -335,6 +335,7 @@ namespace observers
 				// First order state dynamics parameters.
 				params_node_.steering_tau = declare_parameter<float64_t>("steering_time_constant_");
 				params_node_.velocity_tau = declare_parameter<float64_t>("velocity_time_constant_");
+				params_node_.acc_tau = declare_parameter<float64_t>("acc_time_constant_");
 
 			}
 
@@ -368,6 +369,7 @@ namespace observers
 
 				update_param(parameters, "steering_time_constant_", params_node_.steering_tau);
 				update_param(parameters, "velocity_time_constant_", params_node_.velocity_tau);
+				update_param(parameters, "acc_time_constant_", params_node_.acc_tau);
 
 			}
 
