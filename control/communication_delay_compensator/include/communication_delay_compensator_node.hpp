@@ -83,12 +83,14 @@ namespace observers
 				int qfilter_heading_error_order{ 2 };
 				int qfilter_steering_order{ 1 };
 				int qfilter_velocity_error_order{ 1 };
+				int qfilter_acc_error_order{ 1 };
 
 				// Qfilter cut-off frequencies Hz. (low-pass).
 				float64_t qfilter_lateral_error_freq{ 5 };
 				float64_t qfilter_heading_error_freq{ 5 };
 				float64_t qfilter_steering_freq{ 5 };
 				float64_t qfilter_velocity_error_freq{ 5 };
+				float64_t qfilter_acc_error_freq{ 5 };
 
 				// First order vehicle state models.
 				float64_t steering_tau{ 0.3 };
@@ -158,12 +160,14 @@ namespace observers
 				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_heading_error_{};
 				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_steering_error_{};
 				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_velocity_error_{};
+				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_acc_error_{};
 
 				// Pointers to the ROS topics.
 				// Pointers for ros topic
 				// Pointers to the model state variables inputs
 				std::shared_ptr<nav_msgs::msg::Odometry> current_velocity_ptr{ nullptr };
 				std::shared_ptr<SteeringReport> current_steering_ptr_{ nullptr };
+				float64_t previous_velocity_{};
 
 				// Pointer to the model inputs
 				std::shared_ptr<ControlCommand> current_ctrl_ptr_{ nullptr };
@@ -249,6 +253,9 @@ namespace observers
 				void setVelocityErrorCDOBcompensator();
 				void computeVelocityCDOBcompensator();
 
+				void setAccelerationErrorCDOBcompensator();
+				void computeAccelerationCDOBcompensator();
+
 				/**
 				 * @brief placeholders for delay compensator outputs.
 				 * */
@@ -264,6 +271,7 @@ namespace observers
 				std::vector<float64_t> cdob_heading_error_y_outputs_{};
 				std::vector<float64_t> cdob_steering_error_y_outputs_{};
 				std::vector<float64_t> cdob_velocity_error_y_outputs_{};
+				std::vector<float64_t> cdob_acc_error_y_outputs_{};
 
 		};
 

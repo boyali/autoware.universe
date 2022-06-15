@@ -27,6 +27,7 @@ namespace observers
 			cdob_heading_error_y_outputs_.reserve(n_delay_compensator_output);
 			cdob_steering_error_y_outputs_.reserve(n_delay_compensator_output);
 			cdob_velocity_error_y_outputs_.reserve(n_delay_compensator_output);
+			cdob_acc_error_y_outputs_.reserve(n_delay_compensator_output);
 
 			// Reserve internal results vectors.
 
@@ -85,6 +86,7 @@ namespace observers
 			setHeadingErrorCDOBcompensator();
 			setLateralErrorCDOBcompensator();
 			setVelocityErrorCDOBcompensator();
+			setAccelerationErrorCDOBcompensator();
 
 		}
 
@@ -127,6 +129,7 @@ namespace observers
 			computeHeadingCDOBcompensator();
 			computeLateralCDOBcompensator();
 			computeVelocityCDOBcompensator();
+			computeAccelerationCDOBcompensator();
 
 			// Publish delay compensation reference.
 			publishCompensationReferences();
@@ -195,14 +198,24 @@ namespace observers
 // 				ns_utils::print("Unique pointer is not set ");
 // 			}
 
-			if (delay_compensator_lat_error_)
+// 			if (delay_compensator_lat_error_)
+// 			{
+// 				delay_compensator_lat_error_->print();
+// 			}
+// 			else
+// 			{
+// 				ns_utils::print("Unique pointer is not set ");
+// 			}
+
+			if (delay_compensator_acc_error_)
 			{
-				delay_compensator_lat_error_->print();
+				delay_compensator_acc_error_->print();
 			}
 			else
 			{
 				ns_utils::print("Unique pointer is not set ");
 			}
+
 
 			// ns_utils::print("ACT On timer method ");
 // 			ns_utils::print("Params wheelbase ", params_node_.wheel_base);
@@ -226,6 +239,11 @@ namespace observers
 
 		void CommunicationDelayCompensatorNode::onCurrentVelocity(const VelocityMsg::SharedPtr msg)
 		{
+
+			if (current_velocity_ptr)
+			{
+				previous_velocity_ = current_velocity_ptr->twist.twist.linear.x;
+			}
 
 			current_velocity_ptr = std::make_shared<VelocityMsg>(*msg);
 
@@ -325,12 +343,14 @@ namespace observers
 				params_node_.qfilter_heading_error_order = declare_parameter<int>("qfilter_heading_error_order");
 				params_node_.qfilter_steering_order = declare_parameter<int>("qfilter_steering_order");
 				params_node_.qfilter_velocity_error_order = declare_parameter<int>("qfilter_velocity_error_order");
+				params_node_.qfilter_acc_error_order = declare_parameter<int>("qfilter_acc_error_order");
 
 				// Read the filter cut-oof frequencies.
 				params_node_.qfilter_lateral_error_freq = declare_parameter<float64_t>("qfilter_lateral_error_freq");
 				params_node_.qfilter_heading_error_freq = declare_parameter<float64_t>("qfilter_heading_error_freq");
 				params_node_.qfilter_steering_freq = declare_parameter<float64_t>("qfilter_steering_freq");
 				params_node_.qfilter_velocity_error_freq = declare_parameter<float64_t>("qfilter_velocity_error_freq");
+				params_node_.qfilter_acc_error_freq = declare_parameter<float64_t>("qfilter_acc_error_freq");
 
 				// First order state dynamics parameters.
 				params_node_.steering_tau = declare_parameter<float64_t>("steering_time_constant_");
@@ -361,11 +381,13 @@ namespace observers
 				update_param(parameters, "qfilter_heading_error_order", params_node_.qfilter_heading_error_order);
 				update_param(parameters, "qfilter_steering_order", params_node_.qfilter_steering_order);
 				update_param(parameters, "qfilter_velocity_error_order", params_node_.qfilter_velocity_error_order);
+				update_param(parameters, "qfilter_acc_error_order", params_node_.qfilter_acc_error_order);
 
 				update_param(parameters, "qfilter_lateral_error_freq", params_node_.qfilter_lateral_error_freq);
 				update_param(parameters, "qfilter_heading_error_freq", params_node_.qfilter_heading_error_freq);
 				update_param(parameters, "qfilter_steering_freq", params_node_.qfilter_steering_freq);
 				update_param(parameters, "qfilter_velocity_error_freq", params_node_.qfilter_velocity_error_freq);
+				update_param(parameters, "qfilter_acc_error_freq", params_node_.qfilter_acc_error_freq);
 
 				update_param(parameters, "steering_time_constant_", params_node_.steering_tau);
 				update_param(parameters, "velocity_time_constant_", params_node_.velocity_tau);
@@ -743,6 +765,77 @@ namespace observers
 
 			current_delay_debug_msg_->vel_u_nondelay_u_estimated =
 				cdob_velocity_error_y_outputs_[1] + cdob_velocity_error_y_outputs_[2];
+
+			// Debug
+			//ns_utils::print("previous input : ", u_prev, current_steering);
+		}
+		void CommunicationDelayCompensatorNode::setAccelerationErrorCDOBcompensator()
+		{
+			// Create a qfilter from the given order for the steering system.
+			auto const& order_of_q = params_node_.qfilter_acc_error_order;
+			auto const& cut_off_frq_in_hz_q = params_node_.qfilter_acc_error_freq;
+			auto&& w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q; // in [rad/sec]
+
+			// float64_t time_constant_of_qfilter{};
+			auto time_constant_of_qfilter = 1.0 / w_c_of_q;
+
+			// --------------- Qfilter Construction --------------------------------------
+			// Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
+			// Calculate the transfer function.
+			ns_control_toolbox::tf_factor denominator{ std::vector<double>{ time_constant_of_qfilter, 1. }}; // (tau*s+1)
+
+			// Take power of the denominator.
+			denominator.power(static_cast<unsigned int>(order_of_q));
+
+			// Create the transfer function from a numerator an denominator.
+			auto q_tf = ns_control_toolbox::tf{ std::vector<double>{ 1. }, denominator() };
+
+			// --------------- System Model Construction --------------------------------------
+			// There is no dynamical parameter but tau might be changing if we use the adaptive control approach.
+
+			auto g_tf = tf_t({ 1. }, { params_node_.acc_tau, 1. });
+			CommunicationDelayCompensatorCore delay_compensator_acc(q_tf, g_tf, params_node_.cdob_ctrl_period);
+
+			// Store as an unique ptr.
+			delay_compensator_acc_error_ = std::make_unique<CommunicationDelayCompensatorCore>
+				(delay_compensator_acc);
+		}
+		void CommunicationDelayCompensatorNode::computeAccelerationCDOBcompensator()
+		{
+			// Get the previous steering control value sent to the vehicle.
+			auto& u_prev = previous_ctrl_ptr_->longitudinal.acceleration;
+
+			// Get the current measured steering value.
+			auto current_acceleration =
+				(current_velocity_ptr->twist.twist.linear.x - previous_velocity_) / params_node_.cdob_ctrl_period;
+
+			// reset the stored outputs to zero.
+			// std::fill(cdob_steering_error_y_outputs_.begin(), cdob_steering_error_y_outputs_.end(), 0.);
+
+			// Input is steering_input -> G(s) steering model --> next steering state.
+			delay_compensator_acc_error_->simulateOneStep(u_prev, current_acceleration);
+			cdob_acc_error_y_outputs_ = delay_compensator_acc_error_->getOutputs();
+
+			/**
+		 * @brief Outputs of the delay compensator.
+		 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+		 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+		 * y2: du = y0 - y1 where du is the estimated disturbance input
+		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+		 * */
+
+			// Set delay_compensation_reference for the steering.
+			current_delay_references_msg_->acceleration_error_read = current_longitudinal_errors_->acceleration_error_read;
+			current_delay_references_msg_->acceleration_error_compensation_ref = cdob_acc_error_y_outputs_[4];
+
+			// Set debug message.
+			current_delay_debug_msg_->acc_uf = cdob_acc_error_y_outputs_[0];
+			current_delay_debug_msg_->acc_u_du = cdob_acc_error_y_outputs_[1];
+			current_delay_debug_msg_->acc_du = cdob_acc_error_y_outputs_[2];
+			current_delay_debug_msg_->acc_ydu = cdob_acc_error_y_outputs_[3];
+
+			current_delay_debug_msg_->acc_u_nondelay_u_estimated =
+				cdob_acc_error_y_outputs_[1] + cdob_acc_error_y_outputs_[2];
 
 			// Debug
 			//ns_utils::print("previous input : ", u_prev, current_steering);
