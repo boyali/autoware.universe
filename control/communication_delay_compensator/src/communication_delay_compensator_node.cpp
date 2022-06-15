@@ -21,7 +21,8 @@ namespace observers
 		{
 			using std::placeholders::_1;
 
-			size_t n_delay_compensator_output = 4;
+			// Vectors that keeps output of the communication delay compensator objects.
+			size_t n_delay_compensator_output = 5;
 			cdob_lateral_error_y_outputs_.reserve(n_delay_compensator_output);
 			cdob_heading_error_y_outputs_.reserve(n_delay_compensator_output);
 			cdob_steering_error_y_outputs_.reserve(n_delay_compensator_output);
@@ -466,7 +467,7 @@ namespace observers
 
 			// Set delay_compensation_reference for the steering.
 			current_delay_references_msg_->steering_error_read = current_steering;
-			current_delay_references_msg_->steering_error_compensation_ref = cdob_steering_error_y_outputs_[3];
+			current_delay_references_msg_->steering_error_compensation_ref = cdob_steering_error_y_outputs_[4];
 
 			// Set debug message.
 			current_delay_debug_msg_->steering_uf = cdob_steering_error_y_outputs_[0];
@@ -572,7 +573,7 @@ namespace observers
 		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 		 * */
 			current_delay_references_msg_->heading_angle_error_read = current_heading_error;
-			current_delay_references_msg_->heading_angle_error_compensation_ref = cdob_heading_error_y_outputs_[3];
+			current_delay_references_msg_->heading_angle_error_compensation_ref = cdob_heading_error_y_outputs_[4];
 
 			// Set debug message.
 			current_delay_debug_msg_->heading_uf = cdob_heading_error_y_outputs_[0];
@@ -670,7 +671,7 @@ namespace observers
 		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 		 * */
 			current_delay_references_msg_->lateral_deviation_read = current_lateral_error;
-			current_delay_references_msg_->lateral_deviation_error_compensation_ref = cdob_lateral_error_y_outputs_[3];
+			current_delay_references_msg_->lateral_deviation_error_compensation_ref = cdob_lateral_error_y_outputs_[4];
 
 			// Set debug message.
 			current_delay_debug_msg_->lat_uf = cdob_lateral_error_y_outputs_[0];

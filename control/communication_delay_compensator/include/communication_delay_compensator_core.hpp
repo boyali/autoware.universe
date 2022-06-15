@@ -70,6 +70,7 @@ namespace observers
 
 		private:
 				// Qfilter transfer function.
+				size_t num_of_outputs{ 5 };
 				tf_t q_filter_tf_{}; // @brief Transfer function of the qfilter.
 				tf_t g_tf_{}; // @brief state dynamics
 				float64_t dt_{};
@@ -108,6 +109,7 @@ namespace observers
 				 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
 				 * y2: du = y0 - y1 where du is the estimated disturbance input
 				 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+				 * y4: yu  = yu -ydu + ydu
 				 * */
 
 				std::vector<float64_t> y_outputs_;

@@ -25,8 +25,10 @@ observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
 	g_tf_(g_system_model),
 	dt_{ dt }
 {
-	y_outputs_.reserve(4);
+	// The vector that keeps the output of the compensator.
+	y_outputs_.reserve(num_of_outputs);
 
+	// Internal states of the transfer functions in the form of x[k+1] = Ax[k] + Bu[k]
 	x0_qfilter_.setZero();
 	x0_gsystem_.setZero();
 	x0_inv_system_.setZero();
@@ -178,7 +180,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
 	 * */
 
-	y_outputs_ = std::vector<float64_t>(4, 0.);
+	y_outputs_ = std::vector<float64_t>(num_of_outputs, 0.);
 	y_outputs_[0] = y0; // ufiltered
 	y_outputs_[1] = y1; // u-du
 	y_outputs_[2] = du; // du
