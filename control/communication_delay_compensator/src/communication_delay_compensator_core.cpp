@@ -162,14 +162,14 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 
 	// set the input to measured state of Q(s)/G(s) to get the input estimate.
 	// ey, eyaw, or eVel --> Q(s)/G(s) -->u - du
-	x0_inv_system_.setZero();
+	// x0_inv_system_.setZero();
 	auto const&& y1 = q_g_inv_ss_.simulateOneStep(x0_inv_system_, measured_model_state); // output is u-du.
 
 	// Get difference of uf-(u-du) ~=du
 	auto const&& du = y0 - y1;
 
 	// Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
-	x0_gsystem_.setZero();
+	// x0_gsystem_.setZero();
 	auto const&& y3 = g_ss_.simulateOneStep(x0_gsystem_, du); // output is y (i.e ey, eyaw, ...).
 
 	// Get outputs.
