@@ -193,7 +193,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 	y_outputs_[3] = ydu; // du->Q(s)/G(s)--> y_du
 
 	// reference correction.
-	y_outputs_[4] = -1. * (measured_model_state + ydu); // yu = y_measured (yu-ydu) + ydu  where
+	y_outputs_[4] = (measured_model_state + ydu); // yu = y_measured (yu-ydu) + ydu  where
 
 	// Debug
 	// 	ns_utils::print("measured state : ", measured_model_state);
