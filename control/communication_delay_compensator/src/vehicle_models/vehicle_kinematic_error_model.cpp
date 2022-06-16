@@ -124,9 +124,6 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateOneStep(const doub
 		//int a = 1;
 	}
 
-
-
-
 // Get the previous states.
 	auto&& ey0    = x0_[0];
 	auto&& eyaw0  = x0_[1];
