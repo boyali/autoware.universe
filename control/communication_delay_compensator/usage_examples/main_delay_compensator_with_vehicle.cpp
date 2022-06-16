@@ -74,7 +74,7 @@ int main()
 	double wheelbase{ 2.9 };
 	double tau_vel{ 0.1 };
 	double tau_steer{ 0.3 };
-	double dead_time_steer{ 0.0 };
+	double dead_time_steer{ 2.55 };
 	double dead_time_vel{ 0.0 };
 
 	// Create a linear vehicle model for the delay compensator.
@@ -85,6 +85,7 @@ int main()
 
 	//act::tf_t Gey({ 1. }, den_tf_factor(), 5., 2.);
 	act::tf Gey({ 1. }, den_tf_factor(), 1., 1.); // num, den, num constant, den constant
+	auto    Gey_ss = act::tf2ss(Gey, dt);
 
 	// We store the factored num and denominators:  a(var1) * num / b(var1)*den where num-den are constants.
 	std::pair<std::string_view, std::string_view> param_names{ "v", "delta" };
@@ -127,47 +128,86 @@ int main()
 	// Simulate the vehicle model.
 	auto tsim_f = time_vec.rows();
 
-	Eigen::MatrixXd sim_results_dc(tsim_f, 4);
+	Eigen::MatrixXd sim_results_dc(tsim_f, 5);
 	sim_results_dc.setZero();
 
 	Eigen::MatrixXd sim_results_vh(tsim_f, 4);
 	sim_results_vh.setZero();
 
+	// place holder for Gey state.
+	Eigen::MatrixXd sx0_g = Eigen::MatrixXd::Zero(3, 1);
+
 	// State placeholder array
-	std::array<double, 4> xnonlin_v{}; // ey, epsi, delta, V
-	std::array<double, 4> y_ey{}; // output of delay compensator for ey.
+	// std::array<double, 4> xnonlin_v{}; // ey, epsi, delta, V
+	std::array<double, 5> y_ey{}; // output of delay compensator for ey.
 
 	const double timer_dc_sim = ns_utils::tic();
+
+	// Set current vehicle states
+	double ey{};
+	double steer_current{ 10. };
+	double vel_current{};
+
+	// Steering delayer
+	auto            Gsteer_delay    = act::pade(dead_time_steer, 2);
+	auto            Gsteer_delay_ss = act::tf2ss(Gsteer_delay, dt);
+	Eigen::MatrixXd sx0_sd          = Eigen::MatrixXd::Zero(2, 1);
+
 
 	for (auto k = 1; k < tsim_f; ++k)
 	{
 		// Previous commands sent to the vehicle - To get a vehicle state
 		auto uk_str_prev = steer_sin_vec_input(k - 1) * 0.1;
-		auto uk_vel_prev = 10.; // (vel_trg_vec_input(k - 1) + 1.) * 10.; // max(vel_.) is 1.
+		auto uk_vel_prev = 10; // (vel_trg_vec_input(k - 1) + 1.) * 2.; // max(vel_.) is 1.
+//		auto uk_vel_prev = (vel_sqr_vec_input(k - 1) + 2.) * 0.2 + 5.; // max(vel_.) is 1.
+
+		// The controller does not know the error is already delayed. The undelayed signals are sent to the
+		// compensator.
+
+		// Replace num den constant by the states [current vel, current steering states]
+		std::pair<double, double> num_den_pairs_g{ vel_current, steer_current };
+		delay_compensator_ey.simulateOneStep(uk_str_prev, ey, num_den_pairs_g, y_ey);
+
+
+		// Delay steering
+		if (!ns_utils::isEqual(dead_time_steer, 0.0))
+		{
+			uk_str_prev = Gsteer_delay_ss.simulateOneStep(sx0_sd, uk_str_prev);
+		}
+
+		// This is a vehicle model the behaviour of which is delayed.
+		// Simulate only Gey model for ey.
+		// Simulate the linear vehicle model G(s)_ey
+		auto vsqr         = uk_vel_prev * uk_vel_prev;
+		auto cosdelta_sqr = std::cos(uk_str_prev) * std::cos(uk_str_prev);
+		Gey.update_num_den_coef(vsqr, cosdelta_sqr);
+
+		// Gey.print();
+		Gey_ss.updateStateSpace(Gey);
+		ey = Gey_ss.simulateOneStep(sx0_g, uk_str_prev); // gives ey
+
 
 		// Current commands
 		// auto uk_str_cur = steer_sin_vec_input(k) * 0.1;
 		// auto uk_vel_cur = (vel_trg_vec_input(k) + 1.) * 10.; // max(vel_.) is 1.
 
 		// Simulate Nonlinear Vehicle
-		xnonlin_v = nonlinear_model.simulateOneStep(uk_vel_prev, uk_str_prev);
+		// xnonlin_v = nonlinear_model.simulateNonlinearOneStep(uk_vel_prev, uk_str_prev);
 
-		auto measured_model_state = xnonlin_v[0]; // ey here
-		auto steer_current        = xnonlin_v[2];
-		auto v_current            = xnonlin_v[3];
+		// Simulate with linear full vehicle model
+		//xnonlin_v = nonlinear_model.simulateLinearOneStep(uk_vel_prev, uk_str_prev);
 
 
-		// Replace num den constant by the states [current vel, current steering states]
-		std::pair<double, double> num_den_pairs_G{ v_current, steer_current };
-		delay_compensator_ey.simulateOneStep(uk_str_prev,
-				measured_model_state,
-				num_den_pairs_G,
-				y_ey);
 
+		// u[k-1] -->vehicle --> ey[k]
+		// ey            = xnonlin_v[0]; // ey here
+		// steer_current = xnonlin_v[2];
+		// vel_current   = xnonlin_v[3];
 		// delay_compensator_ey.print();
 
-		sim_results_dc.row(k) = Eigen::Matrix<double, 1, 4>::Map(y_ey.data());
-		sim_results_vh.row(k) = Eigen::Matrix<double, 1, 4>::Map(xnonlin_v.data());
+		sim_results_dc.row(k)    = Eigen::Matrix<double, 1, 5>::Map(y_ey.data());
+		sim_results_vh.row(k)(0) = ey; // Eigen::Matrix<double, 1, 4>::Map(xnonlin_v.data());
+		sim_results_vh.row(k)(1) = uk_str_prev; // delayed steer
 	}
 	ns_utils::print("Time for sim takes : ", ns_utils::toc(timer_dc_sim), " ms");
 

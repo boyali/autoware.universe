@@ -55,223 +55,228 @@
 
 namespace observers
 {
-		using namespace std::chrono_literals;
-		using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
-		// using DelayCompensatatorMsg = tier4_vehicle_msgs::msg::DelayCompensators;
-		using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
-		using DelayCompensatorDebugMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationDebug;
+	using namespace std::chrono_literals;
+	using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
+	// using DelayCompensatatorMsg = tier4_vehicle_msgs::msg::DelayCompensators;
+	using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
+	using DelayCompensatorDebugMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationDebug;
 
-		/**
-		 * @brief longitudinal_controller reports vcurrent - vtarget.
-		 * lateral_controller reports current_yaw - target_yaw and current_lat_distance - target_lat_distance
-		 *
-		 * */
-		using ControllerErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
+	/**
+	 * @brief longitudinal_controller reports vcurrent - vtarget.
+	 * lateral_controller reports current_yaw - target_yaw and current_lat_distance - target_lat_distance
+	 *
+	 * */
+	using ControllerErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
 
-		using VelocityMsg = nav_msgs::msg::Odometry;
-		using vehicle_info_util::VehicleInfoUtil;
-		using autoware_auto_vehicle_msgs::msg::SteeringReport;
+	using VelocityMsg = nav_msgs::msg::Odometry;
+	using vehicle_info_util::VehicleInfoUtil;
+	using autoware_auto_vehicle_msgs::msg::SteeringReport;
 
-		// Parameters to pass around.
-		struct Parameters
+	// Parameters to pass around.
+	struct Parameters
 		{
-				float64_t wheel_base{};
-				float32_t cdob_ctrl_period{ 0.05 };
+		float64_t wheel_base{};
+		float64_t cdob_ctrl_period{ 0.05 };
 
-				// Qfilter orders .
-				int qfilter_lateral_error_order{ 3 };
-				int qfilter_heading_error_order{ 2 };
-				int qfilter_steering_order{ 1 };
-				int qfilter_velocity_error_order{ 1 };
-				int qfilter_acc_error_order{ 1 };
+		// Qfilter orders .
+		int qfilter_lateral_error_order{ 3 };
+		int qfilter_heading_error_order{ 2 };
+		int qfilter_steering_order{ 1 };
+		int qfilter_velocity_error_order{ 1 };
+		int qfilter_acc_error_order{ 1 };
 
-				// Qfilter cut-off frequencies Hz. (low-pass).
-				float64_t qfilter_lateral_error_freq{ 5 };
-				float64_t qfilter_heading_error_freq{ 5 };
-				float64_t qfilter_steering_freq{ 5 };
-				float64_t qfilter_velocity_error_freq{ 5 };
-				float64_t qfilter_acc_error_freq{ 5 };
+		// Qfilter cut-off frequencies Hz. (low-pass).
+		float64_t qfilter_lateral_error_freq{ 5 };
+		float64_t qfilter_heading_error_freq{ 5 };
+		float64_t qfilter_steering_freq{ 5 };
+		float64_t qfilter_velocity_error_freq{ 5 };
+		float64_t qfilter_acc_error_freq{ 5 };
 
-				// First order vehicle state models.
-				float64_t steering_tau{ 0.3 };
-				float64_t velocity_tau{ 0.3 };
-				float64_t acc_tau{ 0.3 };
+		// First order vehicle state models.
+		float64_t steering_tau{ 0.3 };
+		float64_t velocity_tau{ 0.3 };
+		float64_t acc_tau{ 0.3 };
 
 		};
 
-		template<typename T>
-		void update_param(const std::vector<rclcpp::Parameter>& parameters,
-		                  const std::string& name,
-		                  T& value)
-		{
-			auto it = std::find_if(
+	template<typename T>
+	void update_param(const std::vector<rclcpp::Parameter>& parameters,
+			const std::string& name,
+			T& value)
+	{
+		auto it = std::find_if(
 				parameters.cbegin(), parameters.cend(),
 				[&name](const rclcpp::Parameter& parameter)
 				{ return parameter.get_name() == name; });
-			if (it != parameters.cend())
-			{
-				value = static_cast<T>(it->template get_value<T>());
-			}
-		}
-
-		// The node class.
-		class CommunicationDelayCompensatorNode : public rclcpp::Node
+		if (it != parameters.cend())
 		{
-		public:
+			value = static_cast<T>(it->template get_value<T>());
+		}
+	}
 
-				/**
-				 * @brief constructor
-				 */
-				explicit CommunicationDelayCompensatorNode(const rclcpp::NodeOptions& node_options);
+	// The node class.
+	class CommunicationDelayCompensatorNode : public rclcpp::Node
+		{
+	public:
 
-				/**
-				 * @brief destructor
-				 */
-				~CommunicationDelayCompensatorNode() override = default;
+		/**
+		 * @brief constructor
+		 */
+		explicit CommunicationDelayCompensatorNode(const rclcpp::NodeOptions& node_options);
 
-		private:
-				// Data Members
-				Parameters params_node_{};
+		/**
+		 * @brief destructor
+		 */
+		~CommunicationDelayCompensatorNode() override = default;
 
-				//!< @brief timer to update after a given interval
-				rclcpp::TimerBase::SharedPtr timer_;
+	private:
+		// Data Members
+		Parameters params_node_{};
 
-				// Subscribers
-				rclcpp::Subscription<ControlCommand>::SharedPtr sub_control_cmds_;
+		//!< @brief timer to update after a given interval
+		rclcpp::TimerBase::SharedPtr timer_;
 
-				//!< @brief subscription for current velocity
-				rclcpp::Subscription<VelocityMsg>::SharedPtr sub_current_velocity_ptr_;
+		// Subscribers
+		rclcpp::Subscription<ControlCommand>::SharedPtr sub_control_cmds_;
 
-				//!< @brief subscription for current velocity
-				rclcpp::Subscription<SteeringReport>::SharedPtr sub_current_steering_ptr_;
+		//!< @brief subscription for current velocity
+		rclcpp::Subscription<VelocityMsg>::SharedPtr sub_current_velocity_ptr_;
 
-				//!< @brief subscription for current velocity error.
-				rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_long_error_ptr_;
+		//!< @brief subscription for current velocity
+		rclcpp::Subscription<SteeringReport>::SharedPtr sub_current_steering_ptr_;
 
-				//!< @brief subscription for current lateral and heading errors.
-				rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_lat_errors_ptr_;
+		//!< @brief subscription for current velocity error.
+		rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_long_error_ptr_;
 
-				// Publishers
-				rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr pub_delay_compensator_;
-				rclcpp::Publisher<DelayCompensatorDebugMsg>::SharedPtr pub_delay_compensator_debug_;
+		//!< @brief subscription for current lateral and heading errors.
+		rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_lat_errors_ptr_;
 
-				// Data Members for the delay-compensation.
-				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_lat_error_{}; // set nullptr.
-				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_heading_error_{};
-				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_steering_error_{};
-				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_velocity_error_{};
-				std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_acc_error_{};
+		// Publishers
+		rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr    pub_delay_compensator_;
+		rclcpp::Publisher<DelayCompensatorDebugMsg>::SharedPtr pub_delay_compensator_debug_;
 
-				// Pointers to the ROS topics.
-				// Pointers for ros topic
-				// Pointers to the model state variables inputs
-				std::shared_ptr<nav_msgs::msg::Odometry> current_velocity_ptr{ nullptr };
-				std::shared_ptr<SteeringReport> current_steering_ptr_{ nullptr };
-				float64_t previous_velocity_{};
+		// Data Members for the delay-compensation.
+		std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_lat_error_{}; // set nullptr.
+		std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_heading_error_{};
+		std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_steering_error_{};
+		std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_velocity_error_{};
+		std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_acc_error_{};
 
-				// Pointer to the model inputs
-				std::shared_ptr<ControlCommand> current_ctrl_ptr_{ nullptr };
-				std::shared_ptr<ControlCommand> previous_ctrl_ptr_{ nullptr };
+		// Pointers to the ROS topics.
+		// Pointers for ros topic
+		// Pointers to the model state variables inputs
+		std::shared_ptr<nav_msgs::msg::Odometry> current_velocity_ptr{ nullptr };
+		std::shared_ptr<SteeringReport>          current_steering_ptr_{ nullptr };
+		float64_t                                previous_velocity_{};
 
-				// Pointers to the compensator outputs.
-				std::shared_ptr<DelayCompensatatorMsg> current_delay_references_msg_{ nullptr };
-				std::shared_ptr<ControllerErrorReportMsg> current_lateral_errors_{ nullptr };
-				std::shared_ptr<ControllerErrorReportMsg> current_longitudinal_errors_{ nullptr };
+		// Pointer to the model inputs
+		std::shared_ptr<ControlCommand> current_ctrl_ptr_{ nullptr };
+		std::shared_ptr<ControlCommand> previous_ctrl_ptr_{ nullptr };
 
-				// Debug messages
-				std::shared_ptr<DelayCompensatorDebugMsg> current_delay_debug_msg_{ nullptr };
+		// Pointers to the compensator outputs.
+		std::shared_ptr<DelayCompensatatorMsg>    current_delay_references_msg_{ nullptr };
+		std::shared_ptr<ControllerErrorReportMsg> current_lateral_errors_{ nullptr };
+		std::shared_ptr<ControllerErrorReportMsg> current_longitudinal_errors_{ nullptr };
 
-				// Node Methods
-				//!< initialize timer to work in real, simulation, and replay
-				void initTimer(float64_t period_s);
+		// Debug messages
+		std::shared_ptr<DelayCompensatorDebugMsg> current_delay_debug_msg_{ nullptr };
 
-				/**
-				 * @brief compute and publish the compensating reference signals for the controllers with a
-				 * constant control period
-				 */
-				void onTimer();
+		// Node Methods
+		//!< initialize timer to work in real, simulation, and replay
+		void initTimer(float64_t period_s);
 
-				/**
-				 * @brief Subscription callbacks
-				 */
-				void onControlCommands(const ControlCommand::SharedPtr msg);
+		/**
+		 * @brief compute and publish the compensating reference signals for the controllers with a
+		 * constant control period
+		 */
+		void onTimer();
 
-				/**
-				 * @brief Subscription callbacks
-				 */
-				void onCurrentVelocity(const VelocityMsg::SharedPtr msg);
+		/**
+		 * @brief Subscription callbacks
+		 */
+		void onControlCommands(const ControlCommand::SharedPtr msg);
 
-				/**
-				 * @brief Subscription callbacks
-				 */
-				void onCurrentSteering(const SteeringReport::SharedPtr msg);
+		/**
+		 * @brief Subscription callbacks
+		 */
+		void onCurrentVelocity(const VelocityMsg::SharedPtr msg);
 
-				/**
-				 * @brief Subscription to computed velocity error
-				 */
-				void onCurrentLongitudinalError(const ControllerErrorReportMsg::SharedPtr msg);
+		/**
+		 * @brief Subscription callbacks
+		 */
+		void onCurrentSteering(const SteeringReport::SharedPtr msg);
 
-				/**
-				 * @brief Subscription to lateral reference errors ey, eyaw.
-				 */
-				void onCurrentLateralErrors(const ControllerErrorReportMsg::SharedPtr msg);
+		/**
+		 * @brief Subscription to computed velocity error
+		 */
+		void onCurrentLongitudinalError(const ControllerErrorReportMsg::SharedPtr msg);
 
-				/**
-				 * @brief Publish message.
-				 * */
-				void publishCompensationReferences();
+		/**
+		 * @brief Subscription to lateral reference errors ey, eyaw.
+		 */
+		void onCurrentLateralErrors(const ControllerErrorReportMsg::SharedPtr msg);
 
-				/**
-				 * @brief Check if data flows.
-				 * */
-				bool8_t isDataReady();
+		/**
+		 * @brief Publish message.
+		 * */
+		void publishCompensationReferences();
 
-				/**
-				 * @brief Default parameters of the parameters.
-				 * */
+		/**
+		 * @brief Check if data flows.
+		 * */
+		bool8_t isDataReady();
 
-				void readAndLoadParameters();
+		/**
+		 * @brief Default parameters of the parameters.
+		 * */
 
-				/**
-				 * @brief Dynamic update of the parameters.
-				 * */
-				OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
-				rcl_interfaces::msg::SetParametersResult onParameterUpdate(const std::vector<rclcpp::Parameter>& parameters);
+		void readAndLoadParameters();
 
-				/**
-				 * @brief Set steering tracking q-filter and 1st order steering linear model.
-				 * */
-				void setSteeringCDOBcompensator(); // creates steering cdob compensator.
-				void computeSteeringCDOBcompensator();  // computes corrective reference for the heading error ref.
+		/**
+		 * @brief Dynamic update of the parameters.
+		 * */
+		OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
 
-				void setHeadingErrorCDOBcompensator();
-				void computeHeadingCDOBcompensator();
+		rcl_interfaces::msg::SetParametersResult onParameterUpdate(const std::vector<rclcpp::Parameter>& parameters);
 
-				void setLateralErrorCDOBcompensator();
-				void computeLateralCDOBcompensator();
+		/**
+		 * @brief Set steering tracking q-filter and 1st order steering linear model.
+		 * */
+		void setSteeringCDOBcompensator(); // creates steering cdob compensator.
+		void computeSteeringCDOBcompensator();  // computes corrective reference for the heading error ref.
 
-				void setVelocityErrorCDOBcompensator();
-				void computeVelocityCDOBcompensator();
+		void setHeadingErrorCDOBcompensator();
 
-				void setAccelerationErrorCDOBcompensator();
-				void computeAccelerationCDOBcompensator();
+		void computeHeadingCDOBcompensator();
 
-				/**
-				 * @brief placeholders for delay compensator outputs.
-				 * */
+		void setLateralErrorCDOBcompensator();
 
-				/**
-				 * @brief Outputs of the delay compensator.
-				 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
-				 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
-				 * y2: du = y0 - y1 where du is the estimated disturbance input
-				 * y3: ydu = G(s)*du where ydu is the response of the system to du.
-				 * */
-				std::vector<float64_t> cdob_lateral_error_y_outputs_{};
-				std::vector<float64_t> cdob_heading_error_y_outputs_{};
-				std::vector<float64_t> cdob_steering_error_y_outputs_{};
-				std::vector<float64_t> cdob_velocity_error_y_outputs_{};
-				std::vector<float64_t> cdob_acc_error_y_outputs_{};
+		void computeLateralCDOBcompensator();
+
+		void setVelocityErrorCDOBcompensator();
+
+		void computeVelocityCDOBcompensator();
+
+		void setAccelerationErrorCDOBcompensator();
+
+		void computeAccelerationCDOBcompensator();
+
+		/**
+		 * @brief placeholders for delay compensator outputs.
+		 * */
+
+		/**
+		 * @brief Outputs of the delay compensator.
+		 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+		 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+		 * y2: du = y0 - y1 where du is the estimated disturbance input
+		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+		 * */
+		std::vector<float64_t> cdob_lateral_error_y_outputs_{};
+		std::vector<float64_t> cdob_heading_error_y_outputs_{};
+		std::vector<float64_t> cdob_steering_error_y_outputs_{};
+		std::vector<float64_t> cdob_velocity_error_y_outputs_{};
+		std::vector<float64_t> cdob_acc_error_y_outputs_{};
 
 		};
 

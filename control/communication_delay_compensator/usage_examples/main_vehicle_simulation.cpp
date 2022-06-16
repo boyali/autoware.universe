@@ -96,7 +96,7 @@ int main()
 	{
 		double desired_vel   = vel_trg_vec_input(k) * 10.; // max(vel_.) is 1.
 		double desired_steer = steer_sin_vec_input(k) * 0.1;
-		x = nonlinear_model.simulateOneStep(desired_vel, desired_steer);
+		x = nonlinear_model.simulateNonlinearOneStep(desired_vel, desired_steer);
 
 		sim_results.row(k) = Eigen::Matrix<double, 1, 4>::Map(x.data());
 	}

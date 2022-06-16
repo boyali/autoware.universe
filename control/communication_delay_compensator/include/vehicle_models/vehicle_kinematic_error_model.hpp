@@ -30,7 +30,7 @@
 /**
  * @brief Implemented to test the current packages and inverted model performance.
  * */
-class CDOB_PUBLIC NonlinearVehicleKinematicModel
+class NonlinearVehicleKinematicModel
 	{
 public:
 
@@ -46,7 +46,10 @@ public:
 
 
 	// Public methods.
-	std::array<double, 4> simulateOneStep(const double& desired_velocity,
+	std::array<double, 4> simulateNonlinearOneStep(const double& desired_velocity,
+			double const& desired_steering);
+
+	std::array<double, 4> simulateLinearOneStep(const double& desired_velocity,
 			double const& desired_steering);
 
 	void getInitialStates(std::array<double, 4>& x0);
@@ -60,9 +63,9 @@ private:
 	double dead_time_vel_{ 0 };
 	double dt_{ 0.1 };
 
-	// Bool agains static gain discretizaiton.
-	bool is_discretisize_vel_delay_{ false };
-	bool is_discretisize_steering_delay_{ false };
+	// Bool gains static gain discretizaiton.
+	bool use_delay_vel{ false };
+	bool use_delay_steer{ false };
 
 
 	std::vector<std::string> state_names_{ "ey", "eyaw", "delta", "V" }; // state names.
