@@ -125,11 +125,14 @@ namespace observers
 
 
 		// Compute the steering compensation values.
-		computeSteeringCDOBcompensator();
-		computeHeadingCDOBcompensator();
-		computeLateralCDOBcompensator();
-		computeVelocityCDOBcompensator();
-		computeAccelerationCDOBcompensator();
+		if (!isVehicleStopping())
+		{
+			computeSteeringCDOBcompensator();
+			computeHeadingCDOBcompensator();
+			computeLateralCDOBcompensator();
+			computeVelocityCDOBcompensator();
+			computeAccelerationCDOBcompensator();
+		}
 
 		// Publish delay compensation reference.
 		publishCompensationReferences();
@@ -848,6 +851,13 @@ namespace observers
 
 		// Debug
 		//ns_utils::print("previous input : ", u_prev, current_steering);
+	}
+
+	bool8_t CommunicationDelayCompensatorNode::isVehicleStopping()
+	{
+
+		auto current_vel = current_velocity_ptr->twist.twist.linear.x;
+		return std::fabs(current_vel) <= 0.5;
 	}
 
 }  // namespace observers

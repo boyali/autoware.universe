@@ -262,6 +262,12 @@ namespace observers
 		void computeAccelerationCDOBcompensator();
 
 		/**
+		 * @brief checks if vehicle is stopping.
+		 * */
+
+		bool8_t isVehicleStopping();
+
+		/**
 		 * @brief placeholders for delay compensator outputs.
 		 * */
 
