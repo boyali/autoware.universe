@@ -54,9 +54,9 @@ namespace observers
 		// Simulate  one-step and get the outputs.
 		/**
 		 * @brief Simulates one-step and produces the outputs.
-		 * @param previous_input: previous input sent to the vehicle
+		 * @param previous_input: previous input sent to the vehicle - probably undelayed raw input.
 		 * @param measured_model_state: the state that tracks a reference (i.e ey, eyaw, eV).
-		 * @param num_den_args_of_g: the model states that define the transfer function, i.e (V^2/(cos(delta)*s + 1).
+		 * @param num_den_args_of_g: varying parameters value of numerator and denominators i.e V^2/(cos(delta)*s+ 1).
 		 * @param outputs from the delay compensator.
 		 * */
 		void simulateOneStep(float64_t const& previous_input, /** previous input*/

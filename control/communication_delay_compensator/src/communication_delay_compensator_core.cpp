@@ -126,9 +126,12 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 	// Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
 	if (num_den_constant_names_g_.first != "1")
 	{
-		auto&& numkey      = num_den_constant_names_g_.first; // Corresponds to v in ey model.
+		auto&& numkey = num_den_constant_names_g_.first; // Corresponds to v in ey model.
+
+		// Find the function of numerator variable and apply its function on it.
 		auto&& num_const_g = pair_func_map_[numkey](num_den_args_of_g.first);
 
+		// Update numerator of G(s) and denominator of QGinv
 		g_tf_.update_num_coef(num_const_g);
 		q_g_inv_tf_.update_den_coef(num_const_g); // since they are inverted.
 
@@ -142,7 +145,6 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 
 		g_tf_.update_den_coef(den_const_g);
 		q_g_inv_tf_.update_num_coef(den_const_g); // since they are inverted.
-
 		// ns_utils::print("State and its function : ", denkey, " : ", den_const_g);
 	}
 
