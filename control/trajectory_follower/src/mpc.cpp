@@ -41,8 +41,8 @@ bool8_t MPC::calculateMPC(
   const float64_t current_velocity, const geometry_msgs::msg::Pose & current_pose,
   autoware_auto_control_msgs::msg::AckermannLateralCommand & ctrl_cmd,
   autoware_auto_planning_msgs::msg::Trajectory & predicted_traj,
-  DelayCompensationRefs & comm_delay_msg,
-  autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic)
+  autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic,
+  std::optional<DelayCompensationRefs> comm_delay_msg)
 {
   /* recalculate velocity from ego-velocity with dynamics */
   trajectory_follower::MPCTrajectory reference_trajectory =
@@ -54,11 +54,12 @@ bool8_t MPC::calculateMPC(
     return false;
   }
 
-  if (m_param.use_comm_time_delay) {
+  if (m_param.use_comm_time_delay && comm_delay_msg.has_value()) {
     mpc_data.lateral_err_delay_compensator_ref =
-      comm_delay_msg.lateral_deviation_error_compensation_ref;
+      comm_delay_msg.value().lateral_deviation_error_compensation_ref;
 
-    mpc_data.yaw_err_delay_compensator_ref = comm_delay_msg.heading_angle_error_compensation_ref;
+    mpc_data.yaw_err_delay_compensator_ref =
+      comm_delay_msg.value().heading_angle_error_compensation_ref;
 
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, 1000 /*ms*/, "In the MPC use_td_param is %i",

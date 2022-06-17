@@ -209,9 +209,9 @@ TEST_F(MPCTest, InitializeAndCalculate)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayDiagnostic diag;
-  DelayRefs delay_refs{};
+  std::optional<DelayRefs> delay_refs{std::nullopt};
   ASSERT_TRUE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag, delay_refs));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -245,9 +245,10 @@ TEST_F(MPCTest, InitializeAndCalculateRightTurn)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayDiagnostic diag;
-  DelayRefs delay_refs{};
+  std::optional<DelayRefs> delay_refs{std::nullopt};
+  ;
   ASSERT_TRUE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag, delay_refs));
   EXPECT_LT(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_LT(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -277,10 +278,11 @@ TEST_F(MPCTest, OsqpCalculate)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayDiagnostic diag;
-  DelayRefs delay_refs{};
+  std::optional<DelayRefs> delay_refs{std::nullopt};
+  ;
   // with OSQP this function returns false despite finding correct solutions
   EXPECT_FALSE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag, delay_refs));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -310,9 +312,10 @@ TEST_F(MPCTest, OsqpCalculateRightTurn)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayDiagnostic diag;
-  DelayRefs delay_refs{};
+  std::optional<DelayRefs> delay_refs{std::nullopt};
+  ;
   ASSERT_TRUE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag, delay_refs));
   EXPECT_LT(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_LT(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -344,9 +347,10 @@ TEST_F(MPCTest, KinematicsNoDelayCalculate)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayDiagnostic diag;
-  DelayRefs delay_refs{};
+  std::optional<DelayRefs> delay_refs{std::nullopt};
+  ;
   ASSERT_TRUE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag, delay_refs));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -378,10 +382,11 @@ TEST_F(MPCTest, KinematicsNoDelayCalculateRightTurn)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayDiagnostic diag;
-  DelayRefs delay_refs{};
+  std::optional<DelayRefs> delay_refs{std::nullopt};
+  ;
 
   ASSERT_TRUE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag, delay_refs));
   EXPECT_LT(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_LT(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -407,9 +412,10 @@ TEST_F(MPCTest, DynamicCalculate)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayDiagnostic diag;
-  DelayRefs delay_refs{};
+  std::optional<DelayRefs> delay_refs{std::nullopt};
+  ;
   ASSERT_TRUE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag, delay_refs));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -434,25 +440,26 @@ TEST_F(MPCTest, MultiSolveWithBuffer)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayDiagnostic diag;
-  DelayRefs delay_refs{};
+  std::optional<DelayRefs> delay_refs{std::nullopt};
+  ;
 
   ASSERT_TRUE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag, delay_refs));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
   EXPECT_EQ(mpc.m_input_buffer.size(), size_t(3));
   ASSERT_TRUE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag, delay_refs));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
   EXPECT_EQ(mpc.m_input_buffer.size(), size_t(3));
   ASSERT_TRUE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag, delay_refs));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
   EXPECT_EQ(mpc.m_input_buffer.size(), size_t(3));
   ASSERT_TRUE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag, delay_refs));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
   EXPECT_EQ(mpc.m_input_buffer.size(), size_t(3));
@@ -480,14 +487,15 @@ TEST_F(MPCTest, FailureCases)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayDiagnostic diag;
-  DelayRefs delay_refs{};
+  std::optional<DelayRefs> delay_refs{std::nullopt};
+  ;
 
   EXPECT_FALSE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_far, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_far, ctrl_cmd, pred_traj, diag, delay_refs));
 
   // Calculate MPC with a fast velocity to make the prediction go further than the reference path
   EXPECT_FALSE(mpc.calculateMPC(
-    neutral_steer, default_velocity + 10.0, pose_far, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity + 10.0, pose_far, ctrl_cmd, pred_traj, diag, delay_refs));
 
   // Set a wrong vehicle model (not a failure but generates an error message)
   const std::string wrong_vehicle_model_type = "wrong_model";
@@ -495,6 +503,6 @@ TEST_F(MPCTest, FailureCases)
     wheelbase, steer_limit, steer_tau);
   mpc.setVehicleModel(vehicle_model_ptr, wrong_vehicle_model_type);
   EXPECT_TRUE(mpc.calculateMPC(
-    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, delay_refs, diag));
+    neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag, delay_refs));
 }
 }  // namespace

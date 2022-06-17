@@ -44,6 +44,7 @@
 
 #include <deque>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -391,8 +392,8 @@ public:
     const float64_t current_velocity, const geometry_msgs::msg::Pose & current_pose,
     autoware_auto_control_msgs::msg::AckermannLateralCommand & ctrl_cmd,
     autoware_auto_planning_msgs::msg::Trajectory & predicted_traj,
-    DelayCompensationRefs & comm_delay_msg,
-    autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic);
+    autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic,
+    std::optional<DelayCompensationRefs> comm_delay_msg = std::nullopt);
   /**
    * @brief set the reference trajectory to follow
    */
