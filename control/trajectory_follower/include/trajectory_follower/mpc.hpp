@@ -371,8 +371,7 @@ public:
   //!< @brief flag to use predicted steer, not measured steer.
   bool8_t m_use_steer_prediction;
 
-  //!< @brief flag to use or not the communication time delay observer.
-  bool8_t m_use_comm_time_delay{false};
+  bool8_t has_received_time_delay_msg_{};
 
   /**
    * @brief constructor

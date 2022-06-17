@@ -55,6 +55,8 @@ bool8_t MPC::calculateMPC(
   }
 
   if (m_param.use_comm_time_delay && comm_delay_msg.has_value()) {
+    has_received_time_delay_msg_ = true;
+
     mpc_data.lateral_err_delay_compensator_ref =
       comm_delay_msg.value().lateral_deviation_error_compensation_ref;
 
@@ -440,15 +442,13 @@ Eigen::VectorXd MPC::getInitialState(const MPCData & data)
 
   const auto & steer = m_use_steer_prediction ? data.predicted_steer : data.steer;
 
-  const auto & lat_err =
-    m_param.use_comm_time_delay ? data.lateral_err_delay_compensator_ref : data.lateral_err;
+  auto lat_err = data.lateral_err;
+  auto yaw_err = data.yaw_err;
 
-  //  const auto & yaw_err =
-  //    m_param.use_comm_time_delay ? data.yaw_err_delay_compensator_ref : data.yaw_err;
-  //
-  //  const auto & lat_err = data.lateral_err;
-
-  const auto & yaw_err = data.yaw_err;
+  if (has_received_time_delay_msg_) {
+    lat_err = data.lateral_err_delay_compensator_ref;
+    // yaw_err = -data.yaw_err_delay_compensator_ref;
+  }
 
   if (m_vehicle_model_type == "kinematics") {
     x0 << lat_err, yaw_err, steer;
