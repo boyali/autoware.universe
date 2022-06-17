@@ -447,7 +447,7 @@ Eigen::VectorXd MPC::getInitialState(const MPCData & data)
 
   if (has_received_time_delay_msg_) {
     lat_err = data.lateral_err_delay_compensator_ref;
-    // yaw_err = -data.yaw_err_delay_compensator_ref;
+    yaw_err = -data.yaw_err_delay_compensator_ref;
   }
 
   if (m_vehicle_model_type == "kinematics") {
