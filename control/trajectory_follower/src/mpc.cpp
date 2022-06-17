@@ -40,7 +40,7 @@ bool8_t MPC::calculateMPC(
   const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer,
   const float64_t current_velocity, const geometry_msgs::msg::Pose & current_pose,
   autoware_auto_control_msgs::msg::AckermannLateralCommand & ctrl_cmd,
-  autoware_auto_planning_msgs::msg::Trajectory & predicted_traj,
+  autoware_auto_planning_msgs::msg::Trajectory & predicted_traj, DelayCompensationRefs &,
   autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic)
 {
   /* recalculate velocity from ego-velocity with dynamics */
@@ -52,6 +52,11 @@ bool8_t MPC::calculateMPC(
     RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 1000 /*ms*/, "fail to get Data.");
     return false;
   }
+
+  // mpc_data.lateral_err = comm_delay_msg.lateral_deviation_error_compensation_ref;
+  // mpc_data.yaw_err = comm_delay_msg.heading_angle_error_compensation_ref;
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    m_logger, *m_clock, 1000 /*ms*/, "In the MPC use_td_param is %i", m_param.use_comm_time_delay);
 
   /* define initial state for error dynamics */
   Eigen::VectorXd x0 = getInitialState(mpc_data);

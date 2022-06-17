@@ -68,3 +68,6 @@
     mass_rr: 600.0
     cf: 155494.663
     cr: 155494.663
+
+    ## Communication delay compensator options
+    use_communication_delay_compensator: false

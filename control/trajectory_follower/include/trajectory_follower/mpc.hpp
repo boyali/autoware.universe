@@ -38,6 +38,7 @@
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
+#include "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 
@@ -56,6 +57,7 @@ namespace trajectory_follower
 {
 using autoware::common::types::bool8_t;
 using autoware::common::types::float64_t;
+using autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
 struct MPCParam
 {
   //!< @brief prediction horizon step
@@ -112,6 +114,8 @@ struct MPCParam
   float64_t low_curvature_weight_steer_acc;
   //!< @brief threshold of curvature to use "low curvature" parameter
   float64_t low_curvature_thresh_curvature;
+
+  bool8_t use_comm_time_delay;
 };
 /**
  * MPC problem data
@@ -363,6 +367,9 @@ public:
   //!< @brief flag to use predicted steer, not measured steer.
   bool8_t m_use_steer_prediction;
 
+  //!< @brief flag to use or not the communication time delay observer.
+  bool8_t m_use_comm_time_delay{false};
+
   /**
    * @brief constructor
    */
@@ -381,6 +388,7 @@ public:
     const float64_t current_velocity, const geometry_msgs::msg::Pose & current_pose,
     autoware_auto_control_msgs::msg::AckermannLateralCommand & ctrl_cmd,
     autoware_auto_planning_msgs::msg::Trajectory & predicted_traj,
+    DelayCompensationRefs & comm_delay_msg,
     autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic);
   /**
    * @brief set the reference trajectory to follow
@@ -435,7 +443,7 @@ public:
    */
   inline void setClock(rclcpp::Clock::SharedPtr clock) { m_clock = clock; }
 
-  std::pair<float64_t, float64_t>  getComputedErrors();
+  std::pair<float64_t, float64_t> getComputedErrors();
 
 };  // class MPC
 }  // namespace trajectory_follower
