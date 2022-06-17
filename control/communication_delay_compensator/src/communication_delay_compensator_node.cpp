@@ -141,94 +141,103 @@ void CommunicationDelayCompensatorNode::onTimer()
     computeAccelerationCDOBcompensator();
   }
 
+  //  computeSteeringCDOBcompensator();
+  //  computeHeadingCDOBcompensator();
+  //  computeLateralCDOBcompensator();
+  //  computeVelocityCDOBcompensator();
+  //  computeAccelerationCDOBcompensator();
+
   // Publish delay compensation reference.
   publishCompensationReferences();
 
   // Debug
-  // RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Hello world");
+  {
+    // RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Hello world");
 
-  // RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), steady_clock, 1000, "Hello World!");
-  // RCLCPP_ERROR(get_logger(), "Trajectory is invalid!, stop computing.");
-  // RCLCPP_DEBUG(get_logger(), "MPC does not have a QP solver");
-  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Timer");
+    // RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), steady_clock, 1000, "Hello World!");
+    // RCLCPP_ERROR(get_logger(), "Trajectory is invalid!, stop computing.");
+    // RCLCPP_DEBUG(get_logger(), "MPC does not have a QP solver");
+    //  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Timer");
+    //
+    //  RCLCPP_INFO_THROTTLE(
+    //    get_logger(), *get_clock(), (1000ms).count(), "Control frequency  %4.2f ",
+    //    params_node_.cdob_ctrl_period);
+    //
+    //  RCLCPP_INFO_THROTTLE(
+    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter ey order %4.2i ",
+    //    params_node_.qfilter_lateral_error_order);
+    //
+    //  RCLCPP_INFO_THROTTLE(
+    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter eyaw order %4.2i ",
+    //    params_node_.qfilter_heading_error_order);
+    //
+    //  RCLCPP_INFO_THROTTLE(
+    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter steering order %4.2i ",
+    //    params_node_.qfilter_steering_order);
+    //
+    //  RCLCPP_INFO_THROTTLE(
+    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity order %4.2i ",
+    //    params_node_.qfilter_velocity_error_order);
+    //
+    //  RCLCPP_INFO_THROTTLE(
+    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter ey frq %4.2f ",
+    //    params_node_.qfilter_lateral_error_freq);
+    //
+    //  RCLCPP_INFO_THROTTLE(
+    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter eyaw frq %4.2f ",
+    //    params_node_.qfilter_heading_error_freq);
+    //
+    //  RCLCPP_INFO_THROTTLE(
+    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter steering frq %4.2f ",
+    //    params_node_.qfilter_steering_freq);
+    //
+    //  RCLCPP_INFO_THROTTLE(
+    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity frq %4.2f ",
+    //    params_node_.qfilter_velocity_error_freq);
 
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "Control frequency  %4.2f ",
-    params_node_.cdob_ctrl_period);
+    // 			if (delay_compensator_steering_error_)
+    // 			{
+    // 				delay_compensator_steering_error_->print();
+    // 			}
+    // 			else
+    // 			{
+    // 				ns_utils::print("Unique pointer is not set ");
+    // 			}
 
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "Qfilter ey order %4.2i ",
-    params_node_.qfilter_lateral_error_order);
+    // 			if (delay_compensator_heading_error_)
+    // 			{
+    // 				delay_compensator_heading_error_->print();
+    // 			}
+    // 			else
+    // 			{
+    // 				ns_utils::print("Unique pointer is not set ");
+    // 			}
 
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "Qfilter eyaw order %4.2i ",
-    params_node_.qfilter_heading_error_order);
+    // 			if (delay_compensator_lat_error_)
+    // 			{
+    // 				delay_compensator_lat_error_->print();
+    // 			}
+    // 			else
+    // 			{
+    // 				ns_utils::print("Unique pointer is not set ");
+    // 			}
 
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "Qfilter steering order %4.2i ",
-    params_node_.qfilter_steering_order);
+    // 			if (delay_compensator_acc_error_)
+    // 			{
+    // 				delay_compensator_acc_error_->print();
+    // 			}
+    // 			else
+    // 			{
+    // 				ns_utils::print("Unique pointer is not set ");
+    // 			}
 
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity order %4.2i ",
-    params_node_.qfilter_velocity_error_order);
-
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "Qfilter ey frq %4.2f ",
-    params_node_.qfilter_lateral_error_freq);
-
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "Qfilter eyaw frq %4.2f ",
-    params_node_.qfilter_heading_error_freq);
-
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "Qfilter steering frq %4.2f ",
-    params_node_.qfilter_steering_freq);
-
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity frq %4.2f ",
-    params_node_.qfilter_velocity_error_freq);
-
-  // 			if (delay_compensator_steering_error_)
-  // 			{
-  // 				delay_compensator_steering_error_->print();
-  // 			}
-  // 			else
-  // 			{
-  // 				ns_utils::print("Unique pointer is not set ");
-  // 			}
-
-  // 			if (delay_compensator_heading_error_)
-  // 			{
-  // 				delay_compensator_heading_error_->print();
-  // 			}
-  // 			else
-  // 			{
-  // 				ns_utils::print("Unique pointer is not set ");
-  // 			}
-
-  // 			if (delay_compensator_lat_error_)
-  // 			{
-  // 				delay_compensator_lat_error_->print();
-  // 			}
-  // 			else
-  // 			{
-  // 				ns_utils::print("Unique pointer is not set ");
-  // 			}
-
-  // 			if (delay_compensator_acc_error_)
-  // 			{
-  // 				delay_compensator_acc_error_->print();
-  // 			}
-  // 			else
-  // 			{
-  // 				ns_utils::print("Unique pointer is not set ");
-  // 			}
-
-  // ns_utils::print("ACT On timer method ");
-  // 			ns_utils::print("Params wheelbase ", params_node_.wheel_base);
-  // 			ns_utils::print("Params qfilter ey order ",
-  // params_node_.qfilter_lateral_error_order); 			ns_utils::print("Params qfilter_velocity_error_freq
-  // ", params_node_.qfilter_velocity_error_freq); end of debug
+    // ns_utils::print("ACT On timer method ");
+    // 			ns_utils::print("Params wheelbase ", params_node_.wheel_base);
+    // 			ns_utils::print("Params qfilter ey order ",
+    // params_node_.qfilter_lateral_error_order); 			ns_utils::print("Params
+    // qfilter_velocity_error_freq
+    // ", params_node_.qfilter_velocity_error_freq); end of debug
+  }
 }
 
 void CommunicationDelayCompensatorNode::onControlCommands(const ControlCommand::SharedPtr msg)
@@ -280,8 +289,8 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
   // 			if (current_lateral_errors_)
   // 			{
   // 				auto lat_error =
-  // static_cast<double>(current_lateral_errors_->lateral_deviation_read); 				auto heading_error =
-  // static_cast<double>(current_lateral_errors_->heading_angle_error_read);
+  // static_cast<double>(current_lateral_errors_->lateral_deviation_read);
+  // auto heading_error = static_cast<double>(current_lateral_errors_->heading_angle_error_read);
   // 				ns_utils::print("Current lateral errors : ", lat_error,
   // heading_error);
   // 			}

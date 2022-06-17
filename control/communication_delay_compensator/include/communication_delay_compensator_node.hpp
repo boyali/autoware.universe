@@ -251,9 +251,8 @@ private:
   /**
    * @brief Set steering tracking q-filter and 1st order steering linear model.
    * */
-  void setSteeringCDOBcompensator();  // creates steering cdob compensator.
-  void
-  computeSteeringCDOBcompensator();  // computes corrective reference for the heading error ref.
+  void setSteeringCDOBcompensator();      // creates steering cdob compensator.
+  void computeSteeringCDOBcompensator();  // computes corrective ref for the heading error // ref.
 
   void setHeadingErrorCDOBcompensator();
 
