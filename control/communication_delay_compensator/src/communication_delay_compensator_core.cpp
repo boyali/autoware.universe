@@ -173,7 +173,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(float64_t con
 
 	// Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
 	x0_gsystem_.setZero();
-	auto const&& ydu = g_ss_.simulateOneStep(x0_gsystem_, du); // output is y (i.e ey, eyaw, ...).
+	auto const&& ydu = g_ss_.simulateOneStep(x0_gsystem_, du); // output is ydu (i.e ey, eyaw, ...).
 
 	// Get outputs.
 	/**

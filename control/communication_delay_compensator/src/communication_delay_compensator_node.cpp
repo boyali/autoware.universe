@@ -480,34 +480,44 @@ namespace observers
 		// Get the current measured steering value.
 		auto& current_steering = current_steering_ptr_->steering_tire_angle;
 
+		// Compute current steering error.
+		auto& curvature = current_cont_perf_errors_->error.curvature_estimate;
+
+		// Ackerman Ideal Steering
+		auto const&& ideal_ackerman_steering = std::atan(curvature * params_node_.wheel_base);
+
+		// Error: current_val - target (ref)_val
+		auto const&& steering_error = current_steering - ideal_ackerman_steering;
+
 		// reset the stored outputs to zero.
 		// std::fill(cdob_steering_error_y_outputs_.begin(), cdob_steering_error_y_outputs_.end(), 0.);
 
 		// Input is steering_input -> G(s) steering model --> next steering state.
-		delay_compensator_steering_error_->simulateOneStep(u_prev, current_steering);
+		delay_compensator_steering_error_->simulateOneStep(u_prev, steering_error);
 		cdob_steering_error_y_outputs_ = delay_compensator_steering_error_->getOutputs();
 
 		/**
-	 * @brief Outputs of the delay compensator.
-	 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
-	 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
-	 * y2: du = y0 - y1 where du is the estimated disturbance input
-	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
-	 * */
+		 * @brief Outputs of the delay compensator.
+		 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+		 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+		 * y2: du = y0 - y1 where du is the estimated disturbance input
+		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+		 * */
 
 		// Set delay_compensation_reference for the steering.
-		current_delay_references_msg_->steering_error_read             = current_steering;
-		current_delay_references_msg_->steering_error_compensation_ref = cdob_steering_error_y_outputs_[4];
+		current_delay_references_msg_->steering_error_read             = static_cast<float>(steering_error);
+		current_delay_references_msg_->steering_error_compensation_ref = static_cast<float>
+		(cdob_steering_error_y_outputs_[4]);
 
 		// Set debug message.
-		current_delay_debug_msg_->steering_uf   = cdob_steering_error_y_outputs_[0];
-		current_delay_debug_msg_->steering_u_du = cdob_steering_error_y_outputs_[1];
-		current_delay_debug_msg_->steering_du   = cdob_steering_error_y_outputs_[2];
-		current_delay_debug_msg_->steering_ydu  = cdob_steering_error_y_outputs_[3];
-		current_delay_debug_msg_->steering_yu   = cdob_steering_error_y_outputs_[4];  // to sum or subtract from ref.
+		current_delay_debug_msg_->steering_uf   = static_cast<float>(cdob_steering_error_y_outputs_[0]);
+		current_delay_debug_msg_->steering_u_du = static_cast<float>(cdob_steering_error_y_outputs_[1]);
+		current_delay_debug_msg_->steering_du   = static_cast<float>(cdob_steering_error_y_outputs_[2]);
+		current_delay_debug_msg_->steering_ydu  = static_cast<float>(cdob_steering_error_y_outputs_[3]);
+		current_delay_debug_msg_->steering_yu   = static_cast<float>(cdob_steering_error_y_outputs_[4]);  // to sum or subtract from ref.
 
-		current_delay_debug_msg_->steering_nondelay_u_estimated =
-				cdob_steering_error_y_outputs_[1] + cdob_steering_error_y_outputs_[2];
+		current_delay_debug_msg_->steering_nondelay_u_estimated = static_cast<float>(
+				cdob_steering_error_y_outputs_[1] + cdob_steering_error_y_outputs_[2]);
 
 		// Debug
 		//ns_utils::print("previous input : ", u_prev, current_steering);
