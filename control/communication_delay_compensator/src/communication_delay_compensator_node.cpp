@@ -607,24 +607,26 @@ namespace observers
 		cdob_heading_error_y_outputs_ = delay_compensator_heading_error_->getOutputs();
 
 		/**
-	 * @brief Outputs of the delay compensator.
-	 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
-	 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
-	 * y2: du = y0 - y1 where du is the estimated disturbance input
-	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
-	 * */
+		 * @brief Outputs of the delay compensator.
+		 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+		 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+		 * y2: du = y0 - y1 where du is the estimated disturbance input
+		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+		 * */
 		current_delay_references_msg_->heading_angle_error_read             = current_heading_error;
-		current_delay_references_msg_->heading_angle_error_compensation_ref = cdob_heading_error_y_outputs_[4];
+		current_delay_references_msg_->heading_angle_error_compensation_ref = static_cast<float>
+		(cdob_heading_error_y_outputs_[4]);
 
 		// Set debug message.
-		current_delay_debug_msg_->heading_uf   = cdob_heading_error_y_outputs_[0];
-		current_delay_debug_msg_->heading_u_du = cdob_heading_error_y_outputs_[1];
-		current_delay_debug_msg_->heading_du   = cdob_heading_error_y_outputs_[2];
-		current_delay_debug_msg_->heading_ydu  = cdob_heading_error_y_outputs_[3];
-		current_delay_debug_msg_->heading_yu   = cdob_heading_error_y_outputs_[4]; // to sum or subtract from ref.
+		current_delay_debug_msg_->heading_uf   = static_cast<float>(cdob_heading_error_y_outputs_[0]);
+		current_delay_debug_msg_->heading_u_du = static_cast<float>(cdob_heading_error_y_outputs_[1]);
+		current_delay_debug_msg_->heading_du   = static_cast<float>(cdob_heading_error_y_outputs_[2]);
+		current_delay_debug_msg_->heading_ydu  = static_cast<float>(cdob_heading_error_y_outputs_[3]);
+		current_delay_debug_msg_->heading_yu   = static_cast<float>(cdob_heading_error_y_outputs_[4]); // to sum or
+		// subtract from ref.
 
-		current_delay_debug_msg_->heading_nondelay_u_estimated =
-				cdob_heading_error_y_outputs_[1] + cdob_heading_error_y_outputs_[2];
+		current_delay_debug_msg_->heading_nondelay_u_estimated = static_cast<float>(
+				cdob_heading_error_y_outputs_[1] + cdob_heading_error_y_outputs_[2]);
 
 		// Debug
 		//ns_utils::print("previous input : ", u_prev, current_steering);
@@ -707,24 +709,26 @@ namespace observers
 		cdob_lateral_error_y_outputs_ = delay_compensator_lat_error_->getOutputs();
 
 		/**
-	 * @brief Outputs of the delay compensator.
-	 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
-	 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
-	 * y2: du = y0 - y1 where du is the estimated disturbance input
-	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
-	 * */
+		 * @brief Outputs of the delay compensator.
+		 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+		 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+		 * y2: du = y0 - y1 where du is the estimated disturbance input
+		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+		 * */
 		current_delay_references_msg_->lateral_deviation_read                   = current_lateral_error;
-		current_delay_references_msg_->lateral_deviation_error_compensation_ref = cdob_lateral_error_y_outputs_[4];
+		current_delay_references_msg_->lateral_deviation_error_compensation_ref = static_cast<float>
+		(cdob_lateral_error_y_outputs_[4]);
 
 		// Set debug message.
-		current_delay_debug_msg_->lat_uf   = cdob_lateral_error_y_outputs_[0];
-		current_delay_debug_msg_->lat_u_du = cdob_lateral_error_y_outputs_[1];
-		current_delay_debug_msg_->lat_du   = cdob_lateral_error_y_outputs_[2];
-		current_delay_debug_msg_->lat_ydu  = cdob_lateral_error_y_outputs_[3];
-		current_delay_debug_msg_->lat_yu   = cdob_lateral_error_y_outputs_[4];  // to sum or subtract from ref.
+		current_delay_debug_msg_->lat_uf   = static_cast<float>(cdob_lateral_error_y_outputs_[0]);
+		current_delay_debug_msg_->lat_u_du = static_cast<float>(cdob_lateral_error_y_outputs_[1]);
+		current_delay_debug_msg_->lat_du   = static_cast<float>(cdob_lateral_error_y_outputs_[2]);
+		current_delay_debug_msg_->lat_ydu  = static_cast<float>(cdob_lateral_error_y_outputs_[3]);
+		current_delay_debug_msg_->lat_yu   = static_cast<float>(cdob_lateral_error_y_outputs_[4]);  // to sum or
+		// subtract from ref.
 
-		current_delay_debug_msg_->lat_u_nondelay_u_estimated =
-				cdob_lateral_error_y_outputs_[1] + cdob_lateral_error_y_outputs_[2];
+		current_delay_debug_msg_->lat_u_nondelay_u_estimated = static_cast<float>(
+				cdob_lateral_error_y_outputs_[1] + cdob_lateral_error_y_outputs_[2]);
 
 		// Debug
 		//ns_utils::print("previous input : ", u_prev, current_steering);
@@ -779,26 +783,27 @@ namespace observers
 		cdob_velocity_error_y_outputs_ = delay_compensator_velocity_error_->getOutputs();
 
 		/**
-	 * @brief Outputs of the delay compensator.
-	 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
-	 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
-	 * y2: du = y0 - y1 where du is the estimated disturbance input
-	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
-	 * */
+		 * @brief Outputs of the delay compensator.
+		 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+		 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+		 * y2: du = y0 - y1 where du is the estimated disturbance input
+		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+		 * */
 
 		// Set delay_compensation_reference for the steering.
 		current_delay_references_msg_->velocity_error_read             = current_longitudinal_errors_->velocity_error_read;
-		current_delay_references_msg_->steering_error_compensation_ref = cdob_velocity_error_y_outputs_[4];
+		current_delay_references_msg_->steering_error_compensation_ref = static_cast<float>
+		(cdob_velocity_error_y_outputs_[4]);
 
 		// Set debug message.
-		current_delay_debug_msg_->vel_uf   = cdob_velocity_error_y_outputs_[0];
-		current_delay_debug_msg_->vel_u_du = cdob_velocity_error_y_outputs_[1];
-		current_delay_debug_msg_->vel_du   = cdob_velocity_error_y_outputs_[2];
-		current_delay_debug_msg_->vel_ydu  = cdob_velocity_error_y_outputs_[3];
-		current_delay_debug_msg_->vel_yu   = cdob_velocity_error_y_outputs_[4];
+		current_delay_debug_msg_->vel_uf   = static_cast<float>(cdob_velocity_error_y_outputs_[0]);
+		current_delay_debug_msg_->vel_u_du = static_cast<float>(cdob_velocity_error_y_outputs_[1]);
+		current_delay_debug_msg_->vel_du   = static_cast<float>(cdob_velocity_error_y_outputs_[2]);
+		current_delay_debug_msg_->vel_ydu  = static_cast<float>(cdob_velocity_error_y_outputs_[3]);
+		current_delay_debug_msg_->vel_yu   = static_cast<float>(cdob_velocity_error_y_outputs_[4]);
 
-		current_delay_debug_msg_->vel_u_nondelay_u_estimated =
-				cdob_velocity_error_y_outputs_[1] + cdob_velocity_error_y_outputs_[2];
+		current_delay_debug_msg_->vel_u_nondelay_u_estimated = static_cast<float>(
+				cdob_velocity_error_y_outputs_[1] + cdob_velocity_error_y_outputs_[2]);
 
 		// Debug
 		//ns_utils::print("previous input : ", u_prev, current_steering);
@@ -853,26 +858,27 @@ namespace observers
 		cdob_acc_error_y_outputs_ = delay_compensator_acc_error_->getOutputs();
 
 		/**
-	 * @brief Outputs of the delay compensator.
-	 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
-	 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
-	 * y2: du = y0 - y1 where du is the estimated disturbance input
-	 * y3: ydu = G(s)*du where ydu is the response of the system to du.
-	 * */
+		 * @brief Outputs of the delay compensator.
+		 * y0: u_filtered,Q(s)*u where u is the input sent to the system.
+		 * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+		 * y2: du = y0 - y1 where du is the estimated disturbance input
+		 * y3: ydu = G(s)*du where ydu is the response of the system to du.
+		 * */
 
 		// Set delay_compensation_reference for the steering.
 		current_delay_references_msg_->acceleration_error_read             = current_longitudinal_errors_->acceleration_error_read;
-		current_delay_references_msg_->acceleration_error_compensation_ref = cdob_acc_error_y_outputs_[4];
+		current_delay_references_msg_->acceleration_error_compensation_ref = static_cast<float>
+		(cdob_acc_error_y_outputs_[4]);
 
 		// Set debug message.
-		current_delay_debug_msg_->acc_uf   = cdob_acc_error_y_outputs_[0];
-		current_delay_debug_msg_->acc_u_du = cdob_acc_error_y_outputs_[1];
-		current_delay_debug_msg_->acc_du   = cdob_acc_error_y_outputs_[2];
-		current_delay_debug_msg_->acc_ydu  = cdob_acc_error_y_outputs_[3];
-		current_delay_debug_msg_->acc_yu   = cdob_acc_error_y_outputs_[4];
+		current_delay_debug_msg_->acc_uf   = static_cast<float>(cdob_acc_error_y_outputs_[0]);
+		current_delay_debug_msg_->acc_u_du = static_cast<float>(cdob_acc_error_y_outputs_[1]);
+		current_delay_debug_msg_->acc_du   = static_cast<float>(cdob_acc_error_y_outputs_[2]);
+		current_delay_debug_msg_->acc_ydu  = static_cast<float>(cdob_acc_error_y_outputs_[3]);
+		current_delay_debug_msg_->acc_yu   = static_cast<float>(cdob_acc_error_y_outputs_[4]);
 
-		current_delay_debug_msg_->acc_u_nondelay_u_estimated =
-				cdob_acc_error_y_outputs_[1] + cdob_acc_error_y_outputs_[2];
+		current_delay_debug_msg_->acc_u_nondelay_u_estimated = static_cast<float>(
+				cdob_acc_error_y_outputs_[1] + cdob_acc_error_y_outputs_[2]);
 
 		// Debug
 		//ns_utils::print("previous input : ", u_prev, current_steering);
