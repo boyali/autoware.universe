@@ -39,6 +39,7 @@
 #include  "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
 #include  "autoware_auto_vehicle_msgs/msg/delay_compensation_debug.hpp"
 #include "autoware_auto_vehicle_msgs/msg/controller_error_report.hpp"
+#include "control_performance_analysis/msg/error_stamped.hpp"
 
 // LIBRARY HEADERS
 // #include "autoware_control_toolbox.hpp"
@@ -71,6 +72,7 @@ namespace observers
 	using VelocityMsg = nav_msgs::msg::Odometry;
 	using vehicle_info_util::VehicleInfoUtil;
 	using autoware_auto_vehicle_msgs::msg::SteeringReport;
+	using ErrorStampedControlPerfMsg = control_performance_analysis::msg::ErrorStamped;
 
 	// Parameters to pass around.
 	struct Parameters
@@ -151,6 +153,10 @@ namespace observers
 		//!< @brief subscription for current lateral and heading errors.
 		rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_lat_errors_ptr_;
 
+		//!< @brief subscription for current lateral and heading errors.
+		rclcpp::Subscription<ErrorStampedControlPerfMsg>::SharedPtr sub_control_perf_errors_ptr_;
+
+
 		// Publishers
 		rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr    pub_delay_compensator_;
 		rclcpp::Publisher<DelayCompensatorDebugMsg>::SharedPtr pub_delay_compensator_debug_;
@@ -174,9 +180,10 @@ namespace observers
 		std::shared_ptr<ControlCommand> previous_ctrl_ptr_{ nullptr };
 
 		// Pointers to the compensator outputs.
-		std::shared_ptr<DelayCompensatatorMsg>    current_delay_references_msg_{ nullptr };
-		std::shared_ptr<ControllerErrorReportMsg> current_lateral_errors_{ nullptr };
-		std::shared_ptr<ControllerErrorReportMsg> current_longitudinal_errors_{ nullptr };
+		std::shared_ptr<DelayCompensatatorMsg>      current_delay_references_msg_{ nullptr };
+		std::shared_ptr<ControllerErrorReportMsg>   current_lateral_errors_{ nullptr };
+		std::shared_ptr<ControllerErrorReportMsg>   current_longitudinal_errors_{ nullptr };
+		std::shared_ptr<ErrorStampedControlPerfMsg> current_cont_perf_errors_{ nullptr };
 
 		// Debug messages
 		std::shared_ptr<DelayCompensatorDebugMsg> current_delay_debug_msg_{ nullptr };
@@ -215,6 +222,11 @@ namespace observers
 		 * @brief Subscription to lateral reference errors ey, eyaw.
 		 */
 		void onCurrentLateralErrors(const ControllerErrorReportMsg::SharedPtr msg);
+
+		/**
+		 * @brief Subscription to control performance errors.
+		 */
+		void onControlPerfErrors(const ErrorStampedControlPerfMsg::SharedPtr msg);
 
 		/**
 		 * @brief Publish message.

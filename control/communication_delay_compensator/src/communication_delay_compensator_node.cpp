@@ -76,6 +76,12 @@ namespace observers
 								(&observers::CommunicationDelayCompensatorNode::onCurrentLateralErrors,
 										this, std::placeholders::_1));
 
+		sub_control_perf_errors_ptr_ =
+				create_subscription<ErrorStampedControlPerfMsg>("~/input/cp_errors", rclcpp::QoS{ 1 },
+						std::bind
+								(&observers::CommunicationDelayCompensatorNode::onControlPerfErrors,
+										this, std::placeholders::_1));
+
 		// Dynamic Parameter Update.
 		is_parameters_set_res_ =
 				this->add_on_set_parameters_callback(std::bind(&CommunicationDelayCompensatorNode::onParameterUpdate,
@@ -282,6 +288,15 @@ namespace observers
 // 			}
 		// end of debug.
 
+	}
+
+	void CommunicationDelayCompensatorNode::onControlPerfErrors(const ErrorStampedControlPerfMsg::SharedPtr msg)
+	{
+
+		current_cont_perf_errors_ = std::make_shared<ErrorStampedControlPerfMsg>(*msg);
+
+		// Debug
+		RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Control Perf. Errors");
 	}
 
 	void CommunicationDelayCompensatorNode::publishCompensationReferences()
@@ -859,6 +874,7 @@ namespace observers
 		auto current_vel = current_velocity_ptr->twist.twist.linear.x;
 		return std::fabs(current_vel) <= 0.5;
 	}
+
 
 }  // namespace observers
 #include "rclcpp_components/register_node_macro.hpp"
