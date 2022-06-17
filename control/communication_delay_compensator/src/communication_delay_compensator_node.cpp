@@ -792,7 +792,7 @@ namespace observers
 
 		// Set delay_compensation_reference for the steering.
 		current_delay_references_msg_->velocity_error_read             = current_longitudinal_errors_->velocity_error_read;
-		current_delay_references_msg_->steering_error_compensation_ref = static_cast<float>
+		current_delay_references_msg_->velocity_error_compensation_ref = static_cast<float>
 		(cdob_velocity_error_y_outputs_[4]);
 
 		// Set debug message.
