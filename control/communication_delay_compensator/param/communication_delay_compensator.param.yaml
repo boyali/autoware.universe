@@ -4,20 +4,20 @@
     cdob_ctrl_period: 0.03     # sampling period.
 
     # -- Q-filters --
-    qfilter_lateral_error_order: 3  # order of the filter transfer functions. >=3
+    qfilter_lateral_error_order: 4  # order of the filter transfer functions. >=3
     qfilter_heading_error_order: 2  # >=2
     qfilter_steering_order: 1 # >=1
     qfilter_velocity_error_order: 1 # >=1
     qfilter_acc_error_order: 1 # >=1
 
-    qfilter_lateral_error_freq: 8.  #qfilter frequency in Hz for lateral error
+    qfilter_lateral_error_freq: 10.  #qfilter frequency in Hz for lateral error
     qfilter_heading_error_freq: 8.  #qfilter frequency in Hz for heading error
     qfilter_steering_freq: 5.  #qfilter frequency in Hz for steering tracking error
     qfilter_velocity_error_freq: 5.  #qfilter frequency in Hz for vel tracking error
     qfilter_acc_error_freq: 5.  #qfilter frequency in Hz for acc tracking error
 
     # -- Vehicle Model Selection -- Currently we have only one.
-    steering_time_constant_: 0.3 # first order steering model time-constant  delta_dot = -1/tau *delta + 1/tau * u
+    steering_time_constant_: 0.27 # first order steering model time-constant  delta_dot = -1/tau *delta + 1/tau * u
     velocity_time_constant_: 0.2 # first order velocity model time-constant
     acc_time_constant_: 0.2 # first order velocity model time-constant
 

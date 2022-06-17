@@ -302,8 +302,8 @@ bool8_t MPC::getData(
     to_angle(current_pose.orientation) - to_angle(data->nearest_pose.orientation));
 
   // Save the  errors to report.
-  m_lateral_error_to_report = -1. * data->lateral_err;  // target-current
-  m_yaw_error_to_report = 1. * data->yaw_err;           // target-current
+  m_lateral_error_to_report = data->lateral_err;  // target-current
+  m_yaw_error_to_report = -1. * data->yaw_err;    // target-current
 
   /* get predicted steer */
   if (!m_steer_prediction_prev) {

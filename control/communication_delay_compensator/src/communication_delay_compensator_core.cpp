@@ -153,10 +153,9 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
 
   // set the input to measured state of Q(s)/G(s) to get the input estimate.
   // ey, eyaw, or eVel --> Q(s)/G(s) -->u - du
-
   x0_inv_system_.setZero();
   auto const && u_du =
-    q_g_inv_ss_.simulateOneStep(x0_inv_system_, -measured_model_state);  // output is u-du.
+    q_g_inv_ss_.simulateOneStep(x0_inv_system_, measured_model_state);  // output is u-du.
 
   // Get difference of uf-(u-du) ~=du
   auto const && du = uf - u_du;
@@ -183,7 +182,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
   y_outputs_[3] = ydu;   // du->Q(s)/G(s)--> y_du
 
   // reference correction.
-  y_outputs_[4] = (-measured_model_state + ydu);  // yu = y_measured (yu-ydu) + ydu  where
+  y_outputs_[4] = (measured_model_state + ydu);  // yu = y_measured (yu-ydu) + ydu  where
 
   // Debug
   // 	ns_utils::print("measured state : ", measured_model_state);
