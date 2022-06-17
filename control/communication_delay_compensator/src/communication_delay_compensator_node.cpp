@@ -108,10 +108,18 @@ namespace observers
 	void CommunicationDelayCompensatorNode::onTimer()
 	{
 
+		// Create compensator messages: For breaking cyclic dependency (controllers wait this package vice versa.).
+		DelayCompensatatorMsg compensation_msg{};
+		current_delay_references_msg_ = std::make_shared<DelayCompensatatorMsg>(compensation_msg);
+
+		DelayCompensatorDebugMsg compensation_debug_msg{};
+		current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(compensation_debug_msg);
+
+
 		if (!isDataReady())
 		{
 			RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Not enough data to compute delay compensation");
-			// publishCompensationReferences();
+			publishCompensationReferences();
 			return;
 		}
 
@@ -119,16 +127,8 @@ namespace observers
 		{
 			ControlCommand zero_cmd{};
 			previous_ctrl_ptr_ = std::make_shared<ControlCommand>(zero_cmd);
-			// publishCompensationReferences();
+			publishCompensationReferences();
 		}
-
-		// Create compensator messages.
-		DelayCompensatatorMsg compensation_msg{};
-		current_delay_references_msg_ = std::make_shared<DelayCompensatatorMsg>(compensation_msg);
-
-		DelayCompensatorDebugMsg compensation_debug_msg{};
-		current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(compensation_debug_msg);
-
 
 		// Compute the steering compensation values.
 		if (!isVehicleStopping())

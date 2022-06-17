@@ -129,6 +129,9 @@ struct MPCData
   float64_t predicted_steer;
   float64_t lateral_err;
   float64_t yaw_err;
+
+  float64_t lateral_err_delay_compensator_ref;
+  float64_t yaw_err_delay_compensator_ref;
 };
 
 /**
