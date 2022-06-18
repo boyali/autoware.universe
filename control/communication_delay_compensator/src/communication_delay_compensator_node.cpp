@@ -625,27 +625,18 @@ void CommunicationDelayCompensatorNode::setLateralErrorCDOBcompensator()
   // Compute the cut-off frequency in rad/sec.
   auto const & order_of_q = params_node_.qfilter_lateral_error_order;
   auto const & cut_off_frq_in_hz_q = params_node_.qfilter_lateral_error_freq;
-  auto && w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q;  // in [rad/sec]
-
-  auto const & time_constant_of_qfilter = 1.0 / w_c_of_q;
 
   // --------------- Qfilter Construction --------------------------------------
   // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
-  // Calculate the transfer function.
 
-  // We use 1 /( tau*s + 1)&^n
-  ns_control_toolbox::tf_factor denominator{
-    std::vector<double>{time_constant_of_qfilter, 1.}};  // (tau*s+1)
+  // If we like to create some damped roots
+  //  auto const && remaining_order = order_of_q - 2;
+  //  float64_t damping_val{1.};
 
-  // Take power of the denominator.
-  denominator.power(static_cast<unsigned int>(order_of_q));
-
-  // if we use damping formulation
-  ns_control_toolbox::tf_factor den1{
-    std::vector<double>{time_constant_of_qfilter, 1.}};  // (tau*s+1)
+  //  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, remaining_order, damping_val);
 
   // Create the transfer function from a numerator an denominator.
-  auto q_tf = ns_control_toolbox::tf{std::vector<double>{1.}, denominator()};
+  auto q_tf = get_nthOrderTF(cut_off_frq_in_hz_q, order_of_q);
 
   // --------------- System Model Construction --------------------------------------
   // There are dynamically changing numerator and denominator coefficients.
@@ -736,22 +727,9 @@ void CommunicationDelayCompensatorNode::setVelocityErrorCDOBcompensator()
   // Create a qfilter from the given order for the steering system.
   auto const & order_of_q = params_node_.qfilter_velocity_error_order;
   auto const & cut_off_frq_in_hz_q = params_node_.qfilter_velocity_error_freq;
-  auto && w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q;  // in [rad/sec]
-
-  // float64_t time_constant_of_qfilter{};
-  auto time_constant_of_qfilter = 1.0 / w_c_of_q;
-
-  // --------------- Qfilter Construction --------------------------------------
-  // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
-  // Calculate the transfer function.
-  ns_control_toolbox::tf_factor denominator{
-    std::vector<double>{time_constant_of_qfilter, 1.}};  // (tau*s+1)
-
-  // Take power of the denominator.
-  denominator.power(static_cast<unsigned int>(order_of_q));
 
   // Create the transfer function from a numerator an denominator.
-  auto q_tf = ns_control_toolbox::tf{std::vector<double>{1.}, denominator()};
+  auto q_tf = get_nthOrderTF(cut_off_frq_in_hz_q, order_of_q);
 
   // --------------- System Model Construction --------------------------------------
   // There is no dynamical parameter but tau might be changing if we use the adaptive control
@@ -814,22 +792,11 @@ void CommunicationDelayCompensatorNode::setAccelerationErrorCDOBcompensator()
   // Create a qfilter from the given order for the steering system.
   auto const & order_of_q = params_node_.qfilter_acc_error_order;
   auto const & cut_off_frq_in_hz_q = params_node_.qfilter_acc_error_freq;
-  auto && w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q;  // in [rad/sec]
-
-  // float64_t time_constant_of_qfilter{};
-  auto time_constant_of_qfilter = 1.0 / w_c_of_q;
 
   // --------------- Qfilter Construction --------------------------------------
   // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
-  // Calculate the transfer function.
-  ns_control_toolbox::tf_factor denominator{
-    std::vector<double>{time_constant_of_qfilter, 1.}};  // (tau*s+1)
 
-  // Take power of the denominator.
-  denominator.power(static_cast<unsigned int>(order_of_q));
-
-  // Create the transfer function from a numerator an denominator.
-  auto q_tf = ns_control_toolbox::tf{std::vector<double>{1.}, denominator()};
+  auto q_tf = get_nthOrderTF(cut_off_frq_in_hz_q, order_of_q);
 
   // --------------- System Model Construction --------------------------------------
   // There is no dynamical parameter but tau might be changing if we use the adaptive control
