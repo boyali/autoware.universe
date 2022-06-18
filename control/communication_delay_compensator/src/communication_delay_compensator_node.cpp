@@ -442,21 +442,27 @@ rcl_interfaces::msg::SetParametersResult CommunicationDelayCompensatorNode::onPa
 void CommunicationDelayCompensatorNode::setSteeringCDOBcompensator()
 {
   // Create a qfilter from the given order for the steering system.
-  auto const & order_of_q = params_node_.qfilter_steering_order;
+  // auto const & order_of_q = params_node_.qfilter_steering_order;
   auto const & cut_off_frq_in_hz_q = params_node_.qfilter_steering_freq;
   auto && w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q;  // in [rad/sec]
 
   // float64_t time_constant_of_qfilter{};
-  auto time_constant_of_qfilter = 1.0 / w_c_of_q;
+  // auto time_constant_of_qfilter = 1.0 / w_c_of_q;
 
   // --------------- Qfilter Construction --------------------------------------
   // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
   // Calculate the transfer function.
-  ns_control_toolbox::tf_factor denominator{
-    std::vector<double>{time_constant_of_qfilter, 1.}};  // (tau*s+1)
+  //  ns_control_toolbox::tf_factor denominator{
+  //    std::vector<double>{time_constant_of_qfilter, 1.}};  // (tau*s+1)
+  //
+  //  // Take power of the denominator.
+  //  denominator.power(static_cast<unsigned int>(order_of_q));
 
-  // Take power of the denominator.
-  denominator.power(static_cast<unsigned int>(order_of_q));
+  double xi{0.8};
+  ns_control_toolbox::tf_factor damping_2nd_order{
+    std::vector<double>{1., 2. * xi * w_c_of_q, w_c_of_q * w_c_of_q}};
+
+  auto denominator = damping_2nd_order;
 
   // Create the transfer function from a numerator an denominator.
   auto q_tf = ns_control_toolbox::tf{std::vector<double>{1.}, denominator()};
@@ -652,7 +658,7 @@ void CommunicationDelayCompensatorNode::setLateralErrorCDOBcompensator()
 {
   // Create a qfilter for he steering to heading transfer function.
   // Compute the cut-off frequency in rad/sec.
-  auto const & order_of_q = params_node_.qfilter_lateral_error_order;
+  // auto const & order_of_q = params_node_.qfilter_lateral_error_order;
   auto const & cut_off_frq_in_hz_q = params_node_.qfilter_lateral_error_freq;
   auto && w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q;  // in [rad/sec]
 
@@ -662,11 +668,23 @@ void CommunicationDelayCompensatorNode::setLateralErrorCDOBcompensator()
   // --------------- Qfilter Construction --------------------------------------
   // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
   // Calculate the transfer function.
-  ns_control_toolbox::tf_factor denominator{
+
+  //  // We use 1 /( tau*s + 1)&^n
+  //  ns_control_toolbox::tf_factor denominator{
+  //    std::vector<double>{time_constant_of_qfilter, 1.}};  // (tau*s+1)
+  //
+  //  // Take power of the denominator.
+  //  denominator.power(static_cast<unsigned int>(order_of_q));
+
+  // if we use damping formulation
+  ns_control_toolbox::tf_factor den1{
     std::vector<double>{time_constant_of_qfilter, 1.}};  // (tau*s+1)
 
-  // Take power of the denominator.
-  denominator.power(static_cast<unsigned int>(order_of_q));
+  double xi{0.8};
+  ns_control_toolbox::tf_factor damping_2nd_order{
+    std::vector<double>{1., 2. * xi * w_c_of_q, w_c_of_q * w_c_of_q}};
+
+  auto denominator = den1 * damping_2nd_order;
 
   // Create the transfer function from a numerator an denominator.
   auto q_tf = ns_control_toolbox::tf{std::vector<double>{1.}, denominator()};

@@ -185,8 +185,8 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
   y_outputs_[4] = (measured_model_state + ydu);  // yu = y_measured (yu-ydu) + ydu  where
 
   // Debug
-  // 	ns_utils::print("measured state : ", measured_model_state);
-  // 	ns_utils::print("simulated uf, u_du, y2, ydu : ", uf, u_du, du, ydu);
+  // ns_utils::print("measured state : ", measured_model_state);
+  // ns_utils::print("simulated uf, u_du, y2, ydu : ", uf, u_du, du, ydu);
   // ns_utils::print("simulated uf, u_du, y2, ydu, y4 : ", uf, u_du, du, ydu, y_outputs_[4]);
 }
 
