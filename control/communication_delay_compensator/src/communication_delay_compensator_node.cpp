@@ -630,13 +630,13 @@ void CommunicationDelayCompensatorNode::setLateralErrorCDOBcompensator()
   // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
 
   // If we like to create some damped roots
-  //  auto const && remaining_order = order_of_q - 2;
-  //  float64_t damping_val{1.};
+  auto const && remaining_order = order_of_q - 2;
+  float64_t damping_val{1.};
 
-  //  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, remaining_order, damping_val);
+  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, remaining_order, damping_val);
 
   // Create the transfer function from a numerator an denominator.
-  auto q_tf = get_nthOrderTF(cut_off_frq_in_hz_q, order_of_q);
+  // auto q_tf = get_nthOrderTF(cut_off_frq_in_hz_q, order_of_q);
 
   // --------------- System Model Construction --------------------------------------
   // There are dynamically changing numerator and denominator coefficients.
