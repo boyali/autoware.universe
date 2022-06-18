@@ -78,8 +78,6 @@ bool8_t MPC::calculateMPC(
   /* define initial state for error dynamics */
   Eigen::VectorXd x0 = getInitialState(mpc_data);
 
-  /* delay compensation */
-
   if (!updateStateForDelayCompensation(reference_trajectory, mpc_data.nearest_time, &x0)) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, 1000 /*ms*/, "updateStateForDelayCompensation failed. stop computation.");

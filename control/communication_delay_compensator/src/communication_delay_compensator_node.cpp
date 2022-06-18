@@ -421,30 +421,20 @@ namespace observers {
         return result;
     }
 
-/**
- * @brief Creates a qfilter Q(s), a transfer function G(s) from steering input to steering state and
- * Q(s)/G(s). The transfer function from steering->heading is G(s) = 1 / (tau_steer*s + 1)
- * */
+    /**
+     * @brief Creates a qfilter Q(s), a transfer function G(s) from steering input to steering state and
+     * Q(s)/G(s). The transfer function from steering->heading is G(s) = 1 / (tau_steer*s + 1)
+     * */
     void CommunicationDelayCompensatorNode::setSteeringCDOBcompensator() {
         // Create a qfilter from the given order for the steering system.
         auto const &order_of_q = params_node_.qfilter_steering_order;
         auto const &cut_off_frq_in_hz_q = params_node_.qfilter_steering_freq;
-        auto &&w_c_of_q = 2.0 * M_PI * cut_off_frq_in_hz_q;  // in [rad/sec]
-
-        // float64_t time_constant_of_qfilter{};
-        auto time_constant_of_qfilter = 1.0 / w_c_of_q;
 
         // --------------- Qfilter Construction --------------------------------------
         // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
-        // Calculate the transfer function.
-        ns_control_toolbox::tf_factor denominator{
-                std::vector<double>{time_constant_of_qfilter, 1.}};  // (tau*s+1)
-
-        // Take power of the denominator.
-        denominator.power(static_cast<unsigned int>(order_of_q));
 
         // Create the transfer function from a numerator an denominator.
-        auto q_tf = ns_control_toolbox::tf{std::vector<double>{1.}, denominator()};
+        auto q_tf = get_nthOrderTF(cut_off_frq_in_hz_q, order_of_q);
 
         // --------------- System Model Construction --------------------------------------
         // There is no dynamical parameter but tau might be changing if we use the adaptive control
