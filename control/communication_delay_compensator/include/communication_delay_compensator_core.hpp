@@ -108,11 +108,18 @@ namespace observers {
 
     /**
      * @brief returns a transfer function in the form 1./(tau*s + 1)
-     * @oaram w_cut_off_hz : cut-off frequency in Hertz.
+     * @param w_cut_off_hz : cut-off frequency in Hertz.
      * */
     tf_t get_nthOrderTF(float64_t const &w_cut_off_hz, int const &n);
 
-    tf_t get_nthOrderTFwithDampedPoles(float64_t const &w_cut_off, int const &n, float64_t const &damping_val);
+    /**
+     * @brief returns a transfer function in the form 1./(tau*s + 1)^n_remaining * (damped tf)
+     * @param w_cut_off_hz : cut-off frequency in Hertz.
+     * @param remaining_order: the order after subtracting two which is the order of damped roots.
+     * @param damping_val: damping value of the roots.
+     * */
+    tf_t get_nthOrderTFwithDampedPoles(float64_t const &w_cut_off_hz,
+                                       int const &remaining_order, float64_t const &damping_val);
 
 
 }  // namespace observers

@@ -254,6 +254,28 @@ observers::tf_t observers::get_nthOrderTF(const autoware::common::types::float64
     return q_tf;
 }
 
+observers::tf_t
+observers::get_nthOrderTFwithDampedPoles(const autoware::common::types::float64_t &w_cut_off_hz,
+                                         const int &remaining_order,
+                                         const autoware::common::types::float64_t &damping_val) {
+
+
+    auto &&wc_rad_sec = 2.0 * M_PI * w_cut_off_hz;  // in [rad/sec]
+
+    // float64_t time_constant_of_qfilter{};
+    auto tau = 1.0 / wc_rad_sec;
+
+    // A second order tamped transfer function.
+    auto q_tf_damped = tf_t({1.}, {tau * tau, 2 * damping_val * tau, 1.});
+
+    if (remaining_order > 0) {
+        auto q_remaining_tf = get_nthOrderTF(w_cut_off_hz, remaining_order);
+        q_tf_damped *= q_remaining_tf;
+    }
+
+    return q_tf_damped;
+}
+
 
 void DelayCompensatorCore_PrototypeExample::print() const {
     ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
