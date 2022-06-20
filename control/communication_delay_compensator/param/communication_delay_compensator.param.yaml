@@ -10,8 +10,8 @@
     qfilter_velocity_error_order: 1 # >=1
     qfilter_acc_error_order: 1 # >=1
 
-    qfilter_lateral_error_freq: 10.  #qfilter frequency in Hz for lateral error
-    qfilter_heading_error_freq: 8.  #qfilter frequency in Hz for heading error
+    qfilter_lateral_error_freq: 5.  #qfilter frequency in Hz for lateral error
+    qfilter_heading_error_freq: 5.  #qfilter frequency in Hz for heading error
     qfilter_steering_freq: 5.  #qfilter frequency in Hz for steering tracking error
     qfilter_velocity_error_freq: 5.  #qfilter frequency in Hz for vel tracking error
     qfilter_acc_error_freq: 5.  #qfilter frequency in Hz for acc tracking error
