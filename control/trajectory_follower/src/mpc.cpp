@@ -63,6 +63,8 @@ bool8_t MPC::calculateMPC(
     mpc_data.yaw_err_delay_compensator_ref =
       comm_delay_msg.value().heading_angle_error_compensation_ref;
 
+    mpc_data.steer_compensator_ref = comm_delay_msg.value().steering_error_compensation_ref;
+
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, 1000 /*ms*/, "In the MPC use_td_param is %i",
       m_param.use_comm_time_delay);

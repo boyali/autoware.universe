@@ -133,6 +133,7 @@ struct MPCData
 
   float64_t lateral_err_delay_compensator_ref;
   float64_t yaw_err_delay_compensator_ref;
+  float64_t steer_compensator_ref;
 };
 
 /**
