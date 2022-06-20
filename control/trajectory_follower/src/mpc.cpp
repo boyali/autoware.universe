@@ -72,9 +72,15 @@ bool8_t MPC::calculateMPC(
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, 1000 /*ms*/, "In the MPC Delay Comp Later ref is %4.2f",
       mpc_data.lateral_err_delay_compensator_ref);
+
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      m_logger, *m_clock, 1000 /*ms*/, "In the MPC Delay Comp Steer ref is %4.2f",
+      mpc_data.steer_compensator_ref);
+
   } else {
     mpc_data.lateral_err_delay_compensator_ref = 0.0;
     mpc_data.yaw_err_delay_compensator_ref = 0.0;
+    mpc_data.steer_compensator_ref = 0.0;
   }
 
   /* define initial state for error dynamics */
@@ -448,6 +454,7 @@ Eigen::VectorXd MPC::getInitialState(const MPCData & data)
   if (has_received_time_delay_msg_) {
     lat_err = data.lateral_err_delay_compensator_ref;
     yaw_err = data.yaw_err_delay_compensator_ref;
+    steer = data.steer_compensator_ref;
   }
 
   if (m_vehicle_model_type == "kinematics") {

@@ -195,29 +195,29 @@ void CommunicationDelayCompensatorNode::onTimer()
     //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity frq %4.2f ",
     //    params_node_.qfilter_velocity_error_freq);
 
-    if (delay_compensator_steering_error_) {
-      delay_compensator_steering_error_->print();
-    } else {
-      ns_utils::print("Unique pointer is not set ");
-    }
-
-    if (delay_compensator_heading_error_) {
-      delay_compensator_heading_error_->print();
-    } else {
-      ns_utils::print("Unique pointer is not set ");
-    }
-
-    if (delay_compensator_lat_error_) {
-      delay_compensator_lat_error_->print();
-    } else {
-      ns_utils::print("Unique pointer is not set ");
-    }
-
-    if (delay_compensator_acc_error_) {
-      delay_compensator_acc_error_->print();
-    } else {
-      ns_utils::print("Unique pointer is not set ");
-    }
+    //    if (delay_compensator_steering_error_) {
+    //      delay_compensator_steering_error_->print();
+    //    } else {
+    //      ns_utils::print("Unique pointer is not set ");
+    //    }
+    //
+    //    if (delay_compensator_heading_error_) {
+    //      delay_compensator_heading_error_->print();
+    //    } else {
+    //      ns_utils::print("Unique pointer is not set ");
+    //    }
+    //
+    //    if (delay_compensator_lat_error_) {
+    //      delay_compensator_lat_error_->print();
+    //    } else {
+    //      ns_utils::print("Unique pointer is not set ");
+    //    }
+    //
+    //    if (delay_compensator_acc_error_) {
+    //      delay_compensator_acc_error_->print();
+    //    } else {
+    //      ns_utils::print("Unique pointer is not set ");
+    //    }
 
     // ns_utils::print("ACT On timer method ");
     // 			ns_utils::print("Params wheelbase ", params_node_.wheel_base);
@@ -436,8 +436,12 @@ void CommunicationDelayCompensatorNode::setSteeringCDOBcompensator()
   // --------------- Qfilter Construction --------------------------------------
   // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
 
-  // Create the transfer function from a numerator an denominator.
+  // Create the transfer function from a numerator and a denominator.
   auto q_tf = get_nthOrderTF(cut_off_frq_in_hz_q, order_of_q);
+
+  //  float64_t damping_val{1.};
+  //  auto remaining_order = order_of_q - 2;
+  //  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, damping_val, remaining_order);
 
   // --------------- System Model Construction --------------------------------------
   // There is no dynamical parameter but tau might be changing if we use the adaptive control
@@ -523,12 +527,13 @@ void CommunicationDelayCompensatorNode::setHeadingErrorCDOBcompensator()
 
   // --------------- Qfilter Construction --------------------------------------
   // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
+  auto q_tf = get_nthOrderTF(cut_off_frq_in_hz_q, order_of_q);
 
   // If we like to create some damped roots
-  auto const && remaining_order = order_of_q - 2;
-  float64_t damping_val{1.};
-
-  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, remaining_order, damping_val);
+  //  auto const && remaining_order = order_of_q - 2;
+  //  float64_t damping_val{1.};
+  //
+  //  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, remaining_order, damping_val);
 
   // --------------- System Model Construction --------------------------------------
   // There are dynamically changing numerator and denominator coefficients.
@@ -629,11 +634,14 @@ void CommunicationDelayCompensatorNode::setLateralErrorCDOBcompensator()
   // --------------- Qfilter Construction --------------------------------------
   // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
 
-  // If we like to create some damped roots
-  auto const && remaining_order = order_of_q - 2;
-  float64_t damping_val{1.};
+  // Create the transfer function from a numerator and a denominator.
+  auto q_tf = get_nthOrderTF(cut_off_frq_in_hz_q, order_of_q);
 
-  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, remaining_order, damping_val);
+  // If we like to create some damped roots
+  //  auto const && remaining_order = order_of_q - 2;
+  //  float64_t damping_val{1.};
+  //
+  //  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, remaining_order, damping_val);
 
   // Create the transfer function from a numerator an denominator.
   // auto q_tf = get_nthOrderTF(cut_off_frq_in_hz_q, order_of_q);
