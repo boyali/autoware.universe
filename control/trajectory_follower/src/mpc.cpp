@@ -301,7 +301,7 @@ bool8_t MPC::getData(
 
   // Save the  errors to report.
   m_lateral_error_to_report = data->lateral_err;  // target-current
-  m_yaw_error_to_report = -1. * data->yaw_err;    // target-current
+  m_yaw_error_to_report = data->yaw_err;          // target-current
 
   /* get predicted steer */
   if (!m_steer_prediction_prev) {
@@ -438,14 +438,14 @@ Eigen::VectorXd MPC::getInitialState(const MPCData & data)
   const int64_t DIM_X = m_vehicle_model_ptr->getDimX();
   Eigen::VectorXd x0 = Eigen::VectorXd::Zero(DIM_X);
 
-  const auto & steer = m_use_steer_prediction ? data.predicted_steer : data.steer;
+  auto steer = m_use_steer_prediction ? data.predicted_steer : data.steer;
 
   auto lat_err = data.lateral_err;
   auto yaw_err = data.yaw_err;
 
   if (has_received_time_delay_msg_) {
     lat_err = data.lateral_err_delay_compensator_ref;
-    yaw_err = -data.yaw_err_delay_compensator_ref;
+    yaw_err = data.yaw_err_delay_compensator_ref;
   }
 
   if (m_vehicle_model_type == "kinematics") {
