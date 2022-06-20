@@ -378,6 +378,7 @@ void DelayCompensatorCore_PrototypeExample::simulateOneStep(
     x0_qfilter_, previous_input);  // Output is filtered previous_input uf.
 
   //  simulate y --> Q(s)/ G(s) --> u-du (original previous_input - disturbance previous_input).
+  // x0_inv_system_.setZero();
   auto y1 = QGinv_ss_.simulateOneStep(x0_inv_system_, measured_model_state);  // output is u-du.
 
   // Get difference of uf-(u-du) ~=du
