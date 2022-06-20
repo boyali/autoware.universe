@@ -381,7 +381,7 @@ void DelayCompensatorCore_PrototypeExample::simulateOneStep(
   auto y1 = QGinv_ss_.simulateOneStep(x0_inv_system_, measured_model_state);  // output is u-du.
 
   // Get difference of uf-(u-du) ~=du
-  auto && du = y0 - y1;
+  auto const && du = y0 - y1;
 
   // Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
   // x0_gsystem_.setZero();
