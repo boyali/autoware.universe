@@ -230,11 +230,11 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
 
   if (nB < nC) {
     // Apply similarity transformation
-    B_.noalias() = Tsimilarity_mat_.inverse() * B_ * alpha;
-    C_.noalias() = C_ * Tsimilarity_mat_ / alpha;
+    B_ = Tsimilarity_mat_.inverse() * B_.eval() * alpha;
+    C_ = C_.eval() * Tsimilarity_mat_ / alpha;
   } else {
-    B_.noalias() = Tsimilarity_mat_.inverse() * B_ / alpha;
-    C_.noalias() = C_ * Tsimilarity_mat_ * alpha;
+    B_ = Tsimilarity_mat_.inverse() * B_.eval() / alpha;
+    C_ = C_.eval() * Tsimilarity_mat_ * alpha;
   }
 
   //	nB = B_.lpNorm<1>();
@@ -342,10 +342,10 @@ Eigen::MatrixXd ns_control_toolbox::tf2ss::D() const { return D_; }
 double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd & x0, const double & u) const
 {
   // First compute the output y.
-  double y = (Cd_ * x0 + Dd_ * u)(0, 0);
+  double y = (Cd_ * x0.eval() + Dd_ * u)(0, 0);
 
   // Then update x0;
-  x0.noalias() = Ad_ * x0 + Bd_ * u;
+  x0 = Ad_ * x0.eval() + Bd_ * u;
 
   return y;
 }
