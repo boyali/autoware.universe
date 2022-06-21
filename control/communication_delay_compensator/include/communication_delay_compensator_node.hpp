@@ -180,6 +180,10 @@ private:
   std::shared_ptr<ControllerErrorReportMsg> current_longitudinal_errors_{nullptr};
   std::shared_ptr<ErrorStampedControlPerfMsg> current_cont_perf_errors_{nullptr};
 
+  // Steering related.
+  float64_t current_curvature_{};
+  float64_t current_steering_error_{};  // from Ackerman angle.
+
   // Debug messages
   std::shared_ptr<DelayCompensatorDebugMsg> current_delay_debug_msg_{nullptr};
 
@@ -250,30 +254,27 @@ private:
 
   /**
    * @brief Set steering tracking q-filter and 1st order steering linear model.
+   * Steering is a state in the kinematic error model and it does not have an error term in this
+   * application.
    * */
   void setSteeringCDOBcompensator();      // creates steering cdob compensator.
-  void computeSteeringCDOBcompensator();  // computes corrective ref for the heading error // ref.
+  void computeSteeringCDOBcompensator();  // computes corrective ref for the heading error
 
-  void setHeadingErrorCDOBcompensator();
-
+  void setHeadingErrorCDOBcompensator();  // creates a heading angle error compensator.
   void computeHeadingCDOBcompensator();
 
   void setLateralErrorCDOBcompensator();
-
   void computeLateralCDOBcompensator();
 
   void setVelocityErrorCDOBcompensator();
-
   void computeVelocityCDOBcompensator();
 
   void setAccelerationErrorCDOBcompensator();
-
   void computeAccelerationCDOBcompensator();
 
   /**
    * @brief checks if vehicle is stopping.
    * */
-
   bool8_t isVehicleStopping();
 
   /**

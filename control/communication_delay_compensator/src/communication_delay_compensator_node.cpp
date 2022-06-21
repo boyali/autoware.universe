@@ -470,19 +470,19 @@ void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
   auto & current_steering = current_steering_ptr_->steering_tire_angle;
 
   // Compute current steering error.
-  auto & curvature = current_cont_perf_errors_->error.curvature_estimate;
+  current_curvature_ = current_cont_perf_errors_->error.curvature_estimate;
 
   // Ackerman Ideal Steering
-  auto const && ideal_ackerman_steering = std::atan(curvature * params_node_.wheel_base);
+  auto const && ideal_ackerman_steering = std::atan(current_curvature_ * params_node_.wheel_base);
 
   // Error: current_val - target (ref)_val
-  auto const && steering_error = current_steering - ideal_ackerman_steering;
+  current_steering_error_ = current_steering - ideal_ackerman_steering;
 
   // reset the stored outputs to zero.
   // std::fill(cdob_steering_error_y_outputs_.begin(), cdob_steering_error_y_outputs_.end(), 0.);
 
   // Input is steering_input -> G(s) steering model --> next steering state.
-  delay_compensator_steering_error_->simulateOneStep(u_prev, steering_error);
+  delay_compensator_steering_error_->simulateOneStep(u_prev, current_steering);
   cdob_steering_error_y_outputs_ = delay_compensator_steering_error_->getOutputs();
 
   /**
@@ -494,7 +494,7 @@ void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
    * */
 
   // Set delay_compensation_reference for the steering.
-  current_delay_references_msg_->steering_error_read = static_cast<float>(steering_error);
+  current_delay_references_msg_->steering_error_read = current_steering;
   current_delay_references_msg_->steering_error_compensation_ref =
     static_cast<float>(cdob_steering_error_y_outputs_[4]);
 
