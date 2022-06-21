@@ -387,7 +387,7 @@ void DelayCompensatorCore_PrototypeExample::simulateOneStep(
   // Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
   // x0_gsystem_.setZero();
   // The response of the vehicle state model to the disturbance input.
-  auto y_du = Gss_.simulateOneStep(x0_gsystem_, du);  // output is y (i.e ey, eyaw, ...).
+  auto ydu = Gss_.simulateOneStep(x0_gsystem_, du);  // output is y (i.e ey, eyaw, ...).
 
   // ns_utils::print("Current velocity and steering :", num_den_args_of_g.first, previous_input);
   // ns_utils::print("Current V^2 and cos(delta)^2  : ",
@@ -401,14 +401,14 @@ void DelayCompensatorCore_PrototypeExample::simulateOneStep(
    * uf: u_filtered,Q(s)*u where u is the previous_input sent to the system.
    * u_minus_ud: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
    * y2: du = uf - y2 where du is the estimated disturbance previous_input
-   * y_du: ydu = G(s)*du where ydu is the response of the system to du.
+   * ydu: ydu = G(s)*du where ydu is the response of the system to du.
    * */
 
-  y_outputs[0] = uf;                           // ufiltered
-  y_outputs[1] = u_minus_ud;                   // u-du
-  y_outputs[2] = du;                           // du
-  y_outputs[3] = y_du;                         // for time being y of du-->G(s)--> ey_du
-  y_outputs[4] = measured_model_state + y_du;  // for time being y of du-->G(s)--> ey_du
+  y_outputs[0] = uf;                          // ufiltered
+  y_outputs[1] = u_minus_ud;                  // u-du
+  y_outputs[2] = du;                          // du
+  y_outputs[3] = ydu;                         // for time being y of du-->G(s)--> ey_du
+  y_outputs[4] = measured_model_state + ydu;  // for time being y of du-->G(s)--> ey_du
 
   // Get Ad_, Bd_, Cd_,Dd_ from QGinv_ss_.
   // getSSsystem(QGinv_ss_);
