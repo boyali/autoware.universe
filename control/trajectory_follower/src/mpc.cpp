@@ -42,7 +42,7 @@ bool8_t MPC::calculateMPC(
   autoware_auto_control_msgs::msg::AckermannLateralCommand & ctrl_cmd,
   autoware_auto_planning_msgs::msg::Trajectory & predicted_traj,
   autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic,
-  std::optional<DelayCompensationRefs> comm_delay_msg)
+  std::optional<DelayCompensationRefs> comm_delay_msg /* comm delay message */)
 {
   /* recalculate velocity from ego-velocity with dynamics */
   trajectory_follower::MPCTrajectory reference_trajectory =
@@ -304,6 +304,7 @@ bool8_t MPC::getData(
   data->steer = static_cast<float64_t>(current_steer.steering_tire_angle);
   data->lateral_err =
     trajectory_follower::MPCUtils::calcLateralError(current_pose, data->nearest_pose);
+
   data->yaw_err = autoware::common::helper_functions::wrap_angle(
     to_angle(current_pose.orientation) - to_angle(data->nearest_pose.orientation));
 
