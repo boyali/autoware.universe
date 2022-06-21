@@ -374,22 +374,23 @@ void DelayCompensatorCore_PrototypeExample::simulateOneStep(
   // Simulate Qs, Gs, Qs/Gs/
   // set previous_input u of Q(s) to get the filtered output. u--> Q(s) -->uf
   // steering, gas sent to the vehicle.
-  auto y0 = Qfilter_ss_.simulateOneStep(
-    x0_qfilter_, previous_input);  // Output is filtered previous_input uf.
+  auto uf = Qfilter_ss_.simulateOneStep(x0_qfilter_, previous_input);  // -->ufiltered
 
   //  simulate y --> Q(s)/ G(s) --> u-du (original previous_input - disturbance previous_input).
   // x0_inv_system_.setZero();
-  auto y1 = QGinv_ss_.simulateOneStep(x0_inv_system_, measured_model_state);  // output is u-du.
+  // output is u-du.
+  auto u_minus_ud = QGinv_ss_.simulateOneStep(x0_inv_system_, measured_model_state);
 
   // Get difference of uf-(u-du) ~=du
-  auto const && du = y0 - y1;
+  auto const && du = uf - u_minus_ud;
 
   // Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
   // x0_gsystem_.setZero();
-  auto y3 = Gss_.simulateOneStep(x0_gsystem_, du);  // output is y (i.e ey, eyaw, ...).
+  // The response of the vehicle state model to the disturbance input.
+  auto y_du = Gss_.simulateOneStep(x0_gsystem_, du);  // output is y (i.e ey, eyaw, ...).
 
-  //	ns_utils::print("Current velocity and steering :", num_den_args_of_g.first, previous_input);
-  //	ns_utils::print("Current V^2 and cos(delta)^2  : ",
+  // ns_utils::print("Current velocity and steering :", num_den_args_of_g.first, previous_input);
+  // ns_utils::print("Current V^2 and cos(delta)^2  : ",
   // pair_func_map_["v"](num_den_args_of_g.first),
   // pair_func_map_["delta"](num_den_args_of_g.second),
   //"\n");
@@ -397,17 +398,17 @@ void DelayCompensatorCore_PrototypeExample::simulateOneStep(
   // Get outputs.
   /**
    * @brief Outputs of the delay compensator.
-   * y0: u_filtered,Q(s)*u where u is the previous_input sent to the system.
-   * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
-   * y2: du = y0 - y2 where du is the estimated disturbance previous_input
-   * y3: ydu = G(s)*du where ydu is the response of the system to du.
+   * uf: u_filtered,Q(s)*u where u is the previous_input sent to the system.
+   * u_minus_ud: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
+   * y2: du = uf - y2 where du is the estimated disturbance previous_input
+   * y_du: ydu = G(s)*du where ydu is the response of the system to du.
    * */
 
-  y_outputs[0] = y0;                         // ufiltered
-  y_outputs[1] = y1;                         // u-du
-  y_outputs[2] = du;                         // du
-  y_outputs[3] = y3;                         // for time being y of du-->G(s)--> ey_du
-  y_outputs[4] = measured_model_state + y3;  // for time being y of du-->G(s)--> ey_du
+  y_outputs[0] = uf;                           // ufiltered
+  y_outputs[1] = u_minus_ud;                   // u-du
+  y_outputs[2] = du;                           // du
+  y_outputs[3] = y_du;                         // for time being y of du-->G(s)--> ey_du
+  y_outputs[4] = measured_model_state + y_du;  // for time being y of du-->G(s)--> ey_du
 
   // Get Ad_, Bd_, Cd_,Dd_ from QGinv_ss_.
   // getSSsystem(QGinv_ss_);
