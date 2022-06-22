@@ -21,11 +21,13 @@
  * */
 
 observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
-  model_ptr_t vehicle_model, tf_t & qfilter, tf_t & g_system_model, double const & dt)
+  model_ptr_t vehicle_model, tf_t & qfilter, tf_t & g_system_model, double const & dt,
+  size_t const & state_ind)
 : vehicle_model_ptr_{std::move(vehicle_model)},
   q_filter_tf_{qfilter},
   g_tf_(g_system_model),
-  dt_{dt}
+  dt_{dt},
+  state_ind_{state_ind}
 {
   // The vector that keeps the output of the compensator.
   // y_outputs_.reserve(num_of_outputs_);
@@ -181,20 +183,28 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
   // Get difference of uf-(u-du) ~=du
   auto const && du = uf - u_du;
 
+  // Simulate vehicle model.
+  vehicle_model_ptr_->simulateOneStep(y_vehicle_, x0_vehicle_, du);
+
   // Get outputs.
   /**
    * @brief Outputs of the delay compensator.
-   * uf: u_filtered,Q(s)*u where u is the previous_input sent to the system.
-   * u_du: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
-   * y2: du = uf - y2 where du is the estimated disturbance previous_input
+   * uf: u_filtered = Q(s)*u where u is the previous_input sent to the system.
+   * u_du: u(_T)-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response and u
+   * (-T) is an estimate of actual input entering into the system.
+   * y2: du = uf - y2 where du is the estimated disturbance from on the previous_input.
+   * ydu : the response of the system to the disturbance input.
+   * yu is the response of system to u(-T) actual input entering to the system.
    * */
 
   std::fill(y_outputs_.begin(), y_outputs_.end(), 0.);
   // y_outputs_ = std::vector<float64_t>(num_of_outputs_, 0.);
 
-  y_outputs_[0] = uf;    // ufiltered
-  y_outputs_[1] = u_du;  // u-du
-  y_outputs_[2] = du;    // du
+  y_outputs_[0] = uf;                                             // ufiltered
+  y_outputs_[1] = u_du;                                           // u-du
+  y_outputs_[2] = du;                                             // du
+  y_outputs_[3] = y_vehicle_(state_ind_);                         // ydu.
+  y_outputs_[4] = y_vehicle_(state_ind_) + measured_model_state;  // response of u(-T): yu
 
   ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x0_vehicle_));
 }

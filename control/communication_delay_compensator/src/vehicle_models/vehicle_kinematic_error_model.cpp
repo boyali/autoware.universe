@@ -302,6 +302,17 @@ void observers::LinearKinematicErrorModel::simulateOneStep_withPastStates(
   y0 = Cd_ * x0.eval() + Dd_ * u;
 }
 
+void observers::LinearKinematicErrorModel::simulateOneStep(
+  state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, float64_t const & u)
+{
+  // first compute the outputs using the current initial conditions, then update
+  // the initial states.
+
+  // first update the output
+  y0 = Cd_ * x0.eval() + Dd_ * u;
+  x0 = Ad_ * x0.eval() + Bd_ * u;
+}
+
 void observers::LinearKinematicErrorModel::updateInitialStates(state_vector_vehicle_t const & x0)
 
 {

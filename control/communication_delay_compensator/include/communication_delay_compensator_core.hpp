@@ -40,7 +40,8 @@ public:
   CommunicationDelayCompensatorCore() = default;
 
   CommunicationDelayCompensatorCore(
-    model_ptr_t vehicle_model, tf_t & qfilter, tf_t & g_system_model, double const & dt);
+    model_ptr_t vehicle_model, tf_t & qfilter, tf_t & g_system_model, double const & dt,
+    size_t const & state_ind);
 
   void print() const;  // @brief  Prints the configuration.
 
@@ -77,6 +78,7 @@ private:
   tf_t q_filter_tf_{};  // @brief Transfer function of the qfilter.
   tf_t g_tf_{};         // @brief state dynamics
   float64_t dt_{};
+  size_t state_ind_{};  // index of the state that the compensator is operating on.
 
   //  Compensator state-space
   ss_t q_filter_ss_{};  //@brief State space model of the qfilter
@@ -103,6 +105,7 @@ private:
 
   // Internal vehicle model simulator.
   state_vector_vehicle_t x0_vehicle_{state_vector_vehicle_t::Zero()};
+  state_vector_vehicle_t y_vehicle_{state_vector_vehicle_t::Zero()};
 
   // Data members, place holders.
   /**
