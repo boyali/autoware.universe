@@ -317,3 +317,8 @@ void observers::LinearKinematicErrorModel::updateInitialStates(Eigen::MatrixXd c
 
   // ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x0_));
 }
+void observers::LinearKinematicErrorModel::updateInitialStates(
+  float64_t const & ey, float64_t const & eyaw, float64_t const & steering)
+{
+  x0_ << ey, eyaw, steering;
+}

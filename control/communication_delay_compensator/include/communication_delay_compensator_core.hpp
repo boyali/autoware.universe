@@ -65,7 +65,7 @@ public:
 
 private:
   // Qfilter transfer function.
-  size_t num_of_outputs{3};
+  size_t num_of_outputs{5};
   tf_t q_filter_tf_{};  // @brief Transfer function of the qfilter.
   tf_t g_tf_{};         // @brief state dynamics
   float64_t dt_{};

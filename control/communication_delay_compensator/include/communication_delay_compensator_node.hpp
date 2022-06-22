@@ -157,7 +157,7 @@ private:
   rclcpp::Publisher<DelayCompensatorDebugMsg>::SharedPtr pub_delay_compensator_debug_;
 
   // Data Members for the delay-compensation.
-  std::unique_ptr<LinearKinematicErrorModel> vehicle_model_ptr_;
+  std::shared_ptr<LinearKinematicErrorModel> vehicle_model_ptr_;
   std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_lat_error_ptr_{};
   std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_yaw_error_ptr_{};
   std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_steering_ptr_{};
@@ -277,6 +277,11 @@ private:
    * @brief checks if vehicle is stopping.
    * */
   bool8_t isVehicleStopping();
+
+  /**
+   * @brief updates the vehicle model.
+   * */
+  void updateVehicleModel();
 
   /**
    * @brief placeholders for delay compensator outputs.

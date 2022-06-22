@@ -170,10 +170,10 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
   auto const && du = uf - u_du;
 
   // Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
-  x0_gsystem_.setZero();
-  // auto const && ydu = g_ss_.simulateOneStep(x0_gsystem_, du);  // output is ydu (i.e ey, eyaw,
-  // ...).
+  // output is ydu (i.e ey, eyaw, ...).
 
+  x0_gsystem_.setZero();
+  auto const && ydu = g_ss_.simulateOneStep(x0_gsystem_, du);
   // Get outputs.
   /**
    * @brief Outputs of the delay compensator.
@@ -189,10 +189,10 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
   y_outputs_[0] = uf;    // ufiltered
   y_outputs_[1] = u_du;  // u-du
   y_outputs_[2] = du;    // du
-  y_outputs_[3] = 0;     // ydu;   // du->Q(s)/G(s)--> y_du
+  y_outputs_[3] = ydu;   // ydu;   // du->Q(s)/G(s)--> y_du
 
   // reference correction.
-  y_outputs_[4] = 0;  //(measured_model_state + ydu);  // yu = y_measured (yu-ydu) + ydu  where
+  y_outputs_[4] = (measured_model_state + ydu);  // yu = y_measured (yu-ydu) + ydu  where
 }
 
 /// -------------- AS A PROTOTYPE NOT USED in the NODE ---------------------------------

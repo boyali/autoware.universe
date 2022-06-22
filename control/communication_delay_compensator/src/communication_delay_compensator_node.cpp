@@ -92,6 +92,10 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
   is_parameters_set_res_ = this->add_on_set_parameters_callback(
     std::bind(&CommunicationDelayCompensatorNode::onParameterUpdate, this, _1));
 
+  // set the vehicle model.
+  vehicle_model_ptr_ = std::make_shared<LinearKinematicErrorModel>(
+    params_node_.wheel_base, params_node_.steering_tau, params_node_.cdob_ctrl_period);
+
   // Set the delay compensator for each tracking purpose.
   setSteeringCDOBcompensator();
   setHeadingErrorCDOBcompensator();
@@ -131,6 +135,10 @@ void CommunicationDelayCompensatorNode::onTimer()
     previous_ctrl_ptr_ = std::make_shared<ControlCommand>(zero_cmd);
     publishCompensationReferences();
   }
+
+  // Update vehicle model.
+  updateVehicleModel();
+  vehicle_model_ptr_->printDiscreteSystem();
 
   // Compute the steering compensation values.
   if (!isVehicleStopping()) {
@@ -335,6 +343,20 @@ bool8_t CommunicationDelayCompensatorNode::isDataReady()
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), (1000ms).count(),
       "[communication_delay] Waiting for the control command ...");
+    return false;
+  }
+
+  if (!current_lateral_errors_) {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), (1000ms).count(),
+      "[communication_delay] Waiting for the current lateral error report ...");
+    return false;
+  }
+
+  if (!current_longitudinal_errors_) {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), (1000ms).count(),
+      "[communication_delay] Waiting for the current longitudinal error report ...");
     return false;
   }
 
@@ -867,6 +889,29 @@ bool8_t CommunicationDelayCompensatorNode::isVehicleStopping()
 {
   auto current_vel = current_velocity_ptr->twist.twist.linear.x;
   return std::fabs(current_vel) <= 0.5;
+}
+void CommunicationDelayCompensatorNode::updateVehicleModel()
+{
+  auto vref = current_velocity_ptr->twist.twist.linear.x;
+  auto current_steering = current_steering_ptr_->steering_tire_angle;
+
+  // Compute current steering error.
+  // current_curvature_ = current_cont_perf_errors_->error.curvature_estimate;
+
+  // Ackerman Ideal Steering
+  auto ideal_ackerman_steering = 0.;  // std::atan(current_curvature_ * params_node_.wheel_base);
+
+  // Update the matrices
+  vehicle_model_ptr_->updateStateSpace(vref, ideal_ackerman_steering);
+
+  // Update the initial state.
+  float64_t ey{current_lateral_errors_->lateral_deviation_read};
+  float64_t eyaw{current_lateral_errors_->heading_angle_error_read};
+
+  vehicle_model_ptr_->updateInitialStates(ey, eyaw, current_steering);
+
+  ns_utils::print(
+    "vref, delta, ey, eyaw, ackerman", vref, current_steering, ey, eyaw, ideal_ackerman_steering);
 }
 
 }  // namespace observers

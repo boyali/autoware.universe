@@ -95,6 +95,8 @@ public:
 
   void updateInitialStates(state_vector_vehicle_t const & x0);
   void updateInitialStates(Eigen::MatrixXd const & x0);
+  void updateInitialStates(
+    float64_t const & ey, float64_t const & eyaw, float64_t const & steering);
 
   void updateStateSpace(float64_t const & vref, float64_t const & steering_ref);
 
