@@ -117,19 +117,19 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
   float64_t const & previous_input, float64_t const & measured_model_state,
   std::pair<float64_t, float64_t> const & num_den_args_of_g)
 {
-  //  if (!is_vehicle_initial_states_set_) {
-  //    /*
-  //     * Check if the vehicle model initial state has the same starting states with the physical
-  //     * system.
-  //     */
-  //
-  //    if (vehicle_model_ptr_->areInitialStatesSet()) {
-  //      x0_vehicle_ = vehicle_model_ptr_->getInitialStates();
-  //      is_vehicle_initial_states_set_ = true;
-  //    }
-  //  }
+  if (!is_vehicle_initial_states_set_) {
+    /*
+     * Check if the vehicle model initial state has the same starting states with the physical
+     * system.
+     */
 
-  x0_vehicle_ = vehicle_model_ptr_->getInitialStates();
+    if (vehicle_model_ptr_->areInitialStatesSet()) {
+      x0_vehicle_ = vehicle_model_ptr_->getInitialStates();
+      is_vehicle_initial_states_set_ = true;
+    }
+  }
+
+  // x0_vehicle_ = vehicle_model_ptr_->getInitialStates();
   // x0_vehicle_.setZero();
 
   // Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)

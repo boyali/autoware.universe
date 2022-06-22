@@ -310,8 +310,8 @@ void observers::LinearKinematicErrorModel::simulateOneStep(
 
   // first update the output
   // y0 = x0 + dt_ * (A_ * x0 + B_ * u);
+  y0 = Cd_ * x0.eval() + Dd_ * u;
   x0 = Ad_ * x0.eval() + Bd_ * u;
-  y0 = Cd_ * x0 + Dd_ * u;
 }
 
 void observers::LinearKinematicErrorModel::updateInitialStates(state_vector_vehicle_t const & x0)
