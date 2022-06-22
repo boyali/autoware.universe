@@ -27,6 +27,7 @@
 // Autoware Headers
 #include "common/types.hpp"
 #include "control_performance_analysis/msg/error_stamped.hpp"
+#include "vehicle_models/vehicle_kinematic_error_model.hpp"
 
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
@@ -156,12 +157,12 @@ private:
   rclcpp::Publisher<DelayCompensatorDebugMsg>::SharedPtr pub_delay_compensator_debug_;
 
   // Data Members for the delay-compensation.
-  std::unique_ptr<CommunicationDelayCompensatorCore>
-    delay_compensator_lat_error_{};  // set nullptr.
-  std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_heading_error_{};
-  std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_steering_error_{};
-  std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_velocity_error_{};
-  std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_acc_error_{};
+  std::unique_ptr<LinearKinematicErrorModel> vehicle_model_ptr_;
+  std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_lat_error_ptr_{};
+  std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_yaw_error_ptr_{};
+  std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_steering_ptr_{};
+  std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_velocity_error_ptr_{};
+  std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_acc_error_ptr_{};
 
   // Pointers to the ROS topics.
   // Pointers for ros topic
@@ -290,7 +291,7 @@ private:
    * */
   std::vector<float64_t> cdob_lateral_error_y_outputs_{};
   std::vector<float64_t> cdob_heading_error_y_outputs_{};
-  std::vector<float64_t> cdob_steering_error_y_outputs_{};
+  std::vector<float64_t> cdob_steering_y_outputs_{};
   std::vector<float64_t> cdob_velocity_error_y_outputs_{};
   std::vector<float64_t> cdob_acc_error_y_outputs_{};
 };

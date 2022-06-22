@@ -26,7 +26,7 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
   size_t const n_delay_compensator_output = 5;
   cdob_lateral_error_y_outputs_.reserve(n_delay_compensator_output);
   cdob_heading_error_y_outputs_.reserve(n_delay_compensator_output);
-  cdob_steering_error_y_outputs_.reserve(n_delay_compensator_output);
+  cdob_steering_y_outputs_.reserve(n_delay_compensator_output);
   cdob_velocity_error_y_outputs_.reserve(n_delay_compensator_output);
   cdob_acc_error_y_outputs_.reserve(n_delay_compensator_output);
 
@@ -195,26 +195,26 @@ void CommunicationDelayCompensatorNode::onTimer()
     //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity frq %4.2f ",
     //    params_node_.qfilter_velocity_error_freq);
 
-    //    if (delay_compensator_steering_error_) {
-    //      delay_compensator_steering_error_->print();
+    //    if (delay_comp_steering_ptr_) {
+    //      delay_comp_steering_ptr_->print();
     //    } else {
     //      ns_utils::print("Unique pointer is not set ");
     //    }
     //
-    //    if (delay_compensator_heading_error_) {
-    //      delay_compensator_heading_error_->print();
+    //    if (delay_comp_yaw_error_ptr_) {
+    //      delay_comp_yaw_error_ptr_->print();
     //    } else {
     //      ns_utils::print("Unique pointer is not set ");
     //    }
     //
-    //    if (delay_compensator_lat_error_) {
-    //      delay_compensator_lat_error_->print();
+    //    if (delay_comp_lat_error_ptr_) {
+    //      delay_comp_lat_error_ptr_->print();
     //    } else {
     //      ns_utils::print("Unique pointer is not set ");
     //    }
     //
-    //    if (delay_compensator_acc_error_) {
-    //      delay_compensator_acc_error_->print();
+    //    if (delay_compensator_acc_error_ptr_) {
+    //      delay_compensator_acc_error_ptr_->print();
     //    } else {
     //      ns_utils::print("Unique pointer is not set ");
     //    }
@@ -452,7 +452,7 @@ void CommunicationDelayCompensatorNode::setSteeringCDOBcompensator()
     q_tf, g_tf, params_node_.cdob_ctrl_period);
 
   // Store as an unique ptr.
-  delay_compensator_steering_error_ =
+  delay_comp_steering_ptr_ =
     std::make_unique<CommunicationDelayCompensatorCore>(delay_compensator_steering);
 }
 
@@ -479,11 +479,11 @@ void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
   current_steering_error_ = current_steering - ideal_ackerman_steering;
 
   // reset the stored outputs to zero.
-  // std::fill(cdob_steering_error_y_outputs_.begin(), cdob_steering_error_y_outputs_.end(), 0.);
+  // std::fill(cdob_steering_y_outputs_.begin(), cdob_steering_y_outputs_.end(), 0.);
 
   // Input is steering_input -> G(s) steering model --> next steering state.
-  delay_compensator_steering_error_->simulateOneStep(u_prev, current_steering);
-  cdob_steering_error_y_outputs_ = delay_compensator_steering_error_->getOutputs();
+  delay_comp_steering_ptr_->simulateOneStep(u_prev, current_steering);
+  cdob_steering_y_outputs_ = delay_comp_steering_ptr_->getOutputs();
 
   /**
    * @brief Outputs of the delay compensator.
@@ -496,18 +496,18 @@ void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
   // Set delay_compensation_reference for the steering.
   current_delay_references_msg_->steering_error_read = current_steering;
   current_delay_references_msg_->steering_error_compensation_ref =
-    static_cast<float>(cdob_steering_error_y_outputs_[4]);
+    static_cast<float>(cdob_steering_y_outputs_[4]);
 
   // Set debug message.
-  current_delay_debug_msg_->steering_uf = static_cast<float>(cdob_steering_error_y_outputs_[0]);
-  current_delay_debug_msg_->steering_u_du = static_cast<float>(cdob_steering_error_y_outputs_[1]);
-  current_delay_debug_msg_->steering_du = static_cast<float>(cdob_steering_error_y_outputs_[2]);
-  current_delay_debug_msg_->steering_ydu = static_cast<float>(cdob_steering_error_y_outputs_[3]);
+  current_delay_debug_msg_->steering_uf = static_cast<float>(cdob_steering_y_outputs_[0]);
+  current_delay_debug_msg_->steering_u_du = static_cast<float>(cdob_steering_y_outputs_[1]);
+  current_delay_debug_msg_->steering_du = static_cast<float>(cdob_steering_y_outputs_[2]);
+  current_delay_debug_msg_->steering_ydu = static_cast<float>(cdob_steering_y_outputs_[3]);
   current_delay_debug_msg_->steering_yu =
-    static_cast<float>(cdob_steering_error_y_outputs_[4]);  // to sum or subtract from ref.
+    static_cast<float>(cdob_steering_y_outputs_[4]);  // to sum or subtract from ref.
 
   current_delay_debug_msg_->steering_nondelay_u_estimated =
-    static_cast<float>(cdob_steering_error_y_outputs_[1] + cdob_steering_error_y_outputs_[2]);
+    static_cast<float>(cdob_steering_y_outputs_[1] + cdob_steering_y_outputs_[2]);
 
   // Debug
   // ns_utils::print("previous input : ", u_prev, current_steering);
@@ -567,7 +567,7 @@ void CommunicationDelayCompensatorNode::setHeadingErrorCDOBcompensator()
   delay_compensator_heading.setDynamicParams_num_den(param_names, f_variable_num_den_funcs);
 
   // Store as an unique ptr.
-  delay_compensator_heading_error_ =
+  delay_comp_yaw_error_ptr_ =
     std::make_unique<CommunicationDelayCompensatorCore>(delay_compensator_heading);
 }
 
@@ -594,8 +594,8 @@ void CommunicationDelayCompensatorNode::computeHeadingCDOBcompensator()
   auto & current_heading_error = current_lateral_errors_->heading_angle_error_read;
 
   // Input is steering_input -> G(s) heading error model --> next heading state.
-  delay_compensator_heading_error_->simulateOneStep(u_prev, current_heading_error, varying_params);
-  cdob_heading_error_y_outputs_ = delay_compensator_heading_error_->getOutputs();
+  delay_comp_yaw_error_ptr_->simulateOneStep(u_prev, current_heading_error, varying_params);
+  cdob_heading_error_y_outputs_ = delay_comp_yaw_error_ptr_->getOutputs();
 
   /**
    * @brief Outputs of the delay compensator.
@@ -678,7 +678,7 @@ void CommunicationDelayCompensatorNode::setLateralErrorCDOBcompensator()
   delay_compensator_lateral.setDynamicParams_num_den(param_names, f_variable_num_den_funcs);
 
   // Store as an unique ptr.
-  delay_compensator_lat_error_ =
+  delay_comp_lat_error_ptr_ =
     std::make_unique<CommunicationDelayCompensatorCore>(delay_compensator_lateral);
 }
 
@@ -700,8 +700,8 @@ void CommunicationDelayCompensatorNode::computeLateralCDOBcompensator()
   auto & current_lateral_error = current_lateral_errors_->lateral_deviation_read;
 
   // Input is steering_input -> G(s) heading error model --> next heading state.
-  delay_compensator_lat_error_->simulateOneStep(u_prev, current_lateral_error, varying_params);
-  cdob_lateral_error_y_outputs_ = delay_compensator_lat_error_->getOutputs();
+  delay_comp_lat_error_ptr_->simulateOneStep(u_prev, current_lateral_error, varying_params);
+  cdob_lateral_error_y_outputs_ = delay_comp_lat_error_ptr_->getOutputs();
 
   /**
    * @brief Outputs of the delay compensator.
@@ -748,7 +748,7 @@ void CommunicationDelayCompensatorNode::setVelocityErrorCDOBcompensator()
     q_tf, g_tf, params_node_.cdob_ctrl_period);
 
   // Store as an unique ptr.
-  delay_compensator_velocity_error_ =
+  delay_comp_velocity_error_ptr_ =
     std::make_unique<CommunicationDelayCompensatorCore>(delay_compensator_velocity);
 }
 
@@ -761,11 +761,11 @@ void CommunicationDelayCompensatorNode::computeVelocityCDOBcompensator()
   auto & current_velocity = current_velocity_ptr->twist.twist.linear.x;
 
   // reset the stored outputs to zero.
-  // std::fill(cdob_steering_error_y_outputs_.begin(), cdob_steering_error_y_outputs_.end(), 0.);
+  // std::fill(cdob_steering_y_outputs_.begin(), cdob_steering_y_outputs_.end(), 0.);
 
   // Input is steering_input -> G(s) steering model --> next steering state.
-  delay_compensator_velocity_error_->simulateOneStep(u_prev, current_velocity);
-  cdob_velocity_error_y_outputs_ = delay_compensator_velocity_error_->getOutputs();
+  delay_comp_velocity_error_ptr_->simulateOneStep(u_prev, current_velocity);
+  cdob_velocity_error_y_outputs_ = delay_comp_velocity_error_ptr_->getOutputs();
 
   /**
    * @brief Outputs of the delay compensator.
@@ -815,7 +815,7 @@ void CommunicationDelayCompensatorNode::setAccelerationErrorCDOBcompensator()
     q_tf, g_tf, params_node_.cdob_ctrl_period);
 
   // Store as an unique ptr.
-  delay_compensator_acc_error_ =
+  delay_compensator_acc_error_ptr_ =
     std::make_unique<CommunicationDelayCompensatorCore>(delay_compensator_acc);
 }
 
@@ -829,11 +829,11 @@ void CommunicationDelayCompensatorNode::computeAccelerationCDOBcompensator()
                               params_node_.cdob_ctrl_period;
 
   // reset the stored outputs to zero.
-  // std::fill(cdob_steering_error_y_outputs_.begin(), cdob_steering_error_y_outputs_.end(), 0.);
+  // std::fill(cdob_steering_y_outputs_.begin(), cdob_steering_y_outputs_.end(), 0.);
 
   // Input is steering_input -> G(s) steering model --> next steering state.
-  delay_compensator_acc_error_->simulateOneStep(u_prev, current_acceleration);
-  cdob_acc_error_y_outputs_ = delay_compensator_acc_error_->getOutputs();
+  delay_compensator_acc_error_ptr_->simulateOneStep(u_prev, current_acceleration);
+  cdob_acc_error_y_outputs_ = delay_compensator_acc_error_ptr_->getOutputs();
 
   /**
    * @brief Outputs of the delay compensator.

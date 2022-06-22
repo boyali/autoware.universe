@@ -22,23 +22,28 @@
 /**
  * @brief Kinematic Vehicle Lateral Error Model state and control definitions.
  * */
-enum class CDOB_PUBLIC KinematicErrorDims : int
-	{
-	STATE_DIM = 3,
-	INPUT_DIM = 1
-	};
+enum class CDOB_PUBLIC KinematicErrorDims : int { STATE_DIM = 3, INPUT_DIM = 1 };
 
-using state_vector_vehicle_t = Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::STATE_DIM), 1>;
-using input_vector_vehicle_t = Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::INPUT_DIM), 1>;
+using state_vector_vehicle_t =
+  Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::STATE_DIM), 1>;
+
+using input_vector_vehicle_t =
+  Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::INPUT_DIM), 1>;
+
+using state_matrix_vehicle_t = Eigen::Matrix<
+  double, toUnderlyingType(KinematicErrorDims::STATE_DIM),
+  toUnderlyingType(KinematicErrorDims::STATE_DIM)>;
+
+using input_matrix_vehicle_t =
+  Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::STATE_DIM), 1>;
 
 // General Template for enum class types.
-template<int Nnum_of_states>
+template <int Nnum_of_states>
 using state_vector_qfilter = Eigen::Matrix<double, Nnum_of_states, 1>;
 
-template<typename T>
+template <typename T>
 using func_type = std::function<T(T)>;
 
-
-//constexpr Eigen::Index STATE_DIM = 3;
-//constexpr Eigen::Index INPUT_DIM = 1;
-#endif //COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_DEFINITIONS_HPP
+// constexpr Eigen::Index STATE_DIM = 3;
+// constexpr Eigen::Index INPUT_DIM = 1;
+#endif  // COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_DEFINITIONS_HPP
