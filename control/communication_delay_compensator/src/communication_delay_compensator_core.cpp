@@ -397,7 +397,7 @@ void DelayCompensatorCore_PrototypeExample::simulateOneStep(
    * the controller.
    * */
   x0_inv_system_.setZero();
-  auto u_minus_ud = QGinv_ss_.simulateOneStep(x0_inv_system_, measured_model_state);
+  auto const && u_minus_ud = QGinv_ss_.simulateOneStep(x0_inv_system_, measured_model_state);
 
   // Get difference of uf-(u-du) ~=du
   auto const && du = uf - u_minus_ud;
@@ -405,8 +405,8 @@ void DelayCompensatorCore_PrototypeExample::simulateOneStep(
   // Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
 
   // The response of the vehicle state model to the disturbance input.
-  x0_gsystem_.setZero();
-  auto ydu = Gss_.simulateOneStep(x0_gsystem_, du);  // output is y (i.e ey, eyaw, ...).
+  // x0_gsystem_.setZero();
+  auto const && ydu = Gss_.simulateOneStep(x0_gsystem_, du);  // output is y (i.e ey, eyaw, ...).
 
   // ns_utils::print("Current velocity and steering :", num_den_args_of_g.first, previous_input);
   // ns_utils::print("Current V^2 and cos(delta)^2  : ",
