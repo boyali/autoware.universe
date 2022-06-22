@@ -117,17 +117,21 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
   float64_t const & previous_input, float64_t const & measured_model_state,
   std::pair<float64_t, float64_t> const & num_den_args_of_g)
 {
-  if (!is_vehicle_initial_states_set_) {
-    /*
-     * Check if the vehicle model initial state has the same starting states with the physical
-     * system.
-     */
+  //  if (!is_vehicle_initial_states_set_) {
+  //    /*
+  //     * Check if the vehicle model initial state has the same starting states with the physical
+  //     * system.
+  //     */
+  //
+  //    if (vehicle_model_ptr_->areInitialStatesSet()) {
+  //      x0_vehicle_ = vehicle_model_ptr_->getInitialStates();
+  //      is_vehicle_initial_states_set_ = true;
+  //    }
+  //  }
 
-    if (vehicle_model_ptr_->areInitialStatesSet()) {
-      x0_vehicle_ = vehicle_model_ptr_->getInitialStates();
-      is_vehicle_initial_states_set_ = true;
-    }
-  }
+  x0_vehicle_ = vehicle_model_ptr_->getInitialStates();
+  // x0_vehicle_.setZero();
+
   // Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
   if (num_den_constant_names_g_.first != "1") {
     auto && numkey = num_den_constant_names_g_.first;  // Corresponds to v in ey model.
@@ -136,7 +140,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
     auto && num_const_g = pair_func_map_[numkey](num_den_args_of_g.first);
 
     // Update numerator of G(s) and denominator of QGinv
-    g_tf_.update_num_coef(num_const_g);
+    // g_tf_.update_num_coef(num_const_g);
     q_g_inv_tf_.update_den_coef(num_const_g);  // since they are inverted.
 
     // ns_utils::print("State and its function : ", numkey, " : ", num_const_g);
@@ -146,7 +150,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
     auto && denkey = num_den_constant_names_g_.second;  // Corresponds to delta in ey model.
     auto && den_const_g = pair_func_map_[denkey](num_den_args_of_g.second);
 
-    g_tf_.update_den_coef(den_const_g);
+    // g_tf_.update_den_coef(den_const_g);
     q_g_inv_tf_.update_num_coef(den_const_g);  // since they are inverted.
     // ns_utils::print("State and its function : ", denkey, " : ", den_const_g);
   }
@@ -154,7 +158,6 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
   // If any of num den constant changes, update the state-space models.
   if (num_den_constant_names_g_.first != "1" || num_den_constant_names_g_.second != "1") {
     // Update Gss accordingly from the TF version.
-
     q_g_inv_ss_.updateStateSpace(q_g_inv_tf_);
 
     // ns_utils::print("G(s) and Q(s)/G(s) are updated");
@@ -176,7 +179,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
    * the controller.
    * ey, eyaw, or eVel --> Q(s)/G(s) -->U(-T) = u(controller) - du
    * */
-  // x0_inv_system_.setZero();
+  x0_inv_system_.setZero();
   auto const && u_du =
     q_g_inv_ss_.simulateOneStep(x0_inv_system_, measured_model_state);  // output is u-du.
 
@@ -202,7 +205,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
 
   y_outputs_[0] = uf;                                             // ufiltered
   y_outputs_[1] = u_du;                                           // u-du
-  y_outputs_[2] = du;                                             // du
+  y_outputs_[2] = -du;                                            // du
   y_outputs_[3] = y_vehicle_(state_ind_);                         // ydu.
   y_outputs_[4] = y_vehicle_(state_ind_) + measured_model_state;  // response of u(-T): yu
 

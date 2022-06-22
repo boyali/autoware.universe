@@ -617,13 +617,13 @@ void CommunicationDelayCompensatorNode::computeHeadingCDOBcompensator()
   auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
 
   // Get the current measured steering value.
-  auto & current_steering = current_steering_ptr_->steering_tire_angle;
+  // auto & current_steering = current_steering_ptr_->steering_tire_angle;
 
   // Get the current longitudinal speed.
   auto & current_speed_v = current_velocity_ptr->twist.twist.linear.x;
 
   // Send the current states [v, delta] to the delay compensator.
-  std::pair<float64_t, float64_t> varying_params({current_speed_v, current_steering});
+  std::pair<float64_t, float64_t> varying_params({current_speed_v, current_ideal_steering_});
 
   // Get the current heading error computed by the controllers.
   auto & current_heading_error = current_lateral_errors_->heading_angle_error_read;
@@ -724,13 +724,13 @@ void CommunicationDelayCompensatorNode::computeLateralCDOBcompensator()
   auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
 
   // Get the current measured steering value.
-  auto & current_steering = current_steering_ptr_->steering_tire_angle;
+  // auto & current_steering = current_steering_ptr_->steering_tire_angle;
 
   // Get the current longitudinal speed.
   auto & current_speed_v = current_velocity_ptr->twist.twist.linear.x;
 
   // Send the current states [v, delta] to the delay compensator.
-  std::pair<float64_t, float64_t> varying_params({current_speed_v, current_steering});
+  std::pair<float64_t, float64_t> varying_params({current_speed_v, current_ideal_steering_});
 
   // Get the current heading error computed by the controllers.
   auto & current_lateral_error = current_lateral_errors_->lateral_deviation_read;
@@ -915,17 +915,25 @@ bool8_t CommunicationDelayCompensatorNode::isVehicleStopping()
 void CommunicationDelayCompensatorNode::updateVehicleModel()
 {
   auto vref = current_velocity_ptr->twist.twist.linear.x;
-  auto current_steering = current_steering_ptr_->steering_tire_angle;
 
   // Update the matrices
   vehicle_model_ptr_->updateStateSpace(vref, current_ideal_steering_);
 
   // Update the initial state.
-  float64_t ey{current_lateral_errors_->lateral_deviation_read};
-  float64_t eyaw{current_lateral_errors_->heading_angle_error_read};
+  //  auto current_steering = current_steering_ptr_->steering_tire_angle;
+  //  float64_t ey{current_lateral_errors_->lateral_deviation_read};
+  //  float64_t eyaw{current_lateral_errors_->heading_angle_error_read};
 
-  if (!vehicle_model_ptr_->areInitialStatesSet()) {
-    vehicle_model_ptr_->updateInitialStates(ey, eyaw, current_steering);
+  //  if (!vehicle_model_ptr_->areInitialStatesSet()) {
+  //    vehicle_model_ptr_->updateInitialStates(ey, eyaw, current_steering);
+  //  }
+
+  if (prev_lateral_errors_ && prev_steering_ptr_) {
+    float64_t ey{prev_lateral_errors_->lateral_deviation_read};
+    float64_t eyaw{prev_lateral_errors_->heading_angle_error_read};
+
+    auto past_stering = prev_steering_ptr_->steering_tire_angle;
+    vehicle_model_ptr_->updateInitialStates(ey, eyaw, past_stering);
   }
 
   //  ns_utils::print(
