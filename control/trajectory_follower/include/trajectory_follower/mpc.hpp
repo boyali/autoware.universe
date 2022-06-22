@@ -187,6 +187,7 @@ private:
 
   //!< @brief previous headin error to report
   float64_t m_yaw_error_to_report{};
+  float64_t m_curvature_to_report{};
 
   //!< @brief previous predicted steering
   std::shared_ptr<float64_t> m_steer_prediction_prev;
@@ -448,6 +449,7 @@ public:
   inline void setClock(rclcpp::Clock::SharedPtr clock) { m_clock = clock; }
 
   std::pair<float64_t, float64_t> getComputedErrors();
+  float64_t getCurrentCurvature();
 
 };  // class MPC
 }  // namespace trajectory_follower

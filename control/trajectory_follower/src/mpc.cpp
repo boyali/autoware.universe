@@ -156,7 +156,11 @@ bool8_t MPC::calculateMPC(
   const float64_t steer_cmd = ctrl_cmd.steering_tire_angle;
   const float64_t wb = m_vehicle_model_ptr->getWheelbase();
 
+  // for time delay compensator
+  m_curvature_to_report = nearest_smooth_k;
+
   typedef decltype(diagnostic.diag_array.data)::value_type DiagnosticValueType;
+
   auto append_diag_data = [&](const auto & val) -> void {
     diagnostic.diag_array.data.push_back(static_cast<DiagnosticValueType>(val));
   };
@@ -839,6 +843,7 @@ std::pair<float64_t, float64_t> MPC::getComputedErrors()
 {
   return std::pair<float64_t, float64_t>({m_lateral_error_to_report, m_yaw_error_to_report});
 }
+float64_t MPC::getCurrentCurvature() { return m_curvature_to_report; }
 
 }  // namespace trajectory_follower
 }  // namespace control
