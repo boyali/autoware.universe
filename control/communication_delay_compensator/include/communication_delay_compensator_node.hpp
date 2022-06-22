@@ -179,6 +179,9 @@ private:
   std::shared_ptr<DelayCompensatatorMsg> current_delay_references_msg_{nullptr};
   std::shared_ptr<ControllerErrorReportMsg> current_lateral_errors_{nullptr};
   std::shared_ptr<ControllerErrorReportMsg> current_longitudinal_errors_{nullptr};
+  std::shared_ptr<ControllerErrorReportMsg> prev_lateral_errors_{nullptr};
+  std::shared_ptr<ControllerErrorReportMsg> prev_longitudinal_errors_{nullptr};
+
   // std::shared_ptr<ErrorStampedControlPerfMsg> current_cont_perf_errors_{nullptr};
 
   // Steering related.

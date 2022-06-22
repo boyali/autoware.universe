@@ -268,6 +268,7 @@ void CommunicationDelayCompensatorNode::onCurrentVelocity(const VelocityMsg::Sha
 void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(
   ControllerErrorReportMsg::SharedPtr const msg)
 {
+  prev_longitudinal_errors_ = current_longitudinal_errors_;
   current_longitudinal_errors_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
   // Debug
@@ -281,6 +282,7 @@ void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(
 void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
   ControllerErrorReportMsg::SharedPtr const msg)
 {
+  prev_lateral_errors_ = current_lateral_errors_;
   current_lateral_errors_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
   // Debug
