@@ -14,17 +14,22 @@
 
 #include "communication_delay_compensator_core.hpp"
 
+#include <utility>
+
 /**
  * @brief Communication Delay Compensator Core.
  * */
 
 observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
-  tf_t & qfilter, tf_t & g_system_model, double const & dt)
-: q_filter_tf_{qfilter}, g_tf_(g_system_model), dt_{dt}
+  model_ptr_t vehicle_model, tf_t & qfilter, tf_t & g_system_model, double const & dt)
+: vehicle_model_ptr_{std::move(vehicle_model)},
+  q_filter_tf_{qfilter},
+  g_tf_(g_system_model),
+  dt_{dt}
 {
   // The vector that keeps the output of the compensator.
-  // y_outputs_.reserve(num_of_outputs);
-  y_outputs_ = std::vector<float64_t>(num_of_outputs, 0.);
+  // y_outputs_.reserve(num_of_outputs_);
+  y_outputs_ = std::vector<float64_t>(num_of_outputs_, 0.);
 
   // Internal states of the transfer functions in the form of x[k+1] = Ax[k] + Bu[k]
   x0_qfilter_.setZero();
@@ -110,6 +115,17 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
   float64_t const & previous_input, float64_t const & measured_model_state,
   std::pair<float64_t, float64_t> const & num_den_args_of_g)
 {
+  if (!is_vehicle_initial_states_set_) {
+    /*
+     * Check if the vehicle model initial state has the same starting states with the physical
+     * system.
+     */
+
+    if (vehicle_model_ptr_->areInitialStatesSet()) {
+      x0_vehicle_ = vehicle_model_ptr_->getInitialStates();
+      is_vehicle_initial_states_set_ = true;
+    }
+  }
   // Get the output of num_constant for the G(s) = nconstant(x) * num / (denconstant(y) * den)
   if (num_den_constant_names_g_.first != "1") {
     auto && numkey = num_den_constant_names_g_.first;  // Corresponds to v in ey model.
@@ -174,11 +190,13 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
    * */
 
   std::fill(y_outputs_.begin(), y_outputs_.end(), 0.);
-  // y_outputs_ = std::vector<float64_t>(num_of_outputs, 0.);
+  // y_outputs_ = std::vector<float64_t>(num_of_outputs_, 0.);
 
   y_outputs_[0] = uf;    // ufiltered
   y_outputs_[1] = u_du;  // u-du
   y_outputs_[2] = du;    // du
+
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x0_vehicle_));
 }
 
 /// -------------- AS A PROTOTYPE NOT USED in the NODE ---------------------------------

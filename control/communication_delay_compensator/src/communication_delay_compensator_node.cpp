@@ -23,7 +23,7 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
   using std::placeholders::_1;
 
   // Vectors that keeps output of the communication delay compensator objects.
-  size_t const n_delay_compensator_output = 3;
+  size_t const n_delay_compensator_output = 5;
   cdob_lateral_error_y_outputs_.reserve(n_delay_compensator_output);
   cdob_heading_error_y_outputs_.reserve(n_delay_compensator_output);
   cdob_steering_y_outputs_.reserve(n_delay_compensator_output);
@@ -142,7 +142,7 @@ void CommunicationDelayCompensatorNode::onTimer()
 
   // Update vehicle model.
   updateVehicleModel();
-  vehicle_model_ptr_->printDiscreteSystem();
+  // vehicle_model_ptr_->printDiscreteSystem();
 
   // Compute the steering compensation values.
   if (!isVehicleStopping()) {
@@ -484,7 +484,7 @@ void CommunicationDelayCompensatorNode::setSteeringCDOBcompensator()
 
   auto g_tf = tf_t({1.}, {params_node_.steering_tau, 1.});
   CommunicationDelayCompensatorCore delay_compensator_steering(
-    q_tf, g_tf, params_node_.cdob_ctrl_period);
+    vehicle_model_ptr_, q_tf, g_tf, params_node_.cdob_ctrl_period);
 
   // Store as an unique ptr.
   delay_comp_steering_ptr_ =
@@ -504,14 +504,8 @@ void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
   // Get the current measured steering value.
   auto & current_steering = current_steering_ptr_->steering_tire_angle;
 
-  // Compute current steering error.
-  current_curvature_ = 0.;  // current_cont_perf_errors_->error.curvature_estimate;
-
-  // Ackerman Ideal Steering
-  auto const && ideal_ackerman_steering = std::atan(current_curvature_ * params_node_.wheel_base);
-
   // Error: current_val - target (ref)_val
-  current_steering_error_ = current_steering - ideal_ackerman_steering;
+  current_steering_error_ = current_steering - current_ideal_steering_;
 
   // reset the stored outputs to zero.
   // std::fill(cdob_steering_y_outputs_.begin(), cdob_steering_y_outputs_.end(), 0.);
@@ -552,11 +546,7 @@ void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
     static_cast<float>(current_steering) + vehicle_sim_outputs_(2);
 
   // Debug
-  ns_utils::print("vehicle states of the steering compensator");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(vehicle_state_));
-
-  ns_utils::print("y_u of the steering compensator");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(vehicle_sim_outputs_));
+  ns_utils::print("In steering compensator");
 }
 
 /**
@@ -607,7 +597,7 @@ void CommunicationDelayCompensatorNode::setHeadingErrorCDOBcompensator()
   auto g_tf = tf_t({1.}, den_tf_factor(), 1., 1.);  // num, den, num_constant, den_constant
 
   CommunicationDelayCompensatorCore delay_compensator_heading(
-    q_tf, g_tf, params_node_.cdob_ctrl_period);
+    vehicle_model_ptr_, q_tf, g_tf, params_node_.cdob_ctrl_period);
 
   // Set the mapping functions of the delay compensator.
   delay_compensator_heading.setDynamicParams_num_den(param_names, f_variable_num_den_funcs);
@@ -672,7 +662,7 @@ void CommunicationDelayCompensatorNode::computeHeadingCDOBcompensator()
     static_cast<float>(vehicle_state_(1)) + current_heading_error;
 
   // Debug
-  // ns_utils::print("previous input : ", u_prev, current_steering);
+  ns_utils::print("In heading compensator");
 }
 
 void CommunicationDelayCompensatorNode::setLateralErrorCDOBcompensator()
@@ -723,7 +713,7 @@ void CommunicationDelayCompensatorNode::setLateralErrorCDOBcompensator()
   auto g_tf = tf_t({1.}, den_tf_factor(), 1., 1.);  // num, den, num_constant, den_constant
 
   CommunicationDelayCompensatorCore delay_compensator_lateral(
-    q_tf, g_tf, params_node_.cdob_ctrl_period);
+    vehicle_model_ptr_, q_tf, g_tf, params_node_.cdob_ctrl_period);
 
   // Set the mapping functions of the delay compensator.
   delay_compensator_lateral.setDynamicParams_num_den(param_names, f_variable_num_den_funcs);
@@ -782,7 +772,7 @@ void CommunicationDelayCompensatorNode::computeLateralCDOBcompensator()
     static_cast<float>(vehicle_sim_outputs_(0)) + current_lateral_error;
 
   // Debug
-  // ns_utils::print("previous input : ", u_prev, current_steering);
+  ns_utils::print("In lateral error compensator");
 }
 
 void CommunicationDelayCompensatorNode::setVelocityErrorCDOBcompensator()
@@ -800,7 +790,7 @@ void CommunicationDelayCompensatorNode::setVelocityErrorCDOBcompensator()
 
   auto g_tf = tf_t({1.}, {params_node_.velocity_tau, 1.});
   CommunicationDelayCompensatorCore delay_compensator_velocity(
-    q_tf, g_tf, params_node_.cdob_ctrl_period);
+    vehicle_model_ptr_, q_tf, g_tf, params_node_.cdob_ctrl_period);
 
   // Store as an unique ptr.
   delay_comp_velocity_error_ptr_ =
@@ -868,7 +858,7 @@ void CommunicationDelayCompensatorNode::setAccelerationErrorCDOBcompensator()
 
   auto g_tf = tf_t({1.}, {params_node_.acc_tau, 1.});
   CommunicationDelayCompensatorCore delay_compensator_acc(
-    q_tf, g_tf, params_node_.cdob_ctrl_period);
+    vehicle_model_ptr_, q_tf, g_tf, params_node_.cdob_ctrl_period);
 
   // Store as an unique ptr.
   delay_compensator_acc_error_ptr_ =
@@ -936,7 +926,9 @@ void CommunicationDelayCompensatorNode::updateVehicleModel()
   float64_t ey{current_lateral_errors_->lateral_deviation_read};
   float64_t eyaw{current_lateral_errors_->heading_angle_error_read};
 
-  vehicle_model_ptr_->updateInitialStates(ey, eyaw, current_steering);
+  if (!vehicle_model_ptr_->areInitialStatesSet()) {
+    vehicle_model_ptr_->updateInitialStates(ey, eyaw, current_steering);
+  }
 
   //  ns_utils::print(
   //    "vref, delta, ey, eyaw, ackerman", vref, current_steering, ey, eyaw,

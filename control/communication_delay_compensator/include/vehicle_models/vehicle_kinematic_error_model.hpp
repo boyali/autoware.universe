@@ -107,7 +107,12 @@ public:
   void simulateOneStep_withPastStates(
     state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, float64_t const & u);
 
+  [[nodiscard]] bool8_t areInitialStatesSet() const { return are_initial_states_set_; }
+
+  [[nodiscard]] state_vector_vehicle_t getInitialStates() const;
+
 private:
+  bool8_t are_initial_states_set_{false};
   float64_t wheelbase_{2.74};
   float64_t tau_steering_{0.3};
   float64_t dt_{0.1};

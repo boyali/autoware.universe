@@ -306,6 +306,7 @@ void observers::LinearKinematicErrorModel::updateInitialStates(state_vector_vehi
 
 {
   x0_ << x0;
+  are_initial_states_set_ = true;
 
   // ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x0_));
 }
@@ -314,6 +315,7 @@ void observers::LinearKinematicErrorModel::updateInitialStates(Eigen::MatrixXd c
 
 {
   x0_ << x0;
+  are_initial_states_set_ = true;
 
   // ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x0_));
 }
@@ -321,4 +323,9 @@ void observers::LinearKinematicErrorModel::updateInitialStates(
   float64_t const & ey, float64_t const & eyaw, float64_t const & steering)
 {
   x0_ << ey, eyaw, steering;
+  are_initial_states_set_ = true;
+}
+state_vector_vehicle_t observers::LinearKinematicErrorModel::getInitialStates() const
+{
+  return x0_;
 }

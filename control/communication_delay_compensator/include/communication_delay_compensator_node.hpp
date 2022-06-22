@@ -127,6 +127,8 @@ public:
    */
   ~CommunicationDelayCompensatorNode() override = default;
 
+  std::shared_ptr<LinearKinematicErrorModel> vehicle_model_ptr_;
+
 private:
   // Data Members
   Parameters params_node_{};
@@ -157,7 +159,6 @@ private:
   rclcpp::Publisher<DelayCompensatorDebugMsg>::SharedPtr pub_delay_compensator_debug_;
 
   // Data Members for the delay-compensation.
-  std::shared_ptr<LinearKinematicErrorModel> vehicle_model_ptr_;
   std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_lat_error_ptr_{};
   std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_yaw_error_ptr_{};
   std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_steering_ptr_{};

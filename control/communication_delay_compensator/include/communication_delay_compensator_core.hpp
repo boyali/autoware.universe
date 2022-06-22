@@ -25,6 +25,7 @@
 
 // Autoware libs
 #include "node_denifitions/node_definitions.hpp"
+#include "vehicle_models/vehicle_kinematic_error_model.hpp"
 
 namespace observers
 {
@@ -35,9 +36,11 @@ namespace observers
 class CommunicationDelayCompensatorCore
 {
 public:
+  using model_ptr_t = std::shared_ptr<LinearKinematicErrorModel>;
   CommunicationDelayCompensatorCore() = default;
 
-  CommunicationDelayCompensatorCore(tf_t & qfilter, tf_t & g_system_model, double const & dt);
+  CommunicationDelayCompensatorCore(
+    model_ptr_t vehicle_model, tf_t & qfilter, tf_t & g_system_model, double const & dt);
 
   void print() const;  // @brief  Prints the configuration.
 
@@ -63,10 +66,14 @@ public:
 
   std::vector<float64_t> getOutputs() const { return y_outputs_; }
 
-private:
-  // Qfilter transfer function.
-  size_t num_of_outputs{3};
+  bool8_t isVehicleModelInitialStatesSet() const { return is_vehicle_initial_states_set_; }
 
+private:
+  bool8_t is_vehicle_initial_states_set_{false};
+  model_ptr_t vehicle_model_ptr_{};
+
+  // Qfilter transfer function.
+  size_t num_of_outputs_{5};
   tf_t q_filter_tf_{};  // @brief Transfer function of the qfilter.
   tf_t g_tf_{};         // @brief state dynamics
   float64_t dt_{};
@@ -93,6 +100,9 @@ private:
   // Internal states.
   Eigen::MatrixXd x0_qfilter_{};     // u--> Q(s) -->ufiltered
   Eigen::MatrixXd x0_inv_system_{};  // y--> Q(s)/G(s) --> u-du
+
+  // Internal vehicle model simulator.
+  state_vector_vehicle_t x0_vehicle_{state_vector_vehicle_t::Zero()};
 
   // Data members, place holders.
   /**
