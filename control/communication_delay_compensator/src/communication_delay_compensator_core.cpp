@@ -179,7 +179,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
    * the controller.
    * ey, eyaw, or eVel --> Q(s)/G(s) -->U(-T) = u(controller) - du
    * */
-  x0_inv_system_.setZero();
+  // x0_inv_system_.setZero();
   auto const && u_du =
     q_g_inv_ss_.simulateOneStep(x0_inv_system_, measured_model_state);  // output is u-du.
 
@@ -205,7 +205,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
 
   y_outputs_[0] = uf;                                             // ufiltered
   y_outputs_[1] = u_du;                                           // u-du
-  y_outputs_[2] = -du;                                            // du
+  y_outputs_[2] = du;                                             // du
   y_outputs_[3] = y_vehicle_(state_ind_);                         // ydu.
   y_outputs_[4] = y_vehicle_(state_ind_) + measured_model_state;  // response of u(-T): yu
 
