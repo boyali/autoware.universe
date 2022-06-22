@@ -516,7 +516,7 @@ void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
    * */
 
   // Set delay_compensation_reference for the steering.
-  current_delay_references_msg_->steering_error_read = current_steering;
+  current_delay_references_msg_->steering_read = current_steering;
   current_delay_references_msg_->steering_error_compensation_ref =
     static_cast<float>(cdob_steering_y_outputs_[4]);
 
