@@ -150,7 +150,7 @@ private:
   rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_lat_errors_ptr_;
 
   //!< @brief subscription for current lateral and heading errors.
-  rclcpp::Subscription<ErrorStampedControlPerfMsg>::SharedPtr sub_control_perf_errors_ptr_;
+  // rclcpp::Subscription<ErrorStampedControlPerfMsg>::SharedPtr sub_control_perf_errors_ptr_;
 
   // Publishers
   rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr pub_delay_compensator_;
@@ -179,7 +179,7 @@ private:
   std::shared_ptr<DelayCompensatatorMsg> current_delay_references_msg_{nullptr};
   std::shared_ptr<ControllerErrorReportMsg> current_lateral_errors_{nullptr};
   std::shared_ptr<ControllerErrorReportMsg> current_longitudinal_errors_{nullptr};
-  std::shared_ptr<ErrorStampedControlPerfMsg> current_cont_perf_errors_{nullptr};
+  // std::shared_ptr<ErrorStampedControlPerfMsg> current_cont_perf_errors_{nullptr};
 
   // Steering related.
   float64_t current_curvature_{};
@@ -226,7 +226,7 @@ private:
   /**
    * @brief Subscription to control performance errors.
    */
-  void onControlPerfErrors(const ErrorStampedControlPerfMsg::SharedPtr msg);
+  // void onControlPerfErrors(const ErrorStampedControlPerfMsg::SharedPtr msg);
 
   /**
    * @brief Publish message.

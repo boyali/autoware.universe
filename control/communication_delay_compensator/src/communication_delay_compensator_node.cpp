@@ -82,11 +82,11 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
       &observers::CommunicationDelayCompensatorNode::onCurrentLateralErrors, this,
       std::placeholders::_1));
 
-  sub_control_perf_errors_ptr_ = create_subscription<ErrorStampedControlPerfMsg>(
-    "~/input/cp_errors", rclcpp::QoS{1},
-    std::bind(
-      &observers::CommunicationDelayCompensatorNode::onControlPerfErrors, this,
-      std::placeholders::_1));
+  //  sub_control_perf_errors_ptr_ = create_subscription<ErrorStampedControlPerfMsg>(
+  //    "~/input/cp_errors", rclcpp::QoS{1},
+  //    std::bind(
+  //      &observers::CommunicationDelayCompensatorNode::onControlPerfErrors, this,
+  //      std::placeholders::_1));
 
   // Dynamic Parameter Update.
   is_parameters_set_res_ = this->add_on_set_parameters_callback(
@@ -293,14 +293,14 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
   // end of debug.
 }
 
-void CommunicationDelayCompensatorNode::onControlPerfErrors(
-  const ErrorStampedControlPerfMsg::SharedPtr msg)
-{
-  current_cont_perf_errors_ = std::make_shared<ErrorStampedControlPerfMsg>(*msg);
-
-  // Debug
-  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Control Perf. Errors");
-}
+// void CommunicationDelayCompensatorNode::onControlPerfErrors(
+//   const ErrorStampedControlPerfMsg::SharedPtr msg)
+//{
+//   current_cont_perf_errors_ = std::make_shared<ErrorStampedControlPerfMsg>(*msg);
+//
+//   // Debug
+//   RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Control Perf. Errors");
+// }
 
 void CommunicationDelayCompensatorNode::publishCompensationReferences()
 {
@@ -492,7 +492,7 @@ void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
   auto & current_steering = current_steering_ptr_->steering_tire_angle;
 
   // Compute current steering error.
-  current_curvature_ = current_cont_perf_errors_->error.curvature_estimate;
+  current_curvature_ = 0.;  // current_cont_perf_errors_->error.curvature_estimate;
 
   // Ackerman Ideal Steering
   auto const && ideal_ackerman_steering = std::atan(current_curvature_ * params_node_.wheel_base);

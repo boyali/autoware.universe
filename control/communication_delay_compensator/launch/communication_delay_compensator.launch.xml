@@ -22,7 +22,8 @@
         <remap from="~/input/long_errors"
                to="/control/trajectory_follower/longitudinal/longitudinal_controller_error_report"/>
         <remap from="~/input/lat_errors" to="/control/trajectory_follower/lateral/lateral_controller_error_report"/>
-        <remap from="~/input/cp_errors" to="/control_performance/performance_vars"/>
+
+        <!--        <remap from="~/input/cp_errors" to="/control_performance/performance_vars"/>-->
         <remap from="~/output/communication_delay_compensation_refs" to="observers/time_delay_compensator/delay_refs"/>
         <remap from="~/output/communication_delay_compensation_debug"
                to="observers/time_delay_compensator/delay_debug"/>
