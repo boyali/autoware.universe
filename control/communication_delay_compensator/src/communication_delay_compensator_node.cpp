@@ -285,6 +285,12 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
   prev_lateral_errors_ = current_lateral_errors_;
   current_lateral_errors_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
+  // Compute current steering error.
+  current_curvature_ = current_lateral_errors_->curvature_read;
+
+  // Ackerman Ideal Steering
+  current_ideal_steering_ = std::atan(current_curvature_ * params_node_.wheel_base);
+
   // Debug
   RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Lateral Errors");
 
@@ -535,14 +541,22 @@ void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
   // Simulate one step of vehicle with du: disturbance input.
   /*vehicle_sim_outputs_ -> [ey, eyaw, delta]*/
   auto && du = current_delay_debug_msg_->steering_du;
+  setToPastLateralModelStates(vehicle_state_);
   vehicle_model_ptr_->simulateOneStep_withPastStates(vehicle_sim_outputs_, vehicle_state_, du);
 
-  current_delay_debug_msg_->steering_ydu = vehicle_sim_outputs_(2);
-  current_delay_debug_msg_->steering_yu = current_steering + vehicle_sim_outputs_(2);
-  current_delay_references_msg_->steering_error_compensation_ref = 0.;
+  current_delay_debug_msg_->steering_ydu = static_cast<float>(vehicle_sim_outputs_(2));
+  current_delay_debug_msg_->steering_yu =
+    static_cast<float>(current_steering) + vehicle_sim_outputs_(2);
+
+  current_delay_references_msg_->steering_error_compensation_ref =
+    static_cast<float>(current_steering) + vehicle_sim_outputs_(2);
 
   // Debug
-  // ns_utils::print("previous input : ", u_prev, current_steering);
+  ns_utils::print("vehicle states of the steering compensator");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(vehicle_state_));
+
+  ns_utils::print("y_u of the steering compensator");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(vehicle_sim_outputs_));
 }
 
 /**
@@ -645,9 +659,17 @@ void CommunicationDelayCompensatorNode::computeHeadingCDOBcompensator()
   current_delay_debug_msg_->heading_nondelay_u_estimated =
     static_cast<float>(cdob_heading_error_y_outputs_[1] + cdob_heading_error_y_outputs_[2]);
 
-  current_delay_debug_msg_->heading_ydu = 0.;
-  current_delay_debug_msg_->heading_yu = 0.;
-  current_delay_references_msg_->heading_angle_error_compensation_ref = 0;
+  auto && du = current_delay_debug_msg_->heading_du;
+  setToPastLateralModelStates(vehicle_state_);
+  vehicle_model_ptr_->simulateOneStep_withPastStates(vehicle_sim_outputs_, vehicle_state_, du);
+
+  current_delay_debug_msg_->heading_ydu = static_cast<float>(vehicle_state_(1));
+
+  current_delay_debug_msg_->heading_yu =
+    static_cast<float>(vehicle_state_(1)) + current_heading_error;
+
+  current_delay_references_msg_->heading_angle_error_compensation_ref =
+    static_cast<float>(vehicle_state_(1)) + current_heading_error;
 
   // Debug
   // ns_utils::print("previous input : ", u_prev, current_steering);
@@ -749,9 +771,15 @@ void CommunicationDelayCompensatorNode::computeLateralCDOBcompensator()
   current_delay_debug_msg_->lat_u_nondelay_u_estimated =
     static_cast<float>(cdob_lateral_error_y_outputs_[1] + cdob_lateral_error_y_outputs_[2]);
 
-  current_delay_debug_msg_->lat_ydu = 0.;
-  current_delay_debug_msg_->lat_yu = 0.;
-  current_delay_references_msg_->lateral_deviation_error_compensation_ref = 0.;
+  auto && du = current_delay_debug_msg_->lat_du;
+  setToPastLateralModelStates(vehicle_state_);
+  vehicle_model_ptr_->simulateOneStep_withPastStates(vehicle_sim_outputs_, vehicle_state_, du);
+
+  current_delay_debug_msg_->lat_ydu = static_cast<float>(vehicle_sim_outputs_(0));
+  current_delay_debug_msg_->lat_yu =
+    static_cast<float>(vehicle_sim_outputs_(0)) + current_lateral_error;
+  current_delay_references_msg_->lateral_deviation_error_compensation_ref =
+    static_cast<float>(vehicle_sim_outputs_(0)) + current_lateral_error;
 
   // Debug
   // ns_utils::print("previous input : ", u_prev, current_steering);
@@ -901,14 +929,8 @@ void CommunicationDelayCompensatorNode::updateVehicleModel()
   auto vref = current_velocity_ptr->twist.twist.linear.x;
   auto current_steering = current_steering_ptr_->steering_tire_angle;
 
-  // Compute current steering error.
-  current_curvature_ = current_lateral_errors_->curvature_read;
-
-  // Ackerman Ideal Steering
-  auto ideal_ackerman_steering = std::atan(current_curvature_ * params_node_.wheel_base);
-
   // Update the matrices
-  vehicle_model_ptr_->updateStateSpace(vref, ideal_ackerman_steering);
+  vehicle_model_ptr_->updateStateSpace(vref, current_ideal_steering_);
 
   // Update the initial state.
   float64_t ey{current_lateral_errors_->lateral_deviation_read};

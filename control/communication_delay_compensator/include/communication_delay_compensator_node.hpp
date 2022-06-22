@@ -188,6 +188,7 @@ private:
 
   // Steering related.
   float64_t current_curvature_{};
+  float64_t current_ideal_steering_{};
   float64_t current_steering_error_{};  // from Ackerman angle.
 
   // Debug messages
