@@ -104,7 +104,7 @@ public:
   void simulateOneStep(state_vector_vehicle_t & y0, float64_t const & u);
 
   // x0 is updated outside.
-  void simulateOneStep(
+  void simulateOneStep_withPastStates(
     state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, float64_t const & u);
 
 private:

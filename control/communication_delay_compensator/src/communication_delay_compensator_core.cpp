@@ -28,12 +28,10 @@ observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
 
   // Internal states of the transfer functions in the form of x[k+1] = Ax[k] + Bu[k]
   x0_qfilter_.setZero();
-  x0_gsystem_.setZero();
   x0_inv_system_.setZero();
 
   // Compute the state spaces which can simulate the system given a u, x0.
   q_filter_ss_ = ss_t(q_filter_tf_, dt_);
-  g_ss_ = ss_t(g_tf_, dt_);
 
   // Compute Q(ss)/G(ss)
   auto g_inv = std::move(g_system_model);
@@ -50,11 +48,9 @@ observers::CommunicationDelayCompensatorCore::CommunicationDelayCompensatorCore(
 
   // Initialize the Eigen vectors.
   auto qfilter_order = std::max(q_filter_tf_.num().size(), q_filter_tf_.den().size());
-  auto system_model_order = std::max(g_tf_.num().size(), g_tf_.den().size());
   auto inverse_system_order = std::max(q_g_inv_tf_.num().size(), q_g_inv_tf_.den().size());
 
   x0_qfilter_ = Eigen::MatrixXd(qfilter_order, 1);
-  x0_gsystem_ = Eigen::MatrixXd(system_model_order, 1);
   x0_inv_system_ = Eigen::MatrixXd(inverse_system_order, 1);
 }
 
@@ -140,7 +136,7 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
   // If any of num den constant changes, update the state-space models.
   if (num_den_constant_names_g_.first != "1" || num_den_constant_names_g_.second != "1") {
     // Update Gss accordingly from the TF version.
-    g_ss_.updateStateSpace(g_tf_);
+
     q_g_inv_ss_.updateStateSpace(q_g_inv_tf_);
 
     // ns_utils::print("G(s) and Q(s)/G(s) are updated");
@@ -169,18 +165,12 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
   // Get difference of uf-(u-du) ~=du
   auto const && du = uf - u_du;
 
-  // Send du to the G(s) as the previous_input du --> G(s) --> dyu to obtain compensation signal.
-  // output is ydu (i.e ey, eyaw, ...).
-
-  x0_gsystem_.setZero();
-  auto const && ydu = g_ss_.simulateOneStep(x0_gsystem_, du);
   // Get outputs.
   /**
    * @brief Outputs of the delay compensator.
    * uf: u_filtered,Q(s)*u where u is the previous_input sent to the system.
    * u_du: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
    * y2: du = uf - y2 where du is the estimated disturbance previous_input
-   * ydu: ydu = G(s)*du where ydu is the response of the system to du.
    * */
 
   std::fill(y_outputs_.begin(), y_outputs_.end(), 0.);
@@ -189,10 +179,6 @@ void observers::CommunicationDelayCompensatorCore::simulateOneStep(
   y_outputs_[0] = uf;    // ufiltered
   y_outputs_[1] = u_du;  // u-du
   y_outputs_[2] = du;    // du
-  y_outputs_[3] = ydu;   // ydu;   // du->Q(s)/G(s)--> y_du
-
-  // reference correction.
-  y_outputs_[4] = (measured_model_state + ydu);  // yu = y_measured (yu-ydu) + ydu  where
 }
 
 /// -------------- AS A PROTOTYPE NOT USED in the NODE ---------------------------------

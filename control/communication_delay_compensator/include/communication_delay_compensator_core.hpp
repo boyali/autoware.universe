@@ -65,14 +65,14 @@ public:
 
 private:
   // Qfilter transfer function.
-  size_t num_of_outputs{5};
+  size_t num_of_outputs{3};
+
   tf_t q_filter_tf_{};  // @brief Transfer function of the qfilter.
   tf_t g_tf_{};         // @brief state dynamics
   float64_t dt_{};
 
   //  Compensator state-space
   ss_t q_filter_ss_{};  //@brief State space model of the qfilter
-  ss_t g_ss_;
 
   // Q(s)/G(s)
   tf_t q_g_inv_tf_{};
@@ -92,7 +92,6 @@ private:
 
   // Internal states.
   Eigen::MatrixXd x0_qfilter_{};     // u--> Q(s) -->ufiltered
-  Eigen::MatrixXd x0_gsystem_{};     // u--> G(s)-->y (i,e ey, eyaw ..)
   Eigen::MatrixXd x0_inv_system_{};  // y--> Q(s)/G(s) --> u-du
 
   // Data members, place holders.

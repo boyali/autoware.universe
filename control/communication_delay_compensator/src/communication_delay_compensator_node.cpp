@@ -23,12 +23,16 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
   using std::placeholders::_1;
 
   // Vectors that keeps output of the communication delay compensator objects.
-  size_t const n_delay_compensator_output = 5;
+  size_t const n_delay_compensator_output = 3;
   cdob_lateral_error_y_outputs_.reserve(n_delay_compensator_output);
   cdob_heading_error_y_outputs_.reserve(n_delay_compensator_output);
   cdob_steering_y_outputs_.reserve(n_delay_compensator_output);
   cdob_velocity_error_y_outputs_.reserve(n_delay_compensator_output);
   cdob_acc_error_y_outputs_.reserve(n_delay_compensator_output);
+
+  // Placeholders for vehicle model.
+  vehicle_state_.setZero();
+  vehicle_sim_outputs_.setZero();
 
   // Reserve internal results vectors.
 
@@ -512,24 +516,27 @@ void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
    * y0: u_filtered,Q(s)*u where u is the input sent to the system.
    * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
    * y2: du = y0 - y1 where du is the estimated disturbance input
-   * y3: ydu = G(s)*du where ydu is the response of the system to du.
    * */
 
   // Set delay_compensation_reference for the steering.
   current_delay_references_msg_->steering_read = current_steering;
-  current_delay_references_msg_->steering_error_compensation_ref =
-    static_cast<float>(cdob_steering_y_outputs_[4]);
 
   // Set debug message.
   current_delay_debug_msg_->steering_uf = static_cast<float>(cdob_steering_y_outputs_[0]);
   current_delay_debug_msg_->steering_u_du = static_cast<float>(cdob_steering_y_outputs_[1]);
   current_delay_debug_msg_->steering_du = static_cast<float>(cdob_steering_y_outputs_[2]);
-  current_delay_debug_msg_->steering_ydu = static_cast<float>(cdob_steering_y_outputs_[3]);
-  current_delay_debug_msg_->steering_yu =
-    static_cast<float>(cdob_steering_y_outputs_[4]);  // to sum or subtract from ref.
 
   current_delay_debug_msg_->steering_nondelay_u_estimated =
     static_cast<float>(cdob_steering_y_outputs_[1] + cdob_steering_y_outputs_[2]);
+
+  // Simulate one step of vehicle with du: disturbance input.
+  /*vehicle_sim_outputs_ -> [ey, eyaw, delta]*/
+  auto && du = current_delay_debug_msg_->steering_du;
+  vehicle_model_ptr_->simulateOneStep_withPastStates(vehicle_sim_outputs_, vehicle_state_, du);
+
+  current_delay_debug_msg_->steering_ydu = vehicle_sim_outputs_(2);
+  current_delay_debug_msg_->steering_yu = current_steering + vehicle_sim_outputs_(2);
+  current_delay_references_msg_->steering_error_compensation_ref = 0.;
 
   // Debug
   // ns_utils::print("previous input : ", u_prev, current_steering);
@@ -627,20 +634,17 @@ void CommunicationDelayCompensatorNode::computeHeadingCDOBcompensator()
    * y3: ydu = G(s)*du where ydu is the response of the system to du.
    * */
   current_delay_references_msg_->heading_angle_error_read = current_heading_error;
-  current_delay_references_msg_->heading_angle_error_compensation_ref =
-    static_cast<float>(cdob_heading_error_y_outputs_[4]);
 
   // Set debug message.
   current_delay_debug_msg_->heading_uf = static_cast<float>(cdob_heading_error_y_outputs_[0]);
   current_delay_debug_msg_->heading_u_du = static_cast<float>(cdob_heading_error_y_outputs_[1]);
   current_delay_debug_msg_->heading_du = static_cast<float>(cdob_heading_error_y_outputs_[2]);
-  current_delay_debug_msg_->heading_ydu = static_cast<float>(cdob_heading_error_y_outputs_[3]);
-  current_delay_debug_msg_->heading_yu =
-    static_cast<float>(cdob_heading_error_y_outputs_[4]);  // to sum or
-  // subtract from ref.
-
   current_delay_debug_msg_->heading_nondelay_u_estimated =
     static_cast<float>(cdob_heading_error_y_outputs_[1] + cdob_heading_error_y_outputs_[2]);
+
+  current_delay_debug_msg_->heading_ydu = 0.;
+  current_delay_debug_msg_->heading_yu = 0.;
+  current_delay_references_msg_->heading_angle_error_compensation_ref = 0;
 
   // Debug
   // ns_utils::print("previous input : ", u_prev, current_steering);
@@ -733,20 +737,18 @@ void CommunicationDelayCompensatorNode::computeLateralCDOBcompensator()
    * y3: ydu = G(s)*du where ydu is the response of the system to du.
    * */
   current_delay_references_msg_->lateral_deviation_read = current_lateral_error;
-  current_delay_references_msg_->lateral_deviation_error_compensation_ref =
-    static_cast<float>(cdob_lateral_error_y_outputs_[4]);
 
   // Set debug message.
   current_delay_debug_msg_->lat_uf = static_cast<float>(cdob_lateral_error_y_outputs_[0]);
   current_delay_debug_msg_->lat_u_du = static_cast<float>(cdob_lateral_error_y_outputs_[1]);
   current_delay_debug_msg_->lat_du = static_cast<float>(cdob_lateral_error_y_outputs_[2]);
-  current_delay_debug_msg_->lat_ydu = static_cast<float>(cdob_lateral_error_y_outputs_[3]);
-  current_delay_debug_msg_->lat_yu =
-    static_cast<float>(cdob_lateral_error_y_outputs_[4]);  // to sum or
-  // subtract from ref.
 
   current_delay_debug_msg_->lat_u_nondelay_u_estimated =
     static_cast<float>(cdob_lateral_error_y_outputs_[1] + cdob_lateral_error_y_outputs_[2]);
+
+  current_delay_debug_msg_->lat_ydu = 0.;
+  current_delay_debug_msg_->lat_yu = 0.;
+  current_delay_references_msg_->lateral_deviation_error_compensation_ref = 0.;
 
   // Debug
   // ns_utils::print("previous input : ", u_prev, current_steering);
@@ -800,18 +802,19 @@ void CommunicationDelayCompensatorNode::computeVelocityCDOBcompensator()
   // Set delay_compensation_reference for the steering.
   current_delay_references_msg_->velocity_error_read =
     current_longitudinal_errors_->velocity_error_read;
-  current_delay_references_msg_->velocity_error_compensation_ref =
-    static_cast<float>(cdob_velocity_error_y_outputs_[4]);
 
   // Set debug message.
   current_delay_debug_msg_->vel_uf = static_cast<float>(cdob_velocity_error_y_outputs_[0]);
   current_delay_debug_msg_->vel_u_du = static_cast<float>(cdob_velocity_error_y_outputs_[1]);
   current_delay_debug_msg_->vel_du = static_cast<float>(cdob_velocity_error_y_outputs_[2]);
-  current_delay_debug_msg_->vel_ydu = static_cast<float>(cdob_velocity_error_y_outputs_[3]);
-  current_delay_debug_msg_->vel_yu = static_cast<float>(cdob_velocity_error_y_outputs_[4]);
 
   current_delay_debug_msg_->vel_u_nondelay_u_estimated =
     static_cast<float>(cdob_velocity_error_y_outputs_[1] + cdob_velocity_error_y_outputs_[2]);
+
+  current_delay_debug_msg_->vel_ydu = 0.;
+  current_delay_debug_msg_->vel_yu = 0.;
+
+  current_delay_references_msg_->velocity_error_compensation_ref = 0.;
 
   // Debug
   // ns_utils::print("previous input : ", u_prev, current_steering);
@@ -868,18 +871,18 @@ void CommunicationDelayCompensatorNode::computeAccelerationCDOBcompensator()
   // Set delay_compensation_reference for the steering.
   current_delay_references_msg_->acceleration_error_read =
     current_longitudinal_errors_->acceleration_error_read;
-  current_delay_references_msg_->acceleration_error_compensation_ref =
-    static_cast<float>(cdob_acc_error_y_outputs_[4]);
 
   // Set debug message.
   current_delay_debug_msg_->acc_uf = static_cast<float>(cdob_acc_error_y_outputs_[0]);
   current_delay_debug_msg_->acc_u_du = static_cast<float>(cdob_acc_error_y_outputs_[1]);
   current_delay_debug_msg_->acc_du = static_cast<float>(cdob_acc_error_y_outputs_[2]);
-  current_delay_debug_msg_->acc_ydu = static_cast<float>(cdob_acc_error_y_outputs_[3]);
-  current_delay_debug_msg_->acc_yu = static_cast<float>(cdob_acc_error_y_outputs_[4]);
 
   current_delay_debug_msg_->acc_u_nondelay_u_estimated =
     static_cast<float>(cdob_acc_error_y_outputs_[1] + cdob_acc_error_y_outputs_[2]);
+
+  current_delay_debug_msg_->acc_ydu = 0.;
+  current_delay_debug_msg_->acc_yu = 0.;
+  current_delay_references_msg_->acceleration_error_compensation_ref = 0.;
 
   // Debug
   // ns_utils::print("previous input : ", u_prev, current_steering);
@@ -896,10 +899,10 @@ void CommunicationDelayCompensatorNode::updateVehicleModel()
   auto current_steering = current_steering_ptr_->steering_tire_angle;
 
   // Compute current steering error.
-  // current_curvature_ = current_cont_perf_errors_->error.curvature_estimate;
+  current_curvature_ = current_lateral_errors_->curvature_read;
 
   // Ackerman Ideal Steering
-  auto ideal_ackerman_steering = 0.;  // std::atan(current_curvature_ * params_node_.wheel_base);
+  auto ideal_ackerman_steering = std::atan(current_curvature_ * params_node_.wheel_base);
 
   // Update the matrices
   vehicle_model_ptr_->updateStateSpace(vref, ideal_ackerman_steering);
@@ -910,8 +913,9 @@ void CommunicationDelayCompensatorNode::updateVehicleModel()
 
   vehicle_model_ptr_->updateInitialStates(ey, eyaw, current_steering);
 
-  ns_utils::print(
-    "vref, delta, ey, eyaw, ackerman", vref, current_steering, ey, eyaw, ideal_ackerman_steering);
+  //  ns_utils::print(
+  //    "vref, delta, ey, eyaw, ackerman", vref, current_steering, ey, eyaw,
+  //    ideal_ackerman_steering);
 }
 
 }  // namespace observers

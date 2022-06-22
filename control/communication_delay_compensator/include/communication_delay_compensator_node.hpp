@@ -73,7 +73,7 @@ using ControllerErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErro
 using VelocityMsg = nav_msgs::msg::Odometry;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using vehicle_info_util::VehicleInfoUtil;
-using ErrorStampedControlPerfMsg = control_performance_analysis::msg::ErrorStamped;
+// using ErrorStampedControlPerfMsg = control_performance_analysis::msg::ErrorStamped;
 
 // Parameters to pass around.
 struct Parameters
@@ -299,6 +299,10 @@ private:
   std::vector<float64_t> cdob_steering_y_outputs_{};
   std::vector<float64_t> cdob_velocity_error_y_outputs_{};
   std::vector<float64_t> cdob_acc_error_y_outputs_{};
+
+  // placeholders for delay compensation vehicle model states.
+  state_vector_vehicle_t vehicle_state_{};
+  state_vector_vehicle_t vehicle_sim_outputs_{};
 };
 
 }  // namespace observers
