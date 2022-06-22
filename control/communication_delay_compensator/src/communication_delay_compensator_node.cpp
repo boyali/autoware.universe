@@ -145,19 +145,19 @@ void CommunicationDelayCompensatorNode::onTimer()
   // vehicle_model_ptr_->printDiscreteSystem();
 
   // Compute the steering compensation values.
-  if (!isVehicleStopping()) {
-    computeSteeringCDOBcompensator();
-    computeHeadingCDOBcompensator();
-    computeLateralCDOBcompensator();
-    computeVelocityCDOBcompensator();
-    computeAccelerationCDOBcompensator();
-  }
+  //  if (!isVehicleStopping()) {
+  //    computeSteeringCDOBcompensator();
+  //    computeHeadingCDOBcompensator();
+  //    computeLateralCDOBcompensator();
+  //    computeVelocityCDOBcompensator();
+  //    computeAccelerationCDOBcompensator();
+  //  }
 
-  //  computeSteeringCDOBcompensator();
-  //  computeHeadingCDOBcompensator();
-  //  computeLateralCDOBcompensator();
-  //  computeVelocityCDOBcompensator();
-  //  computeAccelerationCDOBcompensator();
+  computeSteeringCDOBcompensator();
+  computeHeadingCDOBcompensator();
+  computeLateralCDOBcompensator();
+  computeVelocityCDOBcompensator();
+  computeAccelerationCDOBcompensator();
 
   // Publish delay compensation reference.
   publishCompensationReferences();
