@@ -320,6 +320,7 @@ void CommunicationDelayCompensatorNode::publishCompensationReferences()
 
 void CommunicationDelayCompensatorNode::onCurrentSteering(const SteeringReport::SharedPtr msg)
 {
+  prev_steering_ptr_ = current_steering_ptr_;
   current_steering_ptr_ = std::make_shared<SteeringReport>(*msg);
 
   // Debug
@@ -918,6 +919,18 @@ void CommunicationDelayCompensatorNode::updateVehicleModel()
   //  ns_utils::print(
   //    "vref, delta, ey, eyaw, ackerman", vref, current_steering, ey, eyaw,
   //    ideal_ackerman_steering);
+}
+
+void CommunicationDelayCompensatorNode::setToPastLateralModelStates(state_vector_vehicle_t & x0)
+{
+  x0.setZero();
+
+  if (prev_lateral_errors_ && prev_steering_ptr_) {
+    float64_t ey{prev_lateral_errors_->lateral_deviation_read};
+    float64_t eyaw{prev_lateral_errors_->heading_angle_error_read};
+
+    x0 << ey, eyaw, prev_steering_ptr_->steering_tire_angle;
+  }
 }
 
 }  // namespace observers

@@ -169,6 +169,8 @@ private:
   // Pointers to the model state variables inputs
   std::shared_ptr<nav_msgs::msg::Odometry> current_velocity_ptr{nullptr};
   std::shared_ptr<SteeringReport> current_steering_ptr_{nullptr};
+  std::shared_ptr<SteeringReport> prev_steering_ptr_{nullptr};
+
   float64_t previous_velocity_{};
 
   // Pointer to the model inputs
@@ -286,6 +288,7 @@ private:
    * */
   void updateVehicleModel();
 
+  void setToPastLateralModelStates(state_vector_vehicle_t & x0);
   /**
    * @brief placeholders for delay compensator outputs.
    * */
