@@ -134,9 +134,9 @@ void CommunicationDelayCompensatorNode::onTimer()
     return;
   }
 
-  if (!previous_ctrl_ptr_) {
+  if (!previous_control_cmd_ptr_) {
     ControlCommand zero_cmd{};
-    previous_ctrl_ptr_ = std::make_shared<ControlCommand>(zero_cmd);
+    previous_control_cmd_ptr_ = std::make_shared<ControlCommand>(zero_cmd);
     publishCompensationReferences();
   }
 
@@ -242,8 +242,8 @@ void CommunicationDelayCompensatorNode::onTimer()
 
 void CommunicationDelayCompensatorNode::onControlCommands(const ControlCommand::SharedPtr msg)
 {
-  previous_ctrl_ptr_ = current_ctrl_ptr_;
-  current_ctrl_ptr_ = std::make_shared<ControlCommand>(*msg);
+  previous_control_cmd_ptr_ = current_control_cmd_ptr_;
+  current_control_cmd_ptr_ = std::make_shared<ControlCommand>(*msg);
 
   // Debug
   // ns_utils::print("ACT On control method ");
@@ -343,7 +343,7 @@ bool8_t CommunicationDelayCompensatorNode::isDataReady()
     return false;
   }
 
-  if (!current_ctrl_ptr_) {
+  if (!current_control_cmd_ptr_) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), (1000ms).count(),
       "[communication_delay] Waiting for the control command ...");
@@ -490,7 +490,7 @@ void CommunicationDelayCompensatorNode::setSteeringCDOBcompensator()
 void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
 {
   // Get the previous steering control value sent to the vehicle.
-  auto & u_prev = previous_ctrl_ptr_->lateral.steering_tire_angle;
+  auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
 
   // Get the current measured steering value.
   auto & current_steering = current_steering_ptr_->steering_tire_angle;
@@ -608,7 +608,7 @@ void CommunicationDelayCompensatorNode::setHeadingErrorCDOBcompensator()
 void CommunicationDelayCompensatorNode::computeHeadingCDOBcompensator()
 {
   // Get the previous steering control value sent to the vehicle.
-  auto & u_prev = previous_ctrl_ptr_->lateral.steering_tire_angle;
+  auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
 
   // Get the current measured steering value.
   auto & current_steering = current_steering_ptr_->steering_tire_angle;
@@ -711,7 +711,7 @@ void CommunicationDelayCompensatorNode::setLateralErrorCDOBcompensator()
 void CommunicationDelayCompensatorNode::computeLateralCDOBcompensator()
 {
   // Get the previous steering control value sent to the vehicle.
-  auto & u_prev = previous_ctrl_ptr_->lateral.steering_tire_angle;
+  auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
 
   // Get the current measured steering value.
   auto & current_steering = current_steering_ptr_->steering_tire_angle;
@@ -779,7 +779,7 @@ void CommunicationDelayCompensatorNode::setVelocityErrorCDOBcompensator()
 void CommunicationDelayCompensatorNode::computeVelocityCDOBcompensator()
 {
   // Get the previous steering control value sent to the vehicle.
-  auto & u_prev = previous_ctrl_ptr_->longitudinal.speed;
+  auto & u_prev = previous_control_cmd_ptr_->longitudinal.speed;
 
   // Get the current measured steering value.
   auto & current_velocity = current_velocity_ptr->twist.twist.linear.x;
@@ -847,7 +847,7 @@ void CommunicationDelayCompensatorNode::setAccelerationErrorCDOBcompensator()
 void CommunicationDelayCompensatorNode::computeAccelerationCDOBcompensator()
 {
   // Get the previous steering control value sent to the vehicle.
-  auto & u_prev = previous_ctrl_ptr_->longitudinal.acceleration;
+  auto & u_prev = previous_control_cmd_ptr_->longitudinal.acceleration;
 
   // Get the current measured steering value.
   auto current_acceleration = (current_velocity_ptr->twist.twist.linear.x - previous_velocity_) /

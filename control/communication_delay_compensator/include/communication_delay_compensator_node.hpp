@@ -172,8 +172,8 @@ private:
   float64_t previous_velocity_{};
 
   // Pointer to the model inputs
-  std::shared_ptr<ControlCommand> current_ctrl_ptr_{nullptr};
-  std::shared_ptr<ControlCommand> previous_ctrl_ptr_{nullptr};
+  std::shared_ptr<ControlCommand> current_control_cmd_ptr_{nullptr};
+  std::shared_ptr<ControlCommand> previous_control_cmd_ptr_{nullptr};
 
   // Pointers to the compensator outputs.
   std::shared_ptr<DelayCompensatatorMsg> current_delay_references_msg_{nullptr};
