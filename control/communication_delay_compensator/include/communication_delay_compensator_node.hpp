@@ -60,9 +60,6 @@ namespace observers
 {
 using namespace std::chrono_literals;
 using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
-// using DelayCompensatatorMsg = tier4_vehicle_msgs::msg::DelayCompensators;
-using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
-using DelayCompensatorDebugMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationDebug;
 
 /**
  * @brief longitudinal_controller reports vcurrent - vtarget.

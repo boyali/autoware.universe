@@ -27,8 +27,13 @@
 #include "node_denifitions/node_definitions.hpp"
 #include "vehicle_models/vehicle_kinematic_error_model.hpp"
 
+#include "autoware_auto_vehicle_msgs/msg/delay_compensation_debug.hpp"
+#include "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
+
 namespace observers
 {
+using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
+using DelayCompensatorDebugMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationDebug;
 
 /**
  * @brief Communication Delay Compensator Core without inverse models. .
@@ -49,7 +54,9 @@ public:
 
   void simulateOneStep(
     state_vector_vehicle_t const & current_measurements,
-    input_vector_vehicle_t const & steering_curvature);
+    input_vector_vehicle_t const & steering_curvature,
+    std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
+    std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results);
 
 private:
   bool8_t is_vehicle_initial_states_set_{false};
@@ -69,6 +76,21 @@ private:
   state_vector_vehicle_t x0_qey_{state_vector_vehicle_t::Zero()};
   state_vector_vehicle_t x0_qeyaw_{state_vector_vehicle_t::Zero()};
   state_vector_vehicle_t x0_qsteering_{state_vector_vehicle_t::Zero()};
+
+  // state vectors for filtering inputs.
+  Eigen::MatrixXd xu0_ey_;
+  Eigen::MatrixXd xu0_eyaw_;
+  Eigen::MatrixXd xu0_steering_;
+
+  // state vectors for filtering output measurements.
+  Eigen::MatrixXd xy0_ey_;
+  Eigen::MatrixXd xy0_eyaw_;
+  Eigen::MatrixXd xy0_steering_;
+
+  // placeholders
+  state_vector_vehicle_t output_temp_{state_vector_vehicle_t ::Zero()};
+  input_vector_vehicle_t input_temp_{input_vector_vehicle_t::Zero()};
+
   float64_t dt_{};
 };
 

@@ -121,7 +121,9 @@ void CommunicationDelayCompensatorNode::onTimer()
   vehicle_model_ptr_->printDiscreteSystem();
 
   // Compute lateral CDOB references.
-  computeLateralCDOB();
+  if (!isVehicleStopping()) {
+    computeLateralCDOB();
+  }
 
   // Publish delay compensation reference.
   publishCompensationReferences();
@@ -398,7 +400,7 @@ void CommunicationDelayCompensatorNode::updateVehicleModel()
     vehicle_model_ptr_->updateInitialStates(ey, eyaw, previous_steering_angle_);
   }
 
-  ns_utils::print(" Previous target speed :", previous_target_velocity_);
+  // ns_utils::print(" Previous target speed :", previous_target_velocity_);
 }
 void CommunicationDelayCompensatorNode::setLateralCDOB()
 {
@@ -466,15 +468,24 @@ void CommunicationDelayCompensatorNode::computeLateralCDOB()
   auto const & prev_steering_control_cmd = previous_control_cmd_ptr_->lateral.steering_tire_angle;
   previous_inputs_to_cdob_ << prev_steering_control_cmd, prev_curvature_;
 
+  cdob_lateral_ptr_->simulateOneStep(
+    current_lat_measurements_, previous_inputs_to_cdob_, current_delay_ref_msg_ptr_,
+    current_delay_debug_msg_);
+
+  // Set messages
+  current_delay_ref_msg_ptr_->lateral_deviation_read = current_lat_error;
+  current_delay_ref_msg_ptr_->heading_angle_error_read = current_heading_error;
+  current_delay_ref_msg_ptr_->steering_read = current_steering;
+
   // DEBUG
   {
-    ns_utils::print(
-      "Current readings : ", current_lat_error, current_heading_error, current_steering);
-
-    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
-
-    ns_utils::print("Previous inputs to CDOB : ");
-    ns_eigen_utils::printEigenMat(previous_inputs_to_cdob_);
+    //    ns_utils::print(
+    //      "Current readings : ", current_lat_error, current_heading_error, current_steering);
+    //
+    //    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
+    //
+    //    ns_utils::print("Previous inputs to CDOB : ");
+    //    ns_eigen_utils::printEigenMat(previous_inputs_to_cdob_);
 
     // get the vehicle model parameters on which the controllers compute the control signals.
     // previous : curvature, previous_target velocity

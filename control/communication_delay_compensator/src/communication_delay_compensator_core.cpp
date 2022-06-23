@@ -284,6 +284,27 @@ observers::CommunicationDelayCompensatorForward::CommunicationDelayCompensatorFo
   ss_qfilter_ey_ = ss_t(qfilter_ey, dt_);  // Do not forget to enter the time step dt.
   ss_qfilter_eyaw_ = ss_t(qfilter_eyaw, dt_);
   ss_qfilter_steering_ = ss_t(qfilter_steering, dt_);
+
+  auto order_ey = tf_qfilter_ey_.order();
+  auto order_eyaw = tf_qfilter_eyaw_.order();
+  auto order_steering = tf_qfilter_ey_.order();
+
+  xu0_ey_ = Eigen::MatrixXd(order_ey, 1);
+  xu0_eyaw_ = Eigen::MatrixXd(order_eyaw, 1);
+  xu0_steering_ = Eigen::MatrixXd(order_steering, 1);
+
+  xy0_ey_ = Eigen::MatrixXd(order_ey, 1);
+  xy0_eyaw_ = Eigen::MatrixXd(order_eyaw, 1);
+  xy0_steering_ = Eigen::MatrixXd(order_steering, 1);
+
+  // Set all to zero
+  xu0_ey_.setZero();
+  xu0_eyaw_.setZero();
+  xu0_steering_.setZero();
+
+  xy0_ey_.setZero();
+  xy0_eyaw_.setZero();
+  xy0_steering_.setZero();
 }
 
 void observers::CommunicationDelayCompensatorForward::printQfilterTFs() const
@@ -312,12 +333,69 @@ void observers::CommunicationDelayCompensatorForward::printQfilterSSs() const
   ss_qfilter_steering_.print();
 }
 void observers::CommunicationDelayCompensatorForward::simulateOneStep(
-  const state_vector_vehicle_t & current_measurements, const input_vector_vehicle_t & inputs)
+  const state_vector_vehicle_t & current_measurements, const input_vector_vehicle_t & inputs,
+  std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
+  std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results)
 {
   // Q filter inputs.
+  auto const & steering_input = inputs(0, 0);
+  auto const & uf_ey = ss_qfilter_ey_.simulateOneStep(xu0_ey_, steering_input);
+  auto const & uf_eyaw = ss_qfilter_eyaw_.simulateOneStep(xu0_eyaw_, steering_input);
+  auto const & uf_steering = ss_qfilter_eyaw_.simulateOneStep(xu0_eyaw_, steering_input);
+
+  // Q filter outputs.
+  auto const & measured_ey = current_measurements(0, 0);
+  auto const & measured_eyaw = current_measurements(1, 0);
+  auto const & measured_steering = current_measurements(2, 0);
+
+  // (1 - Q)
+  auto yf_ey = measured_ey - ss_qfilter_ey_.simulateOneStep(xy0_ey_, measured_ey);
+  auto yf_eyaw = measured_eyaw - ss_qfilter_eyaw_.simulateOneStep(xy0_eyaw_, measured_eyaw);
+  auto yf_steering =
+    measured_steering - ss_qfilter_eyaw_.simulateOneStep(xy0_eyaw_, measured_steering);
+
+  // Simulate the vehicle outputs.
+  auto const & curvature = inputs(0, 1);
+
+  input_temp_ = input_vector_vehicle_t{uf_ey, curvature};
+  vehicle_model_ptr_->simulateOneStep(output_temp_, x0_qey_, input_temp_);
+  auto const vec_ey_output = output_temp_(0, 0);
+
+  input_temp_ = input_vector_vehicle_t{uf_eyaw, curvature};
+  vehicle_model_ptr_->simulateOneStep(output_temp_, x0_qeyaw_, input_temp_);
+  auto const vec_eyaw_output = output_temp_(1, 0);
+
+  input_temp_ = input_vector_vehicle_t{uf_steering, curvature};
+  vehicle_model_ptr_->simulateOneStep(output_temp_, x0_qsteering_, input_temp_);
+  auto const vec_steering_output = output_temp_(2, 0);
+
+  // Set the message values.
+  msg_debug_results->lat_uf = uf_ey;
+  msg_debug_results->lat_yu = vec_ey_output + yf_ey;
+  msg_compensation_results->lateral_deviation_error_compensation_ref = vec_ey_output + yf_ey;
+
+  msg_debug_results->heading_uf = uf_eyaw;
+  msg_debug_results->heading_yu = vec_eyaw_output + yf_eyaw;
+  msg_compensation_results->heading_angle_error_compensation_ref = vec_eyaw_output + yf_eyaw;
+
+  msg_debug_results->steering_uf = uf_steering;
+  msg_debug_results->steering_yu = vec_steering_output + yf_steering;
+  msg_compensation_results->steering_error_compensation_ref = vec_steering_output + yf_steering;
+
   // Send to the vehicle model.
   // Q filter measurements.
   // Sum the signals to compute the new references for the controllers.
+
+  ns_utils::print("Filtered inputs :", uf_ey, uf_eyaw, uf_steering);
+  ns_utils::print("Filtered outputs :", yf_ey, yf_eyaw, yf_steering);
+  ns_utils::print("And input temp: ");
+  ns_eigen_utils::printEigenMat(input_temp_);
+
+  ns_utils::print("And output temp: ");
+  ns_eigen_utils::printEigenMat(output_temp_);
+
+  ns_utils::print("And x0_qey temp: ");
+  ns_eigen_utils::printEigenMat(x0_qey_);
 
   ns_eigen_utils::printEigenMat(current_measurements);
   ns_eigen_utils::printEigenMat(inputs);
