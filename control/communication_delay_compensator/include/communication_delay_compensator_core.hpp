@@ -58,6 +58,8 @@ public:
     std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
     std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results);
 
+  void setInitialStates();
+
 private:
   bool8_t is_vehicle_initial_states_set_{false};
   model_ptr_t vehicle_model_ptr_{};
