@@ -47,7 +47,9 @@ public:
   void printQfilterTFs() const;
   void printQfilterSSs() const;
 
-  void simulateOneStep(){};
+  void simulateOneStep(
+    state_vector_vehicle_t const & current_measurements,
+    input_vector_vehicle_t const & steering_curvature);
 
 private:
   bool8_t is_vehicle_initial_states_set_{false};
@@ -68,96 +70,6 @@ private:
   state_vector_vehicle_t x0_qeyaw_{state_vector_vehicle_t::Zero()};
   state_vector_vehicle_t x0_qsteering_{state_vector_vehicle_t::Zero()};
   float64_t dt_{};
-};
-
-/**
- * @brief Communication Delay Compensator Core with Inverse Models.
- * */
-class CommunicationDelayCompensatorCore
-{
-public:
-  using model_ptr_t = std::shared_ptr<LinearKinematicErrorModel>;
-  CommunicationDelayCompensatorCore() = default;
-
-  CommunicationDelayCompensatorCore(
-    model_ptr_t vehicle_model, tf_t & qfilter, tf_t & g_system_model, double const & dt,
-    size_t const & state_ind);
-
-  void print() const;  // @brief  Prints the configuration.
-
-  /**
-   * @brief if there are dynamic parameters multiplying a* num/ (b* den) we can define using it.
-   * */
-
-  void setDynamicParams_num_den(pairs_string_view_t & param_names, pairs_func_maps_t & param_funcs);
-
-  // Simulate  one-step and get the outputs.
-  /**
-   * @brief Simulates one-step and produces the outputs.
-   * @param previous_input: previous input sent to the vehicle - probably undelayed raw input.
-   * @param measured_model_state: the state that tracks a reference (i.e ey, eyaw, eV).
-   * @param num_den_args_of_g: varying parameters value of numerator and denominators i.e
-   * V^2/(cos(delta)*s+ 1).
-   * @param outputs from the delay compensator.
-   * */
-  void simulateOneStep(
-    float64_t const & previous_input,       /** previous input*/
-    float64_t const & measured_model_state, /* The input cause this measurement*/
-    std::pair<float64_t, float64_t> const & num_den_args_of_g = {1., 1.} /** model parameters*/);
-
-  std::vector<float64_t> getOutputs() const { return y_outputs_; }
-
-  bool8_t isVehicleModelInitialStatesSet() const { return is_vehicle_initial_states_set_; }
-
-private:
-  bool8_t is_vehicle_initial_states_set_{false};
-  model_ptr_t vehicle_model_ptr_{};
-
-  // Qfilter transfer function.
-  size_t num_of_outputs_{5};
-  tf_t q_filter_tf_{};  // @brief Transfer function of the qfilter.
-  tf_t g_tf_{};         // @brief state dynamics
-  float64_t dt_{};
-  size_t state_ind_{};  // index of the state that the compensator is operating on.
-
-  //  Compensator state-space
-  ss_t q_filter_ss_{};  //@brief State space model of the qfilter
-
-  // Q(s)/G(s)
-  tf_t q_g_inv_tf_{};
-  ss_t q_g_inv_ss_{};
-
-  // Dynamical parameters and their functions.
-  /**
-   * @brief  Associated model parameters as multiplication factors for num and den of G and Q/G.
-   * i.e G(s) = f(V) num/ (g(delta) den). V and delta are the arguments stored in the pairs_t.
-   * */
-  pairs_string_view_t num_den_constant_names_g_{"1", "1"};
-  pairs_string_view_t num_den_constant_names_g_inv_{"1", "1"};
-
-  // and their functions.
-  pairs_func_maps_t pair_func_map_{};
-  // @brief locate functions of indexed variable name.
-
-  // Internal states.
-  Eigen::MatrixXd x0_qfilter_{};     // u--> Q(s) -->ufiltered
-  Eigen::MatrixXd x0_inv_system_{};  // y--> Q(s)/G(s) --> u-du
-
-  // Internal vehicle model simulator.
-  state_vector_vehicle_t x0_vehicle_{state_vector_vehicle_t::Zero()};
-  state_vector_vehicle_t y_vehicle_{state_vector_vehicle_t::Zero()};
-
-  // Data members, place holders.
-  /**
-   * @brief Outputs of the delay compensator. std::array<float64_t, 4> y_outputs_{};
-   * y0: u_filtered,Q(s)*u where u is the input sent to the system.
-   * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
-   * y2: du = y0 - y1 where du is the estimated disturbance input
-   * y3: ydu = G(s)*du where ydu is the response of the system to du.
-   * y4: yu  = yu -ydu + ydu
-   * */
-
-  std::vector<float64_t> y_outputs_;
 };
 
 /**

@@ -118,7 +118,7 @@ void CommunicationDelayCompensatorNode::onTimer()
 
   // Update vehicle model.
   updateVehicleModel();
-  // vehicle_model_ptr_->printDiscreteSystem();
+  vehicle_model_ptr_->printDiscreteSystem();
 
   // Compute lateral CDOB references.
   computeLateralCDOB();
@@ -398,9 +398,7 @@ void CommunicationDelayCompensatorNode::updateVehicleModel()
     vehicle_model_ptr_->updateInitialStates(ey, eyaw, previous_steering_angle_);
   }
 
-  //  ns_utils::print(
-  //    "vref, delta, ey, eyaw, ackerman", vref, current_steering, ey, eyaw,
-  //    ideal_ackerman_steering);
+  ns_utils::print(" Previous target speed :", previous_target_velocity_);
 }
 void CommunicationDelayCompensatorNode::setLateralCDOB()
 {
@@ -459,13 +457,28 @@ void CommunicationDelayCompensatorNode::computeLateralCDOB()
 
   current_lat_measurements_ << current_lat_error, current_heading_error, current_steering;
 
-  ns_utils::print(
-    "Current readings : ", current_lat_error, current_heading_error, current_steering);
+  // get the previous inputs and parameter that are used and sent to the vehicle.
+  /**
+   * previous: ideal steering and target velocities to linearize the model, and previous
+   * curvature as an input to the steering.
+   * */
 
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
+  auto const & prev_steering_control_cmd = previous_control_cmd_ptr_->lateral.steering_tire_angle;
+  previous_inputs_to_cdob_ << prev_steering_control_cmd, prev_curvature_;
 
-  // get the vehicle model parameters on which the controllers compute the control signals.
-  // previous : curvature, previous_target velocity
+  // DEBUG
+  {
+    ns_utils::print(
+      "Current readings : ", current_lat_error, current_heading_error, current_steering);
+
+    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
+
+    ns_utils::print("Previous inputs to CDOB : ");
+    ns_eigen_utils::printEigenMat(previous_inputs_to_cdob_);
+
+    // get the vehicle model parameters on which the controllers compute the control signals.
+    // previous : curvature, previous_target velocity
+  }
 }
 
 }  // namespace observers

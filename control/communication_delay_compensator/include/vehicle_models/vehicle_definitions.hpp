@@ -34,8 +34,9 @@ using state_matrix_vehicle_t = Eigen::Matrix<
   double, toUnderlyingType(KinematicErrorDims::STATE_DIM),
   toUnderlyingType(KinematicErrorDims::STATE_DIM)>;
 
-using input_matrix_vehicle_t =
-  Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::STATE_DIM), 1>;
+using input_matrix_vehicle_t = Eigen::Matrix<
+  double, toUnderlyingType(KinematicErrorDims::STATE_DIM),
+  toUnderlyingType(KinematicErrorDims::INPUT_DIM)>;
 
 // General Template for enum class types.
 template <int Nnum_of_states>

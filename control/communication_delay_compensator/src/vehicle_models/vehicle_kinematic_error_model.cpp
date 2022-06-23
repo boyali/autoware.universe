@@ -193,7 +193,6 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateLinearOneStep(
 }
 
 // LINEAR KINEMATIC ERROR VEHICLE MODEL
-
 observers::LinearKinematicErrorModel::LinearKinematicErrorModel(
   const float64_t & wheelbase, const float64_t & tau_steering, const float64_t & dt)
 : wheelbase_{wheelbase},
@@ -213,6 +212,7 @@ observers::LinearKinematicErrorModel::LinearKinematicErrorModel(
 {
   // Assuming tau does not change.
   A_(2, 2) = -1. / tau_steering_;
+  B_(1, 1) = 1.;
   B_(2, 0) = 1. / tau_steering_;
 }
 void observers::LinearKinematicErrorModel::printContinuousSystem()
@@ -252,6 +252,8 @@ void observers::LinearKinematicErrorModel::updateStateSpace(
   A_(0, 1) = vref;
   A_(1, 2) = vref / (wheelbase_ * cos_sqr);
 
+  B_(1, 1) = vref;  // for desired heading rate computations.
+
   //  auto IA = state_matrix_vehicle_t::Identity() - A_ * dt_ / 2;
   //  auto Ainv = IA.inverse();
 
@@ -283,31 +285,10 @@ void observers::LinearKinematicErrorModel::updateI_Ats2(
   I_At2_(1, 2) = tau * vref * dt_ / (L * asqr * var);
   I_At2_(2, 2) = 2. * tau / var;
 }
-void observers::LinearKinematicErrorModel::simulateOneStep(
-  state_vector_vehicle_t & y0, const float64_t & u)
-{
-  // first compute the outputs using the current initial conditions, then update
-  // the initial states.
-  y0 = Cd_ * x0_.eval() + Dd_ * u;
-  x0_ = Ad_ * x0_.eval() + Bd_ * u;
-}
-
-void observers::LinearKinematicErrorModel::simulateOneStep_withPastStates(
-  state_vector_vehicle_t & y0, state_vector_vehicle_t & x0,
-  const autoware::common::types::float64_t & u)
-{
-  // first compute the outputs using the current initial conditions, then update
-  // the initial states.
-  x0 = Ad_ * x0.eval() + Bd_ * u;
-  y0 = Cd_ * x0.eval() + Dd_ * u;
-}
 
 void observers::LinearKinematicErrorModel::simulateOneStep(
-  state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, float64_t const & u)
+  state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, const input_vector_vehicle_t & u)
 {
-  // first compute the outputs using the current initial conditions, then update
-  // the initial states.
-
   // first update the output
   // y0 = x0 + dt_ * (A_ * x0 + B_ * u);
   y0 = Cd_ * x0.eval() + Dd_ * u;

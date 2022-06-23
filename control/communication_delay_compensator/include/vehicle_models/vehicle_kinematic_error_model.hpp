@@ -93,23 +93,18 @@ public:
   void printContinuousSystem();
   void printDiscreteSystem();
 
+  // different types of initial state updates.
   void updateInitialStates(state_vector_vehicle_t const & x0);
   void updateInitialStates(Eigen::MatrixXd const & x0);
   void updateInitialStates(
     float64_t const & ey, float64_t const & eyaw, float64_t const & steering);
 
+  // model update.
   void updateStateSpace(float64_t const & vref, float64_t const & steering_ref);
 
-  // x0 is updated inside.
-  void simulateOneStep(state_vector_vehicle_t & y0, float64_t const & u);
-
-  // x0 is updated outside.
   void simulateOneStep(
-    state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, float64_t const & u);
-
-  // x0 is updated outside.
-  void simulateOneStep_withPastStates(
-    state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, float64_t const & u);
+    state_vector_vehicle_t & y0, state_vector_vehicle_t & x0,
+    input_vector_vehicle_t const & steering_curvature);
 
   [[nodiscard]] bool8_t areInitialStatesSet() const { return are_initial_states_set_; }
 
