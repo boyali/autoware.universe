@@ -29,10 +29,23 @@
 
 namespace observers
 {
+
 /**
- * @brief Communication Delay Compensator Core.
+ * @brief Communication Delay Compensator Core without inverse models. .
  * */
 
+class CommunicationDelayCompensatorForward
+{
+public:
+  CommunicationDelayCompensatorForward() = default;
+  CommunicationDelayCompensatorForward(tf_t qfilter_ey, tf_t qfilter_eyaw, tf_t qfilter_delta);
+
+private:
+};
+
+/**
+ * @brief Communication Delay Compensator Core with Inverse Models.
+ * */
 class CommunicationDelayCompensatorCore
 {
 public:
