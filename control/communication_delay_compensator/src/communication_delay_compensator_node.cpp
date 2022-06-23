@@ -1,3 +1,4 @@
+
 // Copyright 2022 The Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,6 +80,8 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
   // set the vehicle model.
   vehicle_model_ptr_ = std::make_shared<LinearKinematicErrorModel>(
     params_node_.wheel_base, params_node_.steering_tau, params_node_.cdob_ctrl_period);
+
+  setLateralCDOB();
 }
 
 void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
@@ -122,54 +125,8 @@ void CommunicationDelayCompensatorNode::onTimer()
 
   // Debug
   {
-    // RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Hello world");
-
-    // RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), steady_clock, 1000, "Hello World!");
-    // RCLCPP_ERROR(get_logger(), "Trajectory is invalid!, stop computing.");
-    // RCLCPP_DEBUG(get_logger(), "MPC does not have a QP solver");
-    //  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Timer");
-    //
-    //  RCLCPP_INFO_THROTTLE(
-    //    get_logger(), *get_clock(), (1000ms).count(), "Control frequency  %4.2f ",
-    //    params_node_.cdob_ctrl_period);
-    //
-    //  RCLCPP_INFO_THROTTLE(
-    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter ey order %4.2i ",
-    //    params_node_.qfilter_lateral_error_order);
-    //
-    //  RCLCPP_INFO_THROTTLE(
-    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter eyaw order %4.2i ",
-    //    params_node_.qfilter_heading_error_order);
-    //
-    //  RCLCPP_INFO_THROTTLE(
-    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter steering order %4.2i ",
-    //    params_node_.qfilter_steering_order);
-    //
-    //  RCLCPP_INFO_THROTTLE(
-    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity order %4.2i ",
-    //    params_node_.qfilter_velocity_error_order);
-    //
-    //  RCLCPP_INFO_THROTTLE(
-    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter ey frq %4.2f ",
-    //    params_node_.qfilter_lateral_error_freq);
-    //
-    //  RCLCPP_INFO_THROTTLE(
-    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter eyaw frq %4.2f ",
-    //    params_node_.qfilter_heading_error_freq);
-    //
-    //  RCLCPP_INFO_THROTTLE(
-    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter steering frq %4.2f ",
-    //    params_node_.qfilter_steering_freq);
-    //
-    //  RCLCPP_INFO_THROTTLE(
-    //    get_logger(), *get_clock(), (1000ms).count(), "Qfilter velocity frq %4.2f ",
-    //    params_node_.qfilter_velocity_error_freq);
-
-    //    if (delay_comp_steering_ptr_) {
-    //      delay_comp_steering_ptr_->print();
-    //    } else {
-    //      ns_utils::print("Unique pointer is not set ");
-    //    }
+    cdob_lateral_ptr_->printQfilterTFs();
+    cdob_lateral_ptr_->printQfilterSSs();
   }
 }
 
@@ -440,6 +397,54 @@ void CommunicationDelayCompensatorNode::updateVehicleModel()
   //  ns_utils::print(
   //    "vref, delta, ey, eyaw, ackerman", vref, current_steering, ey, eyaw,
   //    ideal_ackerman_steering);
+}
+void CommunicationDelayCompensatorNode::setLateralCDOB()
+{
+  /**
+   * Create qfilters for each states. These qfilters take separately the same input and forward
+   * it to the vehicle model by filtering the input commands.
+   */
+
+  // --------------- Qfilter Construction for steering state ------------------------------
+  // Create a qfilter from the given order for the steering system.
+  auto const & order_steering = params_node_.qfilter_steering_order;
+  auto const & wc_steering = params_node_.qfilter_steering_freq;  // cut-off frq Hz.
+
+  // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
+  auto qfilter_steering = get_nthOrderTF(wc_steering, order_steering);
+
+  //  float64_t damping_val{1.};
+  //  auto remaining_order = order_of_q - 2;
+  //  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, damping_val, remaining_order);
+
+  // --------------- Qfilter Construction for heading error state -------------------------
+  auto const & order_heading_error = params_node_.qfilter_heading_error_order;
+  auto const & wc_heading_error = params_node_.qfilter_heading_error_order;
+
+  // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
+  auto qfilter_heading_error = get_nthOrderTF(wc_heading_error, order_heading_error);
+
+  //  float64_t damping_val{1.};
+  //  auto remaining_order = order_of_q - 2;
+  //  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, damping_val, remaining_order);
+
+  // --------------- Qfilter Construction for lateral error state -------------------------
+  auto const & order_lat_error = params_node_.qfilter_lateral_error_order;
+  auto const & wc_lat_error = params_node_.qfilter_lateral_error_freq;
+
+  // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
+  auto qfilter_lat_error = get_nthOrderTF(wc_lat_error, order_lat_error);
+
+  //  float64_t damping_val{1.};
+  //  auto remaining_order = order_of_q - 2;
+  //  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, damping_val, remaining_order);
+
+  CommunicationDelayCompensatorForward delay_compensator_forward(
+    vehicle_model_ptr_, qfilter_lat_error, qfilter_heading_error, qfilter_steering,
+    params_node_.cdob_ctrl_period);
+
+  cdob_lateral_ptr_ =
+    std::make_unique<CommunicationDelayCompensatorForward>(delay_compensator_forward);
 }
 
 }  // namespace observers

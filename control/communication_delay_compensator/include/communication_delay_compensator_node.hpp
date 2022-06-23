@@ -1,3 +1,5 @@
+
+
 // Copyright 2022 The Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -158,7 +160,9 @@ private:
   rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr pub_delay_compensator_;
   rclcpp::Publisher<DelayCompensatorDebugMsg>::SharedPtr pub_delay_compensator_debug_;
 
-  // Data Members for the delay-compensation.
+  // Data Members for the delay-compensation
+  // CDOB: Communication Disturbance Observer-based.
+  std::unique_ptr<CommunicationDelayCompensatorForward> cdob_lateral_ptr_{};
 
   // Pointers to the ROS topics.
   // Pointers for ros topic
@@ -171,14 +175,12 @@ private:
   std::shared_ptr<ControlCommand> current_control_cmd_ptr_{nullptr};
   std::shared_ptr<ControlCommand> previous_control_cmd_ptr_{nullptr};
 
-  // Pointers to the compensator outputs.
+  // Pointers to messages.
   std::shared_ptr<DelayCompensatatorMsg> current_delay_references_msg_{nullptr};
   std::shared_ptr<ControllerErrorReportMsg> current_lateral_errors_{nullptr};
   std::shared_ptr<ControllerErrorReportMsg> current_longitudinal_errors_{nullptr};
   std::shared_ptr<ControllerErrorReportMsg> prev_lateral_errors_{nullptr};
   std::shared_ptr<ControllerErrorReportMsg> prev_longitudinal_errors_{nullptr};
-
-  // std::shared_ptr<ErrorStampedControlPerfMsg> current_cont_perf_errors_{nullptr};
 
   // Steering related.
   float64_t current_curvature_{};
@@ -268,6 +270,11 @@ private:
    * @brief updates the vehicle model.
    * */
   void updateVehicleModel();
+
+  /**
+   * @brief Sets the lateral delay compensator.
+   * */
+  void setLateralCDOB();
 };
 
 }  // namespace observers

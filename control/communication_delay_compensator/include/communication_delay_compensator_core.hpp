@@ -44,9 +44,17 @@ public:
     model_ptr_t vehicle_model, tf_t const & qfilter_ey, tf_t const & qfilter_eyaw,
     tf_t const & qfilter_steering, float64_t const & dt);
 
+  void printQfilterTFs() const;
+  void printQfilterSSs() const;
+
 private:
   bool8_t is_vehicle_initial_states_set_{false};
   model_ptr_t vehicle_model_ptr_{};
+
+  // transfer functions
+  tf_t tf_qfilter_ey_;
+  tf_t tf_qfilter_eyaw_;
+  tf_t tf_qfilter_steering_;
 
   // state-space models.
   ss_t ss_qfilter_ey_;

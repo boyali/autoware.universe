@@ -1,3 +1,4 @@
+
 // Copyright 2022 The Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -465,10 +466,40 @@ observers::CommunicationDelayCompensatorForward::CommunicationDelayCompensatorFo
   observers::CommunicationDelayCompensatorForward::model_ptr_t vehicle_model,
   const observers::tf_t & qfilter_ey, const observers::tf_t & qfilter_eyaw,
   const observers::tf_t & qfilter_steering, float64_t const & dt)
-: vehicle_model_ptr_(std::move(vehicle_model)), dt_{dt}
+: vehicle_model_ptr_(std::move(vehicle_model)),
+  tf_qfilter_ey_{qfilter_ey},
+  tf_qfilter_eyaw_{qfilter_eyaw},
+  tf_qfilter_steering_{qfilter_steering},
+  dt_{dt}
 {
   // Compute the state-space model of QGinv(s)
   ss_qfilter_ey_ = ss_t(qfilter_ey, dt_);  // Do not forget to enter the time step dt.
   ss_qfilter_eyaw_ = ss_t(qfilter_eyaw, dt_);
   ss_qfilter_steering_ = ss_t(qfilter_steering, dt_);
+}
+
+void observers::CommunicationDelayCompensatorForward::printQfilterTFs() const
+{
+  ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
+  ns_utils::print("Transfer function of qfilter of lateral error : \n");
+  tf_qfilter_ey_.print();
+
+  ns_utils::print("Transfer function of qfilter of heading error : \n");
+  tf_qfilter_eyaw_.print();
+
+  ns_utils::print("Transfer function of qfilter of steering state : \n");
+  tf_qfilter_steering_.print();
+}
+
+void observers::CommunicationDelayCompensatorForward::printQfilterSSs() const
+{
+  ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
+  ns_utils::print("State-Space Matrices of qfilter of lateral error : \n");
+  ss_qfilter_ey_.print();
+
+  ns_utils::print("State-Space Matrices of qfilter of heading error : \n");
+  ss_qfilter_eyaw_.print();
+
+  ns_utils::print("State-Space Matrices of qfilter of steering state : \n");
+  ss_qfilter_steering_.print();
 }
