@@ -173,6 +173,7 @@ private:
   std::shared_ptr<SteeringReport> prev_steering_ptr_{nullptr};
 
   float64_t previous_velocity_{};
+  float64_t previous_target_velocity_{1.};
 
   // Pointer to the model inputs
   std::shared_ptr<ControlCommand> current_control_cmd_ptr_{nullptr};
