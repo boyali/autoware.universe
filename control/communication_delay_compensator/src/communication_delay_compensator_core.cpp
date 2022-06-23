@@ -459,3 +459,16 @@ void DelayCompensatorCore_PrototypeExample::getSSsystem(ns_control_toolbox::tf2s
   Cd_ = ss.Cd();
   Dd_ = ss.Dd();
 }
+
+// ------------------- Communication Delay Compensator using Forward Dynamics. ---------
+observers::CommunicationDelayCompensatorForward::CommunicationDelayCompensatorForward(
+  observers::CommunicationDelayCompensatorForward::model_ptr_t vehicle_model,
+  const observers::tf_t & qfilter_ey, const observers::tf_t & qfilter_eyaw,
+  const observers::tf_t & qfilter_steering, float64_t const & dt)
+: vehicle_model_ptr_(std::move(vehicle_model)), dt_{dt}
+{
+  // Compute the state-space model of QGinv(s)
+  ss_qfilter_ey_ = ss_t(qfilter_ey, dt_);  // Do not forget to enter the time step dt.
+  ss_qfilter_eyaw_ = ss_t(qfilter_eyaw, dt_);
+  ss_qfilter_steering_ = ss_t(qfilter_steering, dt_);
+}

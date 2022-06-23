@@ -37,10 +37,27 @@ namespace observers
 class CommunicationDelayCompensatorForward
 {
 public:
+  using model_ptr_t = std::shared_ptr<LinearKinematicErrorModel>;
+
   CommunicationDelayCompensatorForward() = default;
-  CommunicationDelayCompensatorForward(tf_t qfilter_ey, tf_t qfilter_eyaw, tf_t qfilter_delta);
+  CommunicationDelayCompensatorForward(
+    model_ptr_t vehicle_model, tf_t const & qfilter_ey, tf_t const & qfilter_eyaw,
+    tf_t const & qfilter_steering, float64_t const & dt);
 
 private:
+  bool8_t is_vehicle_initial_states_set_{false};
+  model_ptr_t vehicle_model_ptr_{};
+
+  // state-space models.
+  ss_t ss_qfilter_ey_;
+  ss_t ss_qfilter_eyaw_;
+  ss_t ss_qfilter_steering_;
+
+  // States and outputs for each qfilter vehicle model simulations u --> G(s)Q(s) --> y
+  state_vector_vehicle_t x0_qey_{state_vector_vehicle_t::Zero()};
+  state_vector_vehicle_t x0_qeyaw_{state_vector_vehicle_t::Zero()};
+  state_vector_vehicle_t x0_qsteering_{state_vector_vehicle_t::Zero()};
+  float64_t dt_{};
 };
 
 /**
