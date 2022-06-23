@@ -172,9 +172,6 @@ private:
   std::shared_ptr<SteeringReport> current_steering_ptr_{nullptr};
   std::shared_ptr<SteeringReport> prev_steering_ptr_{nullptr};
 
-  float64_t previous_velocity_{};
-  float64_t previous_target_velocity_{1.};
-
   // Pointer to the model inputs
   std::shared_ptr<ControlCommand> current_control_cmd_ptr_{nullptr};
   std::shared_ptr<ControlCommand> previous_control_cmd_ptr_{nullptr};
@@ -190,8 +187,14 @@ private:
 
   // Steering related.
   float64_t current_curvature_{};
+  float64_t prev_curvature_{};
+
   float64_t current_ideal_steering_{};
-  float64_t current_steering_error_{};  // from Ackerman angle.
+  float64_t prev_ideal_steering_{};
+  float64_t previous_steering_angle_{};
+
+  float64_t previous_velocity_{};
+  float64_t previous_target_velocity_{1.};
 
   // Debug messages
   std::shared_ptr<DelayCompensatorDebugMsg> current_delay_debug_msg_{nullptr};

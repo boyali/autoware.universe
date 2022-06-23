@@ -271,6 +271,11 @@ void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(
   prev_longitudinal_errors_ = current_longitudinal_errors_;
   current_longitudinal_errors_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
+  if (prev_longitudinal_errors_) {
+    // Compute current steering error.
+    previous_target_velocity_ = prev_longitudinal_errors_->target_velocity_read;
+  }
+
   // Debug
   // auto vel_error = static_cast<double>(current_longitudinal_errors_->velocity_error_read);
   // ns_utils::print("Longitudinal velocity error :", vel_error);
@@ -290,6 +295,14 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
 
   // Ackerman Ideal Steering
   current_ideal_steering_ = std::atan(current_curvature_ * params_node_.wheel_base);
+
+  if (prev_lateral_errors_) {
+    // Compute current steering error.
+    prev_curvature_ = prev_lateral_errors_->curvature_read;
+
+    // Ackerman Ideal Steering
+    prev_ideal_steering_ = std::atan(prev_curvature_ * params_node_.wheel_base);
+  }
 
   // Debug
   RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Lateral Errors");
@@ -328,6 +341,10 @@ void CommunicationDelayCompensatorNode::onCurrentSteering(const SteeringReport::
 {
   prev_steering_ptr_ = current_steering_ptr_;
   current_steering_ptr_ = std::make_shared<SteeringReport>(*msg);
+
+  if (prev_steering_ptr_) {
+    previous_steering_angle_ = prev_steering_ptr_->steering_tire_angle;
+  }
 
   // Debug
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
@@ -496,7 +513,7 @@ void CommunicationDelayCompensatorNode::setSteeringCDOBcompensator()
 
 /**
  * @brief Computes a corrective reference signal to subtract from the current steering error
- * reference in the form of  r_steering_corrected = r_steering - cdob_corrrection. Additional
+ * reference in the form of  r_steering_corrected = r_steering - cdob_correction. Additional
  * variables are computed for debugging purpose.
  * */
 void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
@@ -506,9 +523,6 @@ void CommunicationDelayCompensatorNode::computeSteeringCDOBcompensator()
 
   // Get the current measured steering value.
   auto & current_steering = current_steering_ptr_->steering_tire_angle;
-
-  // Error: current_val - target (ref)_val
-  current_steering_error_ = current_steering - current_ideal_steering_;
 
   // reset the stored outputs to zero.
   // std::fill(cdob_steering_y_outputs_.begin(), cdob_steering_y_outputs_.end(), 0.);
@@ -934,14 +948,10 @@ void CommunicationDelayCompensatorNode::updateVehicleModel()
   //  }
 
   if (prev_lateral_errors_ && prev_steering_ptr_ && prev_longitudinal_errors_) {
-    // set the previous target velocity.
-    previous_target_velocity_ = prev_longitudinal_errors_->target_velocity_read;
-
     float64_t ey{prev_lateral_errors_->lateral_deviation_read};
     float64_t eyaw{prev_lateral_errors_->heading_angle_error_read};
 
-    auto prev_steering = prev_steering_ptr_->steering_tire_angle;
-    vehicle_model_ptr_->updateInitialStates(ey, eyaw, prev_steering);
+    vehicle_model_ptr_->updateInitialStates(ey, eyaw, previous_steering_angle_);
   }
 
   //  ns_utils::print(
@@ -957,7 +967,7 @@ void CommunicationDelayCompensatorNode::setToPastLateralModelStates(state_vector
     float64_t ey{prev_lateral_errors_->lateral_deviation_read};
     float64_t eyaw{prev_lateral_errors_->heading_angle_error_read};
 
-    x0 << ey, eyaw, prev_steering_ptr_->steering_tire_angle;
+    x0 << ey, eyaw, previous_steering_angle_;
   }
 }
 
