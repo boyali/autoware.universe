@@ -22,7 +22,7 @@
 /**
  * @brief Kinematic Vehicle Lateral Error Model state and control definitions.
  * */
-enum class CDOB_PUBLIC KinematicErrorDims : int { STATE_DIM = 3, INPUT_DIM = 1 };
+enum class CDOB_PUBLIC KinematicErrorDims : int { STATE_DIM = 3, INPUT_DIM = 2 };
 
 using state_vector_vehicle_t =
   Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::STATE_DIM), 1>;

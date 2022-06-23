@@ -176,11 +176,11 @@ private:
   std::shared_ptr<ControlCommand> previous_control_cmd_ptr_{nullptr};
 
   // Pointers to messages.
-  std::shared_ptr<DelayCompensatatorMsg> current_delay_references_msg_{nullptr};
-  std::shared_ptr<ControllerErrorReportMsg> current_lateral_errors_{nullptr};
-  std::shared_ptr<ControllerErrorReportMsg> current_longitudinal_errors_{nullptr};
-  std::shared_ptr<ControllerErrorReportMsg> prev_lateral_errors_{nullptr};
-  std::shared_ptr<ControllerErrorReportMsg> prev_longitudinal_errors_{nullptr};
+  std::shared_ptr<DelayCompensatatorMsg> current_delay_ref_msg_ptr_{nullptr};
+  std::shared_ptr<ControllerErrorReportMsg> current_lat_errors_ptr_{nullptr};
+  std::shared_ptr<ControllerErrorReportMsg> current_long_errors_ptr_{nullptr};
+  std::shared_ptr<ControllerErrorReportMsg> prev_lat_errors_ptr_{nullptr};
+  std::shared_ptr<ControllerErrorReportMsg> prev_long_errors_ptr_{nullptr};
 
   // Steering related.
   float64_t current_curvature_{};
@@ -192,6 +192,10 @@ private:
 
   float64_t previous_velocity_{};
   float64_t previous_target_velocity_{1.};
+
+  // placeholders.
+  state_vector_vehicle_t current_lat_measurements_{state_vector_vehicle_t::Zero()};
+  input_vector_vehicle_t previous_inputs_to_cdob_{input_vector_vehicle_t::Zero()};
 
   // Debug messages
   std::shared_ptr<DelayCompensatorDebugMsg> current_delay_debug_msg_{nullptr};
@@ -275,6 +279,7 @@ private:
    * @brief Sets the lateral delay compensator.
    * */
   void setLateralCDOB();
+  void computeLateralCDOB();
 };
 
 }  // namespace observers

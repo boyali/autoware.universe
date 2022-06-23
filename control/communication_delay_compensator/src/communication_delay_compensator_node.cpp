@@ -98,7 +98,7 @@ void CommunicationDelayCompensatorNode::onTimer()
   // Create compensator messages: For breaking cyclic dependency (controllers wait this package vice
   // versa.).
   DelayCompensatatorMsg compensation_msg{};
-  current_delay_references_msg_ = std::make_shared<DelayCompensatatorMsg>(compensation_msg);
+  current_delay_ref_msg_ptr_ = std::make_shared<DelayCompensatatorMsg>(compensation_msg);
 
   DelayCompensatorDebugMsg compensation_debug_msg{};
   current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(compensation_debug_msg);
@@ -120,13 +120,16 @@ void CommunicationDelayCompensatorNode::onTimer()
   updateVehicleModel();
   // vehicle_model_ptr_->printDiscreteSystem();
 
+  // Compute lateral CDOB references.
+  computeLateralCDOB();
+
   // Publish delay compensation reference.
   publishCompensationReferences();
 
   // Debug
   {
-    cdob_lateral_ptr_->printQfilterTFs();
-    cdob_lateral_ptr_->printQfilterSSs();
+    // cdob_lateral_ptr_->printQfilterTFs();
+    // cdob_lateral_ptr_->printQfilterSSs();
   }
 }
 
@@ -158,16 +161,16 @@ void CommunicationDelayCompensatorNode::onCurrentVelocity(const VelocityMsg::Sha
 void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(
   ControllerErrorReportMsg::SharedPtr const msg)
 {
-  prev_longitudinal_errors_ = current_longitudinal_errors_;
-  current_longitudinal_errors_ = std::make_shared<ControllerErrorReportMsg>(*msg);
+  prev_long_errors_ptr_ = current_long_errors_ptr_;
+  current_long_errors_ptr_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
-  if (prev_longitudinal_errors_) {
+  if (prev_long_errors_ptr_) {
     // Compute current steering error.
-    previous_target_velocity_ = prev_longitudinal_errors_->target_velocity_read;
+    previous_target_velocity_ = prev_long_errors_ptr_->target_velocity_read;
   }
 
   // Debug
-  // auto vel_error = static_cast<double>(current_longitudinal_errors_->velocity_error_read);
+  // auto vel_error = static_cast<double>(current_long_errors_ptr_->velocity_error_read);
   // ns_utils::print("Longitudinal velocity error :", vel_error);
 
   RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Longitudinal Error");
@@ -177,18 +180,18 @@ void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(
 void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
   ControllerErrorReportMsg::SharedPtr const msg)
 {
-  prev_lateral_errors_ = current_lateral_errors_;
-  current_lateral_errors_ = std::make_shared<ControllerErrorReportMsg>(*msg);
+  prev_lat_errors_ptr_ = current_lat_errors_ptr_;
+  current_lat_errors_ptr_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
   // Compute current steering error.
-  current_curvature_ = current_lateral_errors_->curvature_read;
+  current_curvature_ = current_lat_errors_ptr_->curvature_read;
 
   // Ackerman Ideal Steering
   current_ideal_steering_ = std::atan(current_curvature_ * params_node_.wheel_base);
 
-  if (prev_lateral_errors_) {
+  if (prev_lat_errors_ptr_) {
     // Compute current steering error.
-    prev_curvature_ = prev_lateral_errors_->curvature_read;
+    prev_curvature_ = prev_lat_errors_ptr_->curvature_read;
 
     // Ackerman Ideal Steering
     prev_ideal_steering_ = std::atan(prev_curvature_ * params_node_.wheel_base);
@@ -197,11 +200,12 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
   // Debug
   RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Lateral Errors");
 
-  // 			if (current_lateral_errors_)
+  // 			if (current_lat_errors_ptr_)
   // 			{
   // 				auto lat_error =
-  // static_cast<double>(current_lateral_errors_->lateral_deviation_read);
-  // auto heading_error = static_cast<double>(current_lateral_errors_->heading_angle_error_read);
+  // static_cast<double>(current_lat_errors_ptr_->lateral_deviation_read);
+  // auto heading_error =
+  // static_cast<double>(current_lat_errors_ptr_->heading_angle_error_read);
   // 				ns_utils::print("Current lateral errors : ", lat_error,
   // heading_error);
   // 			}
@@ -219,11 +223,11 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
 
 void CommunicationDelayCompensatorNode::publishCompensationReferences()
 {
-  current_delay_references_msg_->stamp = this->now();
+  current_delay_ref_msg_ptr_->stamp = this->now();
   current_delay_debug_msg_->stamp = this->now();
 
   // new_msg.lateral_deviation_error_compensation_ref = 1.0;
-  pub_delay_compensator_->publish(*current_delay_references_msg_);
+  pub_delay_compensator_->publish(*current_delay_ref_msg_ptr_);
   pub_delay_compensator_debug_->publish(*current_delay_debug_msg_);
 }
 
@@ -266,14 +270,14 @@ bool8_t CommunicationDelayCompensatorNode::isDataReady()
     return false;
   }
 
-  if (!current_lateral_errors_) {
+  if (!current_lat_errors_ptr_) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), (1000ms).count(),
       "[communication_delay] Waiting for the current lateral error report ...");
     return false;
   }
 
-  if (!current_longitudinal_errors_) {
+  if (!current_long_errors_ptr_) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), (1000ms).count(),
       "[communication_delay] Waiting for the current longitudinal error report ...");
@@ -380,16 +384,16 @@ void CommunicationDelayCompensatorNode::updateVehicleModel()
 
   // Update the initial state.
   //  auto current_steering = current_steering_ptr_->steering_tire_angle;
-  //  float64_t ey{current_lateral_errors_->lateral_deviation_read};
-  //  float64_t eyaw{current_lateral_errors_->heading_angle_error_read};
+  //  float64_t ey{current_lat_errors_ptr_->lateral_deviation_read};
+  //  float64_t eyaw{current_lat_errors_ptr_->heading_angle_error_read};
 
   //  if (!vehicle_model_ptr_->areInitialStatesSet()) {
   //    vehicle_model_ptr_->updateInitialStates(ey, eyaw, current_steering);
   //  }
 
-  if (prev_lateral_errors_ && prev_steering_ptr_ && prev_longitudinal_errors_) {
-    float64_t ey{prev_lateral_errors_->lateral_deviation_read};
-    float64_t eyaw{prev_lateral_errors_->heading_angle_error_read};
+  if (prev_lat_errors_ptr_ && prev_steering_ptr_ && prev_long_errors_ptr_) {
+    float64_t ey{prev_lat_errors_ptr_->lateral_deviation_read};
+    float64_t eyaw{prev_lat_errors_ptr_->heading_angle_error_read};
 
     vehicle_model_ptr_->updateInitialStates(ey, eyaw, previous_steering_angle_);
   }
@@ -445,6 +449,23 @@ void CommunicationDelayCompensatorNode::setLateralCDOB()
 
   cdob_lateral_ptr_ =
     std::make_unique<CommunicationDelayCompensatorForward>(delay_compensator_forward);
+}
+void CommunicationDelayCompensatorNode::computeLateralCDOB()
+{
+  // get the current outputs observed y=[ey, eyaw, steering] for qfilters.
+  auto const & current_lat_error = current_lat_errors_ptr_->lateral_deviation_read;
+  auto const & current_heading_error = current_lat_errors_ptr_->lateral_deviation_read;
+  auto const & current_steering = current_steering_ptr_->steering_tire_angle;
+
+  current_lat_measurements_ << current_lat_error, current_heading_error, current_steering;
+
+  ns_utils::print(
+    "Current readings : ", current_lat_error, current_heading_error, current_steering);
+
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
+
+  // get the vehicle model parameters on which the controllers compute the control signals.
+  // previous : curvature, previous_target velocity
 }
 
 }  // namespace observers

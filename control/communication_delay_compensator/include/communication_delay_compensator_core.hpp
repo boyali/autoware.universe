@@ -47,6 +47,8 @@ public:
   void printQfilterTFs() const;
   void printQfilterSSs() const;
 
+  void simulateOneStep(){};
+
 private:
   bool8_t is_vehicle_initial_states_set_{false};
   model_ptr_t vehicle_model_ptr_{};
