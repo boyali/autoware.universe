@@ -622,8 +622,9 @@ void CommunicationDelayCompensatorNode::computeHeadingCDOBcompensator()
   // Get the current longitudinal speed.
   //  auto & current_speed_v = current_velocity_ptr->twist.twist.linear.x;
 
-  // Send the current states [v, delta] to the delay compensator.
-  std::pair<float64_t, float64_t> varying_params({previous_velocity_, u_prev});
+  // Send the current states [v, delta] to the delay compensator. These parameters are also the
+  // reference parameters used for linearized model.
+  std::pair<float64_t, float64_t> varying_params({previous_velocity_, current_ideal_steering_});
 
   // Get the current heading error computed by the controllers.
   auto & current_heading_error = current_lateral_errors_->heading_angle_error_read;
@@ -730,7 +731,7 @@ void CommunicationDelayCompensatorNode::computeLateralCDOBcompensator()
   //  auto & current_speed_v = current_velocity_ptr->twist.twist.linear.x;
 
   // Send the current states [v, delta] to the delay compensator.
-  std::pair<float64_t, float64_t> varying_params({previous_velocity_, u_prev});
+  std::pair<float64_t, float64_t> varying_params({previous_velocity_, current_ideal_steering_});
 
   // Get the current heading error computed by the controllers.
   auto & current_lateral_error = current_lateral_errors_->lateral_deviation_read;
@@ -915,9 +916,9 @@ bool8_t CommunicationDelayCompensatorNode::isVehicleStopping()
 void CommunicationDelayCompensatorNode::updateVehicleModel()
 {
   // auto vref = current_velocity_ptr->twist.twist.linear.x;
-  auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
+  // auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
   // Update the matrices
-  vehicle_model_ptr_->updateStateSpace(previous_velocity_, u_prev);
+  vehicle_model_ptr_->updateStateSpace(previous_velocity_, current_ideal_steering_);
 
   // Update the initial state.
   //  auto current_steering = current_steering_ptr_->steering_tire_angle;
