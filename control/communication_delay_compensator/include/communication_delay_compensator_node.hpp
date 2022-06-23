@@ -159,11 +159,6 @@ private:
   rclcpp::Publisher<DelayCompensatorDebugMsg>::SharedPtr pub_delay_compensator_debug_;
 
   // Data Members for the delay-compensation.
-  std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_lat_error_ptr_{};
-  std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_yaw_error_ptr_{};
-  std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_steering_ptr_{};
-  std::unique_ptr<CommunicationDelayCompensatorCore> delay_comp_velocity_error_ptr_{};
-  std::unique_ptr<CommunicationDelayCompensatorCore> delay_compensator_acc_error_ptr_{};
 
   // Pointers to the ROS topics.
   // Pointers for ros topic
@@ -265,26 +260,6 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
 
   /**
-   * @brief Set steering tracking q-filter and 1st order steering linear model.
-   * Steering is a state in the kinematic error model and it does not have an error term in this
-   * application.
-   * */
-  void setSteeringCDOBcompensator();      // creates steering cdob compensator.
-  void computeSteeringCDOBcompensator();  // computes corrective ref for the heading error
-
-  void setHeadingErrorCDOBcompensator();  // creates a heading angle error compensator.
-  void computeHeadingCDOBcompensator();
-
-  void setLateralErrorCDOBcompensator();
-  void computeLateralCDOBcompensator();
-
-  void setVelocityErrorCDOBcompensator();
-  void computeVelocityCDOBcompensator();
-
-  void setAccelerationErrorCDOBcompensator();
-  void computeAccelerationCDOBcompensator();
-
-  /**
    * @brief checks if vehicle is stopping.
    * */
   bool8_t isVehicleStopping();
@@ -293,28 +268,6 @@ private:
    * @brief updates the vehicle model.
    * */
   void updateVehicleModel();
-
-  void setToPastLateralModelStates(state_vector_vehicle_t & x0);
-  /**
-   * @brief placeholders for delay compensator outputs.
-   * */
-
-  /**
-   * @brief Outputs of the delay compensator.
-   * y0: u_filtered,Q(s)*u where u is the input sent to the system.
-   * y1: u-d_u = (Q(s)/G(s))*y_system where y_system is the measured system response.
-   * y2: du = y0 - y1 where du is the estimated disturbance input
-   * y3: ydu = G(s)*du where ydu is the response of the system to du.
-   * */
-  std::vector<float64_t> cdob_lateral_error_y_outputs_{};
-  std::vector<float64_t> cdob_heading_error_y_outputs_{};
-  std::vector<float64_t> cdob_steering_y_outputs_{};
-  std::vector<float64_t> cdob_velocity_error_y_outputs_{};
-  std::vector<float64_t> cdob_acc_error_y_outputs_{};
-
-  // placeholders for delay compensation vehicle model states.
-  state_vector_vehicle_t vehicle_state_{};
-  state_vector_vehicle_t vehicle_sim_outputs_{};
 };
 
 }  // namespace observers
