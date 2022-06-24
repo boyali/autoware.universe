@@ -252,7 +252,7 @@ void observers::LinearKinematicErrorModel::updateStateSpace(
   A_(0, 1) = vref;
   A_(1, 2) = vref / (wheelbase_ * cos_sqr);
 
-  B_(1, 1) = -vref;  // for desired heading rate computations.
+  B_(1, 1) = -vref / (wheelbase_ * cos_sqr);  // for desired heading rate computations.
 
   //  auto IA = state_matrix_vehicle_t::Identity() - A_ * dt_ / 2;
   //  auto Ainv = IA.inverse();
@@ -287,12 +287,13 @@ void observers::LinearKinematicErrorModel::updateI_Ats2(
 }
 
 void observers::LinearKinematicErrorModel::simulateOneStep(
-  state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, const input_vector_vehicle_t & u)
+  state_vector_vehicle_t & y0, state_vector_vehicle_t & x0,
+  const input_vector_vehicle_t & steering_and_ideal_steering)
 {
   // first update the output
-  // y0 = x0 + dt_ * (A_ * x0 + B_ * u);
-  y0 = Cd_ * x0.eval() + Dd_ * u;
-  x0 = Ad_ * x0.eval() + Bd_ * u;
+  // y0 = x0 + dt_ * (A_ * x0 + B_ * steering_and_ideal_steering);
+  y0 = Cd_ * x0.eval() + Dd_ * steering_and_ideal_steering;
+  x0 = Ad_ * x0.eval() + Bd_ * steering_and_ideal_steering;
 }
 
 void observers::LinearKinematicErrorModel::updateInitialStates(state_vector_vehicle_t const & x0)

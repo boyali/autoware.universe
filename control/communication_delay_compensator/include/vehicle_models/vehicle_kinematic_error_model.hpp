@@ -104,7 +104,7 @@ public:
 
   void simulateOneStep(
     state_vector_vehicle_t & y0, state_vector_vehicle_t & x0,
-    input_vector_vehicle_t const & steering_curvature);
+    input_vector_vehicle_t const & steering_and_ideal_steering);
 
   [[nodiscard]] bool8_t areInitialStatesSet() const { return are_initial_states_set_; }
 

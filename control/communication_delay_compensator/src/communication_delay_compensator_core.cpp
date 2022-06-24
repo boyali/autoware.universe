@@ -333,14 +333,15 @@ void observers::CommunicationDelayCompensatorForward::printQfilterSSs() const
   ss_qfilter_steering_.print();
 }
 void observers::CommunicationDelayCompensatorForward::simulateOneStep(
-  const state_vector_vehicle_t & current_measurements, const input_vector_vehicle_t & inputs,
+  const state_vector_vehicle_t & current_measurements,
+  const input_vector_vehicle_t & steering_and_ideal_steering,
   std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
   std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results)
 {
   setInitialStates();  // sets once.
 
   // Q filter inputs.
-  auto const & steering_input = inputs(0, 0);
+  auto const & steering_input = steering_and_ideal_steering(0, 0);
   auto const & uf_ey = ss_qfilter_ey_.simulateOneStep(xu0_ey_, steering_input);
   auto const & uf_eyaw = ss_qfilter_eyaw_.simulateOneStep(xu0_eyaw_, steering_input);
   auto const & uf_steering = ss_qfilter_eyaw_.simulateOneStep(xu0_eyaw_, steering_input);
@@ -356,17 +357,17 @@ void observers::CommunicationDelayCompensatorForward::simulateOneStep(
   auto yf_steering = ss_qfilter_eyaw_.simulateOneStep(xy0_eyaw_, measured_steering);
 
   // Simulate the vehicle outputs.
-  auto const & curvature = inputs(1, 0);
+  auto const & prev_ideal_steering = steering_and_ideal_steering(1, 0);
 
-  input_temp_ = input_vector_vehicle_t{uf_ey, curvature};
+  input_temp_ = input_vector_vehicle_t{uf_ey, prev_ideal_steering};
   vehicle_model_ptr_->simulateOneStep(output_temp_, x0_qey_, input_temp_);
   auto const vec_ey_output = output_temp_(0, 0);
 
-  input_temp_ = input_vector_vehicle_t{uf_eyaw, curvature};
+  input_temp_ = input_vector_vehicle_t{uf_eyaw, prev_ideal_steering};
   vehicle_model_ptr_->simulateOneStep(output_temp_, x0_qeyaw_, input_temp_);
   auto const vec_eyaw_output = output_temp_(1, 0);
 
-  input_temp_ = input_vector_vehicle_t{uf_steering, curvature};
+  input_temp_ = input_vector_vehicle_t{uf_steering, prev_ideal_steering};
   vehicle_model_ptr_->simulateOneStep(output_temp_, x0_qsteering_, input_temp_);
   auto const vec_steering_output = output_temp_(2, 0);
 
@@ -399,16 +400,16 @@ void observers::CommunicationDelayCompensatorForward::simulateOneStep(
   ns_eigen_utils::printEigenMat(x0_qey_);
 
   ns_eigen_utils::printEigenMat(current_measurements);
-  ns_eigen_utils::printEigenMat(inputs);
+  ns_eigen_utils::printEigenMat(steering_and_ideal_steering);
 }
 void observers::CommunicationDelayCompensatorForward::setInitialStates()
 {
-  if (!is_vehicle_initial_states_set_) {
-    if (vehicle_model_ptr_->areInitialStatesSet()) {
-      x0_qey_ = vehicle_model_ptr_->getInitialStates();
-      x0_qeyaw_ = x0_qey_;
-      x0_qsteering_ = x0_qey_;
-      is_vehicle_initial_states_set_ = true;
-    }
+  //  if (!is_vehicle_initial_states_set_) {
+  if (vehicle_model_ptr_->areInitialStatesSet()) {
+    x0_qey_ = vehicle_model_ptr_->getInitialStates();
+    x0_qeyaw_ = x0_qey_;
+    x0_qsteering_ = x0_qey_;
+    is_vehicle_initial_states_set_ = true;
+    //    }
   }
 }

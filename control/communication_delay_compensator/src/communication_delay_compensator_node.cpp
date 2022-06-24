@@ -466,7 +466,7 @@ void CommunicationDelayCompensatorNode::computeLateralCDOB()
    * */
 
   auto const & prev_steering_control_cmd = previous_control_cmd_ptr_->lateral.steering_tire_angle;
-  previous_inputs_to_cdob_ << prev_steering_control_cmd, prev_curvature_;
+  previous_inputs_to_cdob_ << prev_steering_control_cmd, prev_ideal_steering_;
 
   cdob_lateral_ptr_->simulateOneStep(
     current_lat_measurements_, previous_inputs_to_cdob_, current_delay_ref_msg_ptr_,
