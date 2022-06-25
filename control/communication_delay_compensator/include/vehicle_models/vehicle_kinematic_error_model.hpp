@@ -28,6 +28,69 @@
 #include <string>
 #include <vector>
 
+namespace observers
+{
+
+/**
+ * @brief Linear kinematic error vehicle model with three states [ey, eyaw, ]
+ * */
+class LinearKinematicErrorModel
+{
+public:
+  LinearKinematicErrorModel() = default;
+  LinearKinematicErrorModel(
+    float64_t const & wheelbase, float64_t const & tau_steering, float64_t const & dt);
+
+  void printContinuousSystem();
+  void printDiscreteSystem();
+
+  // different types of initial state updates.
+  void updateInitialStates(state_vector_vehicle_t const & x0);
+  void updateInitialStates(Eigen::MatrixXd const & x0);
+  void updateInitialStates(
+    float64_t const & ey, float64_t const & eyaw, float64_t const & steering);
+
+  // model update.
+  void updateStateSpace(float64_t const & vref, float64_t const & steering_ref);
+
+  void simulateOneStep(
+    state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, float64_t const & u);
+
+  [[nodiscard]] bool8_t areInitialStatesSet() const { return are_initial_states_set_; }
+
+  [[nodiscard]] state_vector_vehicle_t getInitialStates() const;
+
+private:
+  bool8_t are_initial_states_set_{false};
+  float64_t wheelbase_{2.74};
+  float64_t tau_steering_{0.3};
+  float64_t dt_{0.1};
+
+  state_matrix_vehicle_t A_{};
+  input_matrix_vehicle_t B_{};
+  state_matrix_vehicle_t C_{};
+  input_matrix_vehicle_t D_{};
+
+  state_matrix_vehicle_t Ad_{};
+  input_matrix_vehicle_t Bd_{};
+  state_matrix_vehicle_t Cd_{};
+  input_matrix_vehicle_t Dd_{};
+
+  state_matrix_vehicle_t I_At2_{};  // inv(I - A*ts/2)
+  state_vector_vehicle_t x0_;       // keep initial states.
+
+  /**
+   * @brief update algebraic solution of inv(I - A*ts/2) required in computing
+   * the Tustin form discretization.
+   * [ 1, (V*ts)/2, (T*V^2*ts^2)/(2*L*a^2*(2*T + ts))]
+   * [ 0,        1,       (T*V*ts)/(L*a^2*(2*T + ts))]
+   * [ 0,        0,                  (2*T)/(2*T + ts)]
+   *
+   * */
+  void updateI_Ats2(float64_t const & vref, float64_t const & cos_steer_sqr);
+};
+}  // namespace observers
+
 /**
  * @brief Implemented to test the current packages and inverted model performance.
  * */
@@ -76,69 +139,5 @@ private:
   Eigen::MatrixXd xv0_{Eigen::MatrixXd::Zero(2, 1)};  // delayed speed input states
   Eigen::MatrixXd xs0_{Eigen::MatrixXd::Zero(2, 1)};  // delayed steeering input states.
 };
-
-namespace observers
-{
-
-/**
- * @brief Linear kinematic error vehicle model with three states [ey, eyaw, ]
- * */
-class LinearKinematicErrorModel
-{
-public:
-  LinearKinematicErrorModel() = default;
-  LinearKinematicErrorModel(
-    float64_t const & wheelbase, float64_t const & tau_steering, float64_t const & dt);
-
-  void printContinuousSystem();
-  void printDiscreteSystem();
-
-  // different types of initial state updates.
-  void updateInitialStates(state_vector_vehicle_t const & x0);
-  void updateInitialStates(Eigen::MatrixXd const & x0);
-  void updateInitialStates(
-    float64_t const & ey, float64_t const & eyaw, float64_t const & steering);
-
-  // model update.
-  void updateStateSpace(float64_t const & vref, float64_t const & steering_ref);
-
-  void simulateOneStep(
-    state_vector_vehicle_t & y0, state_vector_vehicle_t & x0,
-    input_vector_vehicle_t const & steering_and_ideal_steering);
-
-  [[nodiscard]] bool8_t areInitialStatesSet() const { return are_initial_states_set_; }
-
-  [[nodiscard]] state_vector_vehicle_t getInitialStates() const;
-
-private:
-  bool8_t are_initial_states_set_{false};
-  float64_t wheelbase_{2.74};
-  float64_t tau_steering_{0.3};
-  float64_t dt_{0.1};
-
-  state_matrix_vehicle_t A_{};
-  input_matrix_vehicle_t B_{};
-  state_matrix_vehicle_t C_{};
-  input_matrix_vehicle_t D_{};
-
-  state_matrix_vehicle_t Ad_{};
-  input_matrix_vehicle_t Bd_{};
-  state_matrix_vehicle_t Cd_{};
-  input_matrix_vehicle_t Dd_{};
-
-  state_matrix_vehicle_t I_At2_{};  // inv(I - A*ts/2)
-  state_vector_vehicle_t x0_;       // keep initial states.
-
-  /**
-   * @brief update algebraic solution of inv(I - A*ts/2) required in computing
-   * the Tustin form discretization.
-   * [ 1, (V*ts)/2, (T*V^2*ts^2)/(2*L*a^2*(2*T + ts))]
-   * [ 0,        1,       (T*V*ts)/(L*a^2*(2*T + ts))]
-   * [ 0,        0,                  (2*T)/(2*T + ts)]
-   *
-   * */
-  void updateI_Ats2(float64_t const & vref, float64_t const & cos_steer_sqr);
-};
-}  // namespace observers
 
 #endif  // COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP

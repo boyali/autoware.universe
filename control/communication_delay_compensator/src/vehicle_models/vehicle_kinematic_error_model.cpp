@@ -287,13 +287,12 @@ void observers::LinearKinematicErrorModel::updateI_Ats2(
 }
 
 void observers::LinearKinematicErrorModel::simulateOneStep(
-  state_vector_vehicle_t & y0, state_vector_vehicle_t & x0,
-  const input_vector_vehicle_t & steering_and_ideal_steering)
+  state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, float64_t const & u)
 {
   // first update the output
   // y0 = x0 + dt_ * (A_ * x0 + B_ * steering_and_ideal_steering);
-  y0 = Cd_ * x0.eval() + Dd_ * steering_and_ideal_steering;
-  x0 = Ad_ * x0.eval() + Bd_ * steering_and_ideal_steering;
+  y0 = Cd_ * x0.eval() + Dd_ * u;
+  x0 = Ad_ * x0.eval() + Bd_ * u;
 }
 
 void observers::LinearKinematicErrorModel::updateInitialStates(state_vector_vehicle_t const & x0)

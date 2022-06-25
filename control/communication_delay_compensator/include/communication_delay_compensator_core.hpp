@@ -53,8 +53,7 @@ public:
   void printQfilterSSs() const;
 
   void simulateOneStep(
-    state_vector_vehicle_t const & current_measurements,
-    input_vector_vehicle_t const & steering_and_ideal_steering,
+    state_vector_vehicle_t const & current_measurements, float64_t const & steering_cmd,
     std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
     std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results);
 
