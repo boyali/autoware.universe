@@ -90,7 +90,6 @@ private:
 
   // placeholders
   state_vector_vehicle_t output_temp_{state_vector_vehicle_t ::Zero()};
-  input_vector_vehicle_t input_temp_{input_vector_vehicle_t::Zero()};
 
   float64_t dt_{};
 };

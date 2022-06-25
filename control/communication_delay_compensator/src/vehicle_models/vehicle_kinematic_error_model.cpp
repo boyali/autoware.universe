@@ -16,6 +16,146 @@
 
 #include "autoware_control_toolbox.hpp"
 
+// LINEAR KINEMATIC ERROR VEHICLE MODEL
+observers::LinearKinematicErrorModel::LinearKinematicErrorModel(
+  const float64_t & wheelbase, const float64_t & tau_steering, const float64_t & dt)
+: wheelbase_{wheelbase},
+  tau_steering_{tau_steering},
+  dt_{dt},
+  A_{state_matrix_vehicle_t::Zero()},
+  B_{input_matrix_vehicle_t::Zero()},
+  Bw_{input_matrix_vehicle_t::Zero()},
+  C_{state_matrix_vehicle_t ::Identity()},
+  D_{input_matrix_vehicle_t::Zero()},
+  Ad_{state_matrix_vehicle_t::Zero()},
+  Bd_{input_matrix_vehicle_t::Zero()},
+  Bwd_{input_matrix_vehicle_t::Zero()},
+  Cd_{state_matrix_vehicle_t ::Identity()},
+  Dd_{input_matrix_vehicle_t::Zero()},
+  I_At2_{state_matrix_vehicle_t::Identity()},
+  x0_{state_vector_vehicle_t ::Zero()}
+
+{
+  // Assuming tau does not change.
+  A_(2, 2) = -1. / tau_steering_;
+  B_(1, 1) = 1.;
+  B_(2, 0) = 1. / tau_steering_;
+}
+void observers::LinearKinematicErrorModel::printContinuousSystem()
+{
+  ns_utils::print("Matrix A: ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(A_));
+
+  ns_utils::print("Matrix B: ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(B_));
+
+  ns_utils::print("Matrix C: ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(C_));
+
+  ns_utils::print("Matrix D: ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(D_));
+}
+
+void observers::LinearKinematicErrorModel::printDiscreteSystem()
+{
+  ns_utils::print("Matrix Ad: ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Ad_));
+
+  ns_utils::print("Matrix Bd: ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Bd_));
+
+  ns_utils::print("Matrix Cd: ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Cd_));
+
+  ns_utils::print("Matrix Dd: ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Dd_));
+}
+void observers::LinearKinematicErrorModel::updateStateSpace(
+  const float64_t & vref, const float64_t & steering_ref)
+{
+  auto const && cos_sqr = std::cos(steering_ref) * std::cos(steering_ref);
+
+  A_(0, 1) = vref;
+  A_(1, 2) = vref / (wheelbase_ * cos_sqr);
+
+  B_(1, 1) = -vref / (wheelbase_ * cos_sqr);  // for desired heading rate computations.
+
+  //  auto IA = state_matrix_vehicle_t::Identity() - A_ * dt_ / 2;
+  //  auto Ainv = IA.inverse();
+
+  updateI_Ats2(vref, cos_sqr);
+
+  // Discretisize.
+  auto const & I = state_matrix_vehicle_t::Identity();
+
+  Ad_ = I_At2_ * (I + A_ * dt_ / 2.);
+  Bd_ = I_At2_ * B_ * dt_;
+  Cd_ = C_ * I_At2_;
+  Dd_ = D_ + C_ * Bd_ / 2.;
+
+  // Disturbance part
+  Bw_(1, 0) = -vref * steering_ref / (wheelbase_ * cos_sqr);
+  Bwd_ = I_At2_ * Bw_ * dt_;
+
+  // Debug
+  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Ainv));
+  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(I_At2_));
+}
+void observers::LinearKinematicErrorModel::updateI_Ats2(
+  float64_t const & vref, float64_t const & cos_steer_sqr)
+{
+  auto const & L = wheelbase_;
+  auto const asqr = cos_steer_sqr;
+  auto const & tau = tau_steering_;
+  auto const & var = 2 * tau + dt_;
+
+  I_At2_(0, 1) = vref * dt_ / 2.;
+  I_At2_(0, 2) = tau_steering_ * vref * vref * dt_ * dt_ / (2. * L * asqr * var);
+
+  I_At2_(1, 2) = tau * vref * dt_ / (L * asqr * var);
+  I_At2_(2, 2) = 2. * tau / var;
+}
+
+void observers::LinearKinematicErrorModel::simulateOneStep(
+  state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, float64_t const & u)
+{
+  // first update the output
+  // y0 = x0 + dt_ * (A_ * x0 + B_ * steering_and_ideal_steering);
+  y0 = Cd_ * x0.eval() + Dd_ * u;
+  x0 = Ad_ * x0.eval() + Bd_ * u + Bwd_;
+}
+
+void observers::LinearKinematicErrorModel::updateInitialStates(state_vector_vehicle_t const & x0)
+
+{
+  x0_ << x0;
+  are_initial_states_set_ = true;
+
+  // ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x0_));
+}
+
+void observers::LinearKinematicErrorModel::updateInitialStates(Eigen::MatrixXd const & x0)
+
+{
+  x0_ << x0;
+  are_initial_states_set_ = true;
+
+  // ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x0_));
+}
+void observers::LinearKinematicErrorModel::updateInitialStates(
+  float64_t const & ey, float64_t const & eyaw, float64_t const & steering)
+{
+  x0_ << ey, eyaw, steering;
+  are_initial_states_set_ = true;
+}
+state_vector_vehicle_t observers::LinearKinematicErrorModel::getInitialStates() const
+{
+  return x0_;
+}
+
+/**
+ * @brief Nonlinear vehicle model
+ * */
 NonlinearVehicleKinematicModel::NonlinearVehicleKinematicModel(
   double const & wheelbase, double const & tau_vel, double const & tau_steer,
   double const & deadtime_vel, double const & deadtime_steer, double const & dt)
@@ -189,136 +329,5 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateLinearOneStep(
   x0_[2] = delta0 - dt_ * (1 / tau_steer_) * (delta0 - delta_d);                      // delta
   x0_[3] = V0 - dt_ * (1 / tau_vel_) * (V0 - Vd);                                     // v
 
-  return x0_;
-}
-
-// LINEAR KINEMATIC ERROR VEHICLE MODEL
-observers::LinearKinematicErrorModel::LinearKinematicErrorModel(
-  const float64_t & wheelbase, const float64_t & tau_steering, const float64_t & dt)
-: wheelbase_{wheelbase},
-  tau_steering_{tau_steering},
-  dt_{dt},
-  A_{state_matrix_vehicle_t::Zero()},
-  B_{input_matrix_vehicle_t::Zero()},
-  C_{state_matrix_vehicle_t ::Identity()},
-  D_{input_matrix_vehicle_t::Zero()},
-  Ad_{state_matrix_vehicle_t::Zero()},
-  Bd_{input_matrix_vehicle_t::Zero()},
-  Cd_{state_matrix_vehicle_t ::Identity()},
-  Dd_{input_matrix_vehicle_t::Zero()},
-  I_At2_{state_matrix_vehicle_t::Identity()},
-  x0_{state_vector_vehicle_t ::Zero()}
-
-{
-  // Assuming tau does not change.
-  A_(2, 2) = -1. / tau_steering_;
-  B_(1, 1) = 1.;
-  B_(2, 0) = 1. / tau_steering_;
-}
-void observers::LinearKinematicErrorModel::printContinuousSystem()
-{
-  ns_utils::print("Matrix A: ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(A_));
-
-  ns_utils::print("Matrix B: ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(B_));
-
-  ns_utils::print("Matrix C: ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(C_));
-
-  ns_utils::print("Matrix D: ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(D_));
-}
-
-void observers::LinearKinematicErrorModel::printDiscreteSystem()
-{
-  ns_utils::print("Matrix Ad: ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Ad_));
-
-  ns_utils::print("Matrix Bd: ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Bd_));
-
-  ns_utils::print("Matrix Cd: ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Cd_));
-
-  ns_utils::print("Matrix Dd: ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Dd_));
-}
-void observers::LinearKinematicErrorModel::updateStateSpace(
-  const float64_t & vref, const float64_t & steering_ref)
-{
-  auto const && cos_sqr = std::cos(steering_ref) * std::cos(steering_ref);
-
-  A_(0, 1) = vref;
-  A_(1, 2) = vref / (wheelbase_ * cos_sqr);
-
-  B_(1, 1) = -vref / (wheelbase_ * cos_sqr);  // for desired heading rate computations.
-
-  //  auto IA = state_matrix_vehicle_t::Identity() - A_ * dt_ / 2;
-  //  auto Ainv = IA.inverse();
-
-  updateI_Ats2(vref, cos_sqr);
-
-  // Discretisize.
-  auto const & I = state_matrix_vehicle_t::Identity();
-
-  Ad_ = I_At2_ * (I + A_ * dt_ / 2.);
-  Bd_ = I_At2_ * B_ * dt_;
-  Cd_ = C_ * I_At2_;
-  Dd_ = D_ + C_ * Bd_ / 2.;
-
-  // Debug
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Ainv));
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(I_At2_));
-}
-void observers::LinearKinematicErrorModel::updateI_Ats2(
-  float64_t const & vref, float64_t const & cos_steer_sqr)
-{
-  auto const & L = wheelbase_;
-  auto const asqr = cos_steer_sqr;
-  auto const & tau = tau_steering_;
-  auto const & var = 2 * tau + dt_;
-
-  I_At2_(0, 1) = vref * dt_ / 2.;
-  I_At2_(0, 2) = tau_steering_ * vref * vref * dt_ * dt_ / (2. * L * asqr * var);
-
-  I_At2_(1, 2) = tau * vref * dt_ / (L * asqr * var);
-  I_At2_(2, 2) = 2. * tau / var;
-}
-
-void observers::LinearKinematicErrorModel::simulateOneStep(
-  state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, float64_t const & u)
-{
-  // first update the output
-  // y0 = x0 + dt_ * (A_ * x0 + B_ * steering_and_ideal_steering);
-  y0 = Cd_ * x0.eval() + Dd_ * u;
-  x0 = Ad_ * x0.eval() + Bd_ * u;
-}
-
-void observers::LinearKinematicErrorModel::updateInitialStates(state_vector_vehicle_t const & x0)
-
-{
-  x0_ << x0;
-  are_initial_states_set_ = true;
-
-  // ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x0_));
-}
-
-void observers::LinearKinematicErrorModel::updateInitialStates(Eigen::MatrixXd const & x0)
-
-{
-  x0_ << x0;
-  are_initial_states_set_ = true;
-
-  // ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x0_));
-}
-void observers::LinearKinematicErrorModel::updateInitialStates(
-  float64_t const & ey, float64_t const & eyaw, float64_t const & steering)
-{
-  x0_ << ey, eyaw, steering;
-  are_initial_states_set_ = true;
-}
-state_vector_vehicle_t observers::LinearKinematicErrorModel::getInitialStates() const
-{
   return x0_;
 }

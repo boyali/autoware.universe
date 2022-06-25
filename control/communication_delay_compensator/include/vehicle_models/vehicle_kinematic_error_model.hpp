@@ -68,11 +68,13 @@ private:
 
   state_matrix_vehicle_t A_{};
   input_matrix_vehicle_t B_{};
+  input_matrix_vehicle_t Bw_{};
   state_matrix_vehicle_t C_{};
   input_matrix_vehicle_t D_{};
 
   state_matrix_vehicle_t Ad_{};
   input_matrix_vehicle_t Bd_{};
+  input_matrix_vehicle_t Bwd_{};  // curvature disturbance term
   state_matrix_vehicle_t Cd_{};
   input_matrix_vehicle_t Dd_{};
 
