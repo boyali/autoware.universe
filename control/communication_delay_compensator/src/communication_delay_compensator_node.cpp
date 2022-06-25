@@ -453,8 +453,8 @@ void CommunicationDelayCompensatorNode::setLateralCDOB()
 void CommunicationDelayCompensatorNode::computeLateralCDOB()
 {
   // get the current outputs observed y=[ey, eyaw, steering] for qfilters.
-  auto const & current_lat_error = prev_lat_errors_ptr_->lateral_deviation_read;
-  auto const & current_heading_error = prev_lat_errors_ptr_->heading_angle_error_read;
+  auto const & current_lat_error = current_lat_errors_ptr_->lateral_deviation_read;
+  auto const & current_heading_error = current_lat_errors_ptr_->heading_angle_error_read;
   auto const & current_steering = current_steering_ptr_->steering_tire_angle;
 
   current_lat_measurements_ << current_lat_error, current_heading_error, current_steering;
