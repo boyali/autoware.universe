@@ -132,6 +132,8 @@ void CommunicationDelayCompensatorNode::onTimer()
   {
     // cdob_lateral_ptr_->printQfilterTFs();
     // cdob_lateral_ptr_->printQfilterSSs();
+    ns_utils::print("Dummy matrix from yaml file");
+    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(dumymatrix_));
   }
 }
 
@@ -317,6 +319,11 @@ void CommunicationDelayCompensatorNode::readAndLoadParameters()
     params_node_.steering_tau = declare_parameter<float64_t>("steering_time_constant_");
     params_node_.velocity_tau = declare_parameter<float64_t>("velocity_time_constant_");
     params_node_.acc_tau = declare_parameter<float64_t>("acc_time_constant_");
+
+    // load a dummy matrix.
+    auto temp = declare_parameter<std::vector<float64_t>>("Xd1");
+    auto dd = state_matrix_vehicle_t::Map(temp.data());
+    dumymatrix_ = dd.transpose();
 
   }
 

@@ -277,6 +277,9 @@ private:
    * */
   void setLateralCDOB();
   void computeLateralCDOB();
+
+  // to test reading matrix from the yaml file.
+  state_matrix_vehicle_t dumymatrix_{};
 };
 
 }  // namespace observers
