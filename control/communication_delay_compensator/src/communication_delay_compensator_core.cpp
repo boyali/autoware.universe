@@ -72,6 +72,7 @@ observers::LateralCommunicationDelayCompensator::LateralCommunicationDelayCompen
   xd0_{state_qfilter ::Zero()},
   vXs_{lyap_matsXY.vXs},
   vYs_{lyap_matsXY.vYs},
+  Lobs_{input_matrix_observer_t::Zero()},
   dt_{dt},
   qfilter_order_{qfilter_lateral.order()}
 {
@@ -119,14 +120,20 @@ void observers::LateralCommunicationDelayCompensator::setInitialStates()
 }
 void observers::LateralCommunicationDelayCompensator::simulateOneStep(
   const state_vector_vehicle_t & current_measurements,
-  const autoware::common::types::float64_t & steering_cmd,
+  const autoware::common::types::float64_t & previous_steering_cmd,
+  const autoware::common::types::float64_t & current_steering_cmd,
   std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
   std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results)
 {
+  // If the initial states of the state observer are not set, sets it.
   setInitialStates();
 
+  // Compute the observer gain matrix for the current operating conditions.
+
   // Debug
-  ns_utils::print("Steering command read : ", steering_cmd);
+  ns_utils::print("Current steering command read : ", current_steering_cmd);
+  ns_utils::print("Previous steering command read : ", previous_steering_cmd);
+  ns_utils::print("Steering command read : ", current_steering_cmd);
   ns_utils::print("Heading error read : ", msg_compensation_results->heading_angle_error_read);
   ns_utils::print("lat_ey_hat : ", msg_debug_results->lat_ey_hat);
 

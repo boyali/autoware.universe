@@ -71,7 +71,9 @@ public:
   void printLyapMatrices() const;
 
   void simulateOneStep(
-    state_vector_vehicle_t const & current_measurements, float64_t const & steering_cmd,
+    state_vector_vehicle_t const & current_measurements,
+    const autoware::common::types::float64_t & previous_steering_cmd,
+    float64_t const & current_steering_cmd,
     std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
     std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results);
 
@@ -100,9 +102,16 @@ private:
   std::vector<input_matrix_observer_t> vYs_;
 
   // placeholders
+  input_matrix_observer_t Lobs_;  //@brief state observer gain matrix.
+
+  // smaller size data class members.
   float64_t dt_{};
   int qfilter_order_{1};
   bool8_t is_vehicle_initial_states_set_{false};
+
+  /**
+   * @brief
+   * */
 };
 
 /**
