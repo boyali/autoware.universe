@@ -123,4 +123,13 @@ void observers::LateralCommunicationDelayCompensator::simulateOneStep(
   std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
   std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results)
 {
+  setInitialStates();
+
+  // Debug
+  ns_utils::print("Steering command read : ", steering_cmd);
+  ns_utils::print("Heading error read : ", msg_compensation_results->heading_angle_error_read);
+  ns_utils::print("lat_ey_hat : ", msg_debug_results->lat_ey_hat);
+
+  ns_utils::print("Current Measurements : ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_measurements));
 }

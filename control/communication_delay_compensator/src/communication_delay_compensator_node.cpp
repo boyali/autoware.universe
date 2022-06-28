@@ -134,9 +134,9 @@ void CommunicationDelayCompensatorNode::onTimer()
 
   // Debug
   {
-    cdob_lateral_ptr_->printQfilterTFs();
-    cdob_lateral_ptr_->printQfilterSSs();
-    cdob_lateral_ptr_->printLyapMatrices();
+    //    cdob_lateral_ptr_->printQfilterTFs();
+    //    cdob_lateral_ptr_->printQfilterSSs();
+    //    cdob_lateral_ptr_->printLyapMatrices();
   }
 }
 
@@ -448,6 +448,11 @@ void CommunicationDelayCompensatorNode::computeLateralCDOB()
 
   current_lat_measurements_ << current_lat_error, current_heading_error, current_steering;
 
+  // Set messages
+  current_delay_ref_msg_ptr_->lateral_deviation_read = current_lat_error;
+  current_delay_ref_msg_ptr_->heading_angle_error_read = current_heading_error;
+  current_delay_ref_msg_ptr_->steering_read = current_steering;
+
   // get the previous inputs and parameter that are used and sent to the vehicle.
   /**
    * previous: ideal steering and target velocities to linearize the model, and previous
@@ -460,11 +465,6 @@ void CommunicationDelayCompensatorNode::computeLateralCDOB()
   cdob_lateral_ptr_->simulateOneStep(
     current_lat_measurements_, prev_steering_control_cmd, current_delay_ref_msg_ptr_,
     current_delay_debug_msg_);
-
-  // Set messages
-  current_delay_ref_msg_ptr_->lateral_deviation_read = current_lat_error;
-  current_delay_ref_msg_ptr_->heading_angle_error_read = current_heading_error;
-  current_delay_ref_msg_ptr_->steering_read = current_steering;
 
   // DEBUG
   {
