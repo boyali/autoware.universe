@@ -116,6 +116,14 @@ void observers::LinearKinematicErrorModel::updateI_Ats2(
   I_At2_(2, 2) = 2. * tau / var;
 }
 
+/**
+ * @brief Simulates the vehicle motion given an input. The resulting states and outputs are
+ * written into the passed arguments.
+ * @param y0: Output of the one step integration.
+ * @param x0: Vehicle initial states, updated after the integration.
+ * @param u: Steering control signal.
+ *
+ * */
 void observers::LinearKinematicErrorModel::simulateOneStep(
   state_vector_vehicle_t & y0, state_vector_vehicle_t & x0, float64_t const & u)
 {
@@ -151,6 +159,27 @@ void observers::LinearKinematicErrorModel::updateInitialStates(
 state_vector_vehicle_t observers::LinearKinematicErrorModel::getInitialStates() const
 {
   return x0_;
+}
+void observers::LinearKinematicErrorModel::evaluateNonlinearTermsForLyap(
+  observers::state_matrix_observer_t & thetas, const state_vector_vehicle_t & lin_vehicle_states,
+  const autoware::common::types::float64_t & v_long_speed,
+  const autoware::common::types::float64_t & curvature) const
+{
+  // Extract values.
+  auto const & ey = lin_vehicle_states(0);
+  auto const & eyaw = lin_vehicle_states(1);
+  auto const & steering = lin_vehicle_states(2);
+
+  auto const && kappa_expr = curvature / (1. - curvature * ey);
+  auto const && ke_sqr = kappa_expr * kappa_expr;
+
+  auto const && t1 = v_long_speed * std::cos(eyaw);
+
+  auto const && t2 = -ke_sqr * t1;
+  auto const && t3 = kappa_expr * v_long_speed * std::sin(eyaw);
+  auto const && t4 = v_long_speed / (wheelbase_ * std::cos(steering) * std::cos(steering));
+
+  thetas << t1, t2, t3, t4;
 }
 
 /**
