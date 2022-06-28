@@ -38,6 +38,23 @@ using input_matrix_vehicle_t = Eigen::Matrix<
   double, toUnderlyingType(KinematicErrorDims::STATE_DIM),
   toUnderlyingType(KinematicErrorDims::INPUT_DIM)>;
 
+// Lyapunov matrix dimension definitions.
+namespace observers
+{
+
+constexpr size_t cx_number_of_lyap_mats = 5;
+enum class CDOB_PUBLIC StateObserverDims : int { STATE_DIM = 4, INPUT_DIM = 3 };
+
+using state_matrix_observer_t = Eigen::Matrix<
+  double, toUnderlyingType(StateObserverDims::STATE_DIM),
+  toUnderlyingType(StateObserverDims::STATE_DIM)>;
+
+using input_matrix_observer_t = Eigen::Matrix<
+  double, toUnderlyingType(StateObserverDims::INPUT_DIM),
+  toUnderlyingType(StateObserverDims::STATE_DIM)>;
+
+}  // namespace observers
+
 // General Template for enum class types.
 template <int Nnum_of_states>
 using state_vector_qfilter = Eigen::Matrix<double, Nnum_of_states, 1>;

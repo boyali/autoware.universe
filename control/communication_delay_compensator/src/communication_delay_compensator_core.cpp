@@ -64,12 +64,16 @@ observers::tf_t observers::get_nthOrderTFwithDampedPoles(
 
 observers::LateralCommunicationDelayCompensator::LateralCommunicationDelayCompensator(
   observers::LateralCommunicationDelayCompensator::model_ptr_t vehicle_model,
-  const observers::tf_t & qfilter_lateral, const float64_t & dt)
+  const observers::tf_t & qfilter_lateral, sLyapMatrixVecs const & lyap_matsXY,
+  const float64_t & dt)
 : vehicle_model_ptr_(std::move(vehicle_model)),
   tf_qfilter_lat_{qfilter_lateral},
   xu0_{state_qfilter::Zero()},
   xd0_{state_qfilter ::Zero()},
-  dt_{dt}
+  vXs_{lyap_matsXY.vXs},
+  vYs_{lyap_matsXY.vYs},
+  dt_{dt},
+  qfilter_order_{qfilter_lateral.order()}
 {
   // Compute the state-space model of QGinv(s)
   ss_qfilter_lat_ = ss_t(tf_qfilter_lat_, dt_);  // Do not forget to enter the time step dt.
@@ -85,4 +89,20 @@ void observers::LateralCommunicationDelayCompensator::printQfilterSSs() const
   ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
   ns_utils::print("State-Space Matrices of qfilter of lateral error : \n");
   ss_qfilter_lat_.print();
+}
+void observers::LateralCommunicationDelayCompensator::printLyapMatrices() const
+{
+  ns_utils::print("Lyapunov X matrices : ");
+  if (!vXs_.empty()) {
+    for (auto const & item : vXs_) {
+      ns_eigen_utils::printEigenMat(Eigen::MatrixXd(item));
+    }
+  }
+
+  ns_utils::print("Lyapunov Y matrices : ");
+  if (!vYs_.empty()) {
+    for (auto const & item : vYs_) {
+      ns_eigen_utils::printEigenMat(Eigen::MatrixXd(item));
+    }
+  }
 }

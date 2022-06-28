@@ -35,10 +35,21 @@ namespace observers
 using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
 using DelayCompensatorDebugMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationDebug;
 
+struct sLyapMatrixVecs
+{
+  sLyapMatrixVecs()
+  {
+    vXs.reserve(cx_number_of_lyap_mats);
+    vYs.reserve(cx_number_of_lyap_mats);
+  }
+
+  std::vector<state_matrix_observer_t> vXs;
+  std::vector<input_matrix_observer_t> vYs;
+};
+
 /**
  * @brief Communication Delay Compensator Core without inverse models. .
  * */
-
 class LateralCommunicationDelayCompensator
 {
 public:
@@ -47,10 +58,12 @@ public:
 
   LateralCommunicationDelayCompensator() = default;
   LateralCommunicationDelayCompensator(
-    model_ptr_t vehicle_model, tf_t const & qfilter_lateral, float64_t const & dt);
+    model_ptr_t vehicle_model, tf_t const & qfilter_lateral, sLyapMatrixVecs const & lyap_matsXY,
+    float64_t const & dt);
 
   void printQfilterTFs() const;
   void printQfilterSSs() const;
+  void printLyapMatrices() const;
 
   //  void simulateOneStep(
   //    state_vector_vehicle_t const & current_measurements, float64_t const & steering_cmd,
@@ -60,7 +73,6 @@ public:
   //  void setInitialStates();
 
 private:
-  bool8_t is_vehicle_initial_states_set_{false};
   model_ptr_t vehicle_model_ptr_{};
 
   // transfer functions
@@ -73,10 +85,14 @@ private:
   state_qfilter xu0_;  // @brief state vector for the filtered input
   state_qfilter xd0_;  // @brief state vector for the filtered disturbance
 
-  //  // placeholders
-  //  state_vector_vehicle_t output_temp_{state_vector_vehicle_t ::Zero()};
-  //
+  // Lyapunov matrices to compute
+  std::vector<state_matrix_observer_t> vXs_;
+  std::vector<input_matrix_observer_t> vYs_;
+
+  // placeholders
   float64_t dt_{};
+  int qfilter_order_{1};
+  bool8_t is_vehicle_initial_states_set_{false};
 };
 
 /**

@@ -24,7 +24,8 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
   using std::placeholders::_1;
 
   /* get parameter updates */
-  readAndLoadParameters();
+  observers::sLyapMatrixVecs lyap_mat_vec;  // for state observer Lyapunov mats.
+  readAndLoadParameters(lyap_mat_vec);
 
   params_node_.wheel_base = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo().wheel_base_m;
   initTimer(params_node_.cdob_ctrl_period);
@@ -81,7 +82,10 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
   vehicle_model_ptr_ = std::make_shared<LinearKinematicErrorModel>(
     params_node_.wheel_base, params_node_.steering_tau, params_node_.cdob_ctrl_period);
 
-  setLateralCDOB();
+  /**
+   * @brief read the Lyapunov matrices and pass them to the delay compensator.
+   * */
+  setLateralCDOB(lyap_mat_vec);
 }
 
 void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
@@ -132,8 +136,7 @@ void CommunicationDelayCompensatorNode::onTimer()
   {
     cdob_lateral_ptr_->printQfilterTFs();
     cdob_lateral_ptr_->printQfilterSSs();
-    //    ns_utils::print("Dummy matrix from yaml file");
-    //    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(dumymatrix_));
+    cdob_lateral_ptr_->printLyapMatrices();
   }
 }
 
@@ -291,7 +294,8 @@ bool8_t CommunicationDelayCompensatorNode::isDataReady()
   return true;
 }
 
-void CommunicationDelayCompensatorNode::readAndLoadParameters()
+void CommunicationDelayCompensatorNode::readAndLoadParameters(
+  observers::sLyapMatrixVecs & lyap_mats)
 {
   try {
     // Read the filter orders.
@@ -316,10 +320,22 @@ void CommunicationDelayCompensatorNode::readAndLoadParameters()
     params_node_.acc_tau = declare_parameter<float64_t>("acc_time_constant_");
 
     // Load the state observer Lyapunov matrices.
-    // auto temp = declare_parameter<std::vector<float64_t>>("Xd1");
-    // auto dd = state_matrix_vehicle_t::Map(temp.data());
-    // dumymatrix_ = dd.transpose();
+    auto labelX_tag = "Xn";  // No delay nodel for steering and longitudinal speed
+    auto labelY_tag = "Yn";
 
+    for (size_t k = 0; k < observers::cx_number_of_lyap_mats; k++) {
+      auto labelX = labelX_tag + std::to_string(k + 1);
+      auto tempvX = declare_parameter<std::vector<float64_t>>(labelX);
+      auto tempX = state_matrix_observer_t ::Map(tempvX.data());
+
+      lyap_mats.vXs.emplace_back(tempX);
+
+      auto labelY = labelY_tag + std::to_string(k + 1);
+      auto tempvY = declare_parameter<std::vector<float64_t>>(labelY);
+      auto tempY = input_matrix_observer_t ::Map(tempvY.data());
+
+      lyap_mats.vYs.emplace_back(tempY);
+    }
   }
 
   catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
@@ -400,7 +416,7 @@ void CommunicationDelayCompensatorNode::updateVehicleModel()
 
   // ns_utils::print(" Previous target speed :", previous_target_velocity_);
 }
-void CommunicationDelayCompensatorNode::setLateralCDOB()
+void CommunicationDelayCompensatorNode::setLateralCDOB(sLyapMatrixVecs const & lyap_matsXY)
 {
   /**
    * Create qfilter for lateral controller.  It filters both control input and estimated
@@ -419,7 +435,7 @@ void CommunicationDelayCompensatorNode::setLateralCDOB()
   //  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, damping_val, remaining_order);
 
   LateralCommunicationDelayCompensator delay_compensator_lat(
-    vehicle_model_ptr_, qfilter_lat_error, params_node_.cdob_ctrl_period);
+    vehicle_model_ptr_, qfilter_lat_error, lyap_matsXY, params_node_.cdob_ctrl_period);
 
   cdob_lateral_ptr_ = std::make_unique<LateralCommunicationDelayCompensator>(delay_compensator_lat);
 }

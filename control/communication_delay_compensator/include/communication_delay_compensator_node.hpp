@@ -246,7 +246,7 @@ private:
    * @brief Default parameters of the parameters.
    * */
 
-  void readAndLoadParameters();
+  void readAndLoadParameters(observers::sLyapMatrixVecs & lyap_mats);
 
   /**
    * @brief Dynamic update of the parameters.
@@ -269,7 +269,7 @@ private:
   /**
    * @brief Sets the lateral delay compensator.
    * */
-  void setLateralCDOB();
+  void setLateralCDOB(sLyapMatrixVecs const & lyap_matsXY);
   void computeLateralCDOB();
 };
 
