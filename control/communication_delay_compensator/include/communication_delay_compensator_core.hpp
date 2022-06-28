@@ -102,7 +102,8 @@ private:
   std::vector<input_matrix_observer_t> vYs_;
 
   // placeholders
-  input_matrix_observer_t Lobs_;  //@brief state observer gain matrix.
+  input_matrix_observer_t Lobs_;          //@brief state observer gain matrix.
+  state_vector_observer_t theta_params_;  //@brieff nonlinear terms in A of SS models of vehicle.
 
   // smaller size data class members.
   float64_t dt_{};
@@ -110,8 +111,9 @@ private:
   bool8_t is_vehicle_initial_states_set_{false};
 
   /**
-   * @brief
+   * @brief computes the observer gain matrix given the operating conditions.
    * */
+  void computeObserverGains();
 };
 
 /**

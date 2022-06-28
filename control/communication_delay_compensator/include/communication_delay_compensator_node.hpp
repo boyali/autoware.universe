@@ -158,7 +158,8 @@ private:
   // Pointers to the ROS topics.
   // Pointers for ros topic
   // Pointers to the model state variables inputs
-  std::shared_ptr<nav_msgs::msg::Odometry> current_velocity_ptr{nullptr};
+  std::shared_ptr<nav_msgs::msg::Odometry> current_velocity_ptr_{nullptr};
+
   std::shared_ptr<SteeringReport> current_steering_ptr_{nullptr};
   std::shared_ptr<SteeringReport> prev_steering_ptr_{nullptr};
 
@@ -186,7 +187,6 @@ private:
 
   // placeholders.
   state_vector_vehicle_t current_lat_measurements_{state_vector_vehicle_t::Zero()};
-  input_vector_vehicle_t previous_inputs_to_cdob_{input_vector_vehicle_t::Zero()};
 
   // Debug messages
   std::shared_ptr<DelayCompensatorDebugMsg> current_delay_debug_msg_{nullptr};

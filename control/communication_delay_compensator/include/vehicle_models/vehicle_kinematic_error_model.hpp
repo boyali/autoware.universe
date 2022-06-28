@@ -48,7 +48,8 @@ public:
   void updateInitialStates(state_vector_vehicle_t const & x0);
   void updateInitialStates(Eigen::MatrixXd const & x0);
   void updateInitialStates(
-    float64_t const & ey, float64_t const & eyaw, float64_t const & steering);
+    float64_t const & ey, float64_t const & eyaw, float64_t const & steering, float64_t const & vx,
+    float64_t const & curvature);
 
   // model update.
   void updateStateSpace(float64_t const & vref, float64_t const & steering_ref);
@@ -59,9 +60,8 @@ public:
   [[nodiscard]] bool8_t areInitialStatesSet() const { return are_initial_states_set_; }
 
   [[nodiscard]] state_vector_vehicle_t getInitialStates() const;
-  void evaluateNonlinearTermsForLyap(
-    observers::state_vector_observer_t & thetas, state_vector_vehicle_t const & lin_vehicle_states,
-    float64_t const & v_long_speed, float64_t const & curvature) const;
+
+  void evaluateNonlinearTermsForLyap(observers::state_vector_observer_t & thetas) const;
 
 private:
   bool8_t are_initial_states_set_{false};
@@ -83,6 +83,8 @@ private:
 
   state_matrix_vehicle_t I_At2_{};  // inv(I - A*ts/2)
   state_vector_vehicle_t x0_;       // keep initial states.
+  float64_t long_velocity_{};
+  float64_t curvature_{};
 
   /**
    * @brief update algebraic solution of inv(I - A*ts/2) required in computing

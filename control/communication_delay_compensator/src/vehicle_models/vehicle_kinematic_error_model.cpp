@@ -151,9 +151,17 @@ void observers::LinearKinematicErrorModel::updateInitialStates(Eigen::MatrixXd c
   // ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x0_));
 }
 void observers::LinearKinematicErrorModel::updateInitialStates(
-  float64_t const & ey, float64_t const & eyaw, float64_t const & steering)
+  float64_t const & ey, float64_t const & eyaw, float64_t const & steering, float64_t const & vx,
+  float64_t const & curvature)
 {
+  /**
+   * @brief The CDOBs use the linear vehicle model to access to its state space. The states of
+   * the parallel model is estimated by a state observer using this state-space.
+   * */
   x0_ << ey, eyaw, steering;
+
+  long_velocity_ = vx;
+  curvature_ = curvature;
   are_initial_states_set_ = true;
 }
 state_vector_vehicle_t observers::LinearKinematicErrorModel::getInitialStates() const
@@ -161,23 +169,21 @@ state_vector_vehicle_t observers::LinearKinematicErrorModel::getInitialStates() 
   return x0_;
 }
 void observers::LinearKinematicErrorModel::evaluateNonlinearTermsForLyap(
-  observers::state_vector_observer_t & thetas, const state_vector_vehicle_t & lin_vehicle_states,
-  const autoware::common::types::float64_t & v_long_speed,
-  const autoware::common::types::float64_t & curvature) const
+  observers::state_vector_observer_t & thetas) const
 {
   // Extract values.
-  auto const & ey = lin_vehicle_states(0);
-  auto const & eyaw = lin_vehicle_states(1);
-  auto const & steering = lin_vehicle_states(2);
+  auto const & ey = x0_(0);
+  auto const & eyaw = x0_(1);
+  auto const & steering = x0_(2);
 
-  auto const && kappa_expr = curvature / (1. - curvature * ey);
+  auto const && kappa_expr = curvature_ / (1. - curvature_ * ey);
   auto const && ke_sqr = kappa_expr * kappa_expr;
 
-  auto const && t1 = v_long_speed * std::cos(eyaw);
+  auto const && t1 = long_velocity_ * std::cos(eyaw);
 
   auto const && t2 = -ke_sqr * t1;
-  auto const && t3 = kappa_expr * v_long_speed * std::sin(eyaw);
-  auto const && t4 = v_long_speed / (wheelbase_ * std::cos(steering) * std::cos(steering));
+  auto const && t3 = kappa_expr * long_velocity_ * std::sin(eyaw);
+  auto const && t4 = long_velocity_ / (wheelbase_ * std::cos(steering) * std::cos(steering));
 
   thetas << t1, t2, t3, t4;
 }

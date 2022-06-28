@@ -73,6 +73,7 @@ observers::LateralCommunicationDelayCompensator::LateralCommunicationDelayCompen
   vXs_{lyap_matsXY.vXs},
   vYs_{lyap_matsXY.vYs},
   Lobs_{input_matrix_observer_t::Zero()},
+  theta_params_{state_vector_observer_t::Zero()},
   dt_{dt},
   qfilter_order_{qfilter_lateral.order()}
 {
@@ -129,6 +130,7 @@ void observers::LateralCommunicationDelayCompensator::simulateOneStep(
   setInitialStates();
 
   // Compute the observer gain matrix for the current operating conditions.
+  computeObserverGains();
 
   // Debug
   ns_utils::print("Current steering command read : ", current_steering_cmd);
@@ -139,4 +141,12 @@ void observers::LateralCommunicationDelayCompensator::simulateOneStep(
 
   ns_utils::print("Current Measurements : ");
   ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_measurements));
+}
+void observers::LateralCommunicationDelayCompensator::computeObserverGains()
+{
+  theta_params_.setZero();
+  vehicle_model_ptr_->evaluateNonlinearTermsForLyap(theta_params_);
+
+  ns_utils::print("Current Thetas : ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(theta_params_));
 }

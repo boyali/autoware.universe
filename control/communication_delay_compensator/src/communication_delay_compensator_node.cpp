@@ -154,11 +154,11 @@ void CommunicationDelayCompensatorNode::onControlCommands(const ControlCommand::
 
 void CommunicationDelayCompensatorNode::onCurrentVelocity(const VelocityMsg::SharedPtr msg)
 {
-  if (current_velocity_ptr) {
-    previous_velocity_ = current_velocity_ptr->twist.twist.linear.x;
+  if (current_velocity_ptr_) {
+    previous_velocity_ = current_velocity_ptr_->twist.twist.linear.x;
   }
 
-  current_velocity_ptr = std::make_shared<VelocityMsg>(*msg);
+  current_velocity_ptr_ = std::make_shared<VelocityMsg>(*msg);
 
   // ns_utils::print("ACT On velocity method ");
   // ns_utils::print("Read parameter control period :", params_node_.cdob_ctrl_period);
@@ -256,7 +256,7 @@ void CommunicationDelayCompensatorNode::onCurrentSteering(const SteeringReport::
 
 bool8_t CommunicationDelayCompensatorNode::isDataReady()
 {
-  if (!current_velocity_ptr) {
+  if (!current_velocity_ptr_) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), (1000ms).count(),
       "[communication_delay] Waiting for the velocity measurement ...");
@@ -387,16 +387,20 @@ rcl_interfaces::msg::SetParametersResult CommunicationDelayCompensatorNode::onPa
 
 bool8_t CommunicationDelayCompensatorNode::isVehicleStopping()
 {
-  auto current_vel = current_velocity_ptr->twist.twist.linear.x;
+  auto current_vel = current_velocity_ptr_->twist.twist.linear.x;
   return std::fabs(current_vel) <= 0.5;
 }
+
+/**
+ * @brief Parallel vehicle model that operates on the past states [k-1] of the actual vehicle [k].
+ * */
 void CommunicationDelayCompensatorNode::updateVehicleModel()
 {
-  // auto vref = current_velocity_ptr->twist.twist.linear.x;
+  // auto vref = current_velocity_ptr_->twist.twist.linear.x;
   // auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
 
   // Update the matrices
-  vehicle_model_ptr_->updateStateSpace(previous_target_velocity_, current_ideal_steering_);
+  vehicle_model_ptr_->updateStateSpace(previous_target_velocity_, prev_ideal_steering_);
 
   // Update the initial state.
   //  auto current_steering = current_steering_ptr_->steering_tire_angle;
@@ -410,8 +414,10 @@ void CommunicationDelayCompensatorNode::updateVehicleModel()
   if (prev_lat_errors_ptr_ && prev_steering_ptr_ && prev_long_errors_ptr_) {
     float64_t ey{prev_lat_errors_ptr_->lateral_deviation_read};
     float64_t eyaw{prev_lat_errors_ptr_->heading_angle_error_read};
+    float64_t vx{previous_velocity_};
 
-    vehicle_model_ptr_->updateInitialStates(ey, eyaw, previous_steering_angle_);
+    vehicle_model_ptr_->updateInitialStates(
+      ey, eyaw, previous_steering_angle_, vx, prev_curvature_);
   }
 
   // ns_utils::print(" Previous target speed :", previous_target_velocity_);
