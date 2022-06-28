@@ -71,9 +71,7 @@ public:
   void printLyapMatrices() const;
 
   void simulateOneStep(
-    state_vector_vehicle_t const & current_measurements,
-    const autoware::common::types::float64_t & previous_steering_cmd,
-    float64_t const & current_steering_cmd,
+    state_vector_vehicle_t const & current_measurements, float64_t const & current_steering_cmd,
     std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
     std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results);
 
@@ -89,8 +87,8 @@ private:
   ss_t ss_qfilter_lat_;
 
   // state vectors for filtering inputs.
-  state_qfilter xu0_;  // @brief state vector for the filtered input
-  state_qfilter xd0_;  // @brief state vector for the filtered disturbance
+  Eigen::MatrixXd xu0_;  // @brief state vector for the filtered input
+  Eigen::MatrixXd xd0_;  // @brief state vector for the filtered disturbance
 
   /**
    * @brief state observer estimated state [ey, eyaw, steering, disturbance
@@ -107,6 +105,8 @@ private:
 
   // smaller size data class members.
   float64_t dt_{};
+  float64_t previous_qfiltered_control_cmd_{};
+  float64_t current_qfiltered_control_cmd_{};
   int qfilter_order_{1};
   bool8_t is_vehicle_initial_states_set_{false};
 
@@ -114,6 +114,12 @@ private:
    * @brief computes the observer gain matrix given the operating conditions.
    * */
   void computeObserverGains();
+
+  /**
+   * @brief filters the control input and store it as previous_filtered_cmd.
+   * */
+
+  void qfilterControlCommand(float64_t const & current_control_cmd);
 };
 
 /**

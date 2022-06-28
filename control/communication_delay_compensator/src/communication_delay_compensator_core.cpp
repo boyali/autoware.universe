@@ -121,7 +121,6 @@ void observers::LateralCommunicationDelayCompensator::setInitialStates()
 }
 void observers::LateralCommunicationDelayCompensator::simulateOneStep(
   const state_vector_vehicle_t & current_measurements,
-  const autoware::common::types::float64_t & previous_steering_cmd,
   const autoware::common::types::float64_t & current_steering_cmd,
   std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
   std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results)
@@ -132,15 +131,21 @@ void observers::LateralCommunicationDelayCompensator::simulateOneStep(
   // Compute the observer gain matrix for the current operating conditions.
   computeObserverGains();
 
+  // Filter the current input and store it in the as the filtered previous input.
+  qfilterControlCommand(current_steering_cmd);
+
   // Debug
   ns_utils::print("Current steering command read : ", current_steering_cmd);
-  ns_utils::print("Previous steering command read : ", previous_steering_cmd);
   ns_utils::print("Steering command read : ", current_steering_cmd);
   ns_utils::print("Heading error read : ", msg_compensation_results->heading_angle_error_read);
   ns_utils::print("lat_ey_hat : ", msg_debug_results->lat_ey_hat);
 
   ns_utils::print("Current Measurements : ");
   ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_measurements));
+
+  ns_utils::print(
+    "Previous and previous current commands :", previous_qfiltered_control_cmd_,
+    current_qfiltered_control_cmd_);
 }
 void observers::LateralCommunicationDelayCompensator::computeObserverGains()
 {
@@ -149,4 +154,11 @@ void observers::LateralCommunicationDelayCompensator::computeObserverGains()
 
   ns_utils::print("Current Thetas : ");
   ns_eigen_utils::printEigenMat(Eigen::MatrixXd(theta_params_));
+}
+void observers::LateralCommunicationDelayCompensator::qfilterControlCommand(
+  const autoware::common::types::float64_t & current_control_cmd)
+{
+  // First give the output, then update the states.
+  previous_qfiltered_control_cmd_ = current_qfiltered_control_cmd_;
+  current_qfiltered_control_cmd_ = ss_qfilter_lat_.simulateOneStep(xu0_, current_control_cmd);
 }
