@@ -130,8 +130,8 @@ void CommunicationDelayCompensatorNode::onTimer()
 
   // Debug
   {
-    // cdob_lateral_ptr_->printQfilterTFs();
-    // cdob_lateral_ptr_->printQfilterSSs();
+    cdob_lateral_ptr_->printQfilterTFs();
+    cdob_lateral_ptr_->printQfilterSSs();
     //    ns_utils::print("Dummy matrix from yaml file");
     //    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(dumymatrix_));
   }
@@ -418,12 +418,10 @@ void CommunicationDelayCompensatorNode::setLateralCDOB()
   //  auto remaining_order = order_of_q - 2;
   //  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, damping_val, remaining_order);
 
-  //  CommunicationDelayCompensator delay_compensator_forward(
-  //    vehicle_model_ptr_, qfilter_lat_error, qfilter_heading_error, qfilter_steering,
-  //    params_node_.cdob_ctrl_period);
-  //
-  //  cdob_lateral_ptr_ =
-  //    std::make_unique<CommunicationDelayCompensator>(delay_compensator_forward);
+  LateralCommunicationDelayCompensator delay_compensator_lat(
+    vehicle_model_ptr_, qfilter_lat_error, params_node_.cdob_ctrl_period);
+
+  cdob_lateral_ptr_ = std::make_unique<LateralCommunicationDelayCompensator>(delay_compensator_lat);
 }
 void CommunicationDelayCompensatorNode::computeLateralCDOB()
 {

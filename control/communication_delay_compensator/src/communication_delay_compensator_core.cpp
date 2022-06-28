@@ -17,8 +17,6 @@
 
 #include <utility>
 
-// ------------------- Communication Delay Compensator using Forward Dynamics. ---------
-
 // -- HELPER METHODS --
 observers::tf_t observers::get_nthOrderTF(
   const autoware::common::types::float64_t & w_cut_off_hz, const int & n)
@@ -60,4 +58,31 @@ observers::tf_t observers::get_nthOrderTFwithDampedPoles(
   }
 
   return q_tf_damped;
+}
+
+// ------------------- Communication Delay Compensator using Forward Dynamics. ---------
+
+observers::LateralCommunicationDelayCompensator::LateralCommunicationDelayCompensator(
+  observers::LateralCommunicationDelayCompensator::model_ptr_t vehicle_model,
+  const observers::tf_t & qfilter_lateral, const float64_t & dt)
+: vehicle_model_ptr_(std::move(vehicle_model)),
+  tf_qfilter_lat_{qfilter_lateral},
+  xu0_{state_qfilter::Zero()},
+  xd0_{state_qfilter ::Zero()},
+  dt_{dt}
+{
+  // Compute the state-space model of QGinv(s)
+  ss_qfilter_lat_ = ss_t(tf_qfilter_lat_, dt_);  // Do not forget to enter the time step dt.
+}
+void observers::LateralCommunicationDelayCompensator::printQfilterTFs() const
+{
+  ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
+  ns_utils::print("Transfer function of qfilter of lateral error : \n");
+  tf_qfilter_lat_.print();
+}
+void observers::LateralCommunicationDelayCompensator::printQfilterSSs() const
+{
+  ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
+  ns_utils::print("State-Space Matrices of qfilter of lateral error : \n");
+  ss_qfilter_lat_.print();
 }

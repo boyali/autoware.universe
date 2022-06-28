@@ -153,7 +153,7 @@ private:
 
   // Data Members for the delay-compensation
   // CDOB: Communication Disturbance Observer-based.
-  std::unique_ptr<CommunicationDelayCompensator> cdob_lateral_ptr_{};
+  std::unique_ptr<LateralCommunicationDelayCompensator> cdob_lateral_ptr_{};
 
   // Pointers to the ROS topics.
   // Pointers for ros topic
