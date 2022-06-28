@@ -441,31 +441,30 @@ void CommunicationDelayCompensatorNode::setLateralCDOB(sLyapMatrixVecs const & l
 }
 void CommunicationDelayCompensatorNode::computeLateralCDOB()
 {
-  //  // get the current outputs observed y=[ey, eyaw, steering] for qfilters.
-  //  auto const & current_lat_error = current_lat_errors_ptr_->lateral_deviation_read;
-  //  auto const & current_heading_error = current_lat_errors_ptr_->heading_angle_error_read;
-  //  auto const & current_steering = current_steering_ptr_->steering_tire_angle;
-  //
-  //  current_lat_measurements_ << current_lat_error, current_heading_error, current_steering;
-  //
-  //  // get the previous inputs and parameter that are used and sent to the vehicle.
-  //  /**
-  //   * previous: ideal steering and target velocities to linearize the model, and previous
-  //   * curvature as an input to the steering.
-  //   * */
-  //
-  //  auto const & prev_steering_control_cmd =
-  //  previous_control_cmd_ptr_->lateral.steering_tire_angle;
-  //  // previous_inputs_to_cdob_ << prev_steering_control_cmd, prev_ideal_steering_;
-  //
-  //  cdob_lateral_ptr_->simulateOneStep(
-  //    current_lat_measurements_, prev_steering_control_cmd, current_delay_ref_msg_ptr_,
-  //    current_delay_debug_msg_);
-  //
-  //  // Set messages
-  //  current_delay_ref_msg_ptr_->lateral_deviation_read = current_lat_error;
-  //  current_delay_ref_msg_ptr_->heading_angle_error_read = current_heading_error;
-  //  current_delay_ref_msg_ptr_->steering_read = current_steering;
+  // get the current outputs observed y=[ey, eyaw, steering] for qfilters.
+  auto const & current_lat_error = current_lat_errors_ptr_->lateral_deviation_read;
+  auto const & current_heading_error = current_lat_errors_ptr_->heading_angle_error_read;
+  auto const & current_steering = current_steering_ptr_->steering_tire_angle;
+
+  current_lat_measurements_ << current_lat_error, current_heading_error, current_steering;
+
+  // get the previous inputs and parameter that are used and sent to the vehicle.
+  /**
+   * previous: ideal steering and target velocities to linearize the model, and previous
+   * curvature as an input to the steering.
+   * */
+
+  auto const & prev_steering_control_cmd = previous_control_cmd_ptr_->lateral.steering_tire_angle;
+  // previous_inputs_to_cdob_ << prev_steering_control_cmd, prev_ideal_steering_;
+
+  cdob_lateral_ptr_->simulateOneStep(
+    current_lat_measurements_, prev_steering_control_cmd, current_delay_ref_msg_ptr_,
+    current_delay_debug_msg_);
+
+  // Set messages
+  current_delay_ref_msg_ptr_->lateral_deviation_read = current_lat_error;
+  current_delay_ref_msg_ptr_->heading_angle_error_read = current_heading_error;
+  current_delay_ref_msg_ptr_->steering_read = current_steering;
 
   // DEBUG
   {

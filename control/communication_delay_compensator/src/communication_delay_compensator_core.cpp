@@ -106,3 +106,21 @@ void observers::LateralCommunicationDelayCompensator::printLyapMatrices() const
     }
   }
 }
+void observers::LateralCommunicationDelayCompensator::setInitialStates()
+{
+  if (!is_vehicle_initial_states_set_) {
+    if (vehicle_model_ptr_->areInitialStatesSet()) {
+      auto const vehicle_states = vehicle_model_ptr_->getInitialStates();
+
+      xhat0_ << vehicle_states(0), vehicle_states(1), vehicle_states(2), 0.;
+      is_vehicle_initial_states_set_ = true;
+    }
+  }
+}
+void observers::LateralCommunicationDelayCompensator::simulateOneStep(
+  const state_vector_vehicle_t & current_measurements,
+  const autoware::common::types::float64_t & steering_cmd,
+  std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
+  std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results)
+{
+}

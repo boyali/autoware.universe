@@ -48,7 +48,12 @@ struct sLyapMatrixVecs
 };
 
 /**
- * @brief Communication Delay Compensator Core without inverse models. .
+ * @brief Communication Delay Compensator Core without inverse models. It is an ordinary linear
+ * observer model that estimates a slowly varying input disturbance. The time-delay in the input
+ * channel is formulated as a disturbance in the form of:
+ *
+ *     u (s) - [d(s) = u(s)-u(s)e^{-sT}] = u(s)e^{-sT}
+ *
  * */
 class LateralCommunicationDelayCompensator
 {
@@ -65,12 +70,12 @@ public:
   void printQfilterSSs() const;
   void printLyapMatrices() const;
 
-  //  void simulateOneStep(
-  //    state_vector_vehicle_t const & current_measurements, float64_t const & steering_cmd,
-  //    std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
-  //    std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results);
-  //
-  //  void setInitialStates();
+  void simulateOneStep(
+    state_vector_vehicle_t const & current_measurements, float64_t const & steering_cmd,
+    std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
+    std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results);
+
+  void setInitialStates();
 
 private:
   model_ptr_t vehicle_model_ptr_{};
@@ -84,6 +89,11 @@ private:
   // state vectors for filtering inputs.
   state_qfilter xu0_;  // @brief state vector for the filtered input
   state_qfilter xd0_;  // @brief state vector for the filtered disturbance
+
+  /**
+   * @brief state observer estimated state [ey, eyaw, steering, disturbance
+   * */
+  state_vector_observer_t xhat0_;
 
   // Lyapunov matrices to compute
   std::vector<state_matrix_observer_t> vXs_;

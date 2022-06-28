@@ -45,6 +45,12 @@ namespace observers
 constexpr size_t cx_number_of_lyap_mats = 5;
 enum class CDOB_PUBLIC StateObserverDims : int { STATE_DIM = 4, INPUT_DIM = 3 };
 
+using state_vector_observer_t =
+  Eigen::Matrix<double, toUnderlyingType(StateObserverDims::STATE_DIM), 1>;
+
+using input_vector_observer_t =
+  Eigen::Matrix<double, toUnderlyingType(StateObserverDims::INPUT_DIM), 1>;
+
 using state_matrix_observer_t = Eigen::Matrix<
   double, toUnderlyingType(StateObserverDims::STATE_DIM),
   toUnderlyingType(StateObserverDims::STATE_DIM)>;

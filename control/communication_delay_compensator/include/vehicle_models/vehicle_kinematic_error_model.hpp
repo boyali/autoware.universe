@@ -60,7 +60,7 @@ public:
 
   [[nodiscard]] state_vector_vehicle_t getInitialStates() const;
   void evaluateNonlinearTermsForLyap(
-    observers::state_matrix_observer_t & thetas, state_vector_vehicle_t const & lin_vehicle_states,
+    observers::state_vector_observer_t & thetas, state_vector_vehicle_t const & lin_vehicle_states,
     float64_t const & v_long_speed, float64_t const & curvature) const;
 
 private:

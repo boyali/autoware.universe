@@ -161,7 +161,7 @@ state_vector_vehicle_t observers::LinearKinematicErrorModel::getInitialStates() 
   return x0_;
 }
 void observers::LinearKinematicErrorModel::evaluateNonlinearTermsForLyap(
-  observers::state_matrix_observer_t & thetas, const state_vector_vehicle_t & lin_vehicle_states,
+  observers::state_vector_observer_t & thetas, const state_vector_vehicle_t & lin_vehicle_states,
   const autoware::common::types::float64_t & v_long_speed,
   const autoware::common::types::float64_t & curvature) const
 {
