@@ -78,21 +78,15 @@ using vehicle_info_util::VehicleInfoUtil;
 struct Parameters
 {
   float64_t wheel_base{};
-  float64_t cdob_ctrl_period{0.05};
+  float64_t cdob_ctrl_period{0.033};
 
   // Qfilter orders .
-  int qfilter_lateral_error_order{3};
-  int qfilter_heading_error_order{2};
-  int qfilter_steering_order{1};
-  int qfilter_velocity_error_order{1};
-  int qfilter_acc_error_order{1};
+  int qfilter_lateral_error_order{1};
+  int qfilter_longitudinal_error_order{1};
 
   // Qfilter cut-off frequencies Hz. (low-pass).
-  float64_t qfilter_lateral_error_freq{5};
-  float64_t qfilter_heading_error_freq{5};
-  float64_t qfilter_steering_freq{5};
-  float64_t qfilter_velocity_error_freq{5};
-  float64_t qfilter_acc_error_freq{5};
+  float64_t qfilter_lateral_error_freq{10};
+  float64_t qfilter_longitudinal_error_freq{10};
 
   // First order vehicle state models.
   float64_t steering_tau{0.3};
@@ -159,7 +153,7 @@ private:
 
   // Data Members for the delay-compensation
   // CDOB: Communication Disturbance Observer-based.
-  std::unique_ptr<CommunicationDelayCompensatorForward> cdob_lateral_ptr_{};
+  std::unique_ptr<CommunicationDelayCompensator> cdob_lateral_ptr_{};
 
   // Pointers to the ROS topics.
   // Pointers for ros topic
@@ -277,9 +271,6 @@ private:
    * */
   void setLateralCDOB();
   void computeLateralCDOB();
-
-  // to test reading matrix from the yaml file.
-  state_matrix_vehicle_t dumymatrix_{};
 };
 
 }  // namespace observers

@@ -23,22 +23,12 @@
 
 namespace observers
 {
-		using autoware::common::types::float64_t;
-		using autoware::common::types::float32_t;
-		using autoware::common::types::bool8_t;
-		using tf_t = ns_control_toolbox::tf;
-		using ss_t = ns_control_toolbox::tf2ss;
+using autoware::common::types::bool8_t;
+using autoware::common::types::float32_t;
+using autoware::common::types::float64_t;
+using tf_t = ns_control_toolbox::tf;
+using ss_t = ns_control_toolbox::tf2ss;
 
-/**
- * @brief We store dynamical parameters of a transfer function with the following pair types.
- *
- * An example to usage: if G(s) = a^2 (s +1 ) / b (s-1) we store [a, and b] as string and their functions
- * [squaring, identity].
- *
- * */
-		using pairs_string_view_t = std::pair<std::string_view, std::string_view>;
-		using pairs_func_maps_t = std::unordered_map<std::string_view, func_type<double>>;
-}
+}  // namespace observers
 
-#endif //DELAY_COMPENSATOR_INCLUDE_NODE_DENIFITIONS_NODE_DEFINITIONS_HPP
-
+#endif  // DELAY_COMPENSATOR_INCLUDE_NODE_DENIFITIONS_NODE_DEFINITIONS_HPP

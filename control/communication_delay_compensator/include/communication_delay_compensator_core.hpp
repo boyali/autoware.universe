@@ -39,59 +39,59 @@ using DelayCompensatorDebugMsg = autoware_auto_vehicle_msgs::msg::DelayCompensat
  * @brief Communication Delay Compensator Core without inverse models. .
  * */
 
-class CommunicationDelayCompensatorForward
+class CommunicationDelayCompensator
 {
 public:
   using model_ptr_t = std::shared_ptr<LinearKinematicErrorModel>;
 
-  CommunicationDelayCompensatorForward() = default;
-  CommunicationDelayCompensatorForward(
-    model_ptr_t vehicle_model, tf_t const & qfilter_ey, tf_t const & qfilter_eyaw,
-    tf_t const & qfilter_steering, float64_t const & dt);
-
-  void printQfilterTFs() const;
-  void printQfilterSSs() const;
-
-  void simulateOneStep(
-    state_vector_vehicle_t const & current_measurements, float64_t const & steering_cmd,
-    std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
-    std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results);
-
-  void setInitialStates();
+  CommunicationDelayCompensator() = default;
+  //  CommunicationDelayCompensator(
+  //    model_ptr_t vehicle_model, tf_t const & qfilter_ey, tf_t const & qfilter_eyaw,
+  //    tf_t const & qfilter_steering, float64_t const & dt);
+  //
+  //  void printQfilterTFs() const;
+  //  void printQfilterSSs() const;
+  //
+  //  void simulateOneStep(
+  //    state_vector_vehicle_t const & current_measurements, float64_t const & steering_cmd,
+  //    std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
+  //    std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results);
+  //
+  //  void setInitialStates();
 
 private:
   bool8_t is_vehicle_initial_states_set_{false};
-  model_ptr_t vehicle_model_ptr_{};
-
-  // transfer functions
-  tf_t tf_qfilter_ey_;
-  tf_t tf_qfilter_eyaw_;
-  tf_t tf_qfilter_steering_;
-
-  // state-space models.
-  ss_t ss_qfilter_ey_;
-  ss_t ss_qfilter_eyaw_;
-  ss_t ss_qfilter_steering_;
-
-  // States and outputs for each qfilter vehicle model simulations u --> G(s)Q(s) --> y
-  state_vector_vehicle_t x0_qey_{state_vector_vehicle_t::Zero()};
-  state_vector_vehicle_t x0_qeyaw_{state_vector_vehicle_t::Zero()};
-  state_vector_vehicle_t x0_qsteering_{state_vector_vehicle_t::Zero()};
-
-  // state vectors for filtering inputs.
-  Eigen::MatrixXd xu0_ey_;
-  Eigen::MatrixXd xu0_eyaw_;
-  Eigen::MatrixXd xu0_steering_;
-
-  // state vectors for filtering output measurements.
-  Eigen::MatrixXd xy0_ey_;
-  Eigen::MatrixXd xy0_eyaw_;
-  Eigen::MatrixXd xy0_steering_;
-
-  // placeholders
-  state_vector_vehicle_t output_temp_{state_vector_vehicle_t ::Zero()};
-
-  float64_t dt_{};
+  //  model_ptr_t vehicle_model_ptr_{};
+  //
+  //  // transfer functions
+  //  tf_t tf_qfilter_ey_;
+  //  tf_t tf_qfilter_eyaw_;
+  //  tf_t tf_qfilter_steering_;
+  //
+  //  // state-space models.
+  //  ss_t ss_qfilter_ey_;
+  //  ss_t ss_qfilter_eyaw_;
+  //  ss_t ss_qfilter_steering_;
+  //
+  //  // States and outputs for each qfilter vehicle model simulations u --> G(s)Q(s) --> y
+  //  state_vector_vehicle_t x0_qey_{state_vector_vehicle_t::Zero()};
+  //  state_vector_vehicle_t x0_qeyaw_{state_vector_vehicle_t::Zero()};
+  //  state_vector_vehicle_t x0_qsteering_{state_vector_vehicle_t::Zero()};
+  //
+  //  // state vectors for filtering inputs.
+  //  Eigen::MatrixXd xu0_ey_;
+  //  Eigen::MatrixXd xu0_eyaw_;
+  //  Eigen::MatrixXd xu0_steering_;
+  //
+  //  // state vectors for filtering output measurements.
+  //  Eigen::MatrixXd xy0_ey_;
+  //  Eigen::MatrixXd xy0_eyaw_;
+  //  Eigen::MatrixXd xy0_steering_;
+  //
+  //  // placeholders
+  //  state_vector_vehicle_t output_temp_{state_vector_vehicle_t ::Zero()};
+  //
+  //  float64_t dt_{};
 };
 
 /**
