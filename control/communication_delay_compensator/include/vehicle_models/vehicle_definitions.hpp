@@ -30,7 +30,7 @@ namespace observers {
     };
 
     using state_vector_vehicle_t =
-            Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::STATE_DIM), 1>;
+            Eigen::Matrix<double, toUType(KinematicErrorDims::STATE_DIM), 1>;
 
 
     // Lyapunov matrix dimension definitions.
@@ -43,22 +43,22 @@ namespace observers {
     };
 
     using state_vector_observer_t =
-            Eigen::Matrix<double, toUnderlyingType(StateObserverDims::STATE_DIM), 1>;
+            Eigen::Matrix<double, toUType(StateObserverDims::STATE_DIM), 1>;
 
     using input_vector_observer_t =
-            Eigen::Matrix<double, toUnderlyingType(StateObserverDims::INPUT_DIM), 1>;
+            Eigen::Matrix<double, toUType(StateObserverDims::INPUT_DIM), 1>;
 
     using state_matrix_observer_t = Eigen::Matrix<
-            double, toUnderlyingType(StateObserverDims::STATE_DIM),
-            toUnderlyingType(StateObserverDims::STATE_DIM)>;
+            double, toUType(StateObserverDims::STATE_DIM),
+            toUType(StateObserverDims::STATE_DIM)>;
 
     using input_matrix_observer_t = Eigen::Matrix<
-            double, toUnderlyingType(StateObserverDims::INPUT_DIM),
-            toUnderlyingType(StateObserverDims::STATE_DIM)>;
+            double, toUType(StateObserverDims::INPUT_DIM),
+            toUType(StateObserverDims::STATE_DIM)>;
 
     using measurement_matrix_observer_t = Eigen::Matrix<
-            double, toUnderlyingType(StateObserverDims::MEASUREMENT_DIM),
-            toUnderlyingType(StateObserverDims::STATE_DIM)>;
+            double, toUType(StateObserverDims::MEASUREMENT_DIM),
+            toUType(StateObserverDims::STATE_DIM)>;
 
 
     // General Template for enum class types.

@@ -391,13 +391,13 @@ namespace observers {
     };
 
     // Observer model types.
-    using linear_vehicle_model_t = LinearKinematicErrorModel<toUnderlyingType(KinematicErrorDims::STATE_DIM),
-            toUnderlyingType(KinematicErrorDims::INPUT_DIM),
-            toUnderlyingType(KinematicErrorDims::MEASUREMENT_DIM)>;
+    using linear_vehicle_model_t = LinearKinematicErrorModel<toUType(KinematicErrorDims::STATE_DIM),
+            toUType(KinematicErrorDims::INPUT_DIM),
+            toUType(KinematicErrorDims::MEASUREMENT_DIM)>;
 
-    using linear_state_observer_model_t = VehicleModelDisturbanceObserver<toUnderlyingType(
-            StateObserverDims::STATE_DIM), toUnderlyingType(StateObserverDims::INPUT_DIM),
-            toUnderlyingType(StateObserverDims::MEASUREMENT_DIM)>;
+    using linear_state_observer_model_t = VehicleModelDisturbanceObserver<toUType(
+            StateObserverDims::STATE_DIM), toUType(StateObserverDims::INPUT_DIM),
+            toUType(StateObserverDims::MEASUREMENT_DIM)>;
 
 } // namespace observers
 
