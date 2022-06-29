@@ -22,51 +22,57 @@
 /**
  * @brief Kinematic Vehicle Lateral Error Model state and control definitions.
  * */
-enum class CDOB_PUBLIC KinematicErrorDims : int { STATE_DIM = 3, INPUT_DIM = 1 };
+enum class KinematicErrorDims : int {
+    STATE_DIM = 3, INPUT_DIM = 1
+};
 
 using state_vector_vehicle_t =
-  Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::STATE_DIM), 1>;
+        Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::STATE_DIM), 1>;
 
 using input_vector_vehicle_t =
-  Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::INPUT_DIM), 1>;
+        Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::INPUT_DIM), 1>;
 
 using state_matrix_vehicle_t = Eigen::Matrix<
-  double, toUnderlyingType(KinematicErrorDims::STATE_DIM),
-  toUnderlyingType(KinematicErrorDims::STATE_DIM)>;
+        double, toUnderlyingType(KinematicErrorDims::STATE_DIM),
+        toUnderlyingType(KinematicErrorDims::STATE_DIM)>;
 
 using input_matrix_vehicle_t = Eigen::Matrix<
-  double, toUnderlyingType(KinematicErrorDims::STATE_DIM),
-  toUnderlyingType(KinematicErrorDims::INPUT_DIM)>;
+        double, toUnderlyingType(KinematicErrorDims::STATE_DIM),
+        toUnderlyingType(KinematicErrorDims::INPUT_DIM)>;
 
 // Lyapunov matrix dimension definitions.
-namespace observers
-{
+namespace observers {
+    constexpr size_t cx_number_of_lyap_mats = 5;
+    enum class CDOB_PUBLIC StateObserverDims : int {
+        STATE_DIM = 4, INPUT_DIM = 3
+    };
 
-constexpr size_t cx_number_of_lyap_mats = 5;
-enum class CDOB_PUBLIC StateObserverDims : int { STATE_DIM = 4, INPUT_DIM = 3 };
+    using state_vector_observer_t =
+            Eigen::Matrix<double, toUnderlyingType(StateObserverDims::STATE_DIM), 1>;
 
-using state_vector_observer_t =
-  Eigen::Matrix<double, toUnderlyingType(StateObserverDims::STATE_DIM), 1>;
+    using input_vector_observer_t =
+            Eigen::Matrix<double, toUnderlyingType(StateObserverDims::INPUT_DIM), 1>;
 
-using input_vector_observer_t =
-  Eigen::Matrix<double, toUnderlyingType(StateObserverDims::INPUT_DIM), 1>;
+    using state_matrix_observer_t = Eigen::Matrix<
+            double, toUnderlyingType(StateObserverDims::STATE_DIM),
+            toUnderlyingType(StateObserverDims::STATE_DIM)>;
 
-using state_matrix_observer_t = Eigen::Matrix<
-  double, toUnderlyingType(StateObserverDims::STATE_DIM),
-  toUnderlyingType(StateObserverDims::STATE_DIM)>;
+    using input_matrix_observer_t = Eigen::Matrix<
+            double, toUnderlyingType(StateObserverDims::INPUT_DIM),
+            toUnderlyingType(StateObserverDims::STATE_DIM)>;
 
-using input_matrix_observer_t = Eigen::Matrix<
-  double, toUnderlyingType(StateObserverDims::INPUT_DIM),
-  toUnderlyingType(StateObserverDims::STATE_DIM)>;
 
 }  // namespace observers
 
 // General Template for enum class types.
-template <int Nnum_of_states>
+template<int Nnum_of_states>
 using state_vector_qfilter = Eigen::Matrix<double, Nnum_of_states, 1>;
 
-template <typename T>
+template<typename T>
 using func_type = std::function<T(T)>;
+
+template<int nx, int ny>
+using mat_type_t = Eigen::Matrix<double, nx, ny>;
 
 // constexpr Eigen::Index STATE_DIM = 3;
 // constexpr Eigen::Index INPUT_DIM = 1;

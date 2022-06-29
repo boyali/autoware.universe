@@ -167,7 +167,7 @@ void observers::AdaptiveParameterEstimator::updateEstimates(autoware::common::ty
 		auto zhat_dot = -zhat0_ * am_ + ehat0_ * ns * ns;
 		zhat0_ = zhat0_ + dt_ * zhat_dot;
 
-		// update xhat0_;
+		// update xhat0_prev_;
 		// auto xhat0_dot = -am_ * x + theta_ab_(0, 0) * x + theta_ab_(1, 0) * u;
 		xhat0_ = theta_ab_(0, 0) * phi_(0, 0) + theta_ab_(1, 0) * phi_(1, 0);
 

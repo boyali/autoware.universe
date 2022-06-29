@@ -70,6 +70,8 @@ observers::LateralCommunicationDelayCompensator::LateralCommunicationDelayCompen
   tf_qfilter_lat_{qfilter_lateral},
   xu0_{state_qfilter::Zero()},
   xd0_{state_qfilter ::Zero()},
+  xhat0_prev_{state_vector_observer_t::Zero()},
+  xhat0_next_{state_vector_observer_t ::Zero()},
   vXs_{lyap_matsXY.vXs},
   vYs_{lyap_matsXY.vYs},
   Lobs_{input_matrix_observer_t::Zero()},
@@ -114,7 +116,7 @@ void observers::LateralCommunicationDelayCompensator::setInitialStates()
     if (vehicle_model_ptr_->areInitialStatesSet()) {
       auto const vehicle_states = vehicle_model_ptr_->getInitialStates();
 
-      xhat0_ << vehicle_states(0), vehicle_states(1), vehicle_states(2), 0.;
+      xhat0_prev_ << vehicle_states(0), vehicle_states(1), vehicle_states(2), 0.;
       is_vehicle_initial_states_set_ = true;
     }
   }
@@ -133,6 +135,9 @@ void observers::LateralCommunicationDelayCompensator::simulateOneStep(
 
   // Filter the current input and store it in the as the filtered previous input.
   qfilterControlCommand(current_steering_cmd);
+
+  // Final assignment steps.
+  msg_debug_results->lat_uf = static_cast<float>(current_qfiltered_control_cmd_);
 
   // Debug
   ns_utils::print("Current steering command read : ", current_steering_cmd);
@@ -161,4 +166,14 @@ void observers::LateralCommunicationDelayCompensator::qfilterControlCommand(
   // First give the output, then update the states.
   previous_qfiltered_control_cmd_ = current_qfiltered_control_cmd_;
   current_qfiltered_control_cmd_ = ss_qfilter_lat_.simulateOneStep(xu0_, current_control_cmd);
+}
+
+/**
+ * @brief Two-steps estimation method is used as we need the current state estimate. To do this,
+ * we use the previous values for the vehicle model. Upon estimating the current states, we
+ * predict the next states and broadcast it.
+ * */
+void observers::LateralCommunicationDelayCompensator::estimateVehicleStates()
+{
+  // First step propagate the previous steps.
 }

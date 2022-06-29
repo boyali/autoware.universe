@@ -93,7 +93,8 @@ private:
   /**
    * @brief state observer estimated state [ey, eyaw, steering, disturbance
    * */
-  state_vector_observer_t xhat0_;
+  state_vector_observer_t xhat0_prev_;  // @brief state estimate at step [k-1]
+  state_vector_observer_t xhat0_next_;  // @brief state estimate at step [k]
 
   // Lyapunov matrices to compute
   std::vector<state_matrix_observer_t> vXs_;
@@ -118,8 +119,12 @@ private:
   /**
    * @brief filters the control input and store it as previous_filtered_cmd.
    * */
-
   void qfilterControlCommand(float64_t const & current_control_cmd);
+
+  /**
+   * @brief estimates the vehicle states by the state observer.
+   * */
+  void estimateVehicleStates();
 };
 
 /**
