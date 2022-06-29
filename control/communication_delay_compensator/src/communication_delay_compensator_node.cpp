@@ -78,7 +78,7 @@ namespace observers {
 
         // set the vehicle model.
 
-        vehicle_model_ptr_ = std::make_shared<observers::linear_vehicle_model_t>(
+        dist_obs_vehicle_model_ptr_ = std::make_shared<observers::linear_state_observer_model_t>(
                 params_node_.wheel_base, params_node_.steering_tau, params_node_.cdob_ctrl_period);
 
         /**
@@ -119,7 +119,8 @@ namespace observers {
 
         // Update vehicle model.
         updateVehicleModel();
-        vehicle_model_ptr_->printDiscreteSystem();
+        // dist_obs_vehicle_model_ptr_->printDiscreteSystem();
+        dist_obs_vehicle_model_ptr_->printContinuousSystem();
 
         // Compute lateral CDOB references.
         if (!isVehicleStopping()) {
@@ -134,13 +135,6 @@ namespace observers {
             //    cdob_lateral_ptr_->printQfilterTFs();
             //    cdob_lateral_ptr_->printQfilterSSs();
             //    cdob_lateral_ptr_->printLyapMatrices();
-
-            int const state_dim = 4;
-            int const input_dim = 3;
-            VehicleModelDisturbanceObserver<state_dim, input_dim> temp;
-
-            temp.printA();
-
 
         }
     }
@@ -320,7 +314,7 @@ namespace observers {
             auto labelX_tag = "Xn";  // No delay nodel for steering and longitudinal speed
             auto labelY_tag = "Yn";
 
-            for (size_t k = 0; k < observers::cx_number_of_lyap_mats; k++) {
+            for (size_t k = 0; k < observers::cx_NUMBER_OF_LYAP_MATS; k++) {
                 auto labelX = labelX_tag + std::to_string(k + 1);
                 auto tempvX = declare_parameter<std::vector<float64_t>>(labelX);
                 auto tempX = state_matrix_observer_t::Map(tempvX.data());
@@ -329,7 +323,7 @@ namespace observers {
 
                 auto labelY = labelY_tag + std::to_string(k + 1);
                 auto tempvY = declare_parameter<std::vector<float64_t>>(labelY);
-                auto tempY = input_matrix_observer_t::Map(tempvY.data());
+                auto tempY = measurement_matrix_observer_t::Map(tempvY.data());
 
                 lyap_mats.vYs.emplace_back(tempY);
             }
@@ -394,23 +388,16 @@ namespace observers {
         // auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
 
         // Update the matrices
-        vehicle_model_ptr_->updateStateSpace(previous_target_velocity_, prev_ideal_steering_);
+        dist_obs_vehicle_model_ptr_->updateStateSpace(previous_target_velocity_, prev_ideal_steering_);
 
         // Update the initial state.
-        //  auto current_steering = current_steering_ptr_->steering_tire_angle;
-        //  float64_t ey{current_lat_errors_ptr_->lateral_deviation_read};
-        //  float64_t eyaw{current_lat_errors_ptr_->heading_angle_error_read};
-
-        //  if (!vehicle_model_ptr_->areInitialStatesSet()) {
-        //    vehicle_model_ptr_->updateInitialStates(ey, eyaw, current_steering);
-        //  }
 
         if (prev_lat_errors_ptr_ && prev_steering_ptr_ && prev_long_errors_ptr_) {
             float64_t ey{prev_lat_errors_ptr_->lateral_deviation_read};
             float64_t eyaw{prev_lat_errors_ptr_->heading_angle_error_read};
             float64_t vx{previous_velocity_};
 
-            vehicle_model_ptr_->updateInitialStates(
+            dist_obs_vehicle_model_ptr_->updateInitialStates(
                     ey, eyaw, previous_steering_angle_, vx, prev_curvature_);
         }
 
@@ -435,7 +422,7 @@ namespace observers {
         //  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, damping_val, remaining_order);
 
         LateralCommunicationDelayCompensator delay_compensator_lat(
-                vehicle_model_ptr_, qfilter_lat_error, lyap_matsXY, params_node_.cdob_ctrl_period);
+                dist_obs_vehicle_model_ptr_, qfilter_lat_error, lyap_matsXY, params_node_.cdob_ctrl_period);
 
         cdob_lateral_ptr_ = std::make_unique<LateralCommunicationDelayCompensator>(delay_compensator_lat);
     }

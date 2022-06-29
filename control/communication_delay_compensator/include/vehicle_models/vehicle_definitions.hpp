@@ -24,27 +24,22 @@ namespace observers {
  * @brief Kinematic Vehicle Lateral Error Model state and control definitions.
  * */
     enum class KinematicErrorDims : int {
-        STATE_DIM = 3, INPUT_DIM = 1
+        STATE_DIM = 3,
+        INPUT_DIM = 1,
+        MEASUREMENT_DIM = 3
     };
 
     using state_vector_vehicle_t =
             Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::STATE_DIM), 1>;
 
-    using input_vector_vehicle_t =
-            Eigen::Matrix<double, toUnderlyingType(KinematicErrorDims::INPUT_DIM), 1>;
-
-    using state_matrix_vehicle_t = Eigen::Matrix<
-            double, toUnderlyingType(KinematicErrorDims::STATE_DIM),
-            toUnderlyingType(KinematicErrorDims::STATE_DIM)>;
-
-    using input_matrix_vehicle_t = Eigen::Matrix<
-            double, toUnderlyingType(KinematicErrorDims::STATE_DIM),
-            toUnderlyingType(KinematicErrorDims::INPUT_DIM)>;
 
     // Lyapunov matrix dimension definitions.
-    constexpr size_t cx_number_of_lyap_mats = 5;
+    constexpr size_t cx_NUMBER_OF_LYAP_MATS = 5;
     enum class StateObserverDims : int {
-        STATE_DIM = 4, INPUT_DIM = 3
+        STATE_DIM = 4,
+        INPUT_DIM = 1,
+        MEASUREMENT_DIM = 3,
+
     };
 
     using state_vector_observer_t =
@@ -59,6 +54,10 @@ namespace observers {
 
     using input_matrix_observer_t = Eigen::Matrix<
             double, toUnderlyingType(StateObserverDims::INPUT_DIM),
+            toUnderlyingType(StateObserverDims::STATE_DIM)>;
+
+    using measurement_matrix_observer_t = Eigen::Matrix<
+            double, toUnderlyingType(StateObserverDims::MEASUREMENT_DIM),
             toUnderlyingType(StateObserverDims::STATE_DIM)>;
 
 

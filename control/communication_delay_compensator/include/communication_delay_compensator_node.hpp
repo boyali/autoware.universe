@@ -116,7 +116,7 @@ namespace observers {
          */
         ~CommunicationDelayCompensatorNode() override = default;
 
-        std::shared_ptr<observers::linear_vehicle_model_t> vehicle_model_ptr_;
+        std::shared_ptr<observers::linear_state_observer_model_t> dist_obs_vehicle_model_ptr_;
 
     private:
         // Data Members

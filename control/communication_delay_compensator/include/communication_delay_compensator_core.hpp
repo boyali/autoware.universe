@@ -36,25 +36,25 @@ namespace observers {
 
     struct sLyapMatrixVecs {
         sLyapMatrixVecs() {
-            vXs.reserve(cx_number_of_lyap_mats);
-            vYs.reserve(cx_number_of_lyap_mats);
+            vXs.reserve(cx_NUMBER_OF_LYAP_MATS);
+            vYs.reserve(cx_NUMBER_OF_LYAP_MATS);
         }
 
         std::vector<state_matrix_observer_t> vXs;
-        std::vector<input_matrix_observer_t> vYs;
+        std::vector<measurement_matrix_observer_t> vYs;
     };
 
-/**
- * @brief Communication Delay Compensator Core without inverse models. It is an ordinary linear
- * observer model that estimates a slowly varying input disturbance. The time-delay in the input
- * channel is formulated as a disturbance in the form of:
- *
- *     u (s) - [d(s) = u(s)-u(s)e^{-sT}] = u(s)e^{-sT}
- *
- * */
+    /**
+     * @brief Communication Delay Compensator Core without inverse models. It is an ordinary linear
+     * observer model that estimates a slowly varying input disturbance. The time-delay in the input
+     * channel is formulated as a disturbance in the form of:
+     *
+     *     u (s) - [d(s) = u(s)-u(s)e^{-sT}] = u(s)e^{-sT}
+     *
+     * */
     class LateralCommunicationDelayCompensator {
     public:
-        using model_ptr_t = std::shared_ptr<linear_vehicle_model_t>;
+        using model_ptr_t = std::shared_ptr<linear_state_observer_model_t>;
         using state_qfilter = state_vector_qfilter<1>;  // @brief state vector for the filtered input
 
         LateralCommunicationDelayCompensator() = default;
@@ -97,7 +97,7 @@ namespace observers {
 
         // Lyapunov matrices to compute
         std::vector<state_matrix_observer_t> vXs_;
-        std::vector<input_matrix_observer_t> vYs_;
+        std::vector<measurement_matrix_observer_t> vYs_;
 
         // placeholders
         input_matrix_observer_t Lobs_;          //@brief state observer gain matrix.
