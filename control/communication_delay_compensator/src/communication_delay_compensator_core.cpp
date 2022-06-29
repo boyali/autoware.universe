@@ -72,7 +72,7 @@ observers::LateralCommunicationDelayCompensator::LateralCommunicationDelayCompen
           xhat0_next_{state_vector_observer_t::Zero()},
           vXs_{lyap_matsXY.vXs},
           vYs_{lyap_matsXY.vYs},
-          Lobs_{input_matrix_observer_t::Zero()},
+          Lobs_{measurement_matrix_observer_t::Zero()},
           theta_params_{state_vector_observer_t::Zero()},
           dt_{dt},
           qfilter_order_{qfilter_lateral.order()} {
@@ -133,6 +133,10 @@ void observers::LateralCommunicationDelayCompensator::simulateOneStep(
     // Filter the current input and store it in the as the filtered previous input.
     qfilterControlCommand(current_steering_cmd);
 
+
+    // Run the state observer to estimate the current state.
+    estimateVehicleStates();
+
     // Final assignment steps.
     msg_debug_results->lat_uf = static_cast<float>(current_qfiltered_control_cmd_);
 
@@ -151,11 +155,30 @@ void observers::LateralCommunicationDelayCompensator::simulateOneStep(
 }
 
 void observers::LateralCommunicationDelayCompensator::computeObserverGains() {
+
+    // Get the current nonlinear Lyapunov parameters.
     theta_params_.setZero();
     vehicle_model_ptr_->evaluateNonlinearTermsForLyap(theta_params_);
 
+    // Compute the parametric lyapunov matrices.
+    auto Xc = vXs_.back();  // X0, Y0 are stored at the end.
+    auto Yc = vYs_.back();
+
+    // P(th) = P0 + th1*P1 + ...
+    for (size_t k = 0; k < vXs_.size() - 1; ++k) {
+        Xc += theta_params_(k) * vXs_[k];
+        Yc += theta_params_(k) * vYs_[k];
+    }
+
+    Lobs_ = Yc * Xc.inverse();
+
+    // DEBUG
     ns_utils::print("Current Thetas : ");
     ns_eigen_utils::printEigenMat(Eigen::MatrixXd(theta_params_));
+
+    ns_utils::print("Current Observer Gains : ");
+    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Lobs_));
+
 }
 
 void observers::LateralCommunicationDelayCompensator::qfilterControlCommand(
@@ -172,4 +195,5 @@ void observers::LateralCommunicationDelayCompensator::qfilterControlCommand(
  * */
 void observers::LateralCommunicationDelayCompensator::estimateVehicleStates() {
     // First step propagate the previous steps.
+
 }

@@ -100,7 +100,7 @@ namespace observers {
         std::vector<measurement_matrix_observer_t> vYs_;
 
         // placeholders
-        input_matrix_observer_t Lobs_;          //@brief state observer gain matrix.
+        measurement_matrix_observer_t Lobs_;          //@brief state observer gain matrix.
         state_vector_observer_t theta_params_;  //@brieff nonlinear terms in A of SS models of vehicle.
 
         // smaller size data class members.

@@ -132,9 +132,9 @@ namespace observers {
 
         // Debug
         {
-            //    cdob_lateral_ptr_->printQfilterTFs();
-            //    cdob_lateral_ptr_->printQfilterSSs();
-            //    cdob_lateral_ptr_->printLyapMatrices();
+            // cdob_lateral_ptr_->printQfilterTFs();
+            // cdob_lateral_ptr_->printQfilterSSs();
+            // cdob_lateral_ptr_->printLyapMatrices();
 
         }
     }
