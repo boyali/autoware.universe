@@ -128,17 +128,22 @@ void observers::LateralCommunicationDelayCompensator::simulateOneStep(
     setInitialStates();
 
     // Compute the observer gain matrix for the current operating conditions.
-    computeObserverGains();
+    computeObserverGains(current_measurements);
 
     // Filter the current input and store it in the as the filtered previous input.
     qfilterControlCommand(current_steering_cmd);
 
-
     // Run the state observer to estimate the current state.
-    estimateVehicleStates();
+    estimateVehicleStates(current_measurements, current_steering_cmd);
 
     // Final assignment steps.
     msg_debug_results->lat_uf = static_cast<float>(current_qfiltered_control_cmd_);
+    msg_debug_results->lat_ey_hat = static_cast<float>(xhat0_next_(0));
+    msg_debug_results->lat_eyaw_hat = static_cast<float>(xhat0_next_(1));
+    msg_debug_results->lat_steering_hat = static_cast<float>(xhat0_next_(2));
+    msg_debug_results->lat_duf = static_cast<float>(xhat0_next_(2));
+
+
 
     // Debug
     ns_utils::print("Current steering command read : ", current_steering_cmd);
@@ -154,11 +159,12 @@ void observers::LateralCommunicationDelayCompensator::simulateOneStep(
             current_qfiltered_control_cmd_);
 }
 
-void observers::LateralCommunicationDelayCompensator::computeObserverGains() {
+void observers::LateralCommunicationDelayCompensator::computeObserverGains(
+        const state_vector_vehicle_t &current_measurements) {
 
     // Get the current nonlinear Lyapunov parameters.
     theta_params_.setZero();
-    vehicle_model_ptr_->evaluateNonlinearTermsForLyap(theta_params_);
+    vehicle_model_ptr_->evaluateNonlinearTermsForLyap(theta_params_, current_measurements);
 
     // Compute the parametric lyapunov matrices.
     auto Xc = vXs_.back();  // X0, Y0 are stored at the end.
@@ -177,7 +183,7 @@ void observers::LateralCommunicationDelayCompensator::computeObserverGains() {
     ns_eigen_utils::printEigenMat(Eigen::MatrixXd(theta_params_));
 
     ns_utils::print("Current Observer Gains : ");
-    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Lobs_));
+    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Lobs_.transpose()));
 
 }
 
@@ -193,7 +199,26 @@ void observers::LateralCommunicationDelayCompensator::qfilterControlCommand(
  * we use the previous values for the vehicle model. Upon estimating the current states, we
  * predict the next states and broadcast it.
  * */
-void observers::LateralCommunicationDelayCompensator::estimateVehicleStates() {
-    // First step propagate the previous steps.
+void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(
+        const state_vector_vehicle_t &current_measurements,
+        const autoware::common::types::float64_t &current_steering_cmd) {
 
+    // First step propagate the previous states.
+    /**
+     *        xbar = A @ x0_hat + B * u_prev + Bwd
+     *        ybar = C @ xbar + D * uk_qf
+     * */
+
+    xbar_temp_ = xhat0_prev_;
+    vehicle_model_ptr_->simulateOneStep(ybar_temp_, xbar_temp_, previous_qfiltered_control_cmd_);
+
+    xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - current_measurements);  // # xhat_k
+
+    // Second step: simulate the current states and controls.
+    vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);
+    xhat0_next_ = xhat0_prev_;
+
+    // auto xbar
+    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_measurements));
+    ns_utils::print("Current steering command ", current_steering_cmd);
 }

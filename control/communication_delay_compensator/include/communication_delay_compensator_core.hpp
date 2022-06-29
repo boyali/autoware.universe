@@ -92,8 +92,18 @@ namespace observers {
         /**
          * @brief state observer estimated state [ey, eyaw, steering, disturbance
          * */
-        state_vector_observer_t xhat0_prev_;  // @brief state estimate at step [k-1]
-        state_vector_observer_t xhat0_next_;  // @brief state estimate at step [k]
+        // @brief state estimate at step [k-1]
+        state_vector_observer_t xhat0_prev_{state_vector_observer_t::Zero()};
+
+        // @brief state estimate at step [k]
+        state_vector_observer_t xhat0_next_{state_vector_observer_t::Zero()};
+
+        // @brief temporary variables
+        state_vector_observer_t xbar_temp_{state_vector_observer_t::Zero()};
+        state_vector_vehicle_t ybar_temp_{state_vector_vehicle_t::Zero()};
+
+        //@brief estimated vehicle states, disturbance row is zero (cannot observed)
+        state_vector_vehicle_t current_yobs_{state_vector_vehicle_t::Zero()};
 
         // Lyapunov matrices to compute
         std::vector<state_matrix_observer_t> vXs_;
@@ -113,7 +123,7 @@ namespace observers {
         /**
          * @brief computes the observer gain matrix given the operating conditions.
          * */
-        void computeObserverGains();
+        void computeObserverGains(const state_vector_vehicle_t &current_measurements);
 
         /**
          * @brief filters the control input and store it as previous_filtered_cmd.
@@ -123,7 +133,8 @@ namespace observers {
         /**
          * @brief estimates the vehicle states by the state observer.
          * */
-        void estimateVehicleStates();
+        void estimateVehicleStates(const state_vector_vehicle_t &current_measurements,
+                                   const autoware::common::types::float64_t &current_steering_cmd);
     };
 
 /**

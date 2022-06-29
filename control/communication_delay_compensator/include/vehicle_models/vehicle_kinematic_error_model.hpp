@@ -44,6 +44,7 @@ namespace observers {
         using Dtype = mat_type_t<MEASUREMENT_DIM, INPUT_DIM>;
 
         using state_vector_t = mat_type_t<STATE_DIM, 1>;
+        using measurement_vector_t = mat_type_t<MEASUREMENT_DIM, 1>;
 
         // Constructors
         LinearVehicleModelsBase() = default;
@@ -59,7 +60,7 @@ namespace observers {
 
 
         void simulateOneStep(
-                state_vector_vehicle_t &y0, state_vector_vehicle_t &x0, float64_t const &u);
+                measurement_vector_t &y0, state_vector_t &x0, float64_t const &u);
 
         void updateInitialStates(
                 float64_t const &ey, float64_t const &eyaw, float64_t const &steering, float64_t const &vx,
@@ -75,7 +76,8 @@ namespace observers {
 
         [[nodiscard]] state_vector_t getInitialStates() const;
 
-        void evaluateNonlinearTermsForLyap(observers::state_vector_observer_t &thetas) const;
+        void evaluateNonlinearTermsForLyap(observers::state_vector_observer_t &thetas,
+                                           measurement_vector_t const &y0) const;
 
 
     protected:
@@ -240,8 +242,8 @@ namespace observers {
     *
     * */
     template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-    void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::simulateOneStep(state_vector_vehicle_t &y0,
-                                                                                         state_vector_vehicle_t &x0,
+    void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::simulateOneStep(measurement_vector_t &y0,
+                                                                                         state_vector_t &x0,
                                                                                          const float64_t &u) {
 
         // first update the output
@@ -278,12 +280,13 @@ namespace observers {
 
     template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
     void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::evaluateNonlinearTermsForLyap(
-            state_vector_observer_t &thetas) const {
+            state_vector_observer_t &thetas,
+            measurement_vector_t const &y0) const {
 
         // Extract values.
-        auto const &ey = x0_(0);
-        auto const &eyaw = x0_(1);
-        auto const &steering = x0_(2);
+        auto const &ey = y0(0);
+        auto const &eyaw = y0(1);
+        auto const &steering = y0(2);
 
         auto const &&kappa_expr = curvature_ / (1. - curvature_ * ey);
         auto const &&ke_sqr = kappa_expr * kappa_expr;
