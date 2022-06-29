@@ -43,7 +43,7 @@ namespace observers {
 
     // Lyapunov matrix dimension definitions.
     constexpr size_t cx_number_of_lyap_mats = 5;
-    enum class CDOB_PUBLIC StateObserverDims : int {
+    enum class StateObserverDims : int {
         STATE_DIM = 4, INPUT_DIM = 3
     };
 

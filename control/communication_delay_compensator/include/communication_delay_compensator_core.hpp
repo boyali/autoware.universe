@@ -30,22 +30,19 @@
 #include "autoware_auto_vehicle_msgs/msg/delay_compensation_debug.hpp"
 #include "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
 
-namespace observers
-{
-using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
-using DelayCompensatorDebugMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationDebug;
+namespace observers {
+    using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
+    using DelayCompensatorDebugMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationDebug;
 
-struct sLyapMatrixVecs
-{
-  sLyapMatrixVecs()
-  {
-    vXs.reserve(cx_number_of_lyap_mats);
-    vYs.reserve(cx_number_of_lyap_mats);
-  }
+    struct sLyapMatrixVecs {
+        sLyapMatrixVecs() {
+            vXs.reserve(cx_number_of_lyap_mats);
+            vYs.reserve(cx_number_of_lyap_mats);
+        }
 
-  std::vector<state_matrix_observer_t> vXs;
-  std::vector<input_matrix_observer_t> vYs;
-};
+        std::vector<state_matrix_observer_t> vXs;
+        std::vector<input_matrix_observer_t> vYs;
+    };
 
 /**
  * @brief Communication Delay Compensator Core without inverse models. It is an ordinary linear
@@ -55,83 +52,85 @@ struct sLyapMatrixVecs
  *     u (s) - [d(s) = u(s)-u(s)e^{-sT}] = u(s)e^{-sT}
  *
  * */
-class LateralCommunicationDelayCompensator
-{
-public:
-  using model_ptr_t = std::shared_ptr<LinearKinematicErrorModel>;
-  using state_qfilter = state_vector_qfilter<1>;  // @brief state vector for the filtered input
+    class LateralCommunicationDelayCompensator {
+    public:
+        using model_ptr_t = std::shared_ptr<linear_vehicle_model_t>;
+        using state_qfilter = state_vector_qfilter<1>;  // @brief state vector for the filtered input
 
-  LateralCommunicationDelayCompensator() = default;
-  LateralCommunicationDelayCompensator(
-    model_ptr_t vehicle_model, tf_t const & qfilter_lateral, sLyapMatrixVecs const & lyap_matsXY,
-    float64_t const & dt);
+        LateralCommunicationDelayCompensator() = default;
 
-  void printQfilterTFs() const;
-  void printQfilterSSs() const;
-  void printLyapMatrices() const;
+        LateralCommunicationDelayCompensator(
+                model_ptr_t vehicle_model, tf_t const &qfilter_lateral, sLyapMatrixVecs const &lyap_matsXY,
+                float64_t const &dt);
 
-  void simulateOneStep(
-    state_vector_vehicle_t const & current_measurements, float64_t const & current_steering_cmd,
-    std::shared_ptr<DelayCompensatatorMsg> & msg_compensation_results,
-    std::shared_ptr<DelayCompensatorDebugMsg> & msg_debug_results);
+        void printQfilterTFs() const;
 
-  void setInitialStates();
+        void printQfilterSSs() const;
 
-private:
-  model_ptr_t vehicle_model_ptr_{};
+        void printLyapMatrices() const;
 
-  // transfer functions
-  tf_t tf_qfilter_lat_;
+        void simulateOneStep(
+                state_vector_vehicle_t const &current_measurements, float64_t const &current_steering_cmd,
+                std::shared_ptr<DelayCompensatatorMsg> &msg_compensation_results,
+                std::shared_ptr<DelayCompensatorDebugMsg> &msg_debug_results);
 
-  // state-space models.
-  ss_t ss_qfilter_lat_;
+        void setInitialStates();
 
-  // state vectors for filtering inputs.
-  Eigen::MatrixXd xu0_;  // @brief state vector for the filtered input
-  Eigen::MatrixXd xd0_;  // @brief state vector for the filtered disturbance
+    private:
+        model_ptr_t vehicle_model_ptr_{};
 
-  /**
-   * @brief state observer estimated state [ey, eyaw, steering, disturbance
-   * */
-  state_vector_observer_t xhat0_prev_;  // @brief state estimate at step [k-1]
-  state_vector_observer_t xhat0_next_;  // @brief state estimate at step [k]
+        // transfer functions
+        tf_t tf_qfilter_lat_;
 
-  // Lyapunov matrices to compute
-  std::vector<state_matrix_observer_t> vXs_;
-  std::vector<input_matrix_observer_t> vYs_;
+        // state-space models.
+        ss_t ss_qfilter_lat_;
 
-  // placeholders
-  input_matrix_observer_t Lobs_;          //@brief state observer gain matrix.
-  state_vector_observer_t theta_params_;  //@brieff nonlinear terms in A of SS models of vehicle.
+        // state vectors for filtering inputs.
+        Eigen::MatrixXd xu0_;  // @brief state vector for the filtered input
+        Eigen::MatrixXd xd0_;  // @brief state vector for the filtered disturbance
 
-  // smaller size data class members.
-  float64_t dt_{};
-  float64_t previous_qfiltered_control_cmd_{};
-  float64_t current_qfiltered_control_cmd_{};
-  int qfilter_order_{1};
-  bool8_t is_vehicle_initial_states_set_{false};
+        /**
+         * @brief state observer estimated state [ey, eyaw, steering, disturbance
+         * */
+        state_vector_observer_t xhat0_prev_;  // @brief state estimate at step [k-1]
+        state_vector_observer_t xhat0_next_;  // @brief state estimate at step [k]
 
-  /**
-   * @brief computes the observer gain matrix given the operating conditions.
-   * */
-  void computeObserverGains();
+        // Lyapunov matrices to compute
+        std::vector<state_matrix_observer_t> vXs_;
+        std::vector<input_matrix_observer_t> vYs_;
 
-  /**
-   * @brief filters the control input and store it as previous_filtered_cmd.
-   * */
-  void qfilterControlCommand(float64_t const & current_control_cmd);
+        // placeholders
+        input_matrix_observer_t Lobs_;          //@brief state observer gain matrix.
+        state_vector_observer_t theta_params_;  //@brieff nonlinear terms in A of SS models of vehicle.
 
-  /**
-   * @brief estimates the vehicle states by the state observer.
-   * */
-  void estimateVehicleStates();
-};
+        // smaller size data class members.
+        float64_t dt_{};
+        float64_t previous_qfiltered_control_cmd_{};
+        float64_t current_qfiltered_control_cmd_{};
+        int qfilter_order_{1};
+        bool8_t is_vehicle_initial_states_set_{false};
+
+        /**
+         * @brief computes the observer gain matrix given the operating conditions.
+         * */
+        void computeObserverGains();
+
+        /**
+         * @brief filters the control input and store it as previous_filtered_cmd.
+         * */
+        void qfilterControlCommand(float64_t const &current_control_cmd);
+
+        /**
+         * @brief estimates the vehicle states by the state observer.
+         * */
+        void estimateVehicleStates();
+    };
 
 /**
  * @brief returns a transfer function in the form 1./(tau*s + 1)
  * @param w_cut_off_hz : cut-off frequency in Hertz.
  * */
-tf_t get_nthOrderTF(float64_t const & w_cut_off_hz, int const & n);
+    tf_t get_nthOrderTF(float64_t const &w_cut_off_hz, int const &n);
 
 /**
  * @brief returns a transfer function in the form 1./(tau*s + 1)^n_remaining * (damped tf)
@@ -139,8 +138,8 @@ tf_t get_nthOrderTF(float64_t const & w_cut_off_hz, int const & n);
  * @param remaining_order: the order after subtracting two which is the order of damped roots.
  * @param damping_val: damping value of the roots.
  * */
-tf_t get_nthOrderTFwithDampedPoles(
-  float64_t const & w_cut_off_hz, int const & remaining_order, float64_t const & damping_val);
+    tf_t get_nthOrderTFwithDampedPoles(
+            float64_t const &w_cut_off_hz, int const &remaining_order, float64_t const &damping_val);
 
 }  // namespace observers
 

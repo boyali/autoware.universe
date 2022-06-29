@@ -31,79 +31,6 @@
 
 namespace observers {
 
-    /**
-     * @brief Linear kinematic error vehicle model with three states [ey, eyaw, ]
-     * */
-
-    class LinearKinematicErrorModel {
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        LinearKinematicErrorModel() = default;
-
-        LinearKinematicErrorModel(
-                float64_t const &wheelbase, float64_t const &tau_steering, float64_t const &dt);
-
-        void printContinuousSystem();
-
-        void printDiscreteSystem();
-
-        // different types of initial state updates.
-        void updateInitialStates(state_vector_vehicle_t const &x0);
-
-        void updateInitialStates(Eigen::MatrixXd const &x0);
-
-        void updateInitialStates(
-                float64_t const &ey, float64_t const &eyaw, float64_t const &steering, float64_t const &vx,
-                float64_t const &curvature);
-
-        // model update.
-        void updateStateSpace(float64_t const &vref, float64_t const &steering_ref);
-
-        void simulateOneStep(
-                state_vector_vehicle_t &y0, state_vector_vehicle_t &x0, float64_t const &u);
-
-        [[nodiscard]] bool8_t areInitialStatesSet() const { return are_initial_states_set_; }
-
-        [[nodiscard]] state_vector_vehicle_t getInitialStates() const;
-
-        void evaluateNonlinearTermsForLyap(observers::state_vector_observer_t &thetas) const;
-
-    private:
-        bool8_t are_initial_states_set_{false};
-        float64_t wheelbase_{2.74};
-        float64_t tau_steering_{0.3};
-        float64_t dt_{0.1};
-
-        state_matrix_vehicle_t A_{};
-        input_matrix_vehicle_t B_{};
-        input_matrix_vehicle_t Bw_{};
-        state_matrix_vehicle_t C_{};
-        input_matrix_vehicle_t D_{};
-
-        state_matrix_vehicle_t Ad_{};
-        input_matrix_vehicle_t Bd_{};
-        input_matrix_vehicle_t Bwd_{};  // curvature disturbance term
-        state_matrix_vehicle_t Cd_{};
-        input_matrix_vehicle_t Dd_{};
-
-        state_matrix_vehicle_t I_At2_{};  // inv(I - A*ts/2)
-        state_vector_vehicle_t x0_;       // keep initial states.
-        float64_t long_velocity_{};
-        float64_t curvature_{};
-
-        /**
-         * @brief update algebraic solution of inv(I - A*ts/2) required in computing
-         * the Tustin form discretization.
-         * [ 1, (V*ts)/2, (T*V^2*ts^2)/(2*L*a^2*(2*T + ts))]
-         * [ 0,        1,       (T*V*ts)/(L*a^2*(2*T + ts))]
-         * [ 0,        0,                  (2*T)/(2*T + ts)]
-         *
-         * */
-        void updateI_Ats2(float64_t const &vref, float64_t const &cos_steer_sqr);
-    };
-
-
     /*
      * @brief : Vehicle model for disturbance observers
      */
@@ -118,15 +45,31 @@ namespace observers {
         using state_vector_t = mat_type_t<STATE_DIM, 1>;
 
         // Constructors
-
         LinearVehicleModelsBase() = default;
 
         LinearVehicleModelsBase(
                 float64_t const &wheelbase, float64_t const &tau_steering, float64_t const &dt);
 
+
+        void updateStateSpace(float64_t const &vref, float64_t const &steering_ref);
+
+
+        void simulateOneStep(
+                state_vector_vehicle_t &y0, state_vector_vehicle_t &x0, float64_t const &u);
+
+        void updateInitialStates(
+                float64_t const &ey, float64_t const &eyaw, float64_t const &steering, float64_t const &vx,
+                float64_t const &curvature);
+
         void printContinuousSystem();
 
         void printDiscreteSystem();
+
+        [[nodiscard]] bool8_t areInitialStatesSet() const { return are_initial_states_set_; }
+
+        [[nodiscard]] state_vector_t getInitialStates() const;
+
+        void evaluateNonlinearTermsForLyap(observers::state_vector_observer_t &thetas) const;
 
     private:
         bool8_t are_initial_states_set_{false};
@@ -154,6 +97,17 @@ namespace observers {
         float64_t curvature_{};
 
         friend T;
+
+        /**
+        * @brief update algebraic solution of inv(I - A*ts/2) required in computing
+        * the Tustin form discretization.
+        * [ 1, (V*ts)/2, (T*V^2*ts^2)/(2*L*a^2*(2*T + ts))]
+        * [ 0,        1,       (T*V*ts)/(L*a^2*(2*T + ts))]
+        * [ 0,        0,                  (2*T)/(2*T + ts)]
+        *
+        * */
+        void updateI_Ats2(float64_t const &vref, float64_t const &cos_steer_sqr);
+
     };
 
     template<typename T, int STATE_DIM, int INPUT_DIM>
@@ -197,6 +151,123 @@ namespace observers {
 
     }
 
+    template<typename T, int STATE_DIM, int INPUT_DIM>
+    void LinearVehicleModelsBase<T, STATE_DIM, INPUT_DIM>::updateStateSpace(const float64_t &vref,
+                                                                            const float64_t &steering_ref) {
+
+        auto const &&cos_sqr = std::cos(steering_ref) * std::cos(steering_ref);
+
+        A_(0, 1) = vref;
+        A_(1, 2) = vref / (wheelbase_ * cos_sqr);
+
+        B_(1, 1) = -vref / (wheelbase_ * cos_sqr);  // for desired heading rate computations.
+
+        //  auto IA = state_matrix_vehicle_t::Identity() - A_ * dt_ / 2;
+        //  auto Ainv = IA.inverse();
+
+        updateI_Ats2(vref, cos_sqr);
+
+        // Discretisize.
+        auto const &I = state_matrix_vehicle_t::Identity();
+
+        Ad_ = I_At2_ * (I + A_ * dt_ / 2.);
+        Bd_ = I_At2_ * B_ * dt_;
+        Cd_ = C_ * I_At2_;
+        Dd_ = D_ + C_ * Bd_ / 2.;
+
+        // Disturbance part
+        Bw_(1, 0) = -vref * steering_ref / (wheelbase_ * cos_sqr);
+        Bwd_ = I_At2_ * Bw_ * dt_;
+
+
+    }
+
+    template<typename T, int STATE_DIM, int INPUT_DIM>
+    void LinearVehicleModelsBase<T, STATE_DIM, INPUT_DIM>::updateI_Ats2(float64_t const &vref,
+                                                                        float64_t const &cos_steer_sqr) {
+
+        auto const &L = wheelbase_;
+        auto const asqr = cos_steer_sqr;
+        auto const &tau = tau_steering_;
+        auto const &var = 2 * tau + dt_;
+
+        I_At2_(0, 1) = vref * dt_ / 2.;
+        I_At2_(0, 2) = tau_steering_ * vref * vref * dt_ * dt_ / (2. * L * asqr * var);
+
+        I_At2_(1, 2) = tau * vref * dt_ / (L * asqr * var);
+        I_At2_(2, 2) = 2. * tau / var;
+
+    }
+
+    /**
+    * @brief Simulates the vehicle motion given an input. The resulting states and outputs are
+    * written into the passed arguments.
+    * @param y0: Output of the one step integration.
+    * @param x0: Vehicle initial states, updated after the integration.
+    * @param u: Steering control signal.
+    *
+    * */
+    template<typename T, int STATE_DIM, int INPUT_DIM>
+    void LinearVehicleModelsBase<T, STATE_DIM, INPUT_DIM>::simulateOneStep(state_vector_vehicle_t &y0,
+                                                                           state_vector_vehicle_t &x0,
+                                                                           const float64_t &u) {
+
+        // first update the output
+        // y0 = x0 + dt_ * (A_ * x0 + B_ * steering_and_ideal_steering);
+        y0 = Cd_ * x0.eval() + Dd_ * u;
+        x0 = Ad_ * x0.eval() + Bd_ * u + Bwd_;
+
+    }
+
+    template<typename T, int STATE_DIM, int INPUT_DIM>
+    void
+    LinearVehicleModelsBase<T, STATE_DIM, INPUT_DIM>::updateInitialStates(const float64_t &ey, const float64_t &eyaw,
+                                                                          const float64_t &steering,
+                                                                          const float64_t &vx,
+                                                                          const float64_t &curvature) {
+
+        /**
+         * @brief The CDOBs use the linear vehicle model to access to its state space. The states of
+         * the parallel model is estimated by a state observer using this state-space.
+         * */
+        x0_ << ey, eyaw, steering;
+
+        long_velocity_ = vx;
+        curvature_ = curvature;
+        are_initial_states_set_ = true;
+
+    }
+
+    template<typename T, int STATE_DIM, int INPUT_DIM>
+    typename LinearVehicleModelsBase<T, STATE_DIM, INPUT_DIM>::state_vector_t
+    LinearVehicleModelsBase<T, STATE_DIM, INPUT_DIM>::getInitialStates() const {
+        return x0_;
+    }
+
+    template<typename T, int STATE_DIM, int INPUT_DIM>
+    void LinearVehicleModelsBase<T, STATE_DIM, INPUT_DIM>::evaluateNonlinearTermsForLyap(
+            state_vector_observer_t &thetas) const {
+
+        // Extract values.
+        auto const &ey = x0_(0);
+        auto const &eyaw = x0_(1);
+        auto const &steering = x0_(2);
+
+        auto const &&kappa_expr = curvature_ / (1. - curvature_ * ey);
+        auto const &&ke_sqr = kappa_expr * kappa_expr;
+
+        auto const &&t1 = long_velocity_ * std::cos(eyaw);
+
+        auto const &&t2 = -ke_sqr * t1;
+        auto const &&t3 = kappa_expr * long_velocity_ * std::sin(eyaw);
+        auto const &&t4 = long_velocity_ / (wheelbase_ * std::cos(steering) * std::cos(steering));
+
+        thetas << t1, t2, t3, t4;
+    }
+
+    /**
+     * @brief Linear vehicle model for state observers
+     * */
     template<int STATE_DIM, int INPUT_DIM>
     class VehicleModelDisturbanceObserver :
             public LinearVehicleModelsBase<VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM>,
@@ -208,11 +279,6 @@ namespace observers {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
         // Constructors.
-        // Constructors.
-//        VehicleModelDisturbanceObserver() :
-//                LinearVehicleModelsBase<VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM>, STATE_DIM, INPUT_DIM>
-//                        () {}
-
         using BASE::LinearVehicleModelsBase::LinearVehicleModelsBase;
 
         void printA() {
@@ -224,6 +290,28 @@ namespace observers {
 
     };
 
+    /**
+    * @brief Linear kinematic error vehicle model with three states [ey, eyaw, ]
+    * */
+    template<int STATE_DIM, int INPUT_DIM>
+    class LinearKinematicErrorModel : public LinearVehicleModelsBase<VehicleModelDisturbanceObserver<STATE_DIM,
+            INPUT_DIM>, STATE_DIM, INPUT_DIM> {
+
+        using BASE = LinearVehicleModelsBase<VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM>,
+                STATE_DIM, INPUT_DIM>;
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        using BASE::LinearVehicleModelsBase::LinearVehicleModelsBase;
+
+    };
+
+    // Observer model types.
+
+    using linear_vehicle_model_t = LinearKinematicErrorModel<toUnderlyingType(KinematicErrorDims::STATE_DIM),
+            toUnderlyingType(KinematicErrorDims::INPUT_DIM)>;
+
+    using linear_state_observer_model_t = VehicleModelDisturbanceObserver<toUnderlyingType(
+            StateObserverDims::STATE_DIM), toUnderlyingType(StateObserverDims::INPUT_DIM)>;
 
 } // namespace observers
 

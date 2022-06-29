@@ -77,7 +77,8 @@ namespace observers {
                 std::bind(&CommunicationDelayCompensatorNode::onParameterUpdate, this, _1));
 
         // set the vehicle model.
-        vehicle_model_ptr_ = std::make_shared<LinearKinematicErrorModel>(
+
+        vehicle_model_ptr_ = std::make_shared<observers::linear_vehicle_model_t>(
                 params_node_.wheel_base, params_node_.steering_tau, params_node_.cdob_ctrl_period);
 
         /**
