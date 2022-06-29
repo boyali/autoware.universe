@@ -107,38 +107,39 @@ namespace observers {
     /*
      * @brief : Vehicle model for disturbance observers
      */
-    template<typename T>
-    struct sCRTP {
-        T &underlying() { return static_cast<T &>(*this); }
 
-        T const &underlying() const { return static_cast<T const &>(*this); }
-    };
-
-    template<typename T>
-    class StateObserversBase : sCRTP<T> {
-
+    template<int STATE_DIM, int INPUT_DIM>
+    class StateObserverBase {
     public:
-        void print() {
-            ns_utils::print("Hello ...");
-        }
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+        StateObserverBase() = default;
 
-    private:
-        StateObserversBase() = default;
-
-        friend T;
-    };
-
-    template<int STATE_DIM, int INPUT_DIM, int nd = 1>
-    class DisturbanceObserver : StateObserversBase<DisturbanceObserver<STATE_DIM, INPUT_DIM>> {
+        virtual ~StateObserverBase() = default;
 
         using Atype = mat_type_t<STATE_DIM, STATE_DIM>;
         using Btype = mat_type_t<STATE_DIM, INPUT_DIM>;
-        using Ctype = mat_type_t<nd, STATE_DIM>;
-        using Dtype = mat_type_t<nd, INPUT_DIM>;
+        using Ctype = mat_type_t<1, STATE_DIM>;
+        using Dtype = mat_type_t<1, INPUT_DIM>;
+
+    };
+
+    template<int STATE_DIM, int INPUT_DIM>
+    class DisturbanceObserver : public StateObserverBase<STATE_DIM, INPUT_DIM> {
+
 
     public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        using BASE = StateObserverBase<STATE_DIM, INPUT_DIM>;
+        using typename BASE::Atype;
+        using typename BASE::Btype;
+        using typename BASE::Ctype;
+        using typename BASE::Dtype;
+
+
         DisturbanceObserver();
+
+        void printStateSpace();
 
     private:
         bool8_t are_initial_states_set_{false};
@@ -154,9 +155,15 @@ namespace observers {
 
     };
 
-    template<int STATE_DIM, int INPUT_DIM, int nd>
-    DisturbanceObserver<STATE_DIM, INPUT_DIM, nd>::DisturbanceObserver()
-            :A_{mat_type_t<STATE_DIM, INPUT_DIM>::setRandom()} {
+    template<int STATE_DIM, int INPUT_DIM>
+    DisturbanceObserver<STATE_DIM, INPUT_DIM>::DisturbanceObserver() {
+
+    }
+
+    template<int STATE_DIM, int INPUT_DIM>
+    void DisturbanceObserver<STATE_DIM, INPUT_DIM>::printStateSpace() {
+
+        ns_utils::print("In the template ................");
 
     }
 } // namespace observers
