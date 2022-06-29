@@ -17,11 +17,12 @@
 
 #include "autoware_control_toolbox.hpp"
 #include "node_denifitions/node_definitions.hpp"
-#include "qfilters.hpp"
 #include "utils_delay_observer/delay_compensation_utils.hpp"
 #include "vehicle_definitions.hpp"
 
+
 #include <eigen3/Eigen/Core>
+#include <Eigen/StdVector>
 
 #include <iostream>
 #include <memory>
@@ -30,13 +31,14 @@
 
 namespace observers {
 
-
     /**
      * @brief Linear kinematic error vehicle model with three states [ey, eyaw, ]
      * */
 
     class LinearKinematicErrorModel {
     public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         LinearKinematicErrorModel() = default;
 
         LinearKinematicErrorModel(
@@ -100,44 +102,40 @@ namespace observers {
          * */
         void updateI_Ats2(float64_t const &vref, float64_t const &cos_steer_sqr);
     };
-}  // namespace observers
 
 
-/*
- * @brief : Vehicle model for disturbance observers
- */
+    /*
+     * @brief : Vehicle model for disturbance observers
+     */
+    template<typename T>
+    struct sCRTP {
+        T &underlying() { return static_cast<T &>(*this); }
 
-template<typename T>
-struct sCRTP {
-    T &underlying() { return static_cast<T &>(*this); }
+        T const &underlying() const { return static_cast<T const &>(*this); }
+    };
 
-    T const &underlying() const { return static_cast<T const &>(*this); }
-};
+    template<typename T>
+    class StateObserversBase : sCRTP<T> {
 
-template<typename T>
-class StateObserversBase : sCRTP<T> {
-
-public:
-    void print() {
-        ns_utils::print("Hello ...");
-    }
-
-
-private:
-    StateObserversBase() = default;
-
-    friend T;
-};
+    public:
+        void print() {
+            ns_utils::print("Hello ...");
+        }
 
 
-namespace observers {
+    private:
+        StateObserversBase() = default;
+
+        friend T;
+    };
+
     template<int STATE_DIM, int INPUT_DIM, int nd = 1>
     class DisturbanceObserver : StateObserversBase<DisturbanceObserver<STATE_DIM, INPUT_DIM>> {
 
-        using Atype = mat_type_t <STATE_DIM, STATE_DIM>;
-        using Btype = mat_type_t <STATE_DIM, INPUT_DIM>;
-        using Ctype = mat_type_t <nd, STATE_DIM>;
-        using Dtype = mat_type_t <nd, INPUT_DIM>;
+        using Atype = mat_type_t<STATE_DIM, STATE_DIM>;
+        using Btype = mat_type_t<STATE_DIM, INPUT_DIM>;
+        using Ctype = mat_type_t<nd, STATE_DIM>;
+        using Dtype = mat_type_t<nd, INPUT_DIM>;
 
     public:
         DisturbanceObserver();
@@ -158,7 +156,7 @@ namespace observers {
 
     template<int STATE_DIM, int INPUT_DIM, int nd>
     DisturbanceObserver<STATE_DIM, INPUT_DIM, nd>::DisturbanceObserver()
-            :A_{mat_type_t < STATE_DIM, INPUT_DIM > ::setRandom()} {
+            :A_{mat_type_t<STATE_DIM, INPUT_DIM>::setRandom()} {
 
     }
 } // namespace observers

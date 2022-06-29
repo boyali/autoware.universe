@@ -31,7 +31,6 @@ set(CDOB_LIB_HEADERS
         include/communication_delay_compensator_core.hpp
         include/visibility_control.hpp
         include/utils_delay_observer/delay_compensation_utils.hpp
-        include/qfilters.hpp
         include/utils_delay_observer/delay_compensation_utils.hpp
         include/vehicle_models/vehicle_definitions.hpp
         include/vehicle_models/vehicle_kinematic_error_model.hpp
@@ -46,7 +45,6 @@ set(CDOB_LIB_HEADERS
 set(CDOB_LIB_SOURCE
         src/communication_delay_compensator_core.cpp
         src/utils_delay_observer/delay_compensation_utils.cpp
-        src/qfilters.cpp
         src/utils_delay_observer/delay_compensation_utils.cpp
         src/vehicle_models/vehicle_kinematic_error_model.cpp
         src/adaptive_parameter_estimators/adaptive_parameter_estimation.cpp
@@ -112,12 +110,6 @@ ament_auto_package(INSTALL_TO_SHARE
 ament_auto_add_executable(main_type_erasure usage_examples/main_polymorphisim.cpp)
 target_link_libraries(main_type_erasure ${CDOB})
 
-## Dummy control signal
-ament_auto_add_executable(main_qfilter_simulation usage_examples/main_qfilter_simulation.cpp)
-target_link_libraries(main_qfilter_simulation ${CDOB})
-
-ament_auto_add_executable(main_vehicle_simulation usage_examples/main_vehicle_simulation.cpp)
-target_link_libraries(main_vehicle_simulation ${CDOB})
 
 ## ODE integration
 ament_auto_add_executable(main_ode usage_examples/main_ode.cpp)
