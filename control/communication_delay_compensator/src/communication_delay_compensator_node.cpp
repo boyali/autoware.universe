@@ -136,9 +136,11 @@ namespace observers {
 
             int const state_dim = 4;
             int const input_dim = 3;
-            DisturbanceObserver<state_dim, input_dim> temp;
+            VehicleModelDisturbanceObserver<state_dim, input_dim> temp;
 
-            temp.printStateSpace();
+            temp.printA();
+
+
         }
     }
 

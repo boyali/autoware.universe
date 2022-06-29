@@ -107,39 +107,26 @@ namespace observers {
     /*
      * @brief : Vehicle model for disturbance observers
      */
-
-    template<int STATE_DIM, int INPUT_DIM>
-    class StateObserverBase {
+    template<typename T, int STATE_DIM, int INPUT_DIM>
+    class LinearVehicleModelsBase {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        StateObserverBase() = default;
-
-        virtual ~StateObserverBase() = default;
-
         using Atype = mat_type_t<STATE_DIM, STATE_DIM>;
         using Btype = mat_type_t<STATE_DIM, INPUT_DIM>;
         using Ctype = mat_type_t<1, STATE_DIM>;
         using Dtype = mat_type_t<1, INPUT_DIM>;
+        using state_vector_t = mat_type_t<STATE_DIM, 1>;
 
-    };
+        // Constructors
 
-    template<int STATE_DIM, int INPUT_DIM>
-    class DisturbanceObserver : public StateObserverBase<STATE_DIM, INPUT_DIM> {
+        LinearVehicleModelsBase() = default;
 
+        LinearVehicleModelsBase(
+                float64_t const &wheelbase, float64_t const &tau_steering, float64_t const &dt);
 
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        using BASE = StateObserverBase<STATE_DIM, INPUT_DIM>;
-        using typename BASE::Atype;
-        using typename BASE::Btype;
-        using typename BASE::Ctype;
-        using typename BASE::Dtype;
+        void printContinuousSystem();
 
-
-        DisturbanceObserver();
-
-        void printStateSpace();
+        void printDiscreteSystem();
 
     private:
         bool8_t are_initial_states_set_{false};
@@ -147,25 +134,97 @@ namespace observers {
         float64_t tau_steering_{0.3};
         float64_t dt_{0.1};
 
-        Atype A_{};
-        Btype B_{};
-        Btype Bw_{};
-        Ctype C_{};
-        Dtype D_{};
+        // Continuous time state space matrices.
+        Atype A_{Atype::Zero()};
+        Btype B_{Btype::Zero()};
+        Btype Bw_{Btype::Zero()};
+        Ctype C_{Ctype::Zero()};
+        Dtype D_{Dtype::Zero()};
+
+        // Discrete time state space matrices.
+        Atype Ad_{Atype::Zero()};
+        Btype Bd_{Btype::Zero()};
+        Btype Bwd_{Btype::Zero()};
+        Ctype Cd_{Ctype::Zero()};
+        Dtype Dd_{Dtype::Zero()};
+
+        Atype I_At2_{Atype::Zero()};  // inv(I - A*ts/2)
+        state_vector_t x0_;           // keep initial states.
+        float64_t long_velocity_{};
+        float64_t curvature_{};
+
+        friend T;
+    };
+
+    template<typename T, int STATE_DIM, int INPUT_DIM>
+    void LinearVehicleModelsBase<T, STATE_DIM, INPUT_DIM>::printContinuousSystem() {
+        ns_utils::print("Matrix A: ");
+        ns_eigen_utils::printEigenMat(Eigen::MatrixXd(A_));
+
+        ns_utils::print("Matrix B: ");
+        ns_eigen_utils::printEigenMat(Eigen::MatrixXd(B_));
+
+        ns_utils::print("Matrix C: ");
+        ns_eigen_utils::printEigenMat(Eigen::MatrixXd(C_));
+
+        ns_utils::print("Matrix D: ");
+        ns_eigen_utils::printEigenMat(Eigen::MatrixXd(D_));
+
+    }
+
+    template<typename T, int STATE_DIM, int INPUT_DIM>
+    void LinearVehicleModelsBase<T, STATE_DIM, INPUT_DIM>::printDiscreteSystem() {
+
+        ns_utils::print("Matrix Ad: ");
+        ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Ad_));
+
+        ns_utils::print("Matrix Bd: ");
+        ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Bd_));
+
+        ns_utils::print("Matrix Cd: ");
+        ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Cd_));
+
+        ns_utils::print("Matrix Dd: ");
+        ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Dd_));
+
+    }
+
+    template<typename T, int STATE_DIM, int INPUT_DIM>
+    LinearVehicleModelsBase<T, STATE_DIM, INPUT_DIM>::LinearVehicleModelsBase(const float64_t &wheelbase,
+                                                                              const float64_t &tau_steering,
+                                                                              const float64_t &dt)
+            : wheelbase_{wheelbase}, tau_steering_{tau_steering}, dt_{dt} {
+
+    }
+
+    template<int STATE_DIM, int INPUT_DIM>
+    class VehicleModelDisturbanceObserver :
+            public LinearVehicleModelsBase<VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM>,
+                    STATE_DIM, INPUT_DIM> {
+
+        using BASE = LinearVehicleModelsBase<VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM>,
+                STATE_DIM, INPUT_DIM>;
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+        // Constructors.
+        // Constructors.
+//        VehicleModelDisturbanceObserver() :
+//                LinearVehicleModelsBase<VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM>, STATE_DIM, INPUT_DIM>
+//                        () {}
+
+        using BASE::LinearVehicleModelsBase::LinearVehicleModelsBase;
+
+        void printA() {
+            ns_utils::print("In the template ...");
+            ns_eigen_utils::printEigenMat(Eigen::MatrixXd(this->A_));
+        }
+
+    private:
 
     };
 
-    template<int STATE_DIM, int INPUT_DIM>
-    DisturbanceObserver<STATE_DIM, INPUT_DIM>::DisturbanceObserver() {
 
-    }
-
-    template<int STATE_DIM, int INPUT_DIM>
-    void DisturbanceObserver<STATE_DIM, INPUT_DIM>::printStateSpace() {
-
-        ns_utils::print("In the template ................");
-
-    }
 } // namespace observers
 
 
