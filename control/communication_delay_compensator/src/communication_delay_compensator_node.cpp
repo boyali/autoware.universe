@@ -123,10 +123,11 @@ namespace observers {
         dist_obs_vehicle_model_ptr_->printContinuousSystem();
 
         // Compute lateral CDOB references.
-        if (!isVehicleStopping()) {
-            computeLateralCDOB();
-        }
+//        if (!isVehicleStopping()) {
+//            computeLateralCDOB();
+//        }
 
+        computeLateralCDOB();
         // Publish delay compensation reference.
         publishCompensationReferences();
 
