@@ -56,9 +56,10 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 
-namespace observers {
-    using namespace std::chrono_literals;
-    using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
+namespace observers
+{
+using namespace std::chrono_literals;
+using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
 
 /**
  * @brief longitudinal_controller reports vcurrent - vtarget.
@@ -66,209 +67,222 @@ namespace observers {
  * target_lat_distance
  *
  * */
-    using ControllerErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
+using ControllerErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
 
-    using VelocityMsg = nav_msgs::msg::Odometry;
-    using autoware_auto_vehicle_msgs::msg::SteeringReport;
-    using vehicle_info_util::VehicleInfoUtil;
+using VelocityMsg = nav_msgs::msg::Odometry;
+using autoware_auto_vehicle_msgs::msg::SteeringReport;
+using vehicle_info_util::VehicleInfoUtil;
 // using ErrorStampedControlPerfMsg = control_performance_analysis::msg::ErrorStamped;
 
 // Parameters to pass around.
-    struct Parameters {
-        float64_t wheel_base{};
-        float64_t cdob_ctrl_period{0.033};
+struct Parameters
+{
+  float64_t wheel_base{};
+  float64_t cdob_ctrl_period{0.033};
 
-        // Qfilter orders .
-        int qfilter_lateral_error_order{1};
-        int qfilter_longitudinal_error_order{1};
+  // Qfilter orders .
+  int qfilter_lateral_error_order{1};
+  int qfilter_longitudinal_error_order{1};
 
-        // Qfilter cut-off frequencies Hz. (low-pass).
-        float64_t qfilter_lateral_error_freq{10};
-        float64_t qfilter_longitudinal_error_freq{10};
+  // Qfilter cut-off frequencies Hz. (low-pass).
+  float64_t qfilter_lateral_error_freq{10};
+  float64_t qfilter_longitudinal_error_freq{10};
 
-        // First order vehicle state models.
-        float64_t steering_tau{0.3};
-        float64_t velocity_tau{0.3};
-        float64_t acc_tau{0.3};
-    };
+  // First order vehicle state models.
+  float64_t steering_tau{0.3};
+  float64_t velocity_tau{0.3};
+  float64_t acc_tau{0.3};
+};
 
-    template<typename T>
-    void update_param(
-            const std::vector<rclcpp::Parameter> &parameters, const std::string &name, T &value) {
-        auto it = std::find_if(
-                parameters.cbegin(), parameters.cend(),
-                [&name](const rclcpp::Parameter &parameter) { return parameter.get_name() == name; });
-        if (it != parameters.cend()) {
-            value = static_cast<T>(it->template get_value<T>());
-        }
-    }
+template<typename T>
+void update_param(
+    const std::vector<rclcpp::Parameter> &parameters, const std::string &name, T &value)
+{
+  auto it = std::find_if(
+      parameters.cbegin(), parameters.cend(),
+      [&name](const rclcpp::Parameter &parameter)
+      { return parameter.get_name() == name; });
+  if (it != parameters.cend())
+  {
+    value = static_cast<T>(it->template get_value<T>());
+  }
+}
 
 // The node class.
-    class CommunicationDelayCompensatorNode : public rclcpp::Node {
-    public:
-        /**
-         * @brief constructor
-         */
-        explicit CommunicationDelayCompensatorNode(const rclcpp::NodeOptions &node_options);
+class CommunicationDelayCompensatorNode : public rclcpp::Node
+{
+ public:
+  /**
+   * @brief constructor
+   */
+  explicit CommunicationDelayCompensatorNode(const rclcpp::NodeOptions &node_options);
 
-        /**
-         * @brief destructor
-         */
-        ~CommunicationDelayCompensatorNode() override = default;
+  /**
+   * @brief destructor
+   */
+  ~CommunicationDelayCompensatorNode() override = default;
 
-        std::shared_ptr<observers::linear_state_observer_model_t> dist_obs_vehicle_model_ptr_;
+  /**
+   * @brief vehicle model that simulates the physical input.
+   * */
+  std::shared_ptr<observers::linear_vehicle_model_t> vehicle_model_ptr_;
 
-    private:
-        // Data Members
-        Parameters params_node_{};
+  /**
+ * @brief observer vehicle model for state estimation.
+ * */
+  std::shared_ptr<observers::linear_state_observer_model_t> dist_obs_vehicle_model_ptr_;
 
-        //!< @brief timer to update after a given interval
-        rclcpp::TimerBase::SharedPtr timer_;
+ private:
+  // Data Members
+  Parameters params_node_{};
 
-        // Subscribers
-        rclcpp::Subscription<ControlCommand>::SharedPtr sub_control_cmds_;
+  //!< @brief timer to update after a given interval
+  rclcpp::TimerBase::SharedPtr timer_;
 
-        //!< @brief subscription for current velocity
-        rclcpp::Subscription<VelocityMsg>::SharedPtr sub_current_velocity_ptr_;
+  // Subscribers
+  rclcpp::Subscription<ControlCommand>::SharedPtr sub_control_cmds_;
 
-        //!< @brief subscription for current velocity
-        rclcpp::Subscription<SteeringReport>::SharedPtr sub_current_steering_ptr_;
+  //!< @brief subscription for current velocity
+  rclcpp::Subscription<VelocityMsg>::SharedPtr sub_current_velocity_ptr_;
 
-        //!< @brief subscription for current velocity error.
-        rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_long_error_ptr_;
+  //!< @brief subscription for current velocity
+  rclcpp::Subscription<SteeringReport>::SharedPtr sub_current_steering_ptr_;
 
-        //!< @brief subscription for current lateral and heading errors.
-        rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_lat_errors_ptr_;
+  //!< @brief subscription for current velocity error.
+  rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_long_error_ptr_;
 
-        //!< @brief subscription for current lateral and heading errors.
-        // rclcpp::Subscription<ErrorStampedControlPerfMsg>::SharedPtr sub_control_perf_errors_ptr_;
+  //!< @brief subscription for current lateral and heading errors.
+  rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_lat_errors_ptr_;
 
-        // Publishers
-        rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr pub_delay_compensator_;
-        rclcpp::Publisher<DelayCompensatorDebugMsg>::SharedPtr pub_delay_compensator_debug_;
+  //!< @brief subscription for current lateral and heading errors.
+  // rclcpp::Subscription<ErrorStampedControlPerfMsg>::SharedPtr sub_control_perf_errors_ptr_;
 
-        // Data Members for the delay-compensation
-        // CDOB: Communication Disturbance Observer-based.
-        std::unique_ptr<LateralCommunicationDelayCompensator> cdob_lateral_ptr_{};
+  // Publishers
+  rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr pub_delay_compensator_;
+  rclcpp::Publisher<DelayCompensatorDebugMsg>::SharedPtr pub_delay_compensator_debug_;
 
-        // Pointers to the ROS topics.
-        // Pointers for ros topic
-        // Pointers to the model state variables inputs
-        std::shared_ptr<nav_msgs::msg::Odometry> current_velocity_ptr_{nullptr};
+  // Data Members for the delay-compensation
+  // CDOB: Communication Disturbance Observer-based.
+  std::unique_ptr<LateralCommunicationDelayCompensator> cdob_lateral_ptr_{};
 
-        std::shared_ptr<SteeringReport> current_steering_ptr_{nullptr};
-        std::shared_ptr<SteeringReport> prev_steering_ptr_{nullptr};
+  // Pointers to the ROS topics.
+  // Pointers for ros topic
+  // Pointers to the model state variables inputs
+  std::shared_ptr<nav_msgs::msg::Odometry> current_velocity_ptr_{nullptr};
 
-        // Pointer to the model inputs
-        std::shared_ptr<ControlCommand> current_control_cmd_ptr_{nullptr};
-        std::shared_ptr<ControlCommand> previous_control_cmd_ptr_{nullptr};
+  std::shared_ptr<SteeringReport> current_steering_ptr_{nullptr};
+  std::shared_ptr<SteeringReport> prev_steering_ptr_{nullptr};
 
-        // Pointers to messages.
-        std::shared_ptr<DelayCompensatatorMsg> current_delay_ref_msg_ptr_{nullptr};
-        std::shared_ptr<ControllerErrorReportMsg> current_lat_errors_ptr_{nullptr};
-        std::shared_ptr<ControllerErrorReportMsg> current_long_errors_ptr_{nullptr};
-        std::shared_ptr<ControllerErrorReportMsg> prev_lat_errors_ptr_{nullptr};
-        std::shared_ptr<ControllerErrorReportMsg> prev_long_errors_ptr_{nullptr};
+  // Pointer to the model inputs
+  std::shared_ptr<ControlCommand> current_control_cmd_ptr_{nullptr};
+  std::shared_ptr<ControlCommand> previous_control_cmd_ptr_{nullptr};
 
-        // Steering related.
-        float64_t current_curvature_{};
-        float64_t prev_curvature_{};
+  // Pointers to messages.
+  std::shared_ptr<DelayCompensatatorMsg> current_delay_ref_msg_ptr_{nullptr};
+  std::shared_ptr<ControllerErrorReportMsg> current_lat_errors_ptr_{nullptr};
+  std::shared_ptr<ControllerErrorReportMsg> current_long_errors_ptr_{nullptr};
+  std::shared_ptr<ControllerErrorReportMsg> prev_lat_errors_ptr_{nullptr};
+  std::shared_ptr<ControllerErrorReportMsg> prev_long_errors_ptr_{nullptr};
 
-        float64_t current_ideal_steering_{};
-        float64_t prev_ideal_steering_{};
-        float64_t previous_steering_angle_{};
+  // Steering related.
+  float64_t current_curvature_{};
+  float64_t prev_curvature_{};
 
-        float64_t previous_velocity_{};
-        float64_t previous_target_velocity_{1.};
+  float64_t current_ideal_steering_{};
+  float64_t prev_ideal_steering_{};
+  float64_t previous_steering_angle_{};
 
-        // placeholders.
-        state_vector_vehicle_t current_lat_measurements_{state_vector_vehicle_t::Zero()};
+  float64_t previous_velocity_{};
+  float64_t previous_target_velocity_{1.};
 
-        // Debug messages
-        std::shared_ptr<DelayCompensatorDebugMsg> current_delay_debug_msg_{nullptr};
+  // placeholders.
+  state_vector_vehicle_t current_lat_measurements_{state_vector_vehicle_t::Zero()};
 
-        // Node Methods
-        //!< initialize timer to work in real, simulation, and replay
-        void initTimer(float64_t period_s);
+  // Debug messages
+  std::shared_ptr<DelayCompensatorDebugMsg> current_delay_debug_msg_{nullptr};
 
-        /**
-         * @brief compute and publish the compensating reference signals for the controllers with a
-         * constant control period
-         */
-        void onTimer();
+  // Node Methods
+  //!< initialize timer to work in real, simulation, and replay
+  void initTimer(float64_t period_s);
 
-        /**
-         * @brief Subscription callbacks
-         */
-        void onControlCommands(const ControlCommand::SharedPtr msg);
+  /**
+   * @brief compute and publish the compensating reference signals for the controllers with a
+   * constant control period
+   */
+  void onTimer();
 
-        /**
-         * @brief Subscription callbacks
-         */
-        void onCurrentVelocity(const VelocityMsg::SharedPtr msg);
+  /**
+   * @brief Subscription callbacks
+   */
+  void onControlCommands(const ControlCommand::SharedPtr msg);
 
-        /**
-         * @brief Subscription callbacks
-         */
-        void onCurrentSteering(const SteeringReport::SharedPtr msg);
+  /**
+   * @brief Subscription callbacks
+   */
+  void onCurrentVelocity(const VelocityMsg::SharedPtr msg);
 
-        /**
-         * @brief Subscription to computed velocity error
-         */
-        void onCurrentLongitudinalError(const ControllerErrorReportMsg::SharedPtr msg);
+  /**
+   * @brief Subscription callbacks
+   */
+  void onCurrentSteering(const SteeringReport::SharedPtr msg);
 
-        /**
-         * @brief Subscription to lateral reference errors ey, eyaw.
-         */
-        void onCurrentLateralErrors(const ControllerErrorReportMsg::SharedPtr msg);
+  /**
+   * @brief Subscription to computed velocity error
+   */
+  void onCurrentLongitudinalError(const ControllerErrorReportMsg::SharedPtr msg);
 
-        /**
-         * @brief Subscription to control performance errors.
-         */
-        // void onControlPerfErrors(const ErrorStampedControlPerfMsg::SharedPtr msg);
+  /**
+   * @brief Subscription to lateral reference errors ey, eyaw.
+   */
+  void onCurrentLateralErrors(const ControllerErrorReportMsg::SharedPtr msg);
 
-        /**
-         * @brief Publish message.
-         * */
+  /**
+   * @brief Subscription to control performance errors.
+   */
+  // void onControlPerfErrors(const ErrorStampedControlPerfMsg::SharedPtr msg);
 
-        void publishCompensationReferences();
+  /**
+   * @brief Publish message.
+   * */
 
-        /**
-         * @brief Check if data flows.
-         * */
-        bool8_t isDataReady();
+  void publishCompensationReferences();
 
-        /**
-         * @brief Default parameters of the parameters.
-         * */
+  /**
+   * @brief Check if data flows.
+   * */
+  bool8_t isDataReady();
 
-        void readAndLoadParameters(observers::sLyapMatrixVecs &lyap_mats);
+  /**
+   * @brief Default parameters of the parameters.
+   * */
 
-        /**
-         * @brief Dynamic update of the parameters.
-         * */
-        OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
+  void readAndLoadParameters(observers::sLyapMatrixVecs &lyap_mats);
 
-        rcl_interfaces::msg::SetParametersResult onParameterUpdate(
-                const std::vector<rclcpp::Parameter> &parameters);
+  /**
+   * @brief Dynamic update of the parameters.
+   * */
+  OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
 
-        /**
-         * @brief checks if vehicle is stopping.
-         * */
-        bool8_t isVehicleStopping();
+  rcl_interfaces::msg::SetParametersResult onParameterUpdate(
+      const std::vector<rclcpp::Parameter> &parameters);
 
-        /**
-         * @brief updates the vehicle model.
-         * */
-        void updateVehicleModel();
+  /**
+   * @brief checks if vehicle is stopping.
+   * */
+  bool8_t isVehicleStopping();
 
-        /**
-         * @brief Sets the lateral delay compensator.
-         * */
-        void setLateralCDOB(sLyapMatrixVecs const &lyap_matsXY);
+  /**
+   * @brief updates the vehicle model.
+   * */
+  void updateVehicleModels();
 
-        void computeLateralCDOB();
-    };
+  /**
+   * @brief Sets the lateral delay compensator.
+   * */
+  void setLateralCDOB(sLyapMatrixVecs const &lyap_matsXY);
+
+  void computeLateralCDOB();
+};
 
 }  // namespace observers
 #endif  // COMMUNICATION_DELAY_COMPENSATOR__COMMUNICATION_DELAY_COMPENSATOR_NODE_HPP
