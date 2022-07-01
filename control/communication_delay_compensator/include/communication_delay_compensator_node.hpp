@@ -190,10 +190,14 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
 
   float64_t current_ideal_steering_{};
   float64_t prev_ideal_steering_{};
+
   float64_t previous_steering_angle_{};
+  float64_t current_steering_angle_{};
 
   float64_t previous_velocity_{};
+  float64_t current_velocity_{};
   float64_t previous_target_velocity_{1.};
+  float64_t current_target_velocity_{1.};
 
   // placeholders.
   state_vector_vehicle_t current_lat_measurements_{state_vector_vehicle_t::Zero()};
@@ -274,8 +278,12 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   /**
    * @brief updates the vehicle model.
    * */
-  void updateVehicleModels();
+  void updateVehicleModelsWithPreviousTargets();
 
+  /**
+ * @brief updates the vehicle model.
+ * */
+  void updateVehicleModelsWithCurrentTargets();
   /**
    * @brief Sets the lateral delay compensator.
    * */
