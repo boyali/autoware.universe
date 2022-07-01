@@ -16,26 +16,20 @@
 
 #include <cmath>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
-{
+namespace autoware {
+namespace motion {
+namespace control {
+namespace trajectory_follower {
 KinematicsBicycleModel::KinematicsBicycleModel(
-  const float64_t wheelbase, const float64_t steer_lim, const float64_t steer_tau)
-: VehicleModelInterface(/* dim_x */ 3, /* dim_u */ 1, /* dim_y */ 2, wheelbase)
-{
+    const float64_t wheelbase, const float64_t steer_lim, const float64_t steer_tau)
+    : VehicleModelInterface(/* dim_x */ 3, /* dim_u */ 1, /* dim_y */ 2, wheelbase) {
   m_steer_lim = steer_lim;
   m_steer_tau = steer_tau;
 }
 
 void KinematicsBicycleModel::calculateDiscreteMatrix(
-  Eigen::MatrixXd & a_d, Eigen::MatrixXd & b_d, Eigen::MatrixXd & c_d, Eigen::MatrixXd & w_d,
-  const float64_t dt)
-{
+    Eigen::MatrixXd &a_d, Eigen::MatrixXd &b_d, Eigen::MatrixXd &c_d, Eigen::MatrixXd &w_d,
+    const float64_t dt) {
   auto sign = [](float64_t x) { return (x > 0.0) - (x < 0.0); };
 
   /* Linearize delta around delta_r (reference delta) */
@@ -50,7 +44,8 @@ void KinematicsBicycleModel::calculateDiscreteMatrix(
   }
 
   a_d << 0.0, velocity, 0.0, 0.0, 0.0, velocity / m_wheelbase * cos_delta_r_squared_inv, 0.0, 0.0,
-    -1.0 / m_steer_tau;
+      -1.0 / m_steer_tau;
+
   Eigen::MatrixXd I = Eigen::MatrixXd::Identity(m_dim_x, m_dim_x);
   a_d = (I - dt * 0.5 * a_d).inverse() * (I + dt * 0.5 * a_d);  // bilinear discretization
 
@@ -60,14 +55,13 @@ void KinematicsBicycleModel::calculateDiscreteMatrix(
   c_d << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0;
 
   w_d << 0.0,
-    -velocity * m_curvature +
-      velocity / m_wheelbase * (tan(delta_r) - delta_r * cos_delta_r_squared_inv),
-    0.0;
+      -velocity * m_curvature +
+          velocity / m_wheelbase * (tan(delta_r) - delta_r * cos_delta_r_squared_inv),
+      0.0;
   w_d *= dt;
 }
 
-void KinematicsBicycleModel::calculateReferenceInput(Eigen::MatrixXd & u_ref)
-{
+void KinematicsBicycleModel::calculateReferenceInput(Eigen::MatrixXd &u_ref) {
   u_ref(0, 0) = std::atan(m_wheelbase * m_curvature);
 }
 }  // namespace trajectory_follower

@@ -373,12 +373,18 @@ class TRAJECTORY_FOLLOWER_PUBLIC MPC {
    * @param [out] diagnostic diagnostic msg to be filled-out
    */
   bool8_t calculateMPC(
-      const autoware_auto_vehicle_msgs::msg::SteeringReport &current_steer,
       const float64_t current_velocity, const geometry_msgs::msg::Pose &current_pose,
       autoware_auto_control_msgs::msg::AckermannLateralCommand &ctrl_cmd,
       autoware_auto_planning_msgs::msg::Trajectory &predicted_traj,
       autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic &diagnostic,
       std::optional<DelayCompensationRefs> comm_delay_msg = std::nullopt);
+
+  bool8_t calculateInitialErrors(
+      const autoware_auto_vehicle_msgs::msg::SteeringReport &current_steer,
+      const float64_t current_velocity, const geometry_msgs::msg::Pose &current_pose);
+
+  MPCData mpc_data_;
+  trajectory_follower::MPCTrajectory reference_trajectory_;
 
   /**
    * @brief set the reference trajectory to follow
