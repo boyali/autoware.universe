@@ -56,7 +56,7 @@ class LinearVehicleModelsBase
   // Destructors
   virtual ~LinearVehicleModelsBase() = default;
 
-  virtual void updateStateSpace(float64_t const &vref, float64_t const &steering_ref);
+  virtual void updateStateSpace(float64_t const &vr, float64_t const &steer_r);
 
   void simulateOneStep(
       measurement_vector_t &y0, state_vector_t &x0, float64_t const &u);
@@ -146,6 +146,9 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::printDiscre
   ns_utils::print("Matrix Bd: ");
   ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Bd_));
 
+  ns_utils::print("Matrix Bwd: ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Bwd_));
+
   ns_utils::print("Matrix Cd: ");
   ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Cd_));
 
@@ -169,12 +172,12 @@ LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::LinearVehicleMod
 }
 
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateStateSpace(const float64_t &vref,
-                                                                                      const float64_t &steering_ref)
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateStateSpace(const float64_t &vr,
+                                                                                      const float64_t &steer_r)
 {
 
-  auto const &&cos_sqr = std::cos(steering_ref) * std::cos(steering_ref);
-
+  auto const &cos_sqr = std::cos(steer_r) * std::cos(steer_r);
+  auto &&L = wheelbase_;
   /**
    * @brief
    * A matrix
@@ -182,8 +185,8 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateState
    *          [ 0, 0, V/(L*cos(steering)^2)]
    *          [ 0, 0,                  -1/tau]
    * */
-  A_(0, 1) = vref;
-  A_(1, 2) = vref / (wheelbase_ * cos_sqr);
+  A_(0, 1) = vr;
+  A_(1, 2) = vr / (L * cos_sqr);
 
   /**
    * @brief  B = [0, 0, 1/tau]^T
@@ -195,7 +198,8 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateState
    * @brief  Bw = [0, 1/tau, 0]^T
    *
    * */
-  Bw_(1, 0) = -vref * steering_ref / (wheelbase_ * cos_sqr);
+//  Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
+  Bw_(1, 0) = 0 * vr * tan(steer_r) / L - 0 * vr * curvature_ - steer_r / (L * cos_sqr);
 
   //  auto IA = I - A_ * dt_ / 2;
   //  auto Ainv = IA.inverse();
@@ -328,7 +332,7 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::discretisiz
   Ad_ = I_At2_ * (I + A_ * dt_ / 2.);
   Bd_ = I_At2_ * B_ * dt_;
   Cd_ = C_ * I_At2_;
-  Dd_ = D_ + C_ * Bd_ / 2.;
+  Dd_ = D_ + C_ * Bd_.eval() / 2.;
 
   // Disturbance part
   Bwd_ = I_At2_ * Bw_ * dt_;
@@ -348,15 +352,15 @@ class VehicleModelDisturbanceObserver : public LinearVehicleModelsBase<STATE_DIM
 
   // Constructors.
   using BASE::LinearVehicleModelsBase::LinearVehicleModelsBase;
-  void updateStateSpace(const float64_t &vref, const float64_t &steering_ref) override;
+  void updateStateSpace(const float64_t &vr, const float64_t &steer_r) override;
 
 };
 
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateStateSpace(const float64_t &vref,
-                                                                                              const float64_t &steering_ref)
+void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateStateSpace(const float64_t &vr,
+                                                                                              const float64_t &steer_r)
 {
-  auto const &&cos_sqr = std::cos(steering_ref) * std::cos(steering_ref);
+  auto const &&cos_sqr = std::cos(steer_r) * std::cos(steer_r);
 
   /**
     * @brief
@@ -366,8 +370,10 @@ void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::upd
     *          [ 0, 0,                  -1/tau]
     * */
 
-  this->A_(0, 1) = vref;
-  this->A_(1, 2) = vref / (this->wheelbase_ * cos_sqr);
+  auto &&L = this->wheelbase_;
+  this->A_(0, 1) = vr;
+  this->A_(1, 2) = vr / (L * cos_sqr);
+
 
   /**
    * @brief  B = [0, 0, 1/tau]^T
@@ -383,7 +389,9 @@ void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::upd
    * @brief  Bw = [0, 1/tau, 0]^T
    *
    * */
-  this->Bw_(1, 0) = -vref * steering_ref / (this->wheelbase_ * cos_sqr);
+  auto &&curvature_ = this->curvature_;
+//  this->Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
+  this->Bw_(1, 0) = 0 * vr * tan(steer_r) / L - 0 * vr * curvature_ - steer_r / (L * cos_sqr);
 
   //  auto IA = I - A_ * dt_ / 2;
   //  auto Ainv = IA.inverse();

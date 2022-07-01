@@ -139,6 +139,7 @@ void CommunicationDelayCompensatorNode::onTimer()
   //        }
 
   computeLateralCDOB();
+
   // Publish delay compensation reference.
   publishCompensationReferences();
 

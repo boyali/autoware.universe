@@ -1,13 +1,13 @@
 /**:
   ros__parameters:
     # -- System --
-    cdob_ctrl_period: 0.025     # sampling period.
+    cdob_ctrl_period: 0.03     # sampling period.
 
     # -- Q-filters --
     qfilter_lateral_error_order: 1  # must be ==1 as the state observer needed to be redesigned.
     qfilter_longitudinal_error_order: 1  # longitudinal control qfilter.
 
-    qfilter_lateral_error_freq: 10.  #qfilter frequency in Hz for lateral error
+    qfilter_lateral_error_freq: 50.  #qfilter frequency in Hz for lateral error
     qfilter_longitudinal_error_freq: 20.  #qfilter frequency in Hz for heading error
 
     # -- Vehicle Model Selection -- Currently we have only one.
