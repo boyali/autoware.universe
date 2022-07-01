@@ -225,38 +225,37 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(
     const state_vector_vehicle_t &current_measurements,
     const autoware::common::types::float64_t &current_steering_cmd)
 {
-  // First step propagate the previous states.
+
   /**
    *        xbar = A @ x0_hat + B * u_prev + Bwd
    *        ybar = C @ xbar + D * uk_qf
    * */
-
-  xbar_temp_ = xhat0_prev_;
+  //  FIRST STEP: propagate the previous states.
+  xbar_temp_ = xhat0_prev_.eval();
   observer_vehicle_model_ptr_->simulateOneStep(ybar_temp_, xbar_temp_, previous_qfiltered_control_cmd_);
+
   xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - current_measurements);  // # xhat_k
+
+  // Before updating the observer states, use xhat0 current estimate to simulate the disturbance input.
+  // Apply the q-filter to the disturbance state
+  auto dist_state = xhat0_prev_.eval().bottomRows(1)(0);
+  df_d0_ = current_qfiltered_control_cmd_ - ss_qfilter_lat_.simulateOneStep(xd0_, dist_state);
 
   // UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.
   observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);
 
-  // Before updating the observer states, use xhat0 current estimate to simulate the disturbance input.
-  // Apply the q-filter to the disturbance state
-  auto dist_state = xhat0_prev_.bottomRows(1)(0);
-  df_d0_ = current_qfiltered_control_cmd_ - ss_qfilter_lat_.simulateOneStep(xd0_, dist_state);
-
   // Send the qfiltered disturbance input to the vehicle model to get the response.
-  xv_d0_ = current_yobs_;
-  vehicle_model_ptr_->simulateOneStep(yv_d0_, xv_d0_, current_qfiltered_control_cmd_ - df_d0_);
-
-
+  xv_d0_ = current_yobs_.eval();
+  vehicle_model_ptr_->simulateOneStep(yv_d0_, xv_d0_, df_d0_);
 
   // DEBUG
-//  ns_utils::print("Current observer state ");
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xhat0_prev_));
-//
-//  ns_utils::print("Current simulated state to filtered disturbance ");
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xv_d0_));
-//
-//  ns_utils::print("Current measurements ");
-//  ns_eigen_utils::printEigenMat(current_measurements);
+  //  ns_utils::print("Current observer state ");
+  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xhat0_prev_));
+  //
+  //  ns_utils::print("Current simulated state to filtered disturbance ");
+  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xv_d0_));
+  //
+  //  ns_utils::print("Current measurements ");
+  //  ns_eigen_utils::printEigenMat(current_measurements);
 
 }
