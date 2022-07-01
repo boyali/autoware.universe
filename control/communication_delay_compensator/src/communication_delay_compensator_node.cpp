@@ -131,7 +131,7 @@ void CommunicationDelayCompensatorNode::onTimer()
   updateVehicleModels();
   // dist_obs_vehicle_model_ptr_->printDiscreteSystem();
   // dist_obs_vehicle_model_ptr_->printContinuousSystem();
-  // vehicle_model_ptr_->printDiscreteSystem();
+  vehicle_model_ptr_->printDiscreteSystem();
 
   // Compute lateral CDOB references.
   //        if (!isVehicleStopping()) {
@@ -186,7 +186,7 @@ void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(
   if (prev_long_errors_ptr_)
   {
     // Compute current steering error.
-    previous_target_velocity_ = prev_long_errors_ptr_->target_velocity_read;
+    previous_target_velocity_ = static_cast<float64_t>(prev_long_errors_ptr_->target_velocity_read);
   }
 
   // Debug
@@ -204,7 +204,7 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
   current_lat_errors_ptr_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
   // Compute current steering error.
-  current_curvature_ = current_lat_errors_ptr_->curvature_read;
+  current_curvature_ = static_cast<float64_t>(current_lat_errors_ptr_->curvature_read);
 
   // Ackerman Ideal Steering
   current_ideal_steering_ = std::atan(current_curvature_ * params_node_.wheel_base);
@@ -212,7 +212,7 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
   if (prev_lat_errors_ptr_)
   {
     // Compute current steering error.
-    prev_curvature_ = prev_lat_errors_ptr_->curvature_read;
+    prev_curvature_ = static_cast<float64_t>(prev_lat_errors_ptr_->curvature_read);
 
     // Ackerman Ideal Steering
     prev_ideal_steering_ = std::atan(prev_curvature_ * params_node_.wheel_base);
