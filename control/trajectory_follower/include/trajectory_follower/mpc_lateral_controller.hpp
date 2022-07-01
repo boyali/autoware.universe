@@ -229,6 +229,10 @@ private:
    */
   rcl_interfaces::msg::SetParametersResult paramCallback(
     const std::vector<rclcpp::Parameter> & parameters);
+
+  // Time delay compensator variables.
+  // MPC initial references. [ey, eyaw, steering, curvature]
+  std::array<float64_t, 4> mpc_initial_references_{};
 };
 }  // namespace trajectory_follower
 }  // namespace control

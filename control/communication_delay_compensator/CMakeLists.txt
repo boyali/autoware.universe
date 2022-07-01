@@ -12,7 +12,7 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             -Wpedantic
             -Wno-unused-parameter
             -Wno-unused-variable
-            # -Wconversion
+            -Wno-conversion
             -Wno-sign-conversion
             -Wdouble-promotion
             # -Wfloat-equal

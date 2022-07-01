@@ -36,6 +36,12 @@ namespace trajectory_follower
 using namespace std::literals::chrono_literals;
 using ::motion::motion_common::to_angle;
 
+
+bool8_t MPC::calculateInitialErrors()
+{
+    return false;
+}
+
 bool8_t MPC::calculateMPC(
   const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer,
   const float64_t current_velocity, const geometry_msgs::msg::Pose & current_pose,
@@ -63,7 +69,7 @@ bool8_t MPC::calculateMPC(
     mpc_data.yaw_err_delay_compensator_ref =
       comm_delay_msg.value().heading_angle_error_compensation_ref;
 
-    mpc_data.steer_compensator_ref = comm_delay_msg.value().steering_error_compensation_ref;
+    mpc_data.steer_compensator_ref = comm_delay_msg.value().steering_compensation_ref;
 
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, 1000 /*ms*/, "In the MPC use_td_param is %i",
@@ -315,6 +321,7 @@ bool8_t MPC::getData(
   // Save the  errors to report.
   m_lateral_error_to_report = data->lateral_err;  // target-current
   m_yaw_error_to_report = data->yaw_err;          // target-current
+  m_steering_to_report = data->steer; // steering reference that the MPC uses.
 
   /* get predicted steer */
   if (!m_steer_prediction_prev) {
@@ -534,14 +541,14 @@ trajectory_follower::MPCTrajectory MPC::applyVelocityDynamicsFilter(
   const float64_t tau = m_param.velocity_time_constant;
 
   trajectory_follower::MPCTrajectory output = input;
-  trajectory_follower::MPCUtils::dynamicSmoothingVelocity(
-    static_cast<size_t>(nearest_idx), v0, acc_lim, tau, output);
+  trajectory_follower::MPCUtils::dynamicSmoothingVelocity(    static_cast<size_t>(nearest_idx), v0, acc_lim, tau, output);
+
   const float64_t t_ext = 100.0;  // extra time to prevent mpc calculation failure due to short time
   const float64_t t_end = output.relative_time.back() + getPredictionTime() + t_ext;
   const float64_t v_end = 0.0;
+
   output.vx.back() = v_end;  // set for end point
-  output.push_back(
-    output.x.back(), output.y.back(), output.z.back(), output.yaw.back(), v_end, output.k.back(),
+  output.push_back(    output.x.back(), output.y.back(), output.z.back(), output.yaw.back(), v_end, output.k.back(),
     output.smooth_k.back(), t_end);
   return output;
 }
@@ -839,11 +846,16 @@ bool8_t MPC::isValid(const MPCMatrix & m) const
   return true;
 }
 
-std::pair<float64_t, float64_t> MPC::getComputedErrors()
+void MPC::getMPCinitialReferences(std::array<float64_t, 4> &mpc_initial_refs)
 {
-  return std::pair<float64_t, float64_t>({m_lateral_error_to_report, m_yaw_error_to_report});
+
+    mpc_initial_refs[0] = m_lateral_error_to_report;
+    mpc_initial_refs[1] = m_yaw_error_to_report;
+    mpc_initial_refs[2] = m_steering_to_report;
+    mpc_initial_refs[3] = m_curvature_to_report;
+
 }
-float64_t MPC::getCurrentCurvature() { return m_curvature_to_report; }
+
 
 }  // namespace trajectory_follower
 }  // namespace control

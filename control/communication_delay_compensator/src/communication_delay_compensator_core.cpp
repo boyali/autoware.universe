@@ -161,7 +161,7 @@ void observers::LateralCommunicationDelayCompensator::simulateOneStep(
 
   msg_compensation_results->lateral_deviation_error_compensation_ref = yv_d0_(0);
   msg_compensation_results->heading_angle_error_compensation_ref = yv_d0_(1);
-  msg_compensation_results->steering_error_compensation_ref = yv_d0_(2);
+  msg_compensation_results->steering_compensation_ref = yv_d0_(2);
 
   // Debug
 //  ns_utils::print("Current steering command read : ", current_steering_cmd);
@@ -176,8 +176,8 @@ void observers::LateralCommunicationDelayCompensator::simulateOneStep(
 //      "Previous and current filtered commands :", previous_qfiltered_control_cmd_,
 //      current_qfiltered_control_cmd_);
 
-  ns_utils::print("Current disturbance references : ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(yv_d0_));
+//  ns_utils::print("Current disturbance references : ");
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(yv_d0_));
 }
 
 void observers::LateralCommunicationDelayCompensator::computeObserverGains(
@@ -235,17 +235,19 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(
   observer_vehicle_model_ptr_->simulateOneStep(ybar_temp_, xbar_temp_, previous_qfiltered_control_cmd_);
   xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - current_measurements);  // # xhat_k
 
+  // UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.
+  observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);
+
   // Before updating the observer states, use xhat0 current estimate to simulate the disturbance input.
   // Apply the q-filter to the disturbance state
   auto dist_state = xhat0_prev_.bottomRows(1)(0);
-  df_d0_ = ss_qfilter_lat_.simulateOneStep(xd0_, dist_state);
+  df_d0_ = current_qfiltered_control_cmd_ - ss_qfilter_lat_.simulateOneStep(xd0_, dist_state);
 
   // Send the qfiltered disturbance input to the vehicle model to get the response.
-  xv_d0_ = xhat0_prev_.topRows(3);
-  vehicle_model_ptr_->simulateOneStep(yv_d0_, xv_d0_, df_d0_);
+  xv_d0_ = current_yobs_;
+  vehicle_model_ptr_->simulateOneStep(yv_d0_, xv_d0_, current_qfiltered_control_cmd_ - df_d0_);
 
-  // UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.
-  observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);
+
 
   // DEBUG
 //  ns_utils::print("Current observer state ");

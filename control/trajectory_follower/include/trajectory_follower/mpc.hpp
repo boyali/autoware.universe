@@ -187,6 +187,7 @@ private:
 
   //!< @brief previous headin error to report
   float64_t m_yaw_error_to_report{};
+  float64_t m_steering_to_report{};
   float64_t m_curvature_to_report{};
 
   //!< @brief previous predicted steering
@@ -395,6 +396,10 @@ public:
     autoware_auto_planning_msgs::msg::Trajectory & predicted_traj,
     autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic,
     std::optional<DelayCompensationRefs> comm_delay_msg = std::nullopt);
+
+
+  bool8_t calculateInitialErrors();
+
   /**
    * @brief set the reference trajectory to follow
    */
@@ -448,8 +453,8 @@ public:
    */
   inline void setClock(rclcpp::Clock::SharedPtr clock) { m_clock = clock; }
 
-  std::pair<float64_t, float64_t> getComputedErrors();
-  float64_t getCurrentCurvature();
+  void getMPCinitialReferences(std::array<float64_t, 4> &mpc_initial_refs);
+
 
 };  // class MPC
 }  // namespace trajectory_follower
