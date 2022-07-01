@@ -56,7 +56,7 @@ void KinematicsBicycleModel::calculateDiscreteMatrix(
 
   w_d << 0.0,
       -velocity * m_curvature * 0 +
-          velocity / m_wheelbase * (tan(delta_r) * 0 - velocity * delta_r * cos_delta_r_squared_inv),
+          velocity / m_wheelbase * (tan(delta_r) * 0 - delta_r * cos_delta_r_squared_inv),
       0.0;
   w_d *= dt;
 }
