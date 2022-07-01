@@ -240,8 +240,11 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(stat
   // Apply the q-filter to the disturbance state
   auto dist_state = xhat0_prev_.eval().bottomRows<1>()(0);
 
-  // uf - dfilt (u - ue^{-sT}) = ue^{-sT}
-  df_d0_ = ss_qfilter_lat_.simulateOneStep(xd0_, current_steering_cmd - dist_state);
+  /**
+   * (u - ue^{-sT})
+   *  uf - dfilt  = ue^{-sT}
+   * */
+  df_d0_ = current_qfiltered_control_cmd_ - ss_qfilter_lat_.simulateOneStep(xd0_, dist_state);
 
   // UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.
   observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);

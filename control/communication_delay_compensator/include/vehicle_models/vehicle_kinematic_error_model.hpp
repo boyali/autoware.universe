@@ -199,7 +199,7 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateState
    *
    * */
 //  Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
-  Bw_(1, 0) = 0 * vr * tan(steer_r) / L - 0 * vr * curvature_ - steer_r / (L * cos_sqr);
+  Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - steer_r / (L * cos_sqr);
 
   //  auto IA = I - A_ * dt_ / 2;
   //  auto Ainv = IA.inverse();
@@ -391,7 +391,7 @@ void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::upd
    * */
   auto &&curvature_ = this->curvature_;
 //  this->Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
-  this->Bw_(1, 0) = 0 * vr * tan(steer_r) / L - 0 * vr * curvature_ - steer_r / (L * cos_sqr);
+  this->Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - steer_r / (L * cos_sqr);
 
   //  auto IA = I - A_ * dt_ / 2;
   //  auto Ainv = IA.inverse();

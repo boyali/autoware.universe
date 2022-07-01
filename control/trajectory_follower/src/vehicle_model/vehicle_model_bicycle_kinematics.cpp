@@ -47,17 +47,22 @@ void KinematicsBicycleModel::calculateDiscreteMatrix(
       -1.0 / m_steer_tau;
 
   Eigen::MatrixXd I = Eigen::MatrixXd::Identity(m_dim_x, m_dim_x);
-  a_d = (I - dt * 0.5 * a_d).inverse() * (I + dt * 0.5 * a_d);  // bilinear discretization
+
+  auto adInv = (I - dt * 0.5 * a_d).inverse();
+  a_d = adInv * (I + dt * 0.5 * a_d);  // bilinear discretization
 
   b_d << 0.0, 0.0, 1.0 / m_steer_tau;
   b_d *= dt;
+  // b_d = adInv * b_d * dt;
 
   c_d << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0;
+  // c_d = c_d * adInv;
 
   w_d << 0.0,
-      -velocity * m_curvature * 0 +
-          velocity / m_wheelbase * (tan(delta_r) * 0 - delta_r * cos_delta_r_squared_inv),
+      -velocity * m_curvature +
+          velocity / m_wheelbase * (tan(delta_r) - delta_r * cos_delta_r_squared_inv),
       0.0;
+
   w_d *= dt;
 }
 
