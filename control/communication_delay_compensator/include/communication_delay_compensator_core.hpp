@@ -76,7 +76,9 @@ class LateralCommunicationDelayCompensator
 
   void printLyapMatrices() const;
 
-  void simulateOneStep(state_vector_vehicle_t const &current_measurements, float64_t const &current_steering_cmd,
+  void simulateOneStep(state_vector_vehicle_t const &current_measurements,
+                       float64_t const &prev_steering_control_cmd,
+                       float64_t const &current_steering_cmd,
                        std::shared_ptr<DelayCompensatatorMsg> &msg_compensation_results,
                        std::shared_ptr<DelayCompensatorDebugMsg> &msg_debug_results);
 
@@ -126,7 +128,6 @@ class LateralCommunicationDelayCompensator
 
   // smaller size data class members.
   float64_t dt_{};
-  float64_t previous_qfiltered_control_cmd_{};
   float64_t current_qfiltered_control_cmd_{};
   int qfilter_order_{1};
   bool8_t is_vehicle_initial_states_set_{false};
@@ -144,9 +145,9 @@ class LateralCommunicationDelayCompensator
   /**
    * @brief estimates the vehicle states by the state observer.
    * */
-  void estimateVehicleStates(
-      const state_vector_vehicle_t &current_measurements,
-      const autoware::common::types::float64_t &current_steering_cmd);
+  void estimateVehicleStates(const state_vector_vehicle_t &current_measurements,
+                             float64_t const &prev_steering_control_cmd,
+                             float64_t const &current_steering_cmd);
 
   /**
    * @brief q-filters the disturbance output and simulates the disturbance input to get the

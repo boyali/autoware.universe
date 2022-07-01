@@ -136,7 +136,8 @@ void observers::LateralCommunicationDelayCompensator::setInitialStates()
 
 void observers::LateralCommunicationDelayCompensator::simulateOneStep(
     const state_vector_vehicle_t &current_measurements,
-    const autoware::common::types::float64_t &current_steering_cmd,
+    float64_t const &prev_steering_control_cmd,
+    float64_t const &current_steering_cmd,
     std::shared_ptr<DelayCompensatatorMsg> &msg_compensation_results,
     std::shared_ptr<DelayCompensatorDebugMsg> &msg_debug_results)
 {
@@ -150,7 +151,7 @@ void observers::LateralCommunicationDelayCompensator::simulateOneStep(
   qfilterControlCommand(current_steering_cmd);
 
   // Run the state observer to estimate the current state.
-  estimateVehicleStates(current_measurements, current_steering_cmd);
+  estimateVehicleStates(current_measurements, prev_steering_control_cmd, current_steering_cmd);
 
   // Final assignment steps.
   msg_debug_results->lat_uf = static_cast<float>(current_qfiltered_control_cmd_);
@@ -212,7 +213,6 @@ void observers::LateralCommunicationDelayCompensator::qfilterControlCommand(
     const autoware::common::types::float64_t &current_control_cmd)
 {
   // First give the output, then update the states.
-  previous_qfiltered_control_cmd_ = current_qfiltered_control_cmd_;
   current_qfiltered_control_cmd_ = ss_qfilter_lat_.simulateOneStep(xu0_, current_control_cmd);
 }
 
@@ -221,9 +221,9 @@ void observers::LateralCommunicationDelayCompensator::qfilterControlCommand(
  * we use the previous values for the vehicle model. Upon estimating the current states, we
  * predict the next states and broadcast it.
  * */
-void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(
-    const state_vector_vehicle_t &current_measurements,
-    const autoware::common::types::float64_t &current_steering_cmd)
+void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(state_vector_vehicle_t const &current_measurements,
+                                                                            float64_t const &prev_steering_control_cmd,
+                                                                            float64_t const &current_steering_cmd)
 {
 
   /**
@@ -232,7 +232,7 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(
    * */
   //  FIRST STEP: propagate the previous states.
   xbar_temp_ = xhat0_prev_.eval();
-  observer_vehicle_model_ptr_->simulateOneStep(ybar_temp_, xbar_temp_, previous_qfiltered_control_cmd_);
+  observer_vehicle_model_ptr_->simulateOneStep(ybar_temp_, xbar_temp_, prev_steering_control_cmd);
 
   xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - current_measurements);  // # xhat_k
 
@@ -247,10 +247,12 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(
   observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);
 
   // Send the qfiltered disturbance input to the vehicle model to get the response.
-  xv_d0_ = current_yobs_.eval(); // xhat0_prev_.topRows<3>().eval();
+  // xv_d0_ = current_yobs_.eval(); // xhat0_prev_.topRows<3>().eval();
 
   // yu-yd + yd
+  xv_d0_ = current_yobs_.eval(); //xhat0_prev_.eval().topRows<3>();
   vehicle_model_ptr_->simulateOneStep(yv_d0_, xv_d0_, df_d0_);
+  // yv_d0_ += current_measurements;
 
   // DEBUG
   //  ns_utils::print("Current observer state ");
