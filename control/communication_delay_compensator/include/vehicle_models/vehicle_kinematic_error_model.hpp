@@ -201,8 +201,9 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateState
    * @brief  Bw = [0, 1/tau, 0]^T
    *
    * */
-  // Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
+//  Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
   Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - steer_r / (L * cos_sqr);
+//  Bw_(1, 0) = -steer_r * vr / (L * cos_sqr);
 
   //  auto IA = I - A_ * dt_ / 2;
   //  auto Ainv = IA.inverse();
@@ -421,8 +422,9 @@ void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::upd
    *
    * */
   auto &&curvature_ = this->curvature_;
-  //  this->Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
+//  this->Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
   this->Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - steer_r / (L * cos_sqr);
+//  this->Bw_(1, 0) = -vr * steer_r / (L * cos_sqr);
 
   // Discretisize.
   // this->discretisizeBilinear();

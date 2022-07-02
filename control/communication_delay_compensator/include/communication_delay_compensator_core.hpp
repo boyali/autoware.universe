@@ -149,11 +149,106 @@ class LateralCommunicationDelayCompensator
                              float64_t const &prev_steering_control_cmd,
                              float64_t const &current_steering_cmd);
 
+};
+
+/**
+ * @brief Communication Delay Compensator Core without inverse models. It is an ordinary linear
+ * observer model that estimates a slowly varying input disturbance. The time-delay in the input
+ * channel is formulated as a disturbance in the form of:
+ *
+ *     u (s) - [d(s) = u(s)-u(s)e^{-sT}] = u(s)e^{-sT}
+ *
+ * */
+class LateralDisturbanceCompensator
+{
+ public:
+  using obs_model_ptr_t = std::shared_ptr<linear_state_observer_model_t>;
+  using state_qfilter = state_vector_qfilter<1>;  // @brief state vector for the filtered input
+
+  LateralDisturbanceCompensator() = default;
+
+  LateralDisturbanceCompensator(obs_model_ptr_t observer_vehicle_model,
+                                tf_t const &qfilter_lateral,
+                                sLyapMatrixVecs const &lyap_matsXY,
+                                float64_t const &dt);
+
+  void printQfilterTFs() const;
+
+  void printQfilterSSs() const;
+
+  void printLyapMatrices() const;
+
+  void simulateOneStep(state_vector_vehicle_t const &current_measurements,
+                       float64_t const &prev_steering_control_cmd,
+                       float64_t const &current_steering_cmd,
+                       std::shared_ptr<DelayCompensatatorMsg> &msg_compensation_results);
+
+  void setInitialStates();
+
+ private:
+  obs_model_ptr_t observer_vehicle_model_ptr_{}; // state observer model
+
+  // transfer functions
+  tf_t tf_qfilter_lat_;
+
+  // state-space models.
+  ss_t ss_qfilter_lat_;
+
+  // ------------ QFILTER VARIABLES ----------------------------------
+  // state vectors for filtering inputs.
+  Eigen::MatrixXd xu0_;  // @brief state vector for the filtered input
+  Eigen::MatrixXd xd0_;  // @brief state vector for the filtered disturbance
+  float64_t df_d0_{}; // q-filtered disturbance response
+
+  // ------------ OBSERVER VARIABLES ----------------------------------
   /**
-   * @brief q-filters the disturbance output and simulates the disturbance input to get the
-   * disturbance response of the system.
+   * @brief state observer estimated state [ey, eyaw, steering, disturbance
    * */
-  void getDisturbanceResponseRefs();
+  // @brief state estimate at step [k-1]
+  state_vector_observer_t xhat0_prev_{state_vector_observer_t::Zero()};
+
+  //@brief estimated vehicle states, disturbance row is zero (cannot observed)
+  state_vector_vehicle_t current_yobs_{state_vector_vehicle_t::Zero()};
+
+  // @brief temporary variables
+  state_vector_observer_t xbar_temp_{state_vector_observer_t::Zero()};
+  state_vector_vehicle_t ybar_temp_{state_vector_vehicle_t::Zero()};
+
+  // -------------- VEHICLE MODEL VARIABLES ----------------------------
+  state_vector_vehicle_t xv_d0_{state_vector_vehicle_t::Zero()}; // states for disturbance input simulations
+  state_vector_vehicle_t yv_d0_{state_vector_vehicle_t::Zero()}; // response for disturbance input simulations
+
+  // Lyapunov matrices to compute
+  std::vector<state_matrix_observer_t> vXs_;
+  std::vector<measurement_matrix_observer_t> vYs_;
+
+  // placeholders
+  measurement_matrix_observer_t Lobs_;    //@brief state observer gain matrix.
+  state_vector_observer_t theta_params_;  //@brieff nonlinear terms in A of SS models of vehicle.
+
+  // smaller size data class members.
+  float64_t dt_{};
+  float64_t current_qfiltered_control_cmd_{};
+  int qfilter_order_{1};
+  bool8_t is_vehicle_initial_states_set_{false};
+
+  /**
+   * @brief computes the observer gain matrix given the operating conditions.
+   * */
+  void computeObserverGains(const state_vector_vehicle_t &current_measurements);
+
+  /**
+   * @brief filters the control input and store it as previous_filtered_cmd.
+   * */
+  void qfilterControlCommand(float64_t const &current_control_cmd);
+
+  /**
+   * @brief estimates the vehicle states by the state observer.
+   * */
+  void estimateVehicleStates(const state_vector_vehicle_t &current_measurements,
+                             float64_t const &prev_steering_control_cmd,
+                             float64_t const &current_steering_cmd);
+
 };
 
 /**

@@ -112,6 +112,7 @@ struct MPCParam {
   float64_t low_curvature_thresh_curvature;
 
   bool8_t use_comm_time_delay;
+  bool8_t use_dob;
 };
 /**
  * MPC problem data

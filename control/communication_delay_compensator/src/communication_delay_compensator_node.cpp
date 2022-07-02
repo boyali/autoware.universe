@@ -83,14 +83,14 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
                                                                            params_node_.steering_tau,
                                                                            params_node_.cdob_ctrl_period);
 
-  dist_obs_vehicle_model_ptr_ = std::make_shared<observers::linear_state_observer_model_t>(params_node_.wheel_base,
-                                                                                           params_node_.steering_tau,
-                                                                                           params_node_.cdob_ctrl_period);
+  dist_td_obs_vehicle_model_ptr_ = std::make_shared<observers::linear_state_observer_model_t>(params_node_.wheel_base,
+                                                                                              params_node_.steering_tau,
+                                                                                              params_node_.cdob_ctrl_period);
 
   /**
    * @brief read the Lyapunov matrices and pass them to the delay compensator.
    * */
-  setLateralCDOB(lyap_mat_vec);
+  setLateralCDOB_DOBs(lyap_mat_vec);
 }
 
 void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
@@ -131,8 +131,8 @@ void CommunicationDelayCompensatorNode::onTimer()
 //  updateVehicleModelsWithPreviousTargets();
   updateVehicleModelsWithCurrentTargets();
 
-  // dist_obs_vehicle_model_ptr_->printDiscreteSystem();
-  // dist_obs_vehicle_model_ptr_->printContinuousSystem();
+  // dist_td_obs_vehicle_model_ptr_->printDiscreteSystem();
+  // dist_td_obs_vehicle_model_ptr_->printContinuousSystem();
   vehicle_model_ptr_->printDiscreteSystem();
 
   // Compute lateral CDOB references.
@@ -209,7 +209,7 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
   current_lat_errors_ptr_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
   // Compute current steering error.
-  current_curvature_ = static_cast<float64_t>(current_lat_errors_ptr_->curvature_read);
+  current_curvature_ = -static_cast<float64_t>(current_lat_errors_ptr_->curvature_read);
 
   // Ackerman Ideal Steering
   current_ideal_steering_ = std::atan(current_curvature_ * params_node_.wheel_base);
@@ -217,7 +217,7 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
   if (prev_lat_errors_ptr_)
   {
     // Compute current steering error.
-    prev_curvature_ = static_cast<float64_t>(prev_lat_errors_ptr_->curvature_read);
+    prev_curvature_ = -static_cast<float64_t>(prev_lat_errors_ptr_->curvature_read);
 
     // Ackerman Ideal Steering
     prev_ideal_steering_ = std::atan(prev_curvature_ * params_node_.wheel_base);
@@ -332,12 +332,18 @@ void CommunicationDelayCompensatorNode::readAndLoadParameters(
     params_node_.qfilter_lateral_error_order =
         declare_parameter<int>("qfilter_lateral_error_order");
 
+    params_node_.qfilter_lateral_dob_order =
+        declare_parameter<int>("qfilter_lateral_dob_order");
+
     params_node_.qfilter_longitudinal_error_order =
         declare_parameter<int>("qfilter_longitudinal_error_order");
 
     // Read the filter cut-oof frequencies.
     params_node_.qfilter_lateral_error_freq =
         declare_parameter<float64_t>("qfilter_lateral_error_freq");
+
+    params_node_.qfilter_lateral_dob_freq =
+        declare_parameter<float64_t>("qfilter_lateral_dob_freq");
 
     params_node_.qfilter_longitudinal_error_freq =
         declare_parameter<float64_t>("qfilter_longitudinal_error_freq");
@@ -433,7 +439,7 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithPreviousTargets()
   // auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
 
   // Update the matrices
-  dist_obs_vehicle_model_ptr_->updateStateSpace(previous_target_velocity_, prev_ideal_steering_);
+  dist_td_obs_vehicle_model_ptr_->updateStateSpace(previous_target_velocity_, prev_ideal_steering_);
   vehicle_model_ptr_->updateStateSpace(previous_target_velocity_, prev_ideal_steering_);
 
   // Update the initial state.
@@ -444,7 +450,7 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithPreviousTargets()
     float64_t eyaw{static_cast<float64_t>(prev_lat_errors_ptr_->heading_angle_error_read)};
     float64_t vx{previous_velocity_};
 
-    dist_obs_vehicle_model_ptr_->updateInitialStates(ey, eyaw, previous_steering_angle_, vx, prev_curvature_);
+    dist_td_obs_vehicle_model_ptr_->updateInitialStates(ey, eyaw, previous_steering_angle_, vx, prev_curvature_);
     vehicle_model_ptr_->updateInitialStates(ey, eyaw, previous_steering_angle_, vx, prev_curvature_);
   }
 
@@ -460,7 +466,7 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithCurrentTargets()
   // auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
 
   // Update the matrices
-  dist_obs_vehicle_model_ptr_->updateStateSpace(current_target_velocity_, current_ideal_steering_);
+  dist_td_obs_vehicle_model_ptr_->updateStateSpace(current_target_velocity_, current_ideal_steering_);
   vehicle_model_ptr_->updateStateSpace(current_target_velocity_, current_ideal_steering_);
 
   // Update the initial state.
@@ -471,14 +477,14 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithCurrentTargets()
     float64_t eyaw{static_cast<float64_t>(current_lat_errors_ptr_->heading_angle_error_read)};
     float64_t vx{current_velocity_};
 
-    dist_obs_vehicle_model_ptr_->updateInitialStates(ey, eyaw, current_steering_angle_, vx, current_curvature_);
+    dist_td_obs_vehicle_model_ptr_->updateInitialStates(ey, eyaw, current_steering_angle_, vx, current_curvature_);
     vehicle_model_ptr_->updateInitialStates(ey, eyaw, current_steering_angle_, vx, current_curvature_);
   }
 
   // ns_utils::print(" Previous target speed :", previous_target_velocity_);
 }
 
-void CommunicationDelayCompensatorNode::setLateralCDOB(sLyapMatrixVecs const &lyap_matsXY)
+void CommunicationDelayCompensatorNode::setLateralCDOB_DOBs(sLyapMatrixVecs const &lyap_matsXY)
 {
   /**
    * Create qfilter for lateral controller.  It filters both control input and estimated
@@ -486,23 +492,33 @@ void CommunicationDelayCompensatorNode::setLateralCDOB(sLyapMatrixVecs const &ly
    */
 
   // --------------- Qfilter Construction for lateral error state -------------------------
-  auto const &order_lat_error = params_node_.qfilter_lateral_error_order;
-  auto const &wc_lat_error = params_node_.qfilter_lateral_error_freq;
+  auto const &order_lat_error_cdob = params_node_.qfilter_lateral_error_order;
+  auto const &wc_lat_error_cdob = params_node_.qfilter_lateral_error_freq;
 
   // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
-  auto qfilter_lat_error = get_nthOrderTF(wc_lat_error, order_lat_error);
+  auto qfilter_lat_error_cdob = get_nthOrderTF(wc_lat_error_cdob, order_lat_error_cdob);
 
-  //  float64_t damping_val{1.};
-  //  auto remaining_order = order_of_q - 2;
-  //  auto q_tf = get_nthOrderTFwithDampedPoles(cut_off_frq_in_hz_q, damping_val, remaining_order);
+  LateralCommunicationDelayCompensator delay_compensator_lat_cdob(dist_td_obs_vehicle_model_ptr_,
+                                                                  vehicle_model_ptr_,
+                                                                  qfilter_lat_error_cdob,
+                                                                  lyap_matsXY,
+                                                                  params_node_.cdob_ctrl_period);
 
-  LateralCommunicationDelayCompensator delay_compensator_lat(dist_obs_vehicle_model_ptr_,
-                                                             vehicle_model_ptr_,
-                                                             qfilter_lat_error,
-                                                             lyap_matsXY,
-                                                             params_node_.cdob_ctrl_period);
+  cdob_lateral_ptr_ = std::make_unique<LateralCommunicationDelayCompensator>(delay_compensator_lat_cdob);
 
-  cdob_lateral_ptr_ = std::make_unique<LateralCommunicationDelayCompensator>(delay_compensator_lat);
+  // Set the DOB
+  auto const &order_lat_error_dob = params_node_.qfilter_lateral_dob_order;
+  auto const &wc_lat_error_dob = params_node_.qfilter_lateral_dob_freq;
+
+  // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
+  auto qfilter_lat_error_dob = get_nthOrderTF(wc_lat_error_dob, order_lat_error_dob);
+
+  LateralDisturbanceCompensator compensator_lat_dob(dist_td_obs_vehicle_model_ptr_,
+                                                    qfilter_lat_error_cdob,
+                                                    lyap_matsXY,
+                                                    params_node_.cdob_ctrl_period);
+
+  dob_lateral_ptr_ = std::make_unique<LateralDisturbanceCompensator>(compensator_lat_dob);
 }
 
 void CommunicationDelayCompensatorNode::computeLateralCDOB()
@@ -533,6 +549,11 @@ void CommunicationDelayCompensatorNode::computeLateralCDOB()
                                      current_steering_control_cmd,
                                      current_delay_ref_msg_ptr_,
                                      current_delay_debug_msg_);
+
+  dob_lateral_ptr_->simulateOneStep(current_lat_measurements_,
+                                    prev_steering_control_cmd,
+                                    current_steering_control_cmd,
+                                    current_delay_ref_msg_ptr_);
 
   // DEBUG
   {

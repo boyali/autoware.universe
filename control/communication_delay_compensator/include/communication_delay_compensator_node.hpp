@@ -82,10 +82,12 @@ struct Parameters
 
   // Qfilter orders .
   int qfilter_lateral_error_order{1};
+  int qfilter_lateral_dob_order{1};
   int qfilter_longitudinal_error_order{1};
 
   // Qfilter cut-off frequencies Hz. (low-pass).
   float64_t qfilter_lateral_error_freq{10};
+  float64_t qfilter_lateral_dob_freq{10};
   float64_t qfilter_longitudinal_error_freq{10};
 
   // First order vehicle state models.
@@ -122,16 +124,6 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
    */
   ~CommunicationDelayCompensatorNode() override = default;
 
-  /**
-   * @brief vehicle model that simulates the physical input.
-   * */
-  std::shared_ptr<observers::linear_vehicle_model_t> vehicle_model_ptr_;
-
-  /**
- * @brief observer vehicle model for state estimation.
- * */
-  std::shared_ptr<observers::linear_state_observer_model_t> dist_obs_vehicle_model_ptr_;
-
  private:
   // Data Members
   Parameters params_node_{};
@@ -164,6 +156,21 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   // Data Members for the delay-compensation
   // CDOB: Communication Disturbance Observer-based.
   std::unique_ptr<LateralCommunicationDelayCompensator> cdob_lateral_ptr_{};
+
+  /**
+   * @brief vehicle model that simulates the physical input.
+   * */
+  std::shared_ptr<observers::linear_vehicle_model_t> vehicle_model_ptr_;
+
+  /**
+  * @brief observer vehicle model for state estimation.
+  * */
+  std::shared_ptr<observers::linear_state_observer_model_t> dist_td_obs_vehicle_model_ptr_;
+
+  /**
+  * @brief observer vehicle model for input disturbance estimation estimation.
+  * */
+  std::shared_ptr<observers::LateralDisturbanceCompensator> dob_lateral_ptr_;
 
   // Pointers to the ROS topics.
   // Pointers for ros topic
@@ -287,7 +294,7 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   /**
    * @brief Sets the lateral delay compensator.
    * */
-  void setLateralCDOB(sLyapMatrixVecs const &lyap_matsXY);
+  void setLateralCDOB_DOBs(sLyapMatrixVecs const &lyap_matsXY);
 
   void computeLateralCDOB();
 };
