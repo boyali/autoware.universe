@@ -22,6 +22,7 @@
 
 #include <eigen3/Eigen/Core>
 #include <Eigen/StdVector>
+#include <eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixExponential.h>
 
 #include <iostream>
 #include <memory>
@@ -43,6 +44,7 @@ class LinearVehicleModelsBase
   using Btype = mat_type_t<STATE_DIM, INPUT_DIM>;
   using Ctype = mat_type_t<MEASUREMENT_DIM, STATE_DIM>;
   using Dtype = mat_type_t<MEASUREMENT_DIM, INPUT_DIM>;
+  using Stype = mat_type_t<STATE_DIM + INPUT_DIM, STATE_DIM + INPUT_DIM>;
 
   using state_vector_t = mat_type_t<STATE_DIM, 1>;
   using measurement_vector_t = mat_type_t<MEASUREMENT_DIM, 1>;
@@ -65,7 +67,8 @@ class LinearVehicleModelsBase
       float64_t const &ey, float64_t const &eyaw, float64_t const &steering, float64_t const &vx,
       float64_t const &curvature);
 
-  void discretisize();
+  void discretisizeBilinear();
+  void discretisizeExact();
 
   void printContinuousSystem();
 
@@ -198,15 +201,15 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateState
    * @brief  Bw = [0, 1/tau, 0]^T
    *
    * */
-//  Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
+  // Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
   Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - steer_r / (L * cos_sqr);
 
   //  auto IA = I - A_ * dt_ / 2;
   //  auto Ainv = IA.inverse();
-  updateI_Ats2();
 
   // Discretisize.
-  discretisize();
+  // discretisizeBilinear();
+  discretisizeExact();
 
 }
 
@@ -324,8 +327,9 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::evaluateNon
 }
 
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::discretisize()
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::discretisizeBilinear()
 {
+  updateI_Ats2();
 
   auto const &I = Atype::Identity();
 
@@ -336,6 +340,33 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::discretisiz
 
   // Disturbance part
   Bwd_ = I_At2_ * Bw_ * dt_;
+}
+template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::discretisizeExact()
+{
+  /**
+   * e^{[A, B; 0, 0]  = [Ad, Bd;0 1]}
+   *
+   */
+
+  Stype E(Stype::Zero());
+  E.template topLeftCorner<STATE_DIM, STATE_DIM>() = A_;
+  E.template topRightCorner<STATE_DIM, INPUT_DIM>() = B_;
+  Stype expE = (E * dt_).exp();
+
+  Ad_ = expE.template topLeftCorner<STATE_DIM, STATE_DIM>();
+  Bd_ = expE.template topRightCorner<STATE_DIM, INPUT_DIM>();
+
+  // Compute Bw
+  E.setZero();
+  E.template topLeftCorner<STATE_DIM, STATE_DIM>() = A_;
+  E.template topRightCorner<STATE_DIM, INPUT_DIM>() = Bw_;
+
+  expE = (E * dt_).exp();
+  Bw_ = expE.template topRightCorner<STATE_DIM, INPUT_DIM>();
+  Cd_ = C_;
+  Dd_ = D_;
+
 }
 
 /**
@@ -390,15 +421,12 @@ void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::upd
    *
    * */
   auto &&curvature_ = this->curvature_;
-//  this->Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
+  //  this->Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
   this->Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - steer_r / (L * cos_sqr);
 
-  //  auto IA = I - A_ * dt_ / 2;
-  //  auto Ainv = IA.inverse();
-  this->updateI_Ats2();
-
   // Discretisize.
-  this->discretisize();
+  // this->discretisizeBilinear();
+  this->discretisizeExact();
 }
 
 /**
