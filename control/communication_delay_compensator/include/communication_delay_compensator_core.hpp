@@ -129,6 +129,7 @@ class LateralCommunicationDelayCompensator
   // smaller size data class members.
   float64_t dt_{};
   float64_t current_qfiltered_control_cmd_{};
+  float64_t prev_qfiltered_control_cmd_{};
   int qfilter_order_{1};
   bool8_t is_vehicle_initial_states_set_{false};
 
@@ -229,6 +230,7 @@ class LateralDisturbanceCompensator
   // smaller size data class members.
   float64_t dt_{};
   float64_t current_qfiltered_control_cmd_{};
+  float64_t prev_qfiltered_control_cmd_{};
   int qfilter_order_{1};
   bool8_t is_vehicle_initial_states_set_{false};
 
