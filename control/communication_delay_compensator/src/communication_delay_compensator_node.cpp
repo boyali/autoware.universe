@@ -128,8 +128,8 @@ void CommunicationDelayCompensatorNode::onTimer()
   }
 
   // Update vehicle model.
-//  updateVehicleModelsWithPreviousTargets();
-  updateVehicleModelsWithCurrentTargets();
+  updateVehicleModelsWithPreviousTargets();
+//  updateVehicleModelsWithCurrentTargets();
 
   // dist_td_obs_vehicle_model_ptr_->printDiscreteSystem();
   // dist_td_obs_vehicle_model_ptr_->printContinuousSystem();
