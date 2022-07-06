@@ -60,7 +60,12 @@ class LinearVehicleModelsBase
 
   virtual void updateStateSpace(float64_t const &vr, float64_t const &steer_r);
 
+  void updateDisturbanceBw(float64_t const &vr, float64_t const &steer_r, float64_t const &cos_sqr);
+
   void simulateOneStep(
+      measurement_vector_t &y0, state_vector_t &x0, float64_t const &u);
+
+  void simulateOneStepZeroState(
       measurement_vector_t &y0, state_vector_t &x0, float64_t const &u);
 
   void updateInitialStates(
@@ -69,12 +74,13 @@ class LinearVehicleModelsBase
 
   void discretisizeBilinear();
   void discretisizeExact();
+  void getIdealRefSteering(float64_t &ref_steering);
 
   void printContinuousSystem();
 
   void printDiscreteSystem();
 
-  [[nodiscard]] bool8_t areInitialStatesSet() const
+  [[nodiscard]] bool areInitialStatesSet() const
   { return are_initial_states_set_; }
 
   [[nodiscard]] state_vector_t getInitialStates() const;
@@ -82,8 +88,14 @@ class LinearVehicleModelsBase
   void evaluateNonlinearTermsForLyap(observers::state_vector_observer_t &thetas,
                                      measurement_vector_t const &y0) const;
 
+  /**
+   * @gets the recent output y from the state observer. In case of disturbance, y does not contain this information,
+   * just the vehicle states.
+   * */
+  void getObservedValues_y(state_vector_vehicle_t &y);
+
  protected:
-  bool8_t are_initial_states_set_{false};
+  bool are_initial_states_set_{false};
   float64_t wheelbase_{2.74};
   float64_t tau_steering_{0.3};
   float64_t dt_{0.1};
@@ -107,18 +119,7 @@ class LinearVehicleModelsBase
   float64_t long_velocity_{};
   float64_t curvature_{};
 
-  /**
-  * @brief update algebraic solution of inv(I - A*ts/2) required in computing
-  * the Tustin form discretization.
-  * [ 1, (V*ts)/2, (T*V^2*ts^2)/(2*L*a^2*(2*T + ts))]
-  * [ 0,        1,       (T*V*ts)/(L*a^2*(2*T + ts))]
-  * [ 0,        0,                  (2*T)/(2*T + ts)]
-  *
-  * */
-  void updateI_Ats2(float64_t const &vref, float64_t const &cos_steer_sqr);
-
-  // Take direct inverse, instead computing analytical inverse.
-  virtual void updateI_Ats2();
+  measurement_vector_t yobs_{measurement_vector_t::Zero()}; // to keep last observed value
 
 };
 
@@ -130,6 +131,9 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::printContin
 
   ns_utils::print("Matrix B: ");
   ns_eigen_utils::printEigenMat(Eigen::MatrixXd(B_));
+
+  ns_utils::print("Matrix Bw: ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Bw_));
 
   ns_utils::print("Matrix C: ");
   ns_eigen_utils::printEigenMat(Eigen::MatrixXd(C_));
@@ -188,72 +192,30 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateState
    *          [ 0, 0, V/(L*cos(steering)^2)]
    *          [ 0, 0,                  -1/tau]
    * */
+
+  /**
+   * Full nonlinear
+   * */
+//  auto const &ey = x0_(0);
+//  auto const &eyaw = x0_(1);
+//  auto const &delta = x0_(2);
+//
+//  auto kterm = curvature_ / (1. - ey * curvature_);
+//  auto ksqr = kterm * kterm;
+//
+//  A_(0, 1) = vr * cos(eyaw);
+//  A_(1, 0) = -ksqr * vr * cos(eyaw);
+//  A_(1, 1) = kterm * vr * sin(eyaw);
+//  A_(1, 2) = vr / (L * cos_sqr);
+
+  /** IF small angle assumption */
   A_(0, 1) = vr;
-  A_(1, 2) = vr / (L * cos_sqr);
+  A_(1, 2) = vr / (wheelbase_ * cos_sqr);
+  updateDisturbanceBw(vr, steer_r, cos_sqr);
 
-  /**
-   * @brief  B = [0, 0, 1/tau]^T
-   * if tau is not constant, we can update here.
-   * */
-  // B_(2, 0) = 1 / tau_steering_;  // for desired heading rate computations.
-
-  /**
-   * @brief  Bw = [0, 1/tau, 0]^T
-   *
-   * */
-    //  Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
-     Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - steer_r / (L * cos_sqr);
-   // Bw_(1, 0) = -steer_r * vr / (L * cos_sqr);
-
-
-  //  auto IA = I - A_ * dt_ / 2;
-  //  auto Ainv = IA.inverse();
-
-  // Discretisize.
-  // discretisizeBilinear();
-  discretisizeExact();
-
-}
-
-template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateI_Ats2(float64_t const &vref,
-                                                                                  float64_t const &cos_steer_sqr)
-{
-
-  auto const &L = wheelbase_;
-  auto const asqr = cos_steer_sqr;
-  auto const &tau = tau_steering_;
-  auto const &var = 2 * tau + dt_;
-
-  I_At2_(0, 1) = vref * dt_ / 2.;
-  I_At2_(0, 2) = tau_steering_ * vref * vref * dt_ * dt_ / (2. * L * asqr * var);
-
-  I_At2_(1, 2) = tau * vref * dt_ / (L * asqr * var);
-  I_At2_(2, 2) = 2. * tau / var;
-
-  // DEBUG
-  if (A_.rows() == 3)
-  {
-    ns_utils::print("In vehicle model, inverse IA term");
-    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(I_At2_));
-  } else
-  {
-    ns_utils::print("In observer model, inverse IA term");
-    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(I_At2_));
-  }
-
-}
-
-template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateI_Ats2()
-{
-
-  auto const &I = Atype::Identity();
-
-  I_At2_ = (I - A_ * dt_ / 2).inverse();
-
-  // Debug
-  //ns_utils::print("I - A*dt/2 inverse is updated.");
+  /** Discretisize. */
+  discretisizeBilinear();
+  // discretisizeExact();
 
 }
 
@@ -275,6 +237,21 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::simulateOne
   // y0 = x0 + dt_ * (A_ * x0 + B_ * steering_and_ideal_steering);
   y0 = Cd_ * x0.eval() + Dd_ * u;
   x0 = Ad_ * x0.eval() + Bd_ * u + Bwd_;
+
+  yobs_ = y0;
+
+}
+
+template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::simulateOneStepZeroState(measurement_vector_t &y0,
+                                                                                              state_vector_t &x0,
+                                                                                              const float64_t &u)
+{
+
+  // first update the output
+  // y0 = x0 + dt_ * (A_ * x0 + B_ * steering_and_ideal_steering);
+  x0 = Ad_ * x0.eval() + Bd_ * u + Bwd_;
+  y0 = Cd_ * x0.eval() + Dd_ * u;
 
 }
 
@@ -331,9 +308,12 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::evaluateNon
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
 void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::discretisizeBilinear()
 {
-  updateI_Ats2();
+  /**
+   *
+   * */
 
   auto const &I = Atype::Identity();
+  I_At2_ = (I - A_ * dt_ / 2).inverse();
 
   Ad_ = I_At2_ * (I + A_ * dt_ / 2.);
   Bd_ = I_At2_ * B_ * dt_;
@@ -370,6 +350,40 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::discretisiz
   Dd_ = D_;
 
 }
+template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateDisturbanceBw(float64_t const &vr,
+                                                                                         float64_t const &steer_r,
+                                                                                         float64_t const &cos_sqr)
+{
+  /**
+   * @brief  Bw = [0, 1/tau, 0]^T
+   *
+   * */
+
+  auto const &L = wheelbase_;
+
+  Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr); // WORKING BETTER
+  //  Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - steer_r / (L * cos_sqr);
+  //  Bw_(1, 0) = -steer_r * vr / (L * cos_sqr);
+
+
+}
+template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
+void LinearVehicleModelsBase<STATE_DIM,
+                             INPUT_DIM,
+                             MEASUREMENT_DIM>::getObservedValues_y(state_vector_vehicle_t &y)
+{
+
+  y(0) = yobs_(0);
+  y(1) = yobs_(1);
+  y(2) = yobs_(2);
+
+}
+template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::getIdealRefSteering(float64_t &ref_steering)
+{
+  ref_steering = atan(curvature_ * wheelbase_);
+}
 
 /**
  * @brief Linear vehicle model for state observers
@@ -385,52 +399,55 @@ class VehicleModelDisturbanceObserver : public LinearVehicleModelsBase<STATE_DIM
 
   // Constructors.
   using BASE::LinearVehicleModelsBase::LinearVehicleModelsBase;
-  void updateStateSpace(const float64_t &vr, const float64_t &steer_r) override;
+  void updateStateSpace(float64_t const &vr, float64_t const &steer_r) override;
 
 };
-
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
 void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateStateSpace(const float64_t &vr,
                                                                                               const float64_t &steer_r)
 {
-  auto const &&cos_sqr = std::cos(steer_r) * std::cos(steer_r);
-
-  /**
-    * @brief
-    * A matrix
-    *          [ 0, V,                     0]
-    *          [ 0, 0, V/(L*cos(steering)^2)]
-    *          [ 0, 0,                  -1/tau]
-    * */
-
+  auto const &cos_sqr = std::cos(steer_r) * std::cos(steer_r);
   auto &&L = this->wheelbase_;
+  /**
+   * @brief
+   * A matrix
+   *          [ 0, V,                     0]
+   *          [ 0, 0, V/(L*cos(steering)^2)]
+   *          [ 0, 0,                  -1/tau]
+   * */
+
+  //  auto const &x0_ = this->x0_;
+  //  auto curvature = this->curvature_;
+  //
+  //  auto const &ey = x0_(0);
+  //  auto const &eyaw = x0_(1);
+  //  auto const &delta = x0_(2);
+  //
+  //  auto kterm = curvature / (1. - ey * curvature);
+  //  auto ksqr = kterm * kterm;
+  //
+  //  this->A_(0, 1) = vr * cos(eyaw);
+  //  this->A_(1, 0) = -ksqr * vr * cos(eyaw);
+  //  this->A_(1, 1) = kterm * vr * sin(eyaw);
+  //  this->A_(1, 2) = vr / (L * cos_sqr);
+
+  /** Set -B */
+  //  auto col_size = this->A_.cols();
+  //  this->A_.col(col_size - 1) = -this->B_;
+
+  /* IF small angle assumption */
   this->A_(0, 1) = vr;
   this->A_(1, 2) = vr / (L * cos_sqr);
 
-
-  /**
-   * @brief  B = [0, 0, 1/tau]^T
-   *
-   * */
-  // this->B_(2, 0) = 1 / this->tau_steering_;  // for desired heading rate computations.
-
-  // In observer model Anew = [A; -B]
   auto col_size = this->A_.cols();
   this->A_.col(col_size - 1) = -this->B_;
 
-  /**
-   * @brief  Bw = [0, 1/tau, 0]^T
-   *
-   * */
-   auto &&curvature_ = this->curvature_;
-  //  this->Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
-    this->Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - steer_r / (L * cos_sqr);
-  //  this->Bw_(1, 0) = -vr * steer_r / (L * cos_sqr);
+  this->updateDisturbanceBw(vr, steer_r, cos_sqr);
 
+  /** Discretisize. */
+  this->discretisizeBilinear();
+  // this->discretisizeExact();
 
-  // Discretisize.
-  // this->discretisizeBilinear();
-  this->discretisizeExact();
 }
 
 /**
@@ -444,8 +461,11 @@ class LinearKinematicErrorModel : public LinearVehicleModelsBase<STATE_DIM, INPU
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using BASE::LinearVehicleModelsBase::LinearVehicleModelsBase;
-  using BASE::updateInitialStates;
+  using BASE::LinearVehicleModelsBase::updateStateSpace;
+
 };
+
+using ::toUType;
 
 // Observer model types.
 using linear_vehicle_model_t = LinearKinematicErrorModel<toUType(KinematicErrorDims::STATE_DIM),
