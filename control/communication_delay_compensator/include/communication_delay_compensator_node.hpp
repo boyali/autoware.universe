@@ -81,14 +81,17 @@ struct Parameters
   float64_t cdob_ctrl_period{0.033};
 
   // Qfilter orders .
-  int qfilter_lateral_error_order{1};
+  int qfilter_lateral_error_cdob_order{1};
   int qfilter_lateral_dob_order{1};
   int qfilter_longitudinal_error_order{1};
 
   // Qfilter cut-off frequencies Hz. (low-pass).
-  float64_t qfilter_lateral_error_freq{10};
-  float64_t qfilter_lateral_dob_freq{10};
-  float64_t qfilter_longitudinal_error_freq{10};
+  float64_t qfilter_lateral_error_cdob_freq{10.};
+  float64_t qfilter_lateral_dob_freq{10.};
+  float64_t qfilter_longitudinal_error_freq{10.};
+
+  // Damping
+  float64_t qfilter_lateral_dob_damping{1.};
 
   // First order vehicle state models.
   float64_t steering_tau{0.3};

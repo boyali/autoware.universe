@@ -60,7 +60,6 @@ class LateralCommunicationDelayCompensator
  public:
   using obs_model_ptr_t = std::shared_ptr<linear_state_observer_model_t>;
   using model_ptr_t = std::shared_ptr<linear_vehicle_model_t>;
-  using state_qfilter = state_vector_qfilter<1>;  // @brief state vector for the filtered input
 
   LateralCommunicationDelayCompensator() = default;
 
@@ -131,7 +130,7 @@ class LateralCommunicationDelayCompensator
   float64_t current_qfiltered_control_cmd_{};
   float64_t prev_qfiltered_control_cmd_{};
   int qfilter_order_{1};
-  bool8_t is_vehicle_initial_states_set_{false};
+  bool8_t is_observer_model_initial_states_set_{false};
 
   /**
    * @brief computes the observer gain matrix given the operating conditions.
@@ -164,7 +163,6 @@ class LateralDisturbanceCompensator
 {
  public:
   using obs_model_ptr_t = std::shared_ptr<linear_state_observer_model_t>;
-  using state_qfilter = state_vector_qfilter<1>;  // @brief state vector for the filtered input
 
   LateralDisturbanceCompensator() = default;
 
@@ -197,9 +195,9 @@ class LateralDisturbanceCompensator
 
   // ------------ QFILTER VARIABLES ----------------------------------
   // state vectors for filtering inputs.
-  Eigen::MatrixXd xu0_;  // @brief state vector for the filtered input
-  Eigen::MatrixXd xd0_;  // @brief state vector for the filtered disturbance
-  float64_t df_d0_{}; // q-filtered disturbance response
+  Eigen::MatrixXd xu0_;     // @brief state vector for the filtered input
+  Eigen::MatrixXd xd0_;     // @brief state vector for the filtered disturbance
+  float64_t dist_input_{};  // @brief q-filtered disturbance response
 
   // ------------ OBSERVER VARIABLES ----------------------------------
   /**

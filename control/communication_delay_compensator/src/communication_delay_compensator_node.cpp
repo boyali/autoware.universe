@@ -329,8 +329,8 @@ void CommunicationDelayCompensatorNode::readAndLoadParameters(
     // Read the filter orders.
     params_node_.cdob_ctrl_period = declare_parameter<float64_t>("cdob_ctrl_period");  // reads sec.
 
-    params_node_.qfilter_lateral_error_order =
-        declare_parameter<int>("qfilter_lateral_error_order");
+    params_node_.qfilter_lateral_error_cdob_order =
+        declare_parameter<int>("qfilter_lateral_error_cdob_order");
 
     params_node_.qfilter_lateral_dob_order =
         declare_parameter<int>("qfilter_lateral_dob_order");
@@ -339,14 +339,18 @@ void CommunicationDelayCompensatorNode::readAndLoadParameters(
         declare_parameter<int>("qfilter_longitudinal_error_order");
 
     // Read the filter cut-oof frequencies.
-    params_node_.qfilter_lateral_error_freq =
-        declare_parameter<float64_t>("qfilter_lateral_error_freq");
+    params_node_.qfilter_lateral_error_cdob_freq =
+        declare_parameter<float64_t>("qfilter_lateral_error_cdob_freq");
 
     params_node_.qfilter_lateral_dob_freq =
         declare_parameter<float64_t>("qfilter_lateral_dob_freq");
 
     params_node_.qfilter_longitudinal_error_freq =
         declare_parameter<float64_t>("qfilter_longitudinal_error_freq");
+
+    // Damping
+    params_node_.qfilter_lateral_dob_damping =
+        declare_parameter<float64_t>("qfilter_lateral_dob_damping");
 
     // First order state dynamics parameters.
     params_node_.steering_tau = declare_parameter<float64_t>("steering_time_constant_");
@@ -390,13 +394,13 @@ rcl_interfaces::msg::SetParametersResult CommunicationDelayCompensatorNode::onPa
     update_param(parameters, "cdob_ctrl_period", params_node_.cdob_ctrl_period);
 
     update_param(
-        parameters, "qfilter_lateral_error_order", params_node_.qfilter_lateral_error_order);
+        parameters, "qfilter_lateral_error_order", params_node_.qfilter_lateral_error_cdob_order);
 
     update_param(
         parameters, "qfilter_longitudinal_error_order",
         params_node_.qfilter_longitudinal_error_order);
 
-    update_param(parameters, "qfilter_lateral_error_freq", params_node_.qfilter_lateral_error_freq);
+    update_param(parameters, "qfilter_lateral_error_freq", params_node_.qfilter_lateral_error_cdob_freq);
 
     update_param(
         parameters, "qfilter_longitudinal_error_freq", params_node_.qfilter_longitudinal_error_freq);
@@ -492,8 +496,8 @@ void CommunicationDelayCompensatorNode::setLateralCDOB_DOBs(sLyapMatrixVecs cons
    */
 
   // --------------- Qfilter Construction for lateral error state -------------------------
-  auto const &order_lat_error_cdob = params_node_.qfilter_lateral_error_order;
-  auto const &wc_lat_error_cdob = params_node_.qfilter_lateral_error_freq;
+  auto const &order_lat_error_cdob = params_node_.qfilter_lateral_error_cdob_order;
+  auto const &wc_lat_error_cdob = params_node_.qfilter_lateral_error_cdob_freq;
 
   // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
   auto qfilter_lat_error_cdob = get_nthOrderTF(wc_lat_error_cdob, order_lat_error_cdob);
@@ -509,9 +513,18 @@ void CommunicationDelayCompensatorNode::setLateralCDOB_DOBs(sLyapMatrixVecs cons
   // Set the DOB
   auto const &order_lat_error_dob = params_node_.qfilter_lateral_dob_order;
   auto const &wc_lat_error_dob = params_node_.qfilter_lateral_dob_freq;
+  auto const &damping_val = params_node_.qfilter_lateral_dob_damping;
 
-  // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
-  auto qfilter_lat_error_dob = get_nthOrderTF(wc_lat_error_dob, order_lat_error_dob);
+  ns_control_toolbox::tf qfilter_lat_error_dob;
+  if (order_lat_error_dob > 1)
+  {
+    qfilter_lat_error_dob = get_nthOrderTFwithDampedPoles(wc_lat_error_dob, order_lat_error_dob, damping_val);
+  } else
+  {
+
+    // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
+    qfilter_lat_error_dob = get_nthOrderTF(wc_lat_error_dob, order_lat_error_dob);
+  }
 
   LateralDisturbanceCompensator compensator_lat_dob(dist_td_obs_vehicle_model_ptr_,
                                                     qfilter_lat_error_cdob,

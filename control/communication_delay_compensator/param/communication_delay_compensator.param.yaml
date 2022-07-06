@@ -4,15 +4,15 @@
     cdob_ctrl_period: 0.03     # sampling period.
 
     # -- Q-filters --
-    qfilter_lateral_error_order: 1  # must be ==1 as the state observer needed to be redesigned.
-    qfilter_longitudinal_error_order: 1  # longitudinal control qfilter.
+    qfilter_lateral_error_cdob_order: 1  # must be ==1 as the state observer needed to be redesigned.
+    qfilter_lateral_error_cdob_freq: 10.  #qfilter frequency in Hz for lateral error
 
-    qfilter_lateral_dob_order: 1  # must be ==1 as the state observer needed to be redesigned.
+    qfilter_longitudinal_error_order: 2  # longitudinal control qfilter.
+    qfilter_longitudinal_error_freq: 5.  #qfilter frequency in Hz for heading error
 
-
-    qfilter_lateral_error_freq: 5.  #qfilter frequency in Hz for lateral error
+    qfilter_lateral_dob_order: 2  # must be ==1 as the state observer needed to be redesigned.
     qfilter_lateral_dob_freq: 5.    #qfilter frequency in Hz for lateral error
-    qfilter_longitudinal_error_freq: 20.  #qfilter frequency in Hz for heading error
+    qfilter_lateral_dob_damping: 5. # damping for the dob filter.
 
     # -- Vehicle Model Selection -- Currently we have only one.
     steering_time_constant_: 0.27 # first order steering model time-constant  delta_dot = -1/tau *delta + 1/tau * u
