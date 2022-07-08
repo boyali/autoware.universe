@@ -16,21 +16,24 @@
 #define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
 
 #include "common/types.hpp"
+#include "disturbance_generators/disturbance_generators.hpp"
 #include "eigen3/Eigen/Core"
 
 #include "autoware_auto_vehicle_msgs/msg/gear_command.hpp"
 
+#include <limits>
+
 using autoware::common::types::bool8_t;
 using autoware::common::types::float32_t;
 using autoware::common::types::float64_t;
-
+constexpr double EPS = std::numeric_limits<double>::epsilon();
 /**
  * @class SimModelInterface
  * @brief simple_planning_simulator vehicle model class to calculate vehicle dynamics
  */
 class SimModelInterface
 {
-protected:
+ protected:
   const int dim_x_;        //!< @brief dimension of state x
   const int dim_u_;        //!< @brief dimension of input u
   Eigen::VectorXd state_;  //!< @brief vehicle state vector
@@ -39,7 +42,15 @@ protected:
   //!< @brief gear command defined in autoware_auto_msgs/GearCommand
   uint8_t gear_ = autoware_auto_vehicle_msgs::msg::GearCommand::DRIVE;
 
-public:
+  // DISTURBANCE Generator Set
+  IDisturbanceCollection disturbance_collection_{};
+
+  void setDisturbance(IDisturbanceCollection const &dist_collection)
+  {
+    disturbance_collection_ = dist_collection;
+  }
+
+ public:
   /**
    * @brief constructor
    * @param [in] dim_x dimension of state x
@@ -56,25 +67,25 @@ public:
    * @brief get state vector of model
    * @param [out] state state vector
    */
-  void getState(Eigen::VectorXd & state);
+  void getState(Eigen::VectorXd &state);
 
   /**
    * @brief get input vector of model
    * @param [out] input input vector
    */
-  void getInput(Eigen::VectorXd & input);
+  void getInput(Eigen::VectorXd &input);
 
   /**
    * @brief set state vector of model
    * @param [in] state state vector
    */
-  void setState(const Eigen::VectorXd & state);
+  void setState(const Eigen::VectorXd &state);
 
   /**
    * @brief set input vector of model
    * @param [in] input input vector
    */
-  void setInput(const Eigen::VectorXd & input);
+  void setInput(const Eigen::VectorXd &input);
 
   /**
    * @brief set gear
@@ -87,20 +98,20 @@ public:
    * @param [in] dt delta time [s]
    * @param [in] input vehicle input
    */
-  void updateRungeKutta(const float64_t & dt, const Eigen::VectorXd & input);
+  void updateRungeKutta(const float64_t &dt, const Eigen::VectorXd &input);
 
   /**
    * @brief update vehicle states with Euler methods
    * @param [in] dt delta time [s]
    * @param [in] input vehicle input
    */
-  void updateEuler(const float64_t & dt, const Eigen::VectorXd & input);
+  void updateEuler(const float64_t &dt, const Eigen::VectorXd &input);
 
   /**
    * @brief update vehicle states
    * @param [in] dt delta time [s]
    */
-  virtual void update(const float64_t & dt) = 0;
+  virtual void update(const float64_t &dt) = 0;
 
   /**
    * @brief get vehicle position x
@@ -150,12 +161,14 @@ public:
   /**
    * @brief get state vector dimension
    */
-  inline int getDimX() { return dim_x_; }
+  inline int getDimX()
+  { return dim_x_; }
 
   /**
    * @brief get input vector dimension
    */
-  inline int getDimU() { return dim_u_; }
+  inline int getDimU()
+  { return dim_u_; }
 
   /**
    * @brief calculate derivative of states with vehicle model
@@ -163,7 +176,27 @@ public:
    * @param [in] input input vector to model
    */
   virtual Eigen::VectorXd calcModel(
-    const Eigen::VectorXd & state, const Eigen::VectorXd & input) = 0;
+    const Eigen::VectorXd &state, const Eigen::VectorXd &input) = 0;
+
+  /**
+   * @return original non-modified and delayed inputs
+   * */
+
+  std::pair<double, double> getSteerTimeDelayDisturbanceInputs();
+
+  double getCurrentSteerTimeDelay();
+
+  std::pair<double, double> getAccTimeDelayDisturbanceInputs();
+
+  double getCurrentAccTimeDelay();
+
+  double getCurrentRoadSlopeAccDisturbance();
+
+  // returns [ml, bl, mr, br]
+  std::array<double, 4> getCurrentDeadzoneParams();
+
+  // returns original and deadzoned inputs
+  std::pair<double, double> getCurrentDeadzoneDisturbanceInputs();
 };
 
 #endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
