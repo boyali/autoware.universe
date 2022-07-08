@@ -1,11 +1,24 @@
 cmake_minimum_required(VERSION 3.10)
 project(autoware_control_toolbox)
 
+# FMT
+find_package(fmt)
+
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+set(CMAKE_CXX_STANDARD 17)
 
 ## ----------------- Library headers and sources -------------------------------
+set(UTILS_SRC
+	src/utils_act/act_utils.cpp
+	src/utils_act/act_utils_eigen.cpp
+	src/utils_act/timekeep.cpp
+	src/utils_act/writetopath.cpp)
+
+set(UTILS_INCLUDE_DIRS
+	include/utils_act)
+
 set(CONTROL_LIB autoware_control_toolbox_lib)
 
 set(CONTROL_LIB_SOURCE
@@ -34,12 +47,35 @@ set(CONTROL_LIB_HEADERS
 
 set(CONTROL_LIB_INCLUDE_DIRS
 	include
-	include/utils)
+	include/control
+	${UTILS_INCLUDE_DIRS})
 
+
+## ------------- SPLINES ----------------------------------
+
+set(SPLINE_LIB_SOURCE
+	src/splines/interpolating_spline_pcg.cpp
+	src/splines/bsplines_smoother.cpp
+	src/splines/bsplines_interpolator.cpp
+	src/splines/bspline_interpolator_templated.cpp
+	${UTILS_SRC}
+	)
+
+set(SPLINE_LIB_INCLUDE_DIR
+	include/splines
+	${UTILS_INCLUDE_DIRS})
+
+
+add_library(spline_lib ${SPLINE_LIB_SOURCE})
+target_link_libraries(spline_lib)
+target_include_directories(spline_lib PUBLIC ${SPLINE_LIB_INCLUDE_DIR})
+
+## ------------- Whole LIBRARY COMPILE --------------------
 
 ament_auto_add_library(${CONTROL_LIB} SHARED
 	${CONTROL_LIB_SOURCE}
 	${CONTROL_LIB_HEADERS}
+	${UTILS_SRC}
 	)
 target_compile_options(${CONTROL_LIB} PRIVATE -Wno-error=old-style-cast)
 
@@ -71,9 +107,9 @@ endif()
 ament_auto_package(INSTALL_TO_SHARE)
 
 
-# -------------  PROTOTYPES ____________________________
+# -------------------------  PROTOTYPES ____________________________
 
-## TF example
+## CONTROL
 ament_auto_add_executable(main_tf usage_examples/control/main_tf.cpp)
 ament_auto_add_executable(main_pade usage_examples/control/main_pade.cpp)
 ament_auto_add_executable(main_tf2ss usage_examples/control/main_tf2ss.cpp)
@@ -83,3 +119,17 @@ ament_auto_add_executable(main_signal_generator usage_examples/control/main_sign
 #target_link_libraries(main_tf fmt::fmt stdc++fs ${AUTOWARE_CONTROL_TOOLBOX_LIB})
 #target_link_directories(main_tf PUBLIC ${AUTOWARE_CONTROL_LIB_INCLUDE_DIR})
 #target_include_directories(main_tf PRIVATE include include/utils)
+
+## ---------------------- SPLINEs -----------------------------
+
+add_executable(main_spline_pcg usage_examples/splines/main_spline_eigen_pcg.cpp)
+target_link_libraries(main_spline_pcg spline_lib fmt::fmt stdc++fs)
+
+add_executable(main_bspline_smoother usage_examples/splines/main_bspline_smoother.cpp)
+target_link_libraries(main_bspline_smoother spline_lib fmt::fmt stdc++fs)
+
+add_executable(main_bspline_interp usage_examples/splines/main_bspline_interpolator.cpp)
+target_link_libraries(main_bspline_interp spline_lib fmt::fmt stdc++fs)
+
+add_executable(main_bspline_interp_template usage_examples/splines/main_bspline_interpolator_templated.cpp)
+target_link_libraries(main_bspline_interp_template spline_lib fmt::fmt stdc++fs)
