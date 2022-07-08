@@ -35,5 +35,9 @@
 #include "control/tf_algebra.hpp"
 #include "control/transfer_functions.hpp"
 #include "visibility_control.hpp"
+#include "splines/bsplines_smoother.hpp"
+#include "splines/bspline_interpolator_templated.hpp"
+#include "splines/bsplines_interpolator.hpp"
+#include "splines/interpolating_spline_pcg.hpp"
 
 #endif  // AUTOWARE_CONTROL_TOOLBOX_HPP_
