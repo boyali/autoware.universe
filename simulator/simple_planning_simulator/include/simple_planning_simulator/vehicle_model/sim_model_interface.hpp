@@ -156,7 +156,7 @@ class SimModelInterface
   /**
    * @brief get vehicle gear
    */
-  uint8_t getGear() const;
+  [[nodiscard]] uint8_t getGear() const;
 
   /**
    * @brief get state vector dimension
@@ -182,21 +182,21 @@ class SimModelInterface
    * @return original non-modified and delayed inputs
    * */
 
-  std::pair<double, double> getSteerTimeDelayDisturbanceInputs();
+  std::pair<double, double> getSteerTimeDelayDisturbanceInputs() const;
 
-  double getCurrentSteerTimeDelay();
+  double getCurrentSteerTimeDelay() const;
 
-  std::pair<double, double> getAccTimeDelayDisturbanceInputs();
+  std::pair<double, double> getAccTimeDelayDisturbanceInputs() const;
 
-  double getCurrentAccTimeDelay();
+  double getCurrentAccTimeDelay() const;
 
-  double getCurrentRoadSlopeAccDisturbance();
+  double getCurrentRoadSlopeAccDisturbance() const;
 
   // returns [ml, bl, mr, br]
-  std::array<double, 4> getCurrentDeadzoneParams();
+  std::array<double, 4> getCurrentDeadzoneParams() const;
 
   // returns original and deadzoned inputs
-  std::pair<double, double> getCurrentDeadzoneDisturbanceInputs();
+  std::pair<double, double> getCurrentDeadzoneDisturbanceInputs() const;
 };
 
 #endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
