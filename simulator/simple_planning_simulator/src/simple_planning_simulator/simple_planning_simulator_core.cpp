@@ -68,9 +68,7 @@ autoware_auto_vehicle_msgs::msg::SteeringReport to_steering_report(
 
 }  // namespace
 
-namespace simulation
-{
-namespace simple_planning_simulator
+namespace simulation::simple_planning_simulator
 {
 
 SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions &options)
@@ -814,7 +812,6 @@ void SimplePlanningSimulator::Read_and_SetDisturbanceParams(float64_t const &dt,
       std::make_shared<InputDisturbance_DeadZone>(steer_deadzone_dist_gen);
   }
 }
-}  // namespace simple_planning_simulator
 }  // namespace simulation
 
 RCLCPP_COMPONENTS_REGISTER_NODE(simulation::simple_planning_simulator::SimplePlanningSimulator)
