@@ -27,17 +27,13 @@
 #include <vector>
 
 // Library headers
-#include "utils_act/act_definitions.hpp"
-#include "utils_act/act_signal_builder.hpp"
+#include "control/act_definitions.hpp"
+#include "control/act_signal_builder.hpp"
 #include "utils_act/act_utils_eigen.hpp"
-#include "utils_act/balance.hpp"
-#include "utils_act/state_space.hpp"
-#include "utils_act/tf_algebra.hpp"
-#include "utils_act/transfer_functions.hpp"
+#include "control/balance.hpp"
+#include "control/state_space.hpp"
+#include "control/tf_algebra.hpp"
+#include "control/transfer_functions.hpp"
 #include "visibility_control.hpp"
 
-namespace ns_control_toolbox
-{
-
-}  // namespace ns_control_toolbox
 #endif  // AUTOWARE_CONTROL_TOOLBOX_HPP_

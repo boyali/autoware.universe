@@ -15,30 +15,30 @@
 #ifndef AUTOWARE_CONTROL_TOOLBOX_ACT_SIGNAL_BUILDER_HPP
 #define AUTOWARE_CONTROL_TOOLBOX_ACT_SIGNAL_BUILDER_HPP
 
-#include "act_utils.hpp"
-#include "act_utils_eigen.hpp"
+#include "../utils_act/act_utils.hpp"
+#include "../utils_act/act_utils_eigen.hpp"
 #include "visibility_control.hpp"
 namespace ns_control_toolbox
 {
 /**
  * @brief Creates a time vector given a final time and time-step.
  * */
-Eigen::VectorXd make_time_signal(double const & dt, double const & final_time);
+Eigen::VectorXd make_time_signal(double const &dt, double const &final_time);
 
 /**
  * @brief Creates a sin wave vector given a time vector and frequency in Hz.
  * */
-Eigen::VectorXd make_sinus_signal(Eigen::VectorXd const & time_vec, double const & frequency_hz);
+Eigen::VectorXd make_sinus_signal(Eigen::VectorXd const &time_vec, double const &frequency_hz);
 
 /**
  * @brief Creates a square wave vector given a time vector and frequency in Hz.
  * */
-Eigen::VectorXd make_square_signal(Eigen::VectorXd const & time_vec, double const & frequency_hz);
+Eigen::VectorXd make_square_signal(Eigen::VectorXd const &time_vec, double const &frequency_hz);
 
 /**
  * @brief Creates a triangle wave vector given a time vector and frequency in Hz.
  * */
-Eigen::VectorXd make_triangle_signal(Eigen::VectorXd const & time_vec, double const & frequency_hz);
+Eigen::VectorXd make_triangle_signal(Eigen::VectorXd const &time_vec, double const &frequency_hz);
 
 }  // namespace ns_control_toolbox
 

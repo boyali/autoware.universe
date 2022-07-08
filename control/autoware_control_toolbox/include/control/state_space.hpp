@@ -18,8 +18,8 @@
 #define AUTOWARE_CONTROL_TOOLBOX_STATE_SPACE_HPP
 
 #include "act_definitions.hpp"
-#include "act_utils.hpp"
-#include "act_utils_eigen.hpp"
+#include "utils_act/act_utils.hpp"
+#include "utils_act/act_utils_eigen.hpp"
 #include "balance.hpp"
 #include "transfer_functions.hpp"
 
@@ -37,20 +37,20 @@ namespace ns_control_toolbox
 
 class tf2ss
 {
-public:
+ public:
   // Constructors
   tf2ss() = default;
 
-  explicit tf2ss(tf const & sys_tf, const double & Ts = 0.1);
+  explicit tf2ss(tf const &sys_tf, const double &Ts = 0.1);
 
-  tf2ss(std::vector<double> const & num, std::vector<double> const & den, const double & Ts = 0.1);
+  tf2ss(std::vector<double> const &num, std::vector<double> const &den, const double &Ts = 0.1);
 
   // Public methods
   // Currently only Tustin - Bilinear discretization is implemented.
-  void discretisize(double const & Ts);
+  void discretisize(double const &Ts);
 
   // Update state-space once constructed and in case of a parameter change.
-  void updateStateSpace(tf const & sys_tf);
+  void updateStateSpace(tf const &sys_tf);
 
   // Getters for the system matrices.
   // Discrete time state-space matrices.
@@ -79,18 +79,18 @@ public:
    * xy = [A B;C D]xu.
    * */
 
-  double simulateOneStep(Eigen::MatrixXd & x0, double const & u) const;
+  double simulateOneStep(Eigen::MatrixXd &x0, double const &u) const;
 
   /**
    * @brief Compute the system continuous time system matrices
    * */
-  void computeSystemMatrices(std::vector<double> const & num, std::vector<double> const & den);
+  void computeSystemMatrices(std::vector<double> const &num, std::vector<double> const &den);
 
   void print() const;
 
   void print_discrete_system() const;
 
-private:
+ private:
   double Ts_{};
   Eigen::Index N_{};  // system size (A.rows+1).
 
@@ -120,10 +120,10 @@ private:
 };
 
 // Type definitions.
-template <int nx, int ny>
+template<int nx, int ny>
 using mat_type_t = Eigen::Matrix<double, nx, ny>;
 
-template <int N>
+template<int N>
 using state_type_t = Eigen::Matrix<double, N, 1>;
 
 }  // namespace ns_control_toolbox

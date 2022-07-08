@@ -9,63 +9,63 @@ autoware_package()
 set(CONTROL_LIB autoware_control_toolbox_lib)
 
 set(CONTROL_LIB_SOURCE
-        src/utils_act/act_utils.cpp
-        src/utils_act/act_utils_eigen.cpp
-        src/autoware_control_toolbox.cpp
-        src/utils_act/tf_algebra.cpp
-        src/utils_act/state_space.cpp
-        src/utils_act/transfer_functions.cpp
-        src/utils_act/balance.cpp
-        src/utils_act/act_signal_builder.cpp
-        )
+	src/utils_act/act_utils.cpp
+	src/utils_act/act_utils_eigen.cpp
+	src/autoware_control_toolbox.cpp
+	src/control/tf_algebra.cpp
+	src/control/state_space.cpp
+	src/control/transfer_functions.cpp
+	src/control/balance.cpp
+	src/control/act_signal_builder.cpp
+	)
 
 set(CONTROL_LIB_HEADERS
-        include/utils_act/act_definitions.hpp
-        include/autoware_control_toolbox.hpp
-        include/utils_act/act_utils.hpp
-        include/utils_act/balance.hpp
-        include/utils_act/act_utils_eigen.hpp
-        include/visibility_control.hpp
-        include/utils_act/tf_algebra.hpp
-        include/utils_act/state_space.hpp
-        include/utils_act/transfer_functions.hpp
-        include/utils_act/act_signal_builder.hpp
-        )
+	include/control/act_definitions.hpp
+	include/autoware_control_toolbox.hpp
+	include/utils_act/act_utils.hpp
+	include/control/balance.hpp
+	include/utils_act/act_utils_eigen.hpp
+	include/visibility_control.hpp
+	include/control/tf_algebra.hpp
+	include/control/state_space.hpp
+	include/control/transfer_functions.hpp
+	include/control/act_signal_builder.hpp
+	)
 
 set(CONTROL_LIB_INCLUDE_DIRS
-        include
-        include/utils)
+	include
+	include/utils)
 
 
 ament_auto_add_library(${CONTROL_LIB} SHARED
-        ${CONTROL_LIB_SOURCE}
-        ${CONTROL_LIB_HEADERS}
-        )
+	${CONTROL_LIB_SOURCE}
+	${CONTROL_LIB_HEADERS}
+	)
 target_compile_options(${CONTROL_LIB} PRIVATE -Wno-error=old-style-cast)
 
 target_link_libraries(${CONTROL_LIB}
-        ${EIGEN3_LIBRARIES}
-        ${Boost_LIBRARIES})
+	${EIGEN3_LIBRARIES}
+	${Boost_LIBRARIES})
 
 install(DIRECTORY include
-        DESTINATION include)
+	DESTINATION include)
 
 install(TARGETS ${CONTROL_LIB}
-        EXPORT ${CONTROL_LIB}
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION
-        INCLUDES DESTINATION include
-        )
+	EXPORT ${CONTROL_LIB}
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib
+	RUNTIME DESTINATION
+	INCLUDES DESTINATION include
+	)
 
 ## ----------------- Library Tests----------------------------------------------
 
-if (BUILD_TESTING)
-    find_package(ament_lint_auto REQUIRED)
-    ament_lint_auto_find_test_dependencies()
-    find_package(ament_cmake_gtest REQUIRED)
+if(BUILD_TESTING)
+	find_package(ament_lint_auto REQUIRED)
+	ament_lint_auto_find_test_dependencies()
+	find_package(ament_cmake_gtest REQUIRED)
 
-endif ()
+endif()
 
 #ament package generation and installing
 ament_auto_package(INSTALL_TO_SHARE)

@@ -18,8 +18,8 @@
 #define AUTOWARE_CONTROL_TOOLBOX_TRANSFER_FUNCTIONS_HPP
 
 #include "act_definitions.hpp"
-#include "act_utils.hpp"
-#include "act_utils_eigen.hpp"
+#include "../utils_act/act_utils.hpp"
+#include "../utils_act/act_utils_eigen.hpp"
 #include "tf_algebra.hpp"
 
 #include <algorithm>
