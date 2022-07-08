@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_ACC_HPP_
-#define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_ACC_HPP_
+#ifndef SIMPLE_PLANNING_SIMULATOR_SIM_MODEL_DELAY_STEER_ACC_DISTURBANCE_HPP
+#define SIMPLE_PLANNING_SIMULATOR_SIM_MODEL_DELAY_STEER_ACC_DISTURBANCE_HPP
 
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
@@ -23,9 +23,9 @@
 #include <iostream>
 #include <queue>
 
-class SimModelDelaySteerAcc : public SimModelInterface
+class SimModelDelaySteerAcc_Disturbance : public SimModelInterface
 {
-public:
+ public:
   /**
    * @brief constructor
    * @param [in] vx_lim velocity limit [m/s]
@@ -39,20 +39,27 @@ public:
    * @param [in] steer_delay time delay for steering command [s]
    * @param [in] steer_time_constant time constant for 1D model of steering dynamics
    */
-  SimModelDelaySteerAcc(
-    float64_t vx_lim, float64_t steer_lim, float64_t vx_rate_lim, float64_t steer_rate_lim,
-    float64_t wheelbase, float64_t dt, float64_t acc_delay, float64_t acc_time_constant,
-    float64_t steer_delay, float64_t steer_time_constant);
+  SimModelDelaySteerAcc_Disturbance(float64_t vx_lim,
+                                    float64_t steer_lim,
+                                    float64_t vx_rate_lim,
+                                    float64_t steer_rate_lim,
+                                    float64_t wheelbase,
+                                    float64_t acc_delay,
+                                    float64_t acc_time_constant,
+                                    float64_t steer_delay,
+                                    float64_t steer_time_constant,
+                                    IDisturbanceCollection const &disturbance_collection);
 
   /**
    * @brief default destructor
    */
-  ~SimModelDelaySteerAcc() = default;
+  ~SimModelDelaySteerAcc_Disturbance() = default;
 
-private:
-  const float64_t MIN_TIME_CONSTANT;  //!< @brief minimum time constant
+ private:
+  const float64_t MIN_TIME_CONSTANT{0.03};  //!< @brief minimum time constant
 
-  enum IDX {
+  enum IDX
+  {
     X = 0,
     Y,
     YAW,
@@ -60,7 +67,8 @@ private:
     STEER,
     ACCX,
   };
-  enum IDX_U {
+  enum IDX_U
+  {
     ACCX_DES = 0,
     STEER_DES,
     DRIVE_SHIFT,
@@ -83,7 +91,7 @@ private:
    * @brief set queue buffer for input command
    * @param [in] dt delta time
    */
-  void initializeInputQueue(const float64_t & dt);
+  void initializeInputQueue(const float64_t &dt);
 
   /**
    * @brief get vehicle position x
@@ -129,14 +137,14 @@ private:
    * @brief update vehicle states
    * @param [in] dt delta time [s]
    */
-  void update(const float64_t & dt) override;
+  void update(const float64_t &dt) override;
 
   /**
    * @brief calculate derivative of states with time delay steering model
    * @param [in] state current model state
    * @param [in] input input vector to model
    */
-  Eigen::VectorXd calcModel(const Eigen::VectorXd & state, const Eigen::VectorXd & input) override;
+  Eigen::VectorXd calcModel(const Eigen::VectorXd &state, const Eigen::VectorXd &input) override;
 };
 
 #endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_ACC_HPP_
