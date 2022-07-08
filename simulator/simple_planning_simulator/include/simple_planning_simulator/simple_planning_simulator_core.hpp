@@ -25,6 +25,7 @@
 #include "autoware_auto_geometry_msgs/msg/complex32.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/control_mode_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/disturbance_generator_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/engage.hpp"
 #include "autoware_auto_vehicle_msgs/msg/gear_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/gear_report.hpp"
@@ -66,6 +67,7 @@ using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_geometry_msgs::msg::Complex32;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::ControlModeReport;
+using autoware_auto_vehicle_msgs::msg::DisturbanceGeneratorReport;
 using autoware_auto_vehicle_msgs::msg::Engage;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::GearReport;
@@ -89,11 +91,13 @@ using tier4_vehicle_msgs::srv::ControlModeRequest;
 
 class DeltaTime
 {
-public:
-  DeltaTime() : prev_updated_time_ptr_(nullptr) {}
-  float64_t get_dt(const rclcpp::Time & now)
+ public:
+  DeltaTime() : prev_updated_time_ptr_(nullptr)
+  {}
+  float64_t get_dt(const rclcpp::Time &now)
   {
-    if (prev_updated_time_ptr_ == nullptr) {
+    if (prev_updated_time_ptr_ == nullptr)
+    {
       prev_updated_time_ptr_ = std::make_shared<rclcpp::Time>(now);
       return 0.0;
     }
@@ -102,14 +106,15 @@ public:
     return dt;
   }
 
-private:
+ private:
   std::shared_ptr<rclcpp::Time> prev_updated_time_ptr_;
 };
 
 class MeasurementNoiseGenerator
 {
-public:
-  MeasurementNoiseGenerator() {}
+ public:
+  MeasurementNoiseGenerator()
+  {}
 
   std::shared_ptr<std::mt19937> rand_engine_;
   std::shared_ptr<std::normal_distribution<>> pos_dist_;
@@ -120,10 +125,10 @@ public:
 
 class PLANNING_SIMULATOR_PUBLIC SimplePlanningSimulator : public rclcpp::Node
 {
-public:
-  explicit SimplePlanningSimulator(const rclcpp::NodeOptions & options);
+ public:
+  explicit SimplePlanningSimulator(const rclcpp::NodeOptions &options);
 
-private:
+ private:
   /* ros system */
   rclcpp::Publisher<VelocityReport>::SharedPtr pub_velocity_;
   rclcpp::Publisher<Odometry>::SharedPtr pub_odom_;
@@ -135,6 +140,7 @@ private:
   rclcpp::Publisher<HazardLightsReport>::SharedPtr pub_hazard_lights_report_;
   rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr pub_tf_;
   rclcpp::Publisher<PoseStamped>::SharedPtr pub_current_pose_;
+  rclcpp::Publisher<DisturbanceGeneratorReport>::SharedPtr pub_dist_generator_;
 
   rclcpp::Subscription<GearCommand>::SharedPtr sub_gear_cmd_;
   rclcpp::Subscription<GearCommand>::SharedPtr sub_manual_gear_cmd_;
@@ -157,7 +163,7 @@ private:
 
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult on_parameter(
-    const std::vector<rclcpp::Parameter> & parameters);
+    const std::vector<rclcpp::Parameter> &parameters);
 
   /* tf */
   tf2_ros::Buffer tf_buffer_;
@@ -176,6 +182,7 @@ private:
   Trajectory::ConstSharedPtr current_trajectory_ptr_;
   bool simulate_motion_;  //!< stop vehicle motion simulation if false
   ControlMode current_control_mode_;
+  DisturbanceGeneratorReport current_disturbance_gen_;
 
   /* frame_id */
   std::string simulated_frame_id_;  //!< @brief simulated vehicle frame id
@@ -193,13 +200,16 @@ private:
   float64_t y_stddev_;  //!< @brief y standard deviation for dummy covariance in map coordinate
 
   /* vehicle model */
-  enum class VehicleModelType {
+  enum class VehicleModelType
+  {
     IDEAL_STEER_ACC = 0,
     IDEAL_STEER_ACC_GEARED = 1,
     DELAY_STEER_ACC = 2,
     DELAY_STEER_ACC_GEARED = 3,
     IDEAL_STEER_VEL = 4,
-    DELAY_STEER_VEL = 5
+    DELAY_STEER_VEL = 5,
+    DELAY_STEER_ACC_DIST = 6,
+    DELAY_STEER_ACC_GEARED_DIST = 7
   } vehicle_model_type_;  //!< @brief vehicle model type to decide the model dynamics
   std::shared_ptr<SimModelInterface> vehicle_model_ptr_;  //!< @brief vehicle model pointer
 
@@ -211,7 +221,7 @@ private:
   /**
    * @brief set input steering, velocity, and acceleration of the vehicle model
    */
-  void set_input(const AckermannControlCommand & cmd);
+  void set_input(const AckermannControlCommand &cmd);
 
   /**
    * @brief set current_vehicle_state_ with received message
@@ -284,39 +294,39 @@ private:
    * @param [in] vel velocity report to add noise
    * @param [in] steer steering to add noise
    */
-  void add_measurement_noise(Odometry & odom, VelocityReport & vel, SteeringReport & steer) const;
+  void add_measurement_noise(Odometry &odom, VelocityReport &vel, SteeringReport &steer) const;
 
   /**
    * @brief set initial state of simulated vehicle
    * @param [in] pose initial position and orientation
    * @param [in] twist initial velocity and angular velocity
    */
-  void set_initial_state(const Pose & pose, const Twist & twist);
+  void set_initial_state(const Pose &pose, const Twist &twist);
 
   /**
    * @brief set initial state of simulated vehicle with pose transformation based on frame_id
    * @param [in] pose initial position and orientation with header
    * @param [in] twist initial velocity and angular velocity
    */
-  void set_initial_state_with_transform(const PoseStamped & pose, const Twist & twist);
+  void set_initial_state_with_transform(const PoseStamped &pose, const Twist &twist);
 
   /**
    * @brief publish velocity
    * @param [in] velocity The velocity report to publish
    */
-  void publish_velocity(const VelocityReport & velocity);
+  void publish_velocity(const VelocityReport &velocity);
 
   /**
    * @brief publish pose and twist
    * @param [in] odometry The odometry to publish
    */
-  void publish_odometry(const Odometry & odometry);
+  void publish_odometry(const Odometry &odometry);
 
   /**
    * @brief publish steering
    * @param [in] steer The steering to publish
    */
-  void publish_steering(const SteeringReport & steer);
+  void publish_steering(const SteeringReport &steer);
 
   /**
    * @brief publish acceleration
@@ -347,7 +357,15 @@ private:
    * @brief publish tf
    * @param [in] state The kinematic state to publish as a TF
    */
-  void publish_tf(const Odometry & odometry);
+  void publish_tf(const Odometry &odometry);
+
+  /**
+   * @brief reads and sets disturbance parameters.
+   * */
+  void Read_and_SetDisturbanceParams(float64_t const &dt,
+                                     float64_t const &acc_time_delay,
+                                     float64_t const &steer_time_delay,
+                                     IDisturbanceCollection &disturbance_collection);
 };
 }  // namespace simple_planning_simulator
 }  // namespace simulation

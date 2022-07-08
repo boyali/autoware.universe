@@ -20,7 +20,7 @@ SimModelInterface::SimModelInterface(int dim_x, int dim_u) : dim_x_(dim_x), dim_
   input_ = Eigen::VectorXd::Zero(dim_u_);
 }
 
-void SimModelInterface::updateRungeKutta(const float64_t & dt, const Eigen::VectorXd & input)
+void SimModelInterface::updateRungeKutta(const float64_t &dt, const Eigen::VectorXd &input)
 {
   Eigen::VectorXd k1 = calcModel(state_, input);
   Eigen::VectorXd k2 = calcModel(state_ + k1 * 0.5 * dt, input);
@@ -29,13 +29,56 @@ void SimModelInterface::updateRungeKutta(const float64_t & dt, const Eigen::Vect
 
   state_ += 1.0 / 6.0 * (k1 + 2.0 * k2 + 2.0 * k3 + k4) * dt;
 }
-void SimModelInterface::updateEuler(const float64_t & dt, const Eigen::VectorXd & input)
+void SimModelInterface::updateEuler(const float64_t &dt, const Eigen::VectorXd &input)
 {
   state_ += calcModel(state_, input) * dt;
 }
-void SimModelInterface::getState(Eigen::VectorXd & state) { state = state_; }
-void SimModelInterface::getInput(Eigen::VectorXd & input) { input = input_; }
-void SimModelInterface::setState(const Eigen::VectorXd & state) { state_ = state; }
-void SimModelInterface::setInput(const Eigen::VectorXd & input) { input_ = input; }
-void SimModelInterface::setGear(const uint8_t gear) { gear_ = gear; }
-uint8_t SimModelInterface::getGear() const { return gear_; }
+void SimModelInterface::getState(Eigen::VectorXd &state)
+{ state = state_; }
+void SimModelInterface::getInput(Eigen::VectorXd &input)
+{ input = input_; }
+void SimModelInterface::setState(const Eigen::VectorXd &state)
+{ state_ = state; }
+void SimModelInterface::setInput(const Eigen::VectorXd &input)
+{ input_ = input; }
+void SimModelInterface::setGear(const uint8_t gear)
+{ gear_ = gear; }
+uint8_t SimModelInterface::getGear() const
+{ return gear_; }
+
+std::pair<double, double> SimModelInterface::getSteerTimeDelayDisturbanceInputs() const
+{
+  return disturbance_collection_.steering_inputDisturbance_time_delay_ptr_->getOriginalAndDelayedInputs();
+}
+
+double SimModelInterface::getCurrentSteerTimeDelay() const
+{
+  return disturbance_collection_.steering_inputDisturbance_time_delay_ptr_
+    ->getCurrentTimeDelayValue();
+}
+
+std::pair<double, double> SimModelInterface::getAccTimeDelayDisturbanceInputs() const
+{
+  return disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getOriginalAndDelayedInputs();
+}
+
+double SimModelInterface::getCurrentAccTimeDelay() const
+{
+  return disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getCurrentTimeDelayValue();
+}
+
+double SimModelInterface::getCurrentRoadSlopeAccDisturbance() const
+{
+  return disturbance_collection_.road_slope_outputDisturbance_ptr_->getDisturbedOutput();
+}
+
+std::array<double, 4> SimModelInterface::getCurrentDeadzoneParams() const
+{
+  return disturbance_collection_.steering_dedzone_ptr_->getCurrentDeadZoneParameters();
+
+}
+
+std::pair<double, double> SimModelInterface::getCurrentDeadzoneDisturbanceInputs() const
+{
+  return disturbance_collection_.steering_dedzone_ptr_->getOriginalAndDeadzonedInputs();
+}

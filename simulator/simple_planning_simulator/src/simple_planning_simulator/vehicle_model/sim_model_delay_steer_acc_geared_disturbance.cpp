@@ -27,9 +27,9 @@ SimModelDelaySteerAccGeared_Disturbance::SimModelDelaySteerAccGeared_Disturbance
                                                                                  float64_t acc_time_constant,
                                                                                  float64_t steer_delay,
                                                                                  float64_t steer_time_constant,
-                                                                                 IDisturbanceCollection const &disturbance_collection)
+                                                                                 IDisturbanceCollection
+                                                                                 const &disturbance_collection)
   : SimModelInterface(6 /* dim x */, 2 /* dim u */),
-    MIN_TIME_CONSTANT(0.03),
     vx_lim_(vx_lim),
     vx_rate_lim_(vx_rate_lim),
     steer_lim_(steer_lim),
@@ -89,9 +89,8 @@ void SimModelDelaySteerAccGeared_Disturbance::update(const float64_t &dt)
   delayed_input(IDX_U::STEER_DES) = raw_steer_command;  // steer_delayed;
 
   // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
-  auto &&steer_delayed =
-    disturbance_collection_.steering_inputDisturbance_time_delay_ptr_->getDisturbedInput(
-      raw_steer_command);
+  auto &&steer_delayed = disturbance_collection_.steering_inputDisturbance_time_delay_ptr_->getDisturbedInput(
+    raw_steer_command);
 
   // Apply the acceleration delay when only the vehicle is moving, as when stopping its const and we
   // do not want to send un-applied acceleration to the vehicle.
@@ -121,8 +120,7 @@ void SimModelDelaySteerAccGeared_Disturbance::update(const float64_t &dt)
 
   // Apply deadzone to steering
   auto &&steer_deviation = steer_delayed - state_(IDX::STEER);
-  auto &&delta_steer_deadzoned =
-    disturbance_collection_.steering_dedzone_ptr_->getDisturbedInput(steer_deviation);
+  auto &&delta_steer_deadzoned = disturbance_collection_.steering_dedzone_ptr_->getDisturbedInput(steer_deviation);
   auto &&steer_deadzoned = delta_steer_deadzoned + state_(IDX::STEER);
 
   delayed_input(IDX_U::STEER_DES) = steer_deadzoned;
@@ -144,23 +142,20 @@ void SimModelDelaySteerAccGeared_Disturbance::update(const float64_t &dt)
   ns_utils::print("Steering delayed vs steering deadzone ", steer_delayed, steer_deadzoned);
 
   // Returns pair of pairs [m, b]_right_left
-  auto current_deadzone_params =
-    disturbance_collection_.steering_dedzone_ptr_->getCurrentDeadZoneParameters();
-  ns_utils::print(
-    "Left deadzone params slope, threshold:  ", current_deadzone_params[0],
-    current_deadzone_params[1]);
-  ns_utils::print(
-    "Right deadzone params slope, threshold:  ", current_deadzone_params[2],
-    current_deadzone_params[3], "\n");
+  auto current_deadzone_params = disturbance_collection_.steering_dedzone_ptr_->getCurrentDeadZoneParameters();
+  ns_utils::print("Left deadzone params slope, threshold:  ", current_deadzone_params[0],
+                  current_deadzone_params[1]);
+  ns_utils::print("Right deadzone params slope, threshold:  ", current_deadzone_params[2],
+                  current_deadzone_params[3], "\n");
 }
 
 void SimModelDelaySteerAccGeared_Disturbance::initializeInputQueue(const float64_t &dt)
 {
-  auto acc_input_queue_size = static_cast<size_t>(round(acc_delay_ / dt));
+  size_t acc_input_queue_size = static_cast<size_t>(round(acc_delay_ / dt));
   acc_input_queue_.resize(acc_input_queue_size);
   std::fill(acc_input_queue_.begin(), acc_input_queue_.end(), 0.0);
 
-  auto steer_input_queue_size = static_cast<size_t>(round(steer_delay_ / dt));
+  size_t steer_input_queue_size = static_cast<size_t>(round(steer_delay_ / dt));
   steer_input_queue_.resize(steer_input_queue_size);
   std::fill(steer_input_queue_.begin(), steer_input_queue_.end(), 0.0);
 }
