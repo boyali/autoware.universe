@@ -16,7 +16,7 @@
 
 #include "autoware_control_toolbox.hpp"
 #include "utils_act/act_utils.hpp"
-#include "utils_act/state_space.hpp"
+#include "control/state_space.hpp"
 
 #include <cassert>
 

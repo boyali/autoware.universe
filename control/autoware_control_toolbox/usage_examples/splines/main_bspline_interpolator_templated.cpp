@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "writetopath.hpp"
-#include "act_utils.hpp"
+#include "utils_act/writetopath.hpp"
+#include "utils_act/act_utils.hpp"
 #include <vector>
 #include <algorithm>
 #include <numeric>
 #include <random>
-#include "timekeep.hpp"
-#include "bspline_interpolator_templated.hpp"
+#include "utils_act/timekeep.hpp"
+#include "splines/bspline_interpolator_templated.hpp"
 
 int main()
 {

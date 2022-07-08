@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "bsplines_interpolator.hpp"
+#include "splines/bsplines_interpolator.hpp"
 
 #include <algorithm>
 #include <functional>
-#include <bsplines_interpolator.hpp>
+
 #include <vector>
 
 ns_splines::BSplineInterpolator::BSplineInterpolator(

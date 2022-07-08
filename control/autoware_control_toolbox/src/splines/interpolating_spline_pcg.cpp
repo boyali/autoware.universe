@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interpolating_spline_pcg.hpp"
+#include "splines/interpolating_spline_pcg.hpp"
 #include <algorithm>
 #include <functional>
 #include <vector>

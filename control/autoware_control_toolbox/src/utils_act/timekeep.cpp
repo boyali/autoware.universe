@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "timekeep.hpp"
+#include "utils_act/timekeep.hpp"
 
 double tic()
 {
-  struct timespec t;
+  struct timespec t{};
   clock_gettime(CLOCK_REALTIME, &t);
   return double(t.tv_sec) * 1000. + double(t.tv_nsec) / 1000000.;
 }

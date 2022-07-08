@@ -12,4 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "bspline_interpolator_templated.hpp"
+#include "splines/bspline_interpolator_templated.hpp"

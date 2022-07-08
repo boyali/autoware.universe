@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "bsplines_smoother.hpp"
-
-#include "bsplines_smoother.hpp"
+#include "splines/bsplines_smoother.hpp"
 #include <algorithm>
 #include <vector>
 
