@@ -90,8 +90,7 @@ using tier4_vehicle_msgs::srv::ControlModeRequest;
 class DeltaTime
 {
 public:
-  DeltaTime()
-  : prev_updated_time_ptr_(nullptr) {}
+  DeltaTime() : prev_updated_time_ptr_(nullptr) {}
   float64_t get_dt(const rclcpp::Time & now)
   {
     if (prev_updated_time_ptr_ == nullptr) {
@@ -110,7 +109,7 @@ private:
 class MeasurementNoiseGenerator
 {
 public:
-  MeasurementNoiseGenerator() = default;
+  MeasurementNoiseGenerator() {}
 
   std::shared_ptr<std::mt19937> rand_engine_;
   std::shared_ptr<std::normal_distribution<>> pos_dist_;
@@ -194,8 +193,7 @@ private:
   float64_t y_stddev_;  //!< @brief y standard deviation for dummy covariance in map coordinate
 
   /* vehicle model */
-  enum class VehicleModelType
-  {
+  enum class VehicleModelType {
     IDEAL_STEER_ACC = 0,
     IDEAL_STEER_ACC_GEARED = 1,
     DELAY_STEER_ACC = 2,
@@ -350,13 +348,6 @@ private:
    * @param [in] state The kinematic state to publish as a TF
    */
   void publish_tf(const Odometry & odometry);
-
-  /**
-   * @brief reads and sets disturbance parameters.
-   * */
-  void Read_and_SetDisturbanceParams(
-    float64_t const & dt, float64_t const & acc_time_delay, float64_t const & steer_time_delay,
-    IDisturbanceCollection & disturbance_collection);
 };
 }  // namespace simple_planning_simulator
 }  // namespace simulation

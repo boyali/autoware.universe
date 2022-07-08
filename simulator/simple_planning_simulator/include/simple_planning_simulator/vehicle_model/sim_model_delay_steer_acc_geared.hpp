@@ -52,8 +52,7 @@ public:
 private:
   const float64_t MIN_TIME_CONSTANT;  //!< @brief minimum time constant
 
-  enum IDX
-  {
+  enum IDX {
     X = 0,
     Y,
     YAW,
@@ -61,8 +60,7 @@ private:
     STEER,
     ACCX,
   };
-  enum IDX_U
-  {
+  enum IDX_U {
     ACCX_DES = 0,
     STEER_DES,
     DRIVE_SHIFT,

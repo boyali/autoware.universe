@@ -22,7 +22,6 @@
 #include "tier4_autoware_utils/ros/update_param.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
-#include "utils_act/act_utils.hpp"
 #include <tf2/LinearMath/Quaternion.h>
 
 #include <algorithm>
@@ -130,8 +129,6 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   pub_steer_ = create_publisher<SteeringReport>("output/steering", QoS{1});
   pub_acc_ = create_publisher<AccelWithCovarianceStamped>("output/acceleration", QoS{1});
   pub_tf_ = create_publisher<tf2_msgs::msg::TFMessage>("/tf", QoS{1});
-  pub_dist_generator_ =
-    create_publisher<DisturbanceGeneratorReport>("output/disturbance_generator", QoS{1});
 
   /* set param callback */
   set_param_res_ = this->add_on_set_parameters_callback(
@@ -597,8 +594,6 @@ void SimplePlanningSimulator::publish_tf(const Odometry & odometry)
   tf_msg.transforms.emplace_back(std::move(tf));
   pub_tf_->publish(tf_msg);
 }
-
-void SimplePlanningSimulator::ReadandSetDisturbanceParams() {}
 }  // namespace simple_planning_simulator
 }  // namespace simulation
 
