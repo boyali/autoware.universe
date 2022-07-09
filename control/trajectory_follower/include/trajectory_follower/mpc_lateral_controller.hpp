@@ -174,13 +174,6 @@ private:
     autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd);
 
   /**
-   * @brief publish control errors
-   * @param [in] cmd published errors (lateral and heading)
-   */
-  void publishErrors(ControllerErrorReport msg);
-
-
-  /**
    * @brief publish predicted future trajectory
    * @param [in] predicted_traj published predicted trajectory
    */
@@ -229,10 +222,6 @@ private:
    */
   rcl_interfaces::msg::SetParametersResult paramCallback(
     const std::vector<rclcpp::Parameter> & parameters);
-
-  // Time delay compensator variables.
-  // MPC initial references. [ey, eyaw, steering, curvature]
-  std::array<float64_t, 4> mpc_initial_references_{};
 };
 }  // namespace trajectory_follower
 }  // namespace control
