@@ -33,7 +33,7 @@ visualization_msgs::msg::Marker createLocationMarker(geometry_msgs::msg::Pose co
 }
 
 bool createAutowarePlanningTrajectoryMsg(Model::trajectory_data_t const &td, std::array<double, 2> const &xy0,
-																				 autoware_planning_msgs::msg::Trajectory *autoware_traj)
+																				 autoware_auto_planning_msgs::msg::Trajectory *autoware_traj)
 {
 	if (!autoware_traj)
 	{
@@ -47,14 +47,14 @@ bool createAutowarePlanningTrajectoryMsg(Model::trajectory_data_t const &td, std
 
 	for (size_t i = 0; i < size_of_trajectory_data; ++i)
 	{
-		autoware_planning_msgs::msg::TrajectoryPoint p;
+		autoware_auto_planning_msgs::msg::TrajectoryPoint p;
 
 		p.pose.position.x = td.X.at(i)(0) + xy0[0];
 		p.pose.position.y = td.X.at(i)(1) + xy0[1];
 		p.pose.position.z = 0.0;
 
 		p.pose.orientation = ns_utils::getQuaternionFromYaw(ns_utils::wrapToPi(td.X.at(i)(2)));
-		p.twist.linear.x = td.X.at(i)(6);
+		p.longitudinal_velocity_mps = td.X.at(i)(6);
 		autoware_traj->points.push_back(p);
 	}
 	return true;

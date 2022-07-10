@@ -18,7 +18,7 @@
 
 #include <string>
 #include <vector>
-#include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nonlinear_mpc_core/active_model.hpp"
@@ -27,79 +27,79 @@
 #include "visualization_msgs/msg/marker_array.hpp"
 
 inline geometry_msgs::msg::Quaternion createMarkerOrientation(
-  double x, double y, double z, double w)
+	double x, double y, double z, double w)
 {
-  geometry_msgs::msg::Quaternion quaternion;
+	geometry_msgs::msg::Quaternion quaternion;
 
-  quaternion.x = x;
-  quaternion.y = y;
-  quaternion.z = z;
-  quaternion.w = w;
+	quaternion.x = x;
+	quaternion.y = y;
+	quaternion.z = z;
+	quaternion.w = w;
 
-  return quaternion;
+	return quaternion;
 }
 
 inline geometry_msgs::msg::Point createMarkerPosition(double x, double y, double z)
 {
-  geometry_msgs::msg::Point point;
+	geometry_msgs::msg::Point point;
 
-  point.x = x;
-  point.y = y;
-  point.z = z;
+	point.x = x;
+	point.y = y;
+	point.z = z;
 
-  return point;
+	return point;
 }
 
 inline geometry_msgs::msg::Vector3 createMarkerScale(double x, double y, double z)
 {
-  geometry_msgs::msg::Vector3 scale;
+	geometry_msgs::msg::Vector3 scale;
 
-  scale.x = x;
-  scale.y = y;
-  scale.z = z;
+	scale.x = x;
+	scale.y = y;
+	scale.z = z;
 
-  return scale;
+	return scale;
 }
 
 inline std_msgs::msg::ColorRGBA createMarkerColor(float r, float g, float b, float a)
 {
-  std_msgs::msg::ColorRGBA color;
+	std_msgs::msg::ColorRGBA color;
 
-  color.r = r;
-  color.g = g;
-  color.b = b;
-  color.a = a;
+	color.r = r;
+	color.g = g;
+	color.b = b;
+	color.a = a;
 
-  return color;
+	return color;
 }
 
 inline visualization_msgs::msg::Marker createDefaultMarker(
-  const std::string & frame_id, const builtin_interfaces::msg::Time & stamp, const std::string & ns,
-  const int32_t id, const int32_t type, const geometry_msgs::msg::Vector3 & scale,
-  const std_msgs::msg::ColorRGBA & color)
+	const std::string &frame_id, const builtin_interfaces::msg::Time &stamp, const std::string &ns,
+	const int32_t id, const int32_t type, const geometry_msgs::msg::Vector3 &scale,
+	const std_msgs::msg::ColorRGBA &color)
 {
-  visualization_msgs::msg::Marker marker;
+	visualization_msgs::msg::Marker marker;
 
-  marker.header.frame_id = frame_id;
-  marker.header.stamp = stamp;
-  marker.ns = ns;
-  marker.id = id;
-  marker.type = type;
-  marker.action = visualization_msgs::msg::Marker::ADD;
-  marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+	marker.header.frame_id = frame_id;
+	marker.header.stamp = stamp;
+	marker.ns = ns;
+	marker.id = id;
+	marker.type = type;
+	marker.action = visualization_msgs::msg::Marker::ADD;
+	marker.lifetime = rclcpp::Duration::from_seconds(0.5);
 
-  marker.pose.position = createMarkerPosition(0.0, 0.0, 0.0);
-  marker.pose.orientation = createMarkerOrientation(0.0, 0.0, 0.0, 1.0);
-  marker.scale = scale;
-  marker.color = color;
-  marker.frame_locked = true;
+	marker.pose.position = createMarkerPosition(0.0, 0.0, 0.0);
+	marker.pose.orientation = createMarkerOrientation(0.0, 0.0, 0.0, 1.0);
+	marker.scale = scale;
+	marker.color = color;
+	marker.frame_locked = true;
 
-  return marker;
+	return marker;
 }
 
 visualization_msgs::msg::Marker createLocationMarker(
-  geometry_msgs::msg::Pose const & waypoint_pose, const builtin_interfaces::msg::Time & stamp,
-  std::string const & ns);
+	geometry_msgs::msg::Pose const &waypoint_pose, const builtin_interfaces::msg::Time &stamp,
+	std::string const &ns);
 
 /**
  * @brief Create a Autoware Planning Trajectory Msg object
@@ -111,8 +111,7 @@ visualization_msgs::msg::Marker createLocationMarker(
  * @return false
  */
 
-bool createAutowarePlanningTrajectoryMsg(
-  Model::trajectory_data_t const & td, std::array<double, 2> const & xy0,
-  autoware_planning_msgs::msg::Trajectory * autoware_traj);
+bool createAutowarePlanningTrajectoryMsg(Model::trajectory_data_t const &td, std::array<double, 2> const &xy0,
+																				 autoware_auto_planning_msgs::msg::Trajectory *autoware_traj);
 
 #endif  // NONLINEAR_MPC_NODE__NONLINEAR_MPC_NODE_VISUALIZATION_HPP_
