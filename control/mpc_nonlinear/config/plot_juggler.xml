@@ -1,0 +1,197 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root version="2.3.8">
+ <tabbed_widget name="Main Window" parent="main_window">
+  <Tab containers="1" tab_name="Tracking">
+   <Container>
+    <DockSplitter count="1" orientation="-" sizes="1">
+     <DockSplitter count="2" orientation="|" sizes="0.500704;0.499296">
+      <DockSplitter count="3" orientation="-" sizes="0.333066;0.333868;0.333066">
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range left="0.000000" top="3.597656" bottom="-7.258461" right="98.701573"/>
+         <limitY/>
+         <curve color="#0df338" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/velocity_input"/>
+         <curve color="#1a9cc9" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/velocity_measured"/>
+         <curve color="#3d40e4" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/velocity_target"/>
+         <curve color="#fc1224" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/velocity_ukf"/>
+         <curve color="#ffaf00" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/acceleration_input"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range left="0.000000" top="133.375000" bottom="-134.375000" right="98.701573"/>
+         <limitY/>
+         <curve color="#1f77b4" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/fsm_state"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range left="0.000000" top="426171565437.129211" bottom="-17473034182883.625000" right="98.701573"/>
+         <limitY/>
+         <curve color="#6cd627" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/steering_angle_input"/>
+         <curve color="#1c93c8" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/steering_measured"/>
+         <curve color="#f14e4c" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/steering_ukf"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+      <DockSplitter count="2" orientation="-" sizes="0.500401;0.499599">
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range left="0.000000" top="10354133970543642.000000" bottom="-252539858072410.000000" right="98.701573"/>
+         <limitY/>
+         <curve color="#17a3e3" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/lateral_error"/>
+         <curve color="#ff121c" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/lateral_error_ukf"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range left="0.000000" top="2.862967" bottom="-2.734126" right="98.701573"/>
+         <limitY/>
+         <curve color="#22b6bd" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/yaw_error"/>
+         <curve color="#ff1600" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/yaw_error_ukf"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab containers="1" tab_name="Curvature and Yaw Angles">
+   <Container>
+    <DockSplitter count="2" orientation="-" sizes="0.502005;0.497995">
+     <DockSplitter count="2" orientation="|" sizes="0.500704;0.499296">
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries">
+        <range left="0.000000" top="2.164837" bottom="-87.445697" right="58.634958"/>
+        <limitY/>
+        <curve color="#1ac938" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/curvature"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries">
+        <range left="0.000000" top="1.012869" bottom="-2.749941" right="58.634958"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/lateral_acceleration"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+     <DockSplitter count="2" orientation="|" sizes="0.502581;0.497419">
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries">
+        <range left="0.000000" top="1.000000" bottom="0.000000" right="1.000000"/>
+        <limitY/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries">
+        <range left="0.000000" top="12.926100" bottom="-2.979569" right="58.634958"/>
+        <limitY/>
+        <curve color="#0048ff" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/yaw_error"/>
+        <curve color="#ff0300" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/yaw_error_ukf"/>
+        <curve color="#17becf" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/yaw_target"/>
+        <curve color="#5dd615" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/yaw_vehicle"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab containers="1" tab_name="Yaw Angles">
+   <Container>
+    <DockSplitter count="1" orientation="-" sizes="1">
+     <DockSplitter count="2" orientation="|" sizes="0.500704;0.499296">
+      <DockSplitter count="2" orientation="-" sizes="0.500401;0.499599">
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range left="0.000000" top="12.861078" bottom="-0.313685" right="58.634958"/>
+         <limitY/>
+         <curve color="#1f77b4" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/yaw_target"/>
+         <curve color="#d62728" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/yaw_vehicle"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range left="0.000000" top="1150854150630734.000000" bottom="-28069613999975.000000" right="58.634958"/>
+         <limitY/>
+         <curve color="#1f77b4" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/distance_to_stop"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+      <DockSplitter count="2" orientation="-" sizes="0.500401;0.499599">
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range left="0.000000" top="1.000000" bottom="0.000000" right="1.000000"/>
+         <limitY/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range left="0.000000" top="3.597656" bottom="-7.258461" right="58.634958"/>
+         <limitY/>
+         <curve color="#1f77b4" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/acceleration_input"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab containers="1" tab_name="Avg Time and Value">
+   <Container>
+    <DockSplitter count="2" orientation="-" sizes="0.502005;0.497995">
+     <DockArea name="...">
+      <plot style="Lines" mode="TimeSeries">
+       <range left="0.000000" top="0.100000" bottom="-0.100000" right="58.634958"/>
+       <limitY/>
+       <curve color="#1f77b4" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/avg_computation_time"/>
+      </plot>
+     </DockArea>
+     <DockArea name="...">
+      <plot style="Lines" mode="TimeSeries">
+       <range left="0.000000" top="5.080905" bottom="-208.317092" right="58.634958"/>
+       <limitY/>
+       <curve color="#d62728" name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars/nmpc_performance_msg/value_function_value"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="0"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="1"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <Plugins>
+  <plugin ID="DataLoad CSV">
+   <default time_axis=""/>
+  </plugin>
+  <plugin ID="DataLoad ROS2 bags">
+   <use_header_stamp value="false"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+  </plugin>
+  <plugin ID="DataLoad ULog"/>
+  <plugin ID="ROS2 Topic Subscriber">
+   <use_header_stamp value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="true"/>
+   <selected_topics>
+    <topic name="/control/trajectory_follower/debug/nmpc_predicted_trajectory"/>
+    <topic name="/control/trajectory_follower/mpc_nonlinear/debug/nmpc_predicted_performance_vars"/>
+   </selected_topics>
+  </plugin>
+  <plugin ID="UDP Server"/>
+  <plugin ID="WebSocket Server"/>
+  <plugin ID="ZMQ Subscriber"/>
+  <plugin status="idle" ID="CSV Exporter"/>
+  <plugin status="idle" ID="ROS2 Topic Re-Publisher"/>
+ </Plugins>
+ <!-- - - - - - - - - - - - - - - -->
+ <previouslyLoaded_Datafiles/>
+ <previouslyLoaded_Streamer name="ROS2 Topic Subscriber"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <customMathEquations/>
+ <snippets/>
+ <!-- - - - - - - - - - - - - - - -->
+</root>
+
