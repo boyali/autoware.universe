@@ -478,8 +478,8 @@ void NonlinearMPCNode::onTimer()
 	}
 
 	// ns_utils::print("the NMPC problem is solved ...");
-	// Get MPC controls [acc, steering rate]
-	nonlinear_mpc_controller_ptr_->getControlSolutions(u_solution_);  // [acc, steering_rate]
+	// Get MPC controls [ax, steering rate]
+	nonlinear_mpc_controller_ptr_->getControlSolutions(u_solution_);  // [ax, steering_rate]
 
 	// If MPC is solved.
 	nonlinear_mpc_controller_ptr_->shiftControls();
@@ -510,7 +510,7 @@ void NonlinearMPCNode::onTimer()
 	publishPredictedTrajectories("predicted_trajectory", current_trajectory_ptr_->header.frame_id);
 
 	// Maintain the input and steering_buffer for predicting the initial states.
-	// [acc, vx, steering_rate, steering value]
+	// [ax, vx, steering_rate, steering value]
 	std::array<double, 4> all_control_cmds{control_cmd.longitudinal.acceleration,          // ax
 																				 control_cmd.longitudinal.speed,                    // vx
 																				 control_cmd.lateral.steering_tire_rotation_rate,  // steering rate
@@ -525,7 +525,7 @@ void NonlinearMPCNode::onTimer()
 	//  ns_utils::print("steering control", all_control_cmds[3]);
 
 	// Store the first control signal to be applied to the vehicle in the kalman
-	// control variable. input_buffer_[acc, vx, steering_rate, steering value]
+	// control variable. input_buffer_[ax, vx, steering_rate, steering value]
 
 	// u0_kalman_(0) = inputs_buffer_common_.front()[0];  // ax
 	// u0_kalman_(1) = inputs_buffer_common_.front()[3];  // steering angle
@@ -1468,7 +1468,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 		// this acceleration is implied by x,y,z and vx in the planner.
 		double const &&acc_computed = dv / (EPS + dt);
 
-		// Insert  t and acc,
+		// Insert  t and ax,
 		t_smooth_vect.at(k) = t_smooth_vect.at(k - 1) + dt;
 		acc_smooth_vect.at(k) = acc_computed;
 	}
@@ -1533,7 +1533,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 	// ns_eigen_utils::printEigenMat(rdot_interp.topRows(10));
 	// ns_eigen_utils::printEigenMat(rdot_interp.bottomRows(10));
 
-	// ns_utils::print("MPC raw vs smooth data members, s, t, x, y, z, vx, acc");
+	// ns_utils::print("MPC raw vs smooth data members, s, t, x, y, z, vx, ax");
 
 	//  ns_utils::print("\n Raw s -------------- \n");
 	//  ns_utils::print_container(mpc_traj_raw.s);
@@ -1575,7 +1575,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 	//  ns_utils::print_container(mpc_traj_smoothed.vx);
 	//
 	// ns_utils::print("\nacc -------------- ");
-	// ns_utils::print_container(mpc_traj_smoothed.acc);
+	// ns_utils::print_container(mpc_traj_smoothed.ax);
 	//
 	//  ns_utils::print("\ncurvature -------------- ");
 	//  ns_utils::print_container(mpc_traj_smoothed.curvature);
@@ -1940,7 +1940,7 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 															 "...");
 		return;
 	}
-	// x(8) is the last state placeholder is reserved for lateral acceleration or acc control.
+	// x(8) is the last state placeholder is reserved for lateral acceleration or ax control.
 	x0_initial_states_(8) = current_curvature_k0_ * vx_meas * vx_meas;  // Vx**2 / R
 
 	// Create the dynamic parameters
@@ -2007,7 +2007,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
 	Model::input_vector_t uk{Model::input_vector_t::Zero()};
 	Model::param_vector_t params(Model::param_vector_t::Zero());
 
-	// Input buffer content : // [acc, vx, steering_rate, steering]
+	// Input buffer content : // [ax, vx, steering_rate, steering]
 	for (auto const &all_controls : inputs_buffer_common_)
 	{
 		// Extract the controls from the input buffer.
@@ -2087,7 +2087,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_TrajPlanner_Speeds(Model::st
 	Model::param_vector_t params(Model::param_vector_t::Zero());
 
 	// Predict the delayed initial state given the input sequence.
-	// Input buffer content : // [acc, vx, steering_rate, steering]
+	// Input buffer content : // [ax, vx, steering_rate, steering]
 	for (auto const &all_controls : inputs_buffer_common_)
 	{
 		// Placeholders for the speed interpolation.

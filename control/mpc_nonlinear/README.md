@@ -157,7 +157,7 @@ The input disturbance observer helps removing the steady-state error even though
     state_weights: [ 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0., 0.05 ]
     state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 2.0, 1.0, 1.0, 0.0, 0.05 ]
     control_weights: [ 0.001, 0.001 ] # [vx speed input, steering input]
-    jerk_weights: [ 1.0, 1.0 ] # [acc and steering_rate]
+    jerk_weights: [ 1.0, 1.0 ] # [ax and steering_rate]
 
     #  -- Constraints - Upper and lower bounds. ['xw', 'yw', 'yaw', 's', 'e_y', 'e_yaw', 'Vx', 'delta'] --
     xlower: [ -.inf, -.inf, -.inf, -.inf, -3.0, -1.0, 0.0, -0.69, -.inf ]

@@ -32,8 +32,9 @@
 namespace ns_nmpc_interface
 {
 /** @brief OSQP problem structure type definition. */
-using optproblem_type = ns_opt::OptimizationProblemOSQP<
-	Model::state_dim, Model::input_dim, ns_nmpc_interface::MPC_NUM_OF_PRED_STEPS>;
+using optproblem_type = ns_opt::OptimizationProblemOSQP<Model::state_dim,
+																												Model::input_dim,
+																												ns_nmpc_interface::MPC_NUM_OF_PRED_STEPS>;
 
 /**
  * @brief An interface to the NMPC algorithms and data structures.
@@ -80,9 +81,8 @@ class NonlinearMPCController
 	 * @param dt simulation time step,
 	 * @param xk the initial state to be propagated by the simulator.
 	 * */
-	void simulateOneStep(
-		Model::input_vector_t const &u, Model::param_vector_t const &params, double const &dt,
-		Model::state_vector_t &xk) const;
+	void simulateOneStep(Model::input_vector_t const &u, Model::param_vector_t const &params, double const &dt,
+											 Model::state_vector_t &xk) const;
 
 	/**
 	 * @brief simulate the model equations given a control [steering only], vx from trajectory planner and an
@@ -93,20 +93,21 @@ class NonlinearMPCController
 	 * @param xk the initial state to be propagated by the simulator.
 	 * */
 
-	void simulateOneStepVariableSpeed(
-		Model::input_vector_t const &u, Model::param_vector_t const &params, const double &v0,
-		const double &v1, double const &dt, Model::state_vector_t &xk) const;
+	void simulateOneStepVariableSpeed(Model::input_vector_t const &u,
+																		Model::param_vector_t const &params,
+																		const double &v0,
+																		const double &v1,
+																		double const &dt,
+																		Model::state_vector_t &xk) const;
 
 	/**
 	 * @brief simulate a given control sequence successively and store the states in the data containers.
 	 * */
-	void simulateControlSequenceByPredictedInputs(
-		Model::state_vector_t const &x0_predicted,
-		ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+	void simulateControlSequenceByPredictedInputs(Model::state_vector_t const &x0_predicted,
+																								ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
-	void simulateControlSequenceUseVaryingSpeed(
-		Model::state_vector_t const &x0_predicted,
-		ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+	void simulateControlSequenceUseVaryingSpeed(Model::state_vector_t const &x0_predicted,
+																							ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
 	/**
 	 * @brief Sets the reference states to be tracked. In this application, since lateral and heading error is
@@ -117,15 +118,12 @@ class NonlinearMPCController
 	// Interpolates the velocity based on the estimated trajectory path length.
 	void updateScaledPredictedTargetStatesByArcLength(double const &current_predicted_s0);
 
-	bool reInitializeTrajectories(
-		ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+	bool reInitializeTrajectories(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
-	bool initializeTrajectories(
-		ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-		bool use_linear_initialization = false);
+	bool initializeTrajectories(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+															bool use_linear_initialization = false);
 
-	bool linearTrajectoryInitialization(
-		ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+	bool linearTrajectoryInitialization(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
 	void setCurrent_s0(double const &s0);
 
@@ -142,9 +140,9 @@ class NonlinearMPCController
 	 * @brief LPV control methods.
 	 * @param u_model_solution_:  [vx, steering] inputs
 	 * */
-	[[maybe_unused]] void computeSteeringFeedbackControls(
-		ns_splines::InterpolatingSplinePCG const &piecewise_interpolator, double const &dt,
-		Model::input_vector_t &u_solution);
+	[[maybe_unused]] void computeSteeringFeedbackControls(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+																												double const &dt,
+																												Model::input_vector_t &u_solution);
 
 	// NMPC solution medhods.
 	bool solveNMPC_problem(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
@@ -155,7 +153,7 @@ class NonlinearMPCController
 	// Shift controls to predict the next reference trajectories.
 	void shiftControls();
 
-	void getControlSolutions(Model::input_vector_t &u_solution);  // [acc, steering_rate]
+	void getControlSolutions(Model::input_vector_t &u_solution);  // [ax, steering_rate]
 
 	/**
 	 * @brief apply state constraints to the given index.
@@ -201,12 +199,12 @@ class NonlinearMPCController
 	 * @param [in] current_steering_input current predicted steering control value
 	 * @param [out] vdot rate of change of steering
 	 * */
-	void getSteeringDynamics_deltadot(
-		const double &current_steering, const double &current_steering_input, double &delta_dot) const;
+	void getSteeringDynamics_deltadot(const double &current_steering,
+																		const double &current_steering_input,
+																		double &delta_dot) const;
 
 	// Given a speed trajectory, predict the travelled distance depending on the speed.
-	void getPredictedArcLengthDistanceVector(
-		std::vector<double> &s_predicted, double const &current_predicted_s0) const;
+	void getPredictedArcLengthDistanceVector(std::vector<double> &s_predicted, double const &current_predicted_s0) const;
 
 	// Gets the total cost (value function value from the OSQP object.)
 	[[nodiscard]] double getObjectiveValue() const;

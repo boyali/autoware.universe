@@ -35,8 +35,7 @@ ns_nmpc_interface::NonlinearMPCController::NonlinearMPCController(Model::model_p
 {}
 
 // Copy constructors and assignments.
-ns_nmpc_interface::NonlinearMPCController::NonlinearMPCController(
-	const ns_nmpc_interface::NonlinearMPCController &other)
+ns_nmpc_interface::NonlinearMPCController::NonlinearMPCController(const ns_nmpc_interface::NonlinearMPCController &other)
 	: model_ptr_(other.model_ptr_),
 		data_nmpc_(other.data_nmpc_),
 		params_lpv_(other.params_lpv_),
@@ -117,9 +116,8 @@ void ns_nmpc_interface::NonlinearMPCController::getRawDistanceAtIdx(const size_t
 		s_distance = current_MPCtraj_raw_vects_ptr_->s.at(idx);
 	} else
 	{
-		RCLCPP_ERROR(
-			rclcpp::get_logger(node_logger_name_),
-			"[mpc_nonlinear - nmpc_core] Out of distance index ... ");
+		RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
+								 "[mpc_nonlinear - nmpc_core] Out of distance index ... ");
 	}
 }
 
@@ -146,8 +144,7 @@ void ns_nmpc_interface::NonlinearMPCController::updateInitialStates_x0(
 	// end of DEBUG
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getPlannerTravelledDistanceVector(
-	std::vector<double> &s_distance_vector) const
+void ns_nmpc_interface::NonlinearMPCController::getPlannerTravelledDistanceVector(std::vector<double> &s_distance_vector) const
 {
 	s_distance_vector = current_MPCtraj_raw_vects_ptr_->s;
 }
@@ -157,8 +154,7 @@ void ns_nmpc_interface::NonlinearMPCController::getInitialState(Model::state_vec
 	x0 = data_nmpc_.trajectory_data.X[0];
 }
 
-void ns_nmpc_interface::NonlinearMPCController::applyStateConstraints(
-	const Eigen::Index &idx, Model::state_vector_t &x)
+void ns_nmpc_interface::NonlinearMPCController::applyStateConstraints(const Eigen::Index &idx, Model::state_vector_t &x)
 {
 	x(idx) = ns_utils::clamp(x(idx), params_opt_.xlower(idx), params_opt_.xupper(idx));
 }
@@ -178,9 +174,10 @@ void ns_nmpc_interface::NonlinearMPCController::applyControlConstraints(Model::i
 
 }
 
-void ns_nmpc_interface::NonlinearMPCController::simulateOneStep(
-	const Model::input_vector_t &u, const Model::param_vector_t &params, double const &dt,
-	Model::state_vector_t &xk) const
+void ns_nmpc_interface::NonlinearMPCController::simulateOneStep(const Model::input_vector_t &u,
+																																const Model::param_vector_t &params,
+																																double const &dt,
+																																Model::state_vector_t &xk) const
 {
 	// One-step u and kappa are kept constant.
 	ns_sim::simulateNonlinearModel_zoh(model_ptr_, u, params, dt, xk);
@@ -193,9 +190,8 @@ void ns_nmpc_interface::NonlinearMPCController::simulateOneStepVariableSpeed(
 	ns_sim::simulateNonlinearModel_variableSpeed(model_ptr_, u, params, v0, v1, dt, xk);
 }
 
-void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredictedInputs(
-	Model::state_vector_t const &x0_predicted,
-	ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
+void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredictedInputs(Model::state_vector_t const &x0_predicted,
+																																												 ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
 {
 	size_t const &&nX = data_nmpc_.trajectory_data.nX();  // get the size of nX.
 
@@ -283,23 +279,19 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceUseVaryin
 
 		if (!could_interpolate)
 		{
-			RCLCPP_ERROR(
-				rclcpp::get_logger(node_logger_name_),
-				"[nonlinear-mpc - simulate varying speed sequence], "
-				"the spline could not interpolate ...");
+			RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
+									 "[nonlinear-mpc - simulate varying speed sequence],				the spline could not interpolate ...");
 			return;
 		}
 
 		auto const &uk = data_nmpc_.trajectory_data.U[k - 1];
 
 		// InterpolateInCoordinates the target v0, v1 on the trajectory.
-		ns_utils::interp1d_linear(
-			current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx, td0, v0);
+		ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx, td0, v0);
 
 		// use the mpc time step duration dt.
-		ns_utils::interp1d_linear(
-			current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx,
-			td0 + data_nmpc_.mpc_prediction_dt, v1);
+		ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx,
+															td0 + data_nmpc_.mpc_prediction_dt, v1);
 
 		params(0) = kappa0;
 		params(1) = data_nmpc_.target_reference_states_and_controls.X[k - 1](6);
@@ -348,15 +340,15 @@ void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInter
 	std::vector<double> vx_interpolated_vect;
 
 	ns_splines::InterpolatingSplinePCG interpolator_time_speed(1);
-	auto const &&is_interpolated = interpolator_time_speed.Interpolate(
-		current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx, t_predicted_coords,
-		vx_interpolated_vect);
+	auto const &&is_interpolated = interpolator_time_speed.Interpolate(current_MPCtraj_smooth_vects_ptr_->t,
+																																		 current_MPCtraj_smooth_vects_ptr_->vx,
+																																		 t_predicted_coords,
+																																		 vx_interpolated_vect);
 
 	if (!is_interpolated)
 	{
-		RCLCPP_ERROR(
-			rclcpp::get_logger(node_logger_name_),
-			"[mpc_nonlinear] UpdateScaledTargets couldn't interpolate the target speeds ...");
+		RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
+								 "[mpc_nonlinear] UpdateScaledTargets couldn't interpolate the target speeds ...");
 		return;
 	}
 
@@ -386,8 +378,7 @@ void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInter
 	// end of debug
 }
 
-void ns_nmpc_interface::NonlinearMPCController::updateScaledPredictedTargetStatesByArcLength(
-	double const &current_predicted_s0)
+void ns_nmpc_interface::NonlinearMPCController::updateScaledPredictedTargetStatesByArcLength(double const &current_predicted_s0)
 {
 	// Prepare the target trajectory data;
 	// number of stored states in the horizon.
@@ -490,26 +481,24 @@ void ns_nmpc_interface::NonlinearMPCController::getPredictedArcLengthDistanceVec
 
 	ns_splines::InterpolatingSplinePCG time_speed_interpolator(1);
 
-	bool const &&is_interpolated = time_speed_interpolator.Interpolate(
-		current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx, t_predicted_coords,
-		vx_interpolated_vect);
+	bool const &&is_interpolated = time_speed_interpolator.Interpolate(current_MPCtraj_smooth_vects_ptr_->t,
+																																		 current_MPCtraj_smooth_vects_ptr_->vx,
+																																		 t_predicted_coords,
+																																		 vx_interpolated_vect);
 
 	if (!is_interpolated)
 	{
-		RCLCPP_ERROR(
-			rclcpp::get_logger(node_logger_name_),
-			"[nonlinear_mpc]: getPredictedArcLengthDistanceVector spline interpolator failed to compute "
-			"the "
-			"coefficients ...");
+		RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
+								 "[nonlinear_mpc]: getPredictedArcLengthDistanceVector spline interpolator failed to compute "
+								 "the coefficients ...");
 		return;
 	}
 
 	// Integrate the speeds by the trapezoidal rule and mpc_time step duration.
-	std::transform(
-		vx_interpolated_vect.cbegin(), vx_interpolated_vect.cend(), vx_interpolated_vect.cbegin() + 1,
-		std::back_inserter(ds_steps),
-		[&dt](auto const &v0, auto const &v1)
-		{ return (v0 + v1) * dt / 2; });
+	std::transform(vx_interpolated_vect.cbegin(), vx_interpolated_vect.cend(), vx_interpolated_vect.cbegin() + 1,
+								 std::back_inserter(ds_steps),
+								 [&dt](auto const &v0, auto const &v1)
+								 { return (v0 + v1) * dt / 2; });
 
 	// Integrate the ds_steps starting from current_s0_.
 	std::partial_sum(ds_steps.begin(), ds_steps.end(), std::back_inserter(s_predicted));
@@ -536,15 +525,14 @@ void ns_nmpc_interface::NonlinearMPCController::getPredictedArcLengthDistanceVec
 	// end of debug
 }
 
-bool ns_nmpc_interface::NonlinearMPCController::reInitializeTrajectories(
-	ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
+bool ns_nmpc_interface::NonlinearMPCController::reInitializeTrajectories(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
 {
 	auto const is_initialized_traj = linearTrajectoryInitialization(piecewise_interpolator);
 	return is_initialized_traj;
 }
 
-bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
-	ns_splines::InterpolatingSplinePCG const &piecewise_interpolator, bool use_linear_initialization)
+bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+																																			 bool use_linear_initialization)
 {
 	// Initialize the trajectories.
 	bool is_initialized_traj{false};
@@ -555,8 +543,8 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
 
 	} else
 	{
-		is_initialized_traj = lpv_initializer_.simulateWithFeedback(
-			model_ptr_, piecewise_interpolator, params_lpv_, params_opt_, data_nmpc_);
+		is_initialized_traj =
+			lpv_initializer_.simulateWithFeedback(model_ptr_, piecewise_interpolator, params_lpv_, params_opt_, data_nmpc_);
 	}
 
 	// Discretisize the model. Once the reference trajectories are available,
@@ -565,9 +553,12 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
 	// discretization data object.
 
 	auto const &dt = data_nmpc_.mpc_prediction_dt;
-	bool const &&is_initialized_ABs = ns_discretization::multipleShootingTrajectory(
-		model_ptr_, data_nmpc_.trajectory_data, data_nmpc_.target_reference_states_and_controls,
-		piecewise_interpolator, dt, data_nmpc_.discretization_data);
+	bool const &&is_initialized_ABs = ns_discretization::multipleShootingTrajectory(model_ptr_,
+																																									data_nmpc_.trajectory_data,
+																																									data_nmpc_.target_reference_states_and_controls,
+																																									piecewise_interpolator,
+																																									dt,
+																																									data_nmpc_.discretization_data);
 
 	//    // Alternative methods for the discretizations.
 	//    bool is_initialized_ABs = ns_discretization::bilinearTransformation(model_ptr_,
@@ -654,28 +645,32 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
 	std::vector<double> ax_predicted;
 
 	// Fill the empty predicted vectors.
-	ns_utils::interp1d_map_linear(
-		current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->x, s_predicted_vect,
-		xpredicted);  // x
+	ns_utils::interp1d_map_linear(current_MPCtraj_smooth_vects_ptr_->s,
+																current_MPCtraj_smooth_vects_ptr_->x,
+																s_predicted_vect,
+																xpredicted);  // x
 
-	ns_utils::interp1d_map_linear(
-		current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->y, s_predicted_vect,
-		ypredicted);  // y
+	ns_utils::interp1d_map_linear(current_MPCtraj_smooth_vects_ptr_->s,
+																current_MPCtraj_smooth_vects_ptr_->y,
+																s_predicted_vect,
+																ypredicted);  // y
 
-	ns_utils::interp1d_map_linear(
-		current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->yaw, s_predicted_vect,
-		yaw_predicted);  // yaw
+	ns_utils::interp1d_map_linear(current_MPCtraj_smooth_vects_ptr_->s,
+																current_MPCtraj_smooth_vects_ptr_->yaw,
+																s_predicted_vect,
+																yaw_predicted);  // yaw
 
-	ns_utils::interp1d_map_linear(
-		current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->vx, s_predicted_vect,
-		vx_predicted);  // Vx
+	ns_utils::interp1d_map_linear(current_MPCtraj_smooth_vects_ptr_->s,
+																current_MPCtraj_smooth_vects_ptr_->vx,
+																s_predicted_vect,
+																vx_predicted);  // Vx
 
-	ns_utils::interp1d_map_linear(
-		current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->acc, s_predicted_vect,
-		ax_predicted);  // ax
+	ns_utils::interp1d_map_linear(current_MPCtraj_smooth_vects_ptr_->s,
+																current_MPCtraj_smooth_vects_ptr_->ax,
+																s_predicted_vect,
+																ax_predicted);  // ax
 
-	ey_predicted =
-		ns_utils::linspace(xinitial_measured(4), 0.0, K_mpc_steps);  //  [x, y, psi, s, ey, epsi, delta]
+	ey_predicted = ns_utils::linspace(xinitial_measured(4), 0.0, K_mpc_steps);  //  [x, y, psi, s, ey, epsi, delta]
 
 	eyaw_predicted = ns_utils::linspace(xinitial_measured(5), 0.0, K_mpc_steps);
 
@@ -701,11 +696,8 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
 
 		if (!could_interpolate)
 		{
-			RCLCPP_ERROR(
-				rclcpp::get_logger(node_logger_name_),
-				"[nonlinear_mpc] Linear trajectory initialization, "
-				"spline  interpolator failed to compute  the  "
-				"coefficients ...");
+			RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_), "[nonlinear_mpc] Linear trajectory initialization, spline "
+																													" interpolator failed to compute  the coefficients ...");
 
 			return false;
 		}
@@ -772,13 +764,15 @@ trajectory_data_t ns_nmpc_interface::NonlinearMPCController::getCurrentTrajector
 	return data_nmpc_.trajectory_data;
 }
 
-bool ns_nmpc_interface::NonlinearMPCController::solveNMPC_problem(
-	ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
+bool ns_nmpc_interface::NonlinearMPCController::solveNMPC_problem(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
 {
 	// Discretisize.
-	bool const &&is_discretisized = ns_discretization::multipleShootingTrajectory(
-		model_ptr_, data_nmpc_.trajectory_data, data_nmpc_.target_reference_states_and_controls,
-		piecewise_interpolator, data_nmpc_.mpc_prediction_dt, data_nmpc_.discretization_data);
+	bool const &&is_discretisized = ns_discretization::multipleShootingTrajectory(model_ptr_,
+																																								data_nmpc_.trajectory_data,
+																																								data_nmpc_.target_reference_states_and_controls,
+																																								piecewise_interpolator,
+																																								data_nmpc_.mpc_prediction_dt,
+																																								data_nmpc_.discretization_data);
 
 	// Alternative methods for the discretizations.
 	// bool is_discretisized = ns_discretization::bilinearTransformation(
@@ -790,10 +784,9 @@ bool ns_nmpc_interface::NonlinearMPCController::solveNMPC_problem(
 
 	if (!(is_discretisized && is_osqp_initialized))
 	{
-		RCLCPP_ERROR(
-			rclcpp::get_logger(node_logger_name_),
-			"[nonlinear_mpc - solve_mpc] : Could not discretisize trajectories or "
-			"initialize the OSQP modules ...");
+		RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
+								 "[nonlinear_mpc - solve_mpc] : Could not discretisize trajectories or "
+								 "initialize the OSQP modules ...");
 		return false;
 	}
 
@@ -802,18 +795,16 @@ bool ns_nmpc_interface::NonlinearMPCController::solveNMPC_problem(
 
 	if (exit_status == osqp::OsqpExitCode::kPrimalInfeasible)
 	{
-		RCLCPP_ERROR(
-			rclcpp::get_logger(node_logger_name_),
-			"[nonlinear_mpc - solve_mpc_problem] : OSQP solution is "
-			"not primal_feasible ...");
+		RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
+								 "[nonlinear_mpc - solve_mpc_problem] : OSQP solution is "
+								 "not primal_feasible ...");
 		return false;
 	}
 
 	if (exit_status != osqp::OsqpExitCode::kOptimal)
 	{
-		RCLCPP_ERROR(
-			rclcpp::get_logger(node_logger_name_),
-			"[nonlinear_mpc - solve_mpc_problem] : OSQP solution is not optimal ...");
+		RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
+								 "[nonlinear_mpc - solve_mpc_problem] : OSQP solution is not optimal ...");
 		return false;
 	}
 
@@ -860,19 +851,22 @@ bool ns_nmpc_interface::NonlinearMPCController::solveNMPC_problem(
 	return true;
 }
 
-[[maybe_unused]] void ns_nmpc_interface::NonlinearMPCController::computeSteeringFeedbackControls(
-	ns_splines::InterpolatingSplinePCG const &piecewise_interpolator, double const &dt,
-	Model::input_vector_t &u_solution)
+[[maybe_unused]] void ns_nmpc_interface::NonlinearMPCController::computeSteeringFeedbackControls(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+																																																 double const &dt,
+																																																 Model::input_vector_t &u_solution)
 {
 	// Compute a steering feedback signal and store it in the trajectory_data.
-	bool const &&is_feedback_computed = lpv_initializer_.computeSingleFeedbackControls(
-		model_ptr_, piecewise_interpolator, params_lpv_, params_opt_, data_nmpc_, dt);
+	bool const &&is_feedback_computed = lpv_initializer_.computeSingleFeedbackControls(model_ptr_,
+																																										 piecewise_interpolator,
+																																										 params_lpv_,
+																																										 params_opt_,
+																																										 data_nmpc_,
+																																										 dt);
 
 	if (!is_feedback_computed)
 	{
-		RCLCPP_ERROR(
-			rclcpp::get_logger(node_logger_name_),
-			"[nonlinear_mpc_core] Could not compute the feedback signal ...");
+		RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
+								 "[nonlinear_mpc_core] Could not compute the feedback signal ...");
 		return;
 	}
 
@@ -892,8 +886,8 @@ void ns_nmpc_interface::NonlinearMPCController::readSolutionsFromOSQP()
 void ns_nmpc_interface::NonlinearMPCController::shiftControls()
 {
 	/*   size_t const & nU = data_nmpc_.trajectory_data.nU();
-			for (size_t k = 1; k < nU; k++) {
-		data_nmpc_.trajectory_data.U[k - 1] = data_nmpc_.trajectory_data.U[k];
+	for (size_t k = 1; k < nU; k++) {
+	data_nmpc_.trajectory_data.U[k - 1] = data_nmpc_.trajectory_data.U[k];
 	} */
 
 	for (auto &&it = data_nmpc_.trajectory_data.U.begin() + 1;
@@ -944,50 +938,45 @@ double ns_nmpc_interface::NonlinearMPCController::getObjectiveValue() const
 std::array<double, 3> ns_nmpc_interface::NonlinearMPCController::getSmooth_XYYawAtCurrentDistance()
 const
 {
-	double smooth_x;
-	double smooth_y;
-	double smooth_yaw;
+	double smooth_x{};
+	double smooth_y{};
+	double smooth_yaw{};
 
 	// Interpolate the smooth x coord.
-	ns_utils::interp1d_linear(
-		current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->x, current_s0_,
-		smooth_x);
+	ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->x, current_s0_,
+														smooth_x);
 
 	// Interpolate the smooth y coord.
-	ns_utils::interp1d_linear(
-		current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->y, current_s0_,
-		smooth_y);
+	ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->y, current_s0_,
+														smooth_y);
 
 	// Interpolate the smooth yaw angle.
-	ns_utils::interp1d_linear(
-		current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->yaw, current_s0_,
-		smooth_yaw);
+	ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->yaw, current_s0_,
+														smooth_yaw);
 
 	return std::array<double, 3>{smooth_x, smooth_y, ns_utils::wrapToPi(smooth_yaw)};
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getRawVxAtDistance(
-	double const &s, double &vx) const
+void ns_nmpc_interface::NonlinearMPCController::getRawVxAtDistance(double const &s, double &vx) const
 {
-	ns_utils::interp1d_linear(
-		current_MPCtraj_raw_vects_ptr_->s, current_MPCtraj_raw_vects_ptr_->vx, s, vx);
+	ns_utils::interp1d_linear(current_MPCtraj_raw_vects_ptr_->s, current_MPCtraj_raw_vects_ptr_->vx, s, vx);
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getSmoothVxAtDistance(
-	double const &s, double &vx) const
+void ns_nmpc_interface::NonlinearMPCController::getSmoothVxAtDistance(double const &s, double &vx) const
 {
-	ns_utils::interp1d_linear(
-		current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->vx, s, vx);
+	ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->vx, s, vx);
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getSpeedDynamics_vdot(
-	const double &current_long_speed, const double &current_speed_input, double &vdot) const
+void ns_nmpc_interface::NonlinearMPCController::getSpeedDynamics_vdot(const double &current_long_speed,
+																																			const double &current_speed_input,
+																																			double &vdot) const
 {
 	vdot = model_ptr_->getLongSpeedDynamics_vdot(current_long_speed, current_speed_input);
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getSteeringDynamics_deltadot(
-	const double &current_steering, const double &current_steering_input, double &delta_dot) const
+void ns_nmpc_interface::NonlinearMPCController::getSteeringDynamics_deltadot(const double &current_steering,
+																																						 const double &current_steering_input,
+																																						 double &delta_dot) const
 {
 	delta_dot = model_ptr_->getSteeringDynamics_deltadot(current_steering, current_steering_input);
 }
