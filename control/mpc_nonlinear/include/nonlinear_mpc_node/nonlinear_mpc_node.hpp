@@ -128,29 +128,30 @@ class NonlinearMPCNode : public rclcpp::Node
 	rclcpp::Publisher<ControlCmdMsg>::SharedPtr pub_control_cmd_{nullptr};
 
 	// Closest point marker publisher.
-	rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_closest_point_debug_marker_;
+	rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_closest_point_debug_marker_{nullptr};
 
 	// Publish the predicted trajectory.
-	rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_predicted_traj_;
+	rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_predicted_traj_{nullptr};
 
 	// <-@brief topic publisher for predicted trajectory
-	rclcpp::Publisher<TrajectoryMsg>::SharedPtr pub_predicted_traj_;
+	rclcpp::Publisher<TrajectoryMsg>::SharedPtr pub_predicted_traj_{nullptr};
 
 	// <-@brief publishes the nonlinear mpc performance variables.
-	rclcpp::Publisher<NonlinearMPCPerformanceMsg>::SharedPtr pub_nmpc_performance_;
+	rclcpp::Publisher<NonlinearMPCPerformanceMsg>::SharedPtr pub_nmpc_performance_{nullptr};
 
 	// SUBSCRIBERS.
 	// subscribe to the trajectory.
-	rclcpp::Subscription<TrajectoryMsg>::SharedPtr sub_trajectory_;
+	rclcpp::Subscription<TrajectoryMsg>::SharedPtr sub_trajectory_{nullptr};
 
 	// subscribe to the longitudinal velocity.
-	rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_velocity_;
+	rclcpp::Subscription<VelocityMsg>::SharedPtr sub_velocity_{nullptr};
 
 	// subscribe to the measured vehicle steering.
 	rclcpp::Subscription<SteeringMeasuredMsg>::SharedPtr sub_vehicle_steering_;
 
-	tf2_ros::Buffer tf_buffer_;
-	tf2_ros::TransformListener tf_listener_;  //!<- @brief tf listener.
+	// subscribe to the measured vehicle steering.
+	tf2::BufferCore tf_buffer_{tf2::BUFFER_CORE_DEFAULT_CACHE_TIME};
+	tf2_ros::TransformListener tf_listener_{tf_buffer_};
 
 	//!<- @brief timer to update after a given interval.
 	rclcpp::TimerBase::SharedPtr timer_{nullptr};
@@ -187,7 +188,7 @@ class NonlinearMPCNode : public rclcpp::Node
 	TrajectoryMsg::SharedPtr current_trajectory_ptr_{nullptr};
 
 	// < @brief measured steering.
-	geometry_msgs::msg::TwistStamped::SharedPtr current_velocity_ptr_{nullptr};
+	VelocityMsg::SharedPtr current_velocity_ptr_{nullptr};
 
 	// !<=@brief measured steering.
 	SteeringMeasuredMsg::SharedPtr current_steering_ptr_{nullptr};
@@ -319,7 +320,7 @@ class NonlinearMPCNode : public rclcpp::Node
 	/**
 	 * @brief set current measured longitudinal speed.
 	 */
-	void onVelocity(geometry_msgs::msg::TwistStamped::SharedPtr msg);
+	void onVelocity(VelocityMsg::SharedPtr msg);
 
 	void updateCurrentPose();
 
@@ -333,8 +334,6 @@ class NonlinearMPCNode : public rclcpp::Node
 	void findClosestPrevWayPointIdx();
 
 	void computeClosestPointOnTraj();
-
-	void setCurrentCOGPose(geometry_msgs::msg::PoseStamped const &ps);
 
 	/**
 	 * @brief calculates the distance to the vehicle states in which the speed is less than a threshold.
@@ -421,15 +420,13 @@ class NonlinearMPCNode : public rclcpp::Node
 	 * @brief publish control command as autoware_msgs/ControlCommand type
 	 * @param [in] cmd published control command
 	 */
-	void publishControlCommands(const ControlCmdMsg &ctrl_cmd) const;
+	void publishControlCommand(ControlCmdMsg &control_cmd) const;
 
 	void publishControlsAndUpdateVars(const ControlCmdMsg &ctrl_cmd);
 
 	void publishPerformanceVariables(const ControlCmdMsg &control_cmd);
 
 	void publishPredictedTrajectories(std::string const &ns, std::string const &frame_id) const;
-
-	void publishClosestPointMarker(std::string const &ns) const;
 
 	void publishClosestPointMarker(std::string const &ns) const;
 
@@ -452,7 +449,6 @@ class NonlinearMPCNode : public rclcpp::Node
 
 	// Friend class for testing.
 	friend class NMPCTestSuiteMembers;
-
 	bool is_testing_{false};  // !<-@brief only used for testing purpose in loading parameters.
 };
 } // namespace ns_mpc_nonlinear
