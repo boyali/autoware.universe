@@ -422,7 +422,7 @@ class NonlinearMPCNode : public rclcpp::Node
 	 */
 	void publishControlCommand(ControlCmdMsg &control_cmd) const;
 
-	void publishControlsAndUpdateVars(const ControlCmdMsg &ctrl_cmd);
+	void publishControlsAndUpdateVars(ControlCmdMsg &ctrl_cmd);
 
 	void publishPerformanceVariables(const ControlCmdMsg &control_cmd);
 

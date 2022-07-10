@@ -55,9 +55,8 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 																											 std::bind(&NonlinearMPCNode::onTrajectory, this, _1));
 
 	sub_velocity_ = create_subscription<VelocityMsg>("~/input/current_velocity",
-																									 rclcpp::QoS{1},
-																									 std::bind(&NonlinearMPCNode::onVelocity,
-																														 this, _1));
+																									 rclcpp::QoS{1}, std::bind(&NonlinearMPCNode::onVelocity,
+																																						 this, _1));
 
 	sub_vehicle_steering_ = create_subscription<SteeringMeasuredMsg>("~/input/current_steering", rclcpp::QoS{1},
 																																	 std::bind(&NonlinearMPCNode::onSteeringMeasured,
@@ -440,8 +439,7 @@ void NonlinearMPCNode::onTimer()
 	/**
 	 * All inputs of the NMPC [vx, steering] are applied and the system is simulated.
 	 * */
-	nonlinear_mpc_controller_ptr_->simulateControlSequenceByPredictedInputs(
-		x0_predicted_, interpolator_curvature_pws);
+	nonlinear_mpc_controller_ptr_->simulateControlSequenceByPredictedInputs(x0_predicted_, interpolator_curvature_pws);
 
 	// Model::input_vector_t u_model_solution_; // [velocity input - m/s, steering input - rad]
 	// If we choose to use MPC. Get solution from OSQP into the traj_data_.
@@ -474,7 +472,8 @@ void NonlinearMPCNode::onTimer()
 
 		// ROS_ERROR("[nonlinear_mpc]: Could not solve the mpc problem ... ");
 		// Publish stopping command.
-		publishControlsAndUpdateVars(getStopControlCommand());
+		auto stop_cmd = getStopControlCommand();
+		publishControlsAndUpdateVars(stop_cmd);
 		return;
 	}
 
@@ -676,7 +675,7 @@ void NonlinearMPCNode::publishControlCommand(ControlCmdMsg &control_cmd) const
 	// ns_utils::print("On Velocity");
 }
 
-void NonlinearMPCNode::publishControlsAndUpdateVars(const ControlCmdMsg &ctrl_cmd)
+void NonlinearMPCNode::publishControlsAndUpdateVars(ControlCmdMsg &ctrl_cmd)
 {
 
 	// publish the control command.
@@ -1984,7 +1983,7 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 	// Set the nonlinear mpc performance variables.
 	nmpc_performance_vars_.nmpc_lateral_error = error_states[0];
 	nmpc_performance_vars_.nmpc_yaw_error = error_states[1];
-	nmpc_performance_vars_.long_velocity_measured = current_velocity_ptr_->twist.linear.x;
+	nmpc_performance_vars_.long_velocity_measured = current_velocity_ptr_->twist.twist.linear.x;
 
 	nmpc_performance_vars_.lateral_error_ukf = x0_kalman_est_(4);
 	nmpc_performance_vars_.yaw_error_ukf = x0_kalman_est_(5);
