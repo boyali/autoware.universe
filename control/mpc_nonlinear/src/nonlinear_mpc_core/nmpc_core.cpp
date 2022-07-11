@@ -617,8 +617,7 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(ns_spline
 	return initialized_;
 }
 
-bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
-	ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
+bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
 {
 	// Create the new s-coordinates from the predicted speed trajectory.
 	std::vector<double> s_predicted_vect;
