@@ -17,7 +17,8 @@
 #include "vehicle_models/kinematic_vehicle_model.hpp"
 #include <limits>
 
-void ns_models::KinematicModelSingleTrackModel::updateParameters(const ParamsVehicle &params_vehicle)
+void ns_models::KinematicModelSingleTrackModel::updateParameters(
+	const ParamsVehicle &params_vehicle)
 {
 	wheel_base_ = params_vehicle.wheel_base;
 	lr_ = params_vehicle.lr;
@@ -26,10 +27,11 @@ void ns_models::KinematicModelSingleTrackModel::updateParameters(const ParamsVeh
 	use_delay_models_ = params_vehicle.use_delay_model;
 }
 
-void ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDynamicsBase::state_vector_ad_t &x,
-																																const VehicleDynamicsBase::input_vector_ad_t &u,
-																																const VehicleDynamicsBase::param_vector_ad_t &params,
-																																VehicleDynamicsBase::state_vector_ad_t &f_xdot)
+void ns_models::KinematicModelSingleTrackModel::systemEquations(
+	const VehicleDynamicsBase::state_vector_ad_t &x,
+	const VehicleDynamicsBase::input_vector_ad_t &u,
+	const VehicleDynamicsBase::param_vector_ad_t &params,
+	VehicleDynamicsBase::state_vector_ad_t &f_xdot)
 {
 	// For guarding zero division.
 	auto constexpr EPS = std::numeric_limits<double>::epsilon();
@@ -48,10 +50,10 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDyn
 	// auto const &vd = params(1);  // virtual car speed - desired velocity.
 
 	auto const &tan_delta = tan(delta);
-	auto const beta = atan(tan_delta * lr_ / wheel_base_);
+	auto const &beta = atan(tan_delta * lr_ / wheel_base_);
 
 	// Unpack each of the controls
-	auto const &ax_acc_brk_input = u(0);  // ax - brake input [m/s/s]
+	auto const &ax_acc_brk_input = u(0);  // acc - brake input [m/s/s]
 	auto const &steering_input = u(1);    // steering input [rad]
 
 	// Kinematic equations.
@@ -67,16 +69,26 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDyn
 	// Control states.
 	if (use_delay_models_)
 	{
-		f_xdot(6) = -(v - ax_acc_brk_input) / speed_tau_;
-		// f_xdot(6) = ax_acc_brk_input;
-
+		// f_xdot(6) = -(v - vx_acc_brk_input) / speed_tau_;
+		// f_xdot(6) = -v / speed_tau_ + ax_acc_brk_input;
+		f_xdot(6) = ax_acc_brk_input;
 		f_xdot(7) = -(delta - steering_input) / steering_tau_;
+		//f_xdot(8) = -(f_xdot(3) - vx_virtual_car) / speed_tau_;
 
 	} else
 	{
 		f_xdot(6) = ax_acc_brk_input;  // !<@brief acceleration brake input
 		f_xdot(7) = steering_input;
+		//f_xdot(8) = f_xdot(3) - vx_virtual_car;
 	}
+
+	// !<@brief Ti is put to observe its effects on the response.
+	// double kI = 0.1;  // integrator constant
+
+	// f_xdot(8) =( v - vx_virtual_car)*kI;
+	// f_xdot(8) = (f_xdot(3) - vx_virtual_car) * kI;
+//    auto const &&psi_ddot =
+//            (f_xdot(6) * cos(beta + epsi) * tan_delta + v * (1.0 + tan_delta * tan_delta)) / wheel_base_;
 
 	f_xdot(8) = f_xdot(2) * f_xdot(6) * cos(beta + epsi); // ay_dot = psi_dot x Vx
 }
@@ -120,8 +132,8 @@ void ns_models::KinematicModelSingleTrackModel::testModel()
 	ns_eigen_utils::printEigenMat(B);
 }
 
-double ns_models::KinematicModelSingleTrackModel::getLongSpeedDynamics_vdot(const double &current_long_speed,
-																																						const double & /*current_speed_input*/) const
+double ns_models::KinematicModelSingleTrackModel::getLongSpeedDynamics_vdot(
+	const double &current_long_speed, const double &current_speed_input) const
 {
 	auto const &v = current_long_speed;
 	auto const &vx_acc_brk_input = current_long_speed;
@@ -140,8 +152,8 @@ double ns_models::KinematicModelSingleTrackModel::getLongSpeedDynamics_vdot(cons
 	return vdot;
 }
 
-double ns_models::KinematicModelSingleTrackModel::getSteeringDynamics_deltadot(const double &current_steering,
-																																							 const double &current_steering_input) const
+double ns_models::KinematicModelSingleTrackModel::getSteeringDynamics_deltadot(
+	const double &current_steering, const double &current_steering_input) const
 {
 	auto &&delta = current_steering;
 	auto &&steering_input = current_steering_input;

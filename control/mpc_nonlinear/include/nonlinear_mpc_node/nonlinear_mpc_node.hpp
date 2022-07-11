@@ -112,8 +112,8 @@ class NonlinearMPCNode : public rclcpp::Node
 	 * @brief Takes a fixed size (in rows) raw trajectory matrix --> smoothes out to fixed size reference trajectory.
 	 *
 	 * */
-	using bspline_type_t = ns_splines::BSplineInterpolatorTemplated<
-		ns_splines::MPC_MAP_SMOOTHER_IN, ns_splines::MPC_MAP_SMOOTHER_OUT>;
+	using bspline_type_t = ns_splines::BSplineInterpolatorTemplated<ns_splines::MPC_MAP_SMOOTHER_IN,
+																																	ns_splines::MPC_MAP_SMOOTHER_OUT>;
 
 	/**
 	 *  @brief Public curvature interpolator, updated by the node, used all over the modules.
@@ -175,10 +175,6 @@ class NonlinearMPCNode : public rclcpp::Node
 	ns_filters::KalmanUnscented kalman_filter_{};
 
 	/**
-	 * @brief Disturbance input observer for speed tracking
-	 */
-
-	/**
 	 * @brief Finite State Machine for tracking vehicle motion states.
 	 * */
 	ns_states::VehicleMotionFSM vehicle_motion_fsm_{};
@@ -195,6 +191,7 @@ class NonlinearMPCNode : public rclcpp::Node
 
 	// !<-@brief measured pose.
 	geometry_msgs::msg::PoseStamped::SharedPtr current_pose_ptr_{nullptr};
+	std::unique_ptr<geometry_msgs::msg::PoseStamped> current_COG_pose_ptr_{nullptr};
 
 	/**
 	 * @brief exact location of the vehicle projection on the current trajectory.
@@ -291,9 +288,9 @@ class NonlinearMPCNode : public rclcpp::Node
 	void loadVehicleParameters(ns_models::ParamsVehicle &params_vehicle);  // load vehicle model params.
 
 	// Load NMPCCore, LPV parameters and OSQP class parameters.
-	void loadNMPCoreParameters(
-		ns_data::data_nmpc_core_type_t &data_nmpc_core, ns_data::param_lpv_type_t &params_lpv,
-		ns_data::ParamsOptimization &params_optimization);
+	void loadNMPCoreParameters(ns_data::data_nmpc_core_type_t &data_nmpc_core,
+														 ns_data::param_lpv_type_t &params_lpv,
+														 ns_data::ParamsOptimization &params_optimization);
 
 	void loadFilterParameters(ns_data::ParamsFilters &params_filters);
 
@@ -322,6 +319,11 @@ class NonlinearMPCNode : public rclcpp::Node
 	 */
 	void onVelocity(VelocityMsg::SharedPtr msg);
 
+	/**
+	* @brief set current measured steering with received message
+	*/
+	void onSteeringMeasured(SteeringMeasuredMsg::SharedPtr msg);
+
 	void updateCurrentPose();
 
 	bool isDataReady();
@@ -335,6 +337,8 @@ class NonlinearMPCNode : public rclcpp::Node
 
 	void computeClosestPointOnTraj();
 
+	void setCurrentCOGPose(geometry_msgs::msg::PoseStamped const &ps);
+
 	/**
 	 * @brief calculates the distance to the vehicle states in which the speed is less than a threshold.
 	 * */
@@ -344,7 +348,7 @@ class NonlinearMPCNode : public rclcpp::Node
 	std::array<double, 3> getDistanceEgoTargetSpeeds();
 
 	/** @brief Get average MPC computation time in seconds. */
-	[[maybe_unused]] void getAverageMPCcomputeTime(double &avg_compute_time_in_sec) const;
+	void getAverageMPCcomputeTime(double &avg_compute_time_in_sec) const;
 
 	/**
 	 * @brief compute the initial error and set the initial states and controls.
@@ -376,11 +380,6 @@ class NonlinearMPCNode : public rclcpp::Node
 	void predictDelayedInitialStateBy_TrajPlanner_Speeds(Model::state_vector_t &xd0);
 
 	void estimateDisturbanceInput();
-
-	/**
-	 * @brief set current measured steering with received message
-	 */
-	void onSteeringMeasured(SteeringMeasuredMsg::SharedPtr msg);
 
 	/**
 	 * @brief Set the timer object.
@@ -420,7 +419,7 @@ class NonlinearMPCNode : public rclcpp::Node
 	 * @brief publish control command as autoware_msgs/ControlCommand type
 	 * @param [in] cmd published control command
 	 */
-	void publishControlCommand(ControlCmdMsg &control_cmd) const;
+	void publishControlCommands(ControlCmdMsg &control_cmd) const;
 
 	void publishControlsAndUpdateVars(ControlCmdMsg &ctrl_cmd);
 
@@ -442,7 +441,7 @@ class NonlinearMPCNode : public rclcpp::Node
 	/**
 	 * @brief get stop command
 	 */
-	ControlCmdMsg getStopControlCommand() const;
+	static ControlCmdMsg getStopControlCommand();
 
 	// Debug Parameters
 	mutable DebugData debug_data_{};
