@@ -50,7 +50,7 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(
 	// auto const &vd = params(1);  // virtual car speed - desired velocity.
 
 	auto const &tan_delta = tan(delta);
-	auto const &beta = atan(tan_delta * lr_ / wheel_base_);
+	auto const &beta{0.}; // = atan(tan_delta * lr_ / wheel_base_);
 
 	// Unpack each of the controls
 	auto const &ax_acc_brk_input = u(0);  // acc - brake input [m/s/s]

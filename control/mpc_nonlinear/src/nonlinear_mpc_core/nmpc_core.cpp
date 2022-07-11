@@ -679,7 +679,7 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
 
 	for (size_t k = 1; k < K_mpc_steps; k++)
 	{
-		auto xprev = data_nmpc_.trajectory_data.X[k - 1];
+		// auto xprev = data_nmpc_.trajectory_data.X[k - 1];
 
 		xk.setZero();
 		xk(0) = xpredicted[k];        // x
@@ -715,8 +715,10 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
 		uk.setZero();
 
 		double vx_target{};
-		interpolator_distance_speed.Interpolate(
-			current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->vx, sk, vx_target);
+		interpolator_distance_speed.Interpolate(current_MPCtraj_smooth_vects_ptr_->s,
+																						current_MPCtraj_smooth_vects_ptr_->vx,
+																						sk,
+																						vx_target);
 
 		uk(0) = ax_predicted[k];    // predicted acceleration.
 		uk(1) = xk(7);       // predicted feedforward steering

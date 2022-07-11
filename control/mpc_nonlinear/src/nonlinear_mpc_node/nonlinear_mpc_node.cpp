@@ -1777,10 +1777,9 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
 	 * interpolated waypoint. This is the dot product normalized by the length of the interval.
 	 * a.b = |a|.|b|.cos(alpha) -- > |a|.cos(alpha) = a.b / |b| where b is the path interval.
 	 * */
-
-	double const &&ds_distance_p0_to_p_interp =
-		(dx_prev_to_next * dx_prev_to_vehicle + dy_prev_to_next * dy_prev_to_vehicle) /
-			magnitude_p0_to_p1;
+	double const
+		&&ds_distance_p0_to_p_interp = (dx_prev_to_next * dx_prev_to_vehicle + dy_prev_to_next * dy_prev_to_vehicle) /
+		magnitude_p0_to_p1;
 
 	// Get the current distance from the origin and keep in te current_s0_ variable.
 	nonlinear_mpc_controller_ptr_->getRawDistanceAtIdx(*idx_prev_wp_ptr_, current_s0_);
@@ -1797,17 +1796,14 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
 	double const &&ratio_t = ns_utils::clamp(ds_distance_p0_to_p_interp / magnitude_p0_to_p1, 0.0, 1.0);
 
 	// InterpolateInCoordinates pose.position and pose.orientation
-	interpolated_traj_point.pose.position.x =
-		current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.x +
-			ratio_t * dx_prev_to_next;
+	interpolated_traj_point.pose.position.x = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.x +
+		ratio_t * dx_prev_to_next;
 
-	interpolated_traj_point.pose.position.y =
-		current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.y +
-			ratio_t * dy_prev_to_next;
+	interpolated_traj_point.pose.position.y = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.y +
+		ratio_t * dy_prev_to_next;
 
-	interpolated_traj_point.pose.position.z =
-		current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.z +
-			ratio_t * dz_prev_to_next;
+	interpolated_traj_point.pose.position.z = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.z +
+		ratio_t * dz_prev_to_next;
 
 	// InterpolateInCoordinates the yaw angle of pi : interpolated waypoint
 	double const &&interp_yaw_angle = ns_utils::wrapToPi(prev_yaw + ratio_t * dyaw_prev_to_next);
