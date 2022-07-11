@@ -69,9 +69,7 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(
 	// Control states.
 	if (use_delay_models_)
 	{
-		// f_xdot(6) = -(v - vx_acc_brk_input) / speed_tau_;
-		// f_xdot(6) = -v / speed_tau_ + ax_acc_brk_input;
-		f_xdot(6) = ax_acc_brk_input;
+		f_xdot(6) = -(v - ax_acc_brk_input) / speed_tau_;
 		f_xdot(7) = -(delta - steering_input) / steering_tau_;
 		//f_xdot(8) = -(f_xdot(3) - vx_virtual_car) / speed_tau_;
 
@@ -79,16 +77,8 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(
 	{
 		f_xdot(6) = ax_acc_brk_input;  // !<@brief acceleration brake input
 		f_xdot(7) = steering_input;
-		//f_xdot(8) = f_xdot(3) - vx_virtual_car;
+
 	}
-
-	// !<@brief Ti is put to observe its effects on the response.
-	// double kI = 0.1;  // integrator constant
-
-	// f_xdot(8) =( v - vx_virtual_car)*kI;
-	// f_xdot(8) = (f_xdot(3) - vx_virtual_car) * kI;
-//    auto const &&psi_ddot =
-//            (f_xdot(6) * cos(beta + epsi) * tan_delta + v * (1.0 + tan_delta * tan_delta)) / wheel_base_;
 
 	f_xdot(8) = f_xdot(2) * f_xdot(6) * cos(beta + epsi); // ay_dot = psi_dot x Vx
 }

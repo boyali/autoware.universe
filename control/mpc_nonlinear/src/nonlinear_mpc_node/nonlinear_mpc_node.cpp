@@ -1794,8 +1794,7 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
 	 * */
 
 	// clamp signature (val, lower, upper)
-	double const &&ratio_t =
-		ns_utils::clamp(ds_distance_p0_to_p_interp / magnitude_p0_to_p1, 0.0, 1.0);
+	double const &&ratio_t = ns_utils::clamp(ds_distance_p0_to_p_interp / magnitude_p0_to_p1, 0.0, 1.0);
 
 	// InterpolateInCoordinates pose.position and pose.orientation
 	interpolated_traj_point.pose.position.x =
