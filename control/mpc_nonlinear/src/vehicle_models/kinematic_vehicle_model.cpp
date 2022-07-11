@@ -17,8 +17,7 @@
 #include "vehicle_models/kinematic_vehicle_model.hpp"
 #include <limits>
 
-void ns_models::KinematicModelSingleTrackModel::updateParameters(
-	const ParamsVehicle &params_vehicle)
+void ns_models::KinematicModelSingleTrackModel::updateParameters(const ParamsVehicle &params_vehicle)
 {
 	wheel_base_ = params_vehicle.wheel_base;
 	lr_ = params_vehicle.lr;

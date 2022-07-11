@@ -721,7 +721,7 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
 																						vx_target);
 
 		uk(0) = ax_predicted[k];    // predicted acceleration.
-		uk(1) = xk(7);       // predicted feedforward steering
+		uk(1) = xk(7);              // predicted feedforward steering
 
 		applyControlConstraints(0, uk);
 		applyControlConstraints(1, uk);
