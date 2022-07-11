@@ -28,15 +28,15 @@
 #include <vector>
 #include "Eigen/Dense"
 #include "kinematic_model_definitions.hpp"
-// #include "utils/codegen_eigen_support.hpp"
+#include "utils/codegen_eigen_support.hpp"
 #include "utils/nmpc_utils.hpp"
 
 #define CODEGEN true
-#if CODEGEN
-#include <cppad/cg.hpp>
-#else
-#include <cppad/cppad.hpp>
-#endif
+//#if CODEGEN
+//#include <cppad/cg.hpp>
+//#else
+//#include <cppad/cppad.hpp>
+//#endif
 
 
 /**
