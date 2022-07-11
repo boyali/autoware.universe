@@ -175,11 +175,11 @@ void TrajectoryData<Model>::getControlMPCSolutionsAtTime(const double &t,
 {
 	if (t > mpc_dt)
 	{
-		ns_utils::print(
+		ns_nmpc_utils::print(
 			"[nonlinear_mpc] The control at time t greater than the MPC time is not implemented  "
 			"...");
 
-		ns_utils::print(
+		ns_nmpc_utils::print(
 			"[nonlinear_mpc] The requested time for the control interpolation must be less than "
 			"the MPC  time step ");
 		return;

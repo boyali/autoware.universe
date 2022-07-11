@@ -27,7 +27,7 @@
 #include "utils/nmpc_utils.hpp"
 #include "utils/nmpc_utils_eigen.hpp"
 
-namespace ns_splines
+namespace ns_nmpc_splines
 {
 /*
  *  Main References : Semiparametric Regression by David Rupert et al.
@@ -97,7 +97,7 @@ class BSplineSmoother
 
 	std::vector<std::vector<double>> basisRowsWithDerivatives(double const &ti);
 
-	std::vector<double> fPlusCube(double const &ti, double const &ki) const;  // returns max(0, t);
+	[[nodiscard]] std::vector<double> fPlusCube(double const &ti, double const &ki) const;  // returns max(0, t);
 	void solveByDemmlerReisch(Eigen::MatrixXd &basis_mat, Eigen::MatrixXd &basis_dmat,
 														Eigen::MatrixXd &basis_ddmat);  // set projection mat.
 
@@ -108,5 +108,5 @@ class BSplineSmoother
 												 Eigen::MatrixXd &basis_dmat,
 												 Eigen::MatrixXd &basis_ddmat);
 };
-}  // namespace ns_splines
+}  // namespace ns_nmpc_splines
 #endif  // SPLINES__BSPLINES_SMOOTHER_HPP_

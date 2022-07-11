@@ -19,14 +19,14 @@
 #include <functional>
 #include <vector>
 
-ns_splines::InterpolatingSplinePCG::InterpolatingSplinePCG(size_t interpolating_type)
+ns_nmpc_splines::InterpolatingSplinePCG::InterpolatingSplinePCG(size_t interpolating_type)
 	: interp_type_{interpolating_type}
 {}
 
-bool ns_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &tbase,
-																										 std::vector<double> const &ybase,
-																										 std::vector<double> const &tnew,
-																										 std::vector<double> &ynew)
+bool ns_nmpc_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &tbase,
+																													std::vector<double> const &ybase,
+																													std::vector<double> const &tnew,
+																													std::vector<double> &ynew)
 {
 
 	if (tnew[0] < tbase[0] && tnew.back() > tbase.back())
@@ -50,7 +50,7 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &
 
 	for (auto const &ti : tnew)
 	{
-		auto const &&left_ind = ns_utils::binary_index_search(ti, tbase);
+		auto const &&left_ind = ns_nmpc_utils::binary_index_search(ti, tbase);
 		auto const &picewise_coeffs = coefficients_[left_ind];
 
 		// Compute dt.
@@ -64,7 +64,8 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &
 	return couldSolve_and_Monotonic;
 }
 
-bool ns_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &tnew, std::vector<double> &ynew) const
+bool ns_nmpc_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &tnew,
+																													std::vector<double> &ynew) const
 {
 	if (!initialized_)
 	{
@@ -86,7 +87,7 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &
 
 	for (auto const &ti : tnew)
 	{
-		auto const &&left_ind = ns_utils::binary_index_search(ti, tbase_);
+		auto const &&left_ind = ns_nmpc_utils::binary_index_search(ti, tbase_);
 		auto const &picewise_coeffs = coefficients_[left_ind];
 
 		// Compute dt.
@@ -100,10 +101,10 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &
 }
 
 // Point-wise scalar interpolation - std::vector case.
-bool ns_splines::InterpolatingSplinePCG::Interpolate(const std::vector<double> &tbase,
-																										 const std::vector<double> &ybase,
-																										 const double &tnew,
-																										 double &ynew)
+bool ns_nmpc_splines::InterpolatingSplinePCG::Interpolate(const std::vector<double> &tbase,
+																													const std::vector<double> &ybase,
+																													const double &tnew,
+																													double &ynew)
 {
 	if (tnew < tbase[0] && tnew > tbase.back())
 	{
@@ -123,7 +124,7 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(const std::vector<double> &
 	}
 
 	// Binary Search.
-	auto const &&left_ind = ns_utils::binary_index_search(tnew, tbase);
+	auto const &&left_ind = ns_nmpc_utils::binary_index_search(tnew, tbase);
 	auto const &picewise_coeffs = coefficients_[left_ind];
 
 	// Compute dt.
@@ -136,7 +137,7 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(const std::vector<double> &
 }
 
 // Point-wise scalar interpolation - std::vector case.
-bool ns_splines::InterpolatingSplinePCG::Interpolate(const double &tnew, double &ynew) const
+bool ns_nmpc_splines::InterpolatingSplinePCG::Interpolate(const double &tnew, double &ynew) const
 {
 	if (!initialized_)
 	{
@@ -156,7 +157,7 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(const double &tnew, double 
 	}
 
 	// Binary Search.
-	auto const &&left_ind = ns_utils::binary_index_search(tnew, tbase_);
+	auto const &&left_ind = ns_nmpc_utils::binary_index_search(tnew, tbase_);
 	auto const &picewise_coeffs = coefficients_[left_ind];
 
 	// Compute dt.
@@ -168,7 +169,7 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(const double &tnew, double 
 	return true;
 }
 
-bool ns_splines::InterpolatingSplinePCG::compute_coefficients(std::vector<double> const &ybase)
+bool ns_nmpc_splines::InterpolatingSplinePCG::compute_coefficients(std::vector<double> const &ybase)
 {
 	auto dimy(static_cast<int>(ybase.size()));
 	Eigen::Index dimy_eig(dimy);
@@ -236,11 +237,11 @@ bool ns_splines::InterpolatingSplinePCG::compute_coefficients(std::vector<double
 
 		Eigen::Map<Eigen::VectorXd> b(brhs.data(), dimy_eig, 1);
 		//    // DEBUG
-		//    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Asprs));
+		//    ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(Asprs));
 		//
 		//    auto main_diag = Asprs.diagonal();
-		//    ns_eigen_utils::printEigenMat(main_diag);
-		//    ns_eigen_utils::printEigenMat(b);
+		//    ns_nmpc_eigen_utils::printEigenMat(main_diag);
+		//    ns_nmpc_eigen_utils::printEigenMat(b);
 		//    // End of DEBUG
 
 		//    std::vector<double> solution_c(dimy);
@@ -264,8 +265,8 @@ bool ns_splines::InterpolatingSplinePCG::compute_coefficients(std::vector<double
 
 }
 
-void ns_splines::InterpolatingSplinePCG::set_bd_coeffs_(std::vector<double> const &ybase,
-																												std::vector<double> const &c_coeffs)
+void ns_nmpc_splines::InterpolatingSplinePCG::set_bd_coeffs_(std::vector<double> const &ybase,
+																														 std::vector<double> const &c_coeffs)
 {
 	// Set d_coeffs = (c(i+1) - c(i)) / 3.
 	// set bi = a1 - a0 - (c1 + 2*c0)/3;
@@ -299,8 +300,8 @@ void ns_splines::InterpolatingSplinePCG::set_bd_coeffs_(std::vector<double> cons
 	coefficients_.emplace_back(std::vector<double>{a_coeff[kf], b_coeffs[kf], c_coeffs[kf], d_coeffs[kf]});
 }
 
-bool ns_splines::InterpolatingSplinePCG::prepareCoefficients(std::vector<double> const &tbase,
-																														 std::vector<double> const &ybase)
+bool ns_nmpc_splines::InterpolatingSplinePCG::prepareCoefficients(std::vector<double> const &tbase,
+																																	std::vector<double> const &ybase)
 {
 	// Just produce a warning.
 	if (bool const &&isMonotonic = checkIfMonotonic(tbase);!isMonotonic)
@@ -320,7 +321,7 @@ bool ns_splines::InterpolatingSplinePCG::prepareCoefficients(std::vector<double>
 	return true;
 }
 
-bool ns_splines::InterpolatingSplinePCG::checkIfMonotonic(const std::vector<double> &tbase)
+bool ns_nmpc_splines::InterpolatingSplinePCG::checkIfMonotonic(const std::vector<double> &tbase)
 {
 	// Check if interpolating coordinates is monotonic.
 	auto const &&isIncreasing_it = std::adjacent_find(std::cbegin(tbase), std::cend(tbase), std::greater_equal<>());
@@ -342,7 +343,8 @@ bool ns_splines::InterpolatingSplinePCG::checkIfMonotonic(const std::vector<doub
  *  using the existing parameters we need to initialize the interpolator setting reusing_coefficients=false, so that
  *  the interpolator re-computes the interpolation coefficients.
  * */
-bool ns_splines::InterpolatingSplinePCG::Initialize(std::vector<double> const &tbase, std::vector<double> const &ybase)
+bool ns_nmpc_splines::InterpolatingSplinePCG::Initialize(std::vector<double> const &tbase,
+																												 std::vector<double> const &ybase)
 {
 	double const &t0 = tbase[0];
 	double y0{};
@@ -357,7 +359,8 @@ bool ns_splines::InterpolatingSplinePCG::Initialize(std::vector<double> const &t
 	return couldInterpolate;
 }
 
-double ns_splines::InterpolatingSplinePCG::evaluatePolynomial(double const &ti, std::vector<double> const &coeffs) const
+double ns_nmpc_splines::InterpolatingSplinePCG::evaluatePolynomial(double const &ti,
+																																	 std::vector<double> const &coeffs) const
 {
 	size_t const &&nitems = coeffs.size();
 	double sum_ttimes_coeff = 0.0;
@@ -370,9 +373,9 @@ double ns_splines::InterpolatingSplinePCG::evaluatePolynomial(double const &ti, 
 	return sum_ttimes_coeff;
 }
 
-bool ns_splines::PCG::solve(Eigen::SparseMatrix<double> const &Asparse,
-														Eigen::VectorXd const &b,
-														std::vector<double> &solution_c) const
+bool ns_nmpc_splines::PCG::solve(Eigen::SparseMatrix<double> const &Asparse,
+																 Eigen::VectorXd const &b,
+																 std::vector<double> &solution_c) const
 {
 	// Initialize a solution vector xn with zero.
 	Eigen::VectorXd xn(b.rows(), 1);  // solution to Ax = b, xn is the coefficients of a polynomial
@@ -381,7 +384,7 @@ bool ns_splines::PCG::solve(Eigen::SparseMatrix<double> const &Asparse,
 	// Initialize residuals.
 	Eigen::VectorXd rn(b);  // residuals r(n) n is the iteration number.
 
-	//  ns_eigen_utils::printEigenMat(rn);
+	//  ns_nmpc_eigen_utils::printEigenMat(rn);
 	// Initialize inverse of the diagonals.
 	Eigen::VectorXd invDiag(b.rows(), 1);
 	invDiag << Asparse.diagonal().unaryExpr([](auto const &x)
@@ -393,7 +396,7 @@ bool ns_splines::PCG::solve(Eigen::SparseMatrix<double> const &Asparse,
 	// Initialize search direction pn.
 	auto pn = rtilda_n;
 
-	//  ns_eigen_utils::printEigenMat(rtilda_n);
+	//  ns_nmpc_eigen_utils::printEigenMat(rtilda_n);
 	// Compute the step length.
 	auto alpha_n = rn.dot(rtilda_n) / pApnorm(pn);
 
@@ -408,12 +411,12 @@ bool ns_splines::PCG::solve(Eigen::SparseMatrix<double> const &Asparse,
 	rn = rn - alpha_n * Asparse * pn;
 	//  rn = rn - alpha_n * pAdot(pn);
 
-	//  ns_eigen_utils::printEigenMat(rn);
+	//  ns_nmpc_eigen_utils::printEigenMat(rn);
 
 	// DEBUG
 	// std::cout << "\nrn_tilda \n";
-	// ns_eigen_utils::printEigenMat(rtilda_n);
-	//  ns_eigen_utils::printEigenMat(invDiag);
+	// ns_nmpc_eigen_utils::printEigenMat(rtilda_n);
+	//  ns_nmpc_eigen_utils::printEigenMat(invDiag);
 	// end of DEBUG
 
 	for (size_t k = 0; k < maxiter_; ++k)
@@ -440,7 +443,7 @@ bool ns_splines::PCG::solve(Eigen::SparseMatrix<double> const &Asparse,
 
 		//    rn.noalias() = rn - alpha_n * pAdot(pn);
 		//    std::cout << rn.rows() << " " << pAdot(pn).rows() << std::endl;
-		//    ns_eigen_utils::printEigenMat(pAdot(pn) - rn);
+		//    ns_nmpc_eigen_utils::printEigenMat(pAdot(pn) - rn);
 
 		if (isConvergedL1(rn))
 		{
@@ -453,13 +456,13 @@ bool ns_splines::PCG::solve(Eigen::SparseMatrix<double> const &Asparse,
 	return false;
 }
 
-bool ns_splines::PCG::isConvergedL1(Eigen::VectorXd const &residuals) const
+bool ns_nmpc_splines::PCG::isConvergedL1(Eigen::VectorXd const &residuals) const
 {
 	auto const &&l1norm = residuals.cwiseAbs().sum();
 	return l1norm < eps_;
 }
 
-double ns_splines::PCG::pApnorm(const Eigen::MatrixXd &p)
+double ns_nmpc_splines::PCG::pApnorm(const Eigen::MatrixXd &p)
 {
 	auto const &&dim_p = p.rows();
 

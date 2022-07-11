@@ -23,7 +23,7 @@
 #include <vector>
 #include "Eigen/Core"
 
-namespace ns_eigen_utils
+namespace ns_nmpc_eigen_utils
 {
 template<typename T>
 using eigen_dynamic_type = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
@@ -516,5 +516,5 @@ void cholesky_update(Eigen::MatrixBase<Derived1> &R,
 	//        printEigenMat(Rsqrt.eval());
 
 }
-}  // namespace ns_eigen_utils
+}  // namespace ns_nmpc_eigen_utils
 #endif  // UTILS__NMPC_UTILS_EIGEN_HPP_

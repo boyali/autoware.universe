@@ -1,32 +1,28 @@
-// Copyright 2022 The Autoware Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2021 - 2022 Autoware Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-#ifndef COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP
-#define COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP
-
-#include "vehicle_definitions.hpp"
+#ifndef MPC_NONLINEAR_INCLUDE_CDOB_DOB_CDOB_MODELS_HPP_
+#define MPC_NONLINEAR_INCLUDE_CDOB_DOB_CDOB_MODELS_HPP_
 
 #include <eigen3/Eigen/Core>
 #include <Eigen/StdVector>
-#include <eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixExponential.h>
+#include "cdob_dob/cdob_dob_definitions.hpp"
+#include "utils/nmpc_utils_eigen.hpp"
 
-#include <iostream>
-#include <memory>
-#include <string>
-#include <vector>
-
-namespace observers
+namespace ns_cdob
 {
 
 /*
@@ -49,8 +45,7 @@ class LinearVehicleModelsBase
 	// Constructors
 	LinearVehicleModelsBase() = default;
 
-	LinearVehicleModelsBase(
-		double const &wheelbase, double const &tau_steering, double const &dt);
+	LinearVehicleModelsBase(double const &wheelbase, double const &tau_steering, double const &dt);
 
 	// Destructors
 	virtual ~LinearVehicleModelsBase() = default;
@@ -59,19 +54,19 @@ class LinearVehicleModelsBase
 
 	void updateDisturbanceBw(double const &vr, double const &steer_r, double const &cos_sqr);
 
-	void simulateOneStep(
-		measurement_vector_t &y0, state_vector_t &x0, double const &u);
+	void simulateOneStep(measurement_vector_t &y0, state_vector_t &x0, double const &u);
 
-	void simulateOneStepZeroState(
-		measurement_vector_t &y0, state_vector_t &x0, double const &u);
+	void simulateOneStepZeroState(measurement_vector_t &y0, state_vector_t &x0, double const &u);
 
-	void updateInitialStates(
-		double const &ey, double const &eyaw, double const &steering, double const &vx,
-		double const &curvature);
+	void updateInitialStates(double const &ey,
+													 double const &eyaw,
+													 double const &steering,
+													 double const &vx,
+													 double const &curvature);
 
 	void discretisizeBilinear();
 	void discretisizeExact();
-	void getIdealRefSteering(double &ref_steering);
+	void getIdealRefSteering(double &ref_steering) const;
 
 	void printContinuousSystem();
 
@@ -82,7 +77,7 @@ class LinearVehicleModelsBase
 
 	[[nodiscard]] state_vector_t getInitialStates() const;
 
-	void evaluateNonlinearTermsForLyap(observers::state_vector_observer_t &thetas,
+	void evaluateNonlinearTermsForLyap(state_vector_observer_t &thetas,
 																		 measurement_vector_t const &y0) const;
 
 	/**
@@ -123,20 +118,20 @@ class LinearVehicleModelsBase
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
 void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::printContinuousSystem()
 {
-	ns_utils::print("Matrix A: ");
-	ns_eigen_utils::printEigenMat(Eigen::MatrixXd(A_));
+	ns_nmpc_utils::print("Matrix A: ");
+	ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(A_));
 
-	ns_utils::print("Matrix B: ");
-	ns_eigen_utils::printEigenMat(Eigen::MatrixXd(B_));
+	ns_nmpc_utils::print("Matrix B: ");
+	ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(B_));
 
-	ns_utils::print("Matrix Bw: ");
-	ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Bw_));
+	ns_nmpc_utils::print("Matrix Bw: ");
+	ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(Bw_));
 
-	ns_utils::print("Matrix C: ");
-	ns_eigen_utils::printEigenMat(Eigen::MatrixXd(C_));
+	ns_nmpc_utils::print("Matrix C: ");
+	ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(C_));
 
-	ns_utils::print("Matrix D: ");
-	ns_eigen_utils::printEigenMat(Eigen::MatrixXd(D_));
+	ns_nmpc_utils::print("Matrix D: ");
+	ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(D_));
 
 }
 
@@ -144,20 +139,20 @@ template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
 void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::printDiscreteSystem()
 {
 
-	ns_utils::print("Matrix Ad: ");
-	ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Ad_));
+	ns_nmpc_utils::print("Matrix Ad: ");
+	ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(Ad_));
 
-	ns_utils::print("Matrix Bd: ");
-	ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Bd_));
+	ns_nmpc_utils::print("Matrix Bd: ");
+	ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(Bd_));
 
-	ns_utils::print("Matrix Bwd: ");
-	ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Bwd_));
+	ns_nmpc_utils::print("Matrix Bwd: ");
+	ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(Bwd_));
 
-	ns_utils::print("Matrix Cd: ");
-	ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Cd_));
+	ns_nmpc_utils::print("Matrix Cd: ");
+	ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(Cd_));
 
-	ns_utils::print("Matrix Dd: ");
-	ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Dd_));
+	ns_nmpc_utils::print("Matrix Dd: ");
+	ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(Dd_));
 
 }
 
@@ -181,7 +176,7 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateState
 {
 
 	auto const &cos_sqr = std::cos(steer_r) * std::cos(steer_r);
-	auto &&L = wheelbase_;
+	auto const &L = wheelbase_;
 	/**
 	 * @brief
 	 * A matrix
@@ -377,7 +372,7 @@ void LinearVehicleModelsBase<STATE_DIM,
 
 }
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::getIdealRefSteering(double &ref_steering)
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::getIdealRefSteering(double &ref_steering) const
 {
 	ref_steering = atan(curvature_ * wheelbase_);
 }
@@ -404,7 +399,7 @@ void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::upd
 																																															const double &steer_r)
 {
 	auto const &cos_sqr = std::cos(steer_r) * std::cos(steer_r);
-	auto &&L = this->wheelbase_;
+	auto const &L = this->wheelbase_;
 	/**
 	 * @brief
 	 * A matrix
@@ -462,18 +457,17 @@ class LinearKinematicErrorModel : public LinearVehicleModelsBase<STATE_DIM, INPU
 
 };
 
-using ns_utils::toUType;
+using ns_nmpc_utils::toUType;
 
 // Observer model types.
-using linear_vehicle_model_t = LinearKinematicErrorModel<toUType(KinematicErrorDims::STATE_DIM),
-																												 toUType(KinematicErrorDims::INPUT_DIM),
-																												 toUType(KinematicErrorDims::MEASUREMENT_DIM)>;
+using linear_vehicle_model_t = LinearKinematicErrorModel<toUType(CDOB_KinematicErrorDims::STATE_DIM),
+																												 toUType(CDOB_KinematicErrorDims::INPUT_DIM),
+																												 toUType(CDOB_KinematicErrorDims::MEASUREMENT_DIM)>;
 
-using linear_state_observer_model_t = VehicleModelDisturbanceObserver<toUType(
-	StateObserverDims::STATE_DIM), toUType(StateObserverDims::INPUT_DIM),
+using linear_state_observer_model_t = VehicleModelDisturbanceObserver<toUType(StateObserverDims::STATE_DIM),
+																																			toUType(StateObserverDims::INPUT_DIM),
 																																			toUType(StateObserverDims::MEASUREMENT_DIM)>;
 
-} // namespace observers
+} // namespace ns_cdob
 
-
-#endif  // COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP
+#endif //MPC_NONLINEAR_INCLUDE_CDOB_DOB_CDOB_MODELS_HPP_

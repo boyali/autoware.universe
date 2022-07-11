@@ -35,7 +35,7 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 // Converts degree to radians.
-namespace ns_utils
+namespace ns_nmpc_utils
 {
 /**
  * @brief Saturates given values
@@ -344,6 +344,15 @@ bool isEqual(T a, T b)
 	return abs(a - b) < std::numeric_limits<T>::epsilon();
 }
 
-}  // namespace ns_utils
+/**
+ * @brief Fetching the underlying type from strongly typed Enum class.
+ * */
+template<typename E>
+constexpr auto toUType(E e) noexcept
+{
+	return static_cast<std::underlying_type_t<E>>(e);
+}
+
+}  // namespace ns_nmpc_utils
 
 #endif  // UTILS__NMPC_UTILS_HPP_

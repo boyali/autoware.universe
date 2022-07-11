@@ -17,7 +17,7 @@
 #include "utils/nmpc_utils.hpp"
 #include <vector>
 
-namespace ns_utils
+namespace ns_nmpc_utils
 {
 // Time methods.
 double tic()
@@ -106,4 +106,4 @@ void computeYawFromXY(const std::vector<T> &xvect, const std::vector<T> &yvect, 
 	}
 }
 
-}  // namespace ns_utils
+}  // namespace ns_nmpc_utils

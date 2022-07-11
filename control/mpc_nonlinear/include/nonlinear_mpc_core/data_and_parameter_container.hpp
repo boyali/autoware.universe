@@ -22,41 +22,46 @@
 #include "active_model.hpp"
 #include "nonlinear_mpc_core/nmpc_data_discretization.hpp"
 #include "nonlinear_mpc_core/nmpc_data_trajectory.hpp"
+#include "cdob_dob/cdob_dob_core.hpp"
 
 namespace ns_data
 {
 struct ParamsNMPCNode
 {
 	// Control implementation parameters
-	double control_frequency;
-	double control_period;
+	double control_frequency{};
+	double control_period{};
 
-	double input_delay_time;             // !<@brief input time delay.
-	size_t input_delay_discrete_nsteps;  // !<@brief discrete time delay steps.
+	double input_delay_time{};             // !<@brief input time delay.
+	size_t input_delay_discrete_nsteps{};  // !<@brief discrete time delay steps.
 
 	// Stop state parameters.
-	double stop_state_entry_ego_speed;
-	double stop_state_entry_target_speed;
-	double stop_state_keep_stopping_dist;
-	double will_stop_state_dist;
+	double stop_state_entry_ego_speed{};
+	double stop_state_entry_target_speed{};
+	double stop_state_keep_stopping_dist{};
+	double will_stop_state_dist{};
 
 	// Simulation model for planning simulator.
-	bool use_delay_sim_model;
-	bool predict_initial_states;
+	bool use_delay_sim_model{};
+	bool predict_initial_states{};
 
 	// For interpolator used in the prediction.
-	bool use_acceleration_inputs;
-	bool use_kalman;
+	bool use_acceleration_inputs{}; // parameters whether to use NMPC computed acc: Obsolete to be removed.
+	bool use_kalman{false};
 
 	// For trajectory initialization. Linear or LPV feedback trajectory initialization.
-	bool use_linear_trajectory_initialization;
+	bool use_linear_trajectory_initialization{};
 
 	// Use mpc controller or the feedback controllers.
-	bool use_mpc_controller;
-	size_t number_of_sqp_iterations;
+	bool use_mpc_controller{};
+	size_t number_of_sqp_iterations{};
 
 	// Vehicle parameters to keep in the node
-	double lr;
+	double lr{};
+
+	// CDOB DOB parameters.
+	bool use_cdob{false};
+	bool use_dob{false};
 
 };
 
@@ -84,23 +89,6 @@ struct ParamsOptimization
 {
 	ParamsOptimization()
 	{
-		// Constraints.
-		xupper.setZero();
-		xlower.setZero();
-		xupper_scaled.setZero();
-		xlower_scaled.setZero();
-
-		uupper.setZero();
-		ulower.setZero();
-		uupper_scaled.setZero();
-		ulower_scaled.setZero();
-
-		// Scaling ranges.
-		scaling_range = std::vector<double>(2, 0.0);
-		xmin_for_scaling.setZero();
-		xmax_for_scaling.setZero();
-		umin_for_scaling.setZero();
-		umax_for_scaling.setZero();
 
 		// Prepare the weight matrices.
 		Q.setIdentity();
@@ -111,36 +99,35 @@ struct ParamsOptimization
 		// Prepare the scaling matrix and vectors.
 		Sx.setIdentity();  // prepare state scaling diagonal matrix.
 		Su.setIdentity();  // prepare control scaling diagonal matrix.
-		Cx.setZero();      // prepare state centering column vector.
-		Cu.setZero();      // prepare control centering column vector.
 
 		// Prepare inverse scaling matrices.
 		Sx_inv.setIdentity();
 		Su_inv.setIdentity();
 	}
 
-	~ParamsOptimization() = default;
+	//~ParamsOptimization() = default;
 
 	/**
 	 * @brief State and control upper and lower bounds for the optimization algorithms.
 	 * Current states [xw, yw, psi, s, ey, e_yaw, v, delta] and controls [vx, steering]_inputs
 	 * */
-	Model::state_vector_t xupper;
-	Model::state_vector_t xlower;
-	Model::state_vector_t xupper_scaled;
-	Model::state_vector_t xlower_scaled;
+	Model::state_vector_t xupper{Model::state_vector_t::Zero()};
+	Model::state_vector_t xlower{Model::state_vector_t::Zero()};
+	Model::state_vector_t xupper_scaled{Model::state_vector_t::Zero()};
+	Model::state_vector_t xlower_scaled{Model::state_vector_t::Zero()};
 
-	Model::input_vector_t uupper;
-	Model::input_vector_t ulower;
-	Model::input_vector_t uupper_scaled;
-	Model::input_vector_t ulower_scaled;
+	Model::input_vector_t uupper{Model::input_vector_t::Zero()};
+	Model::input_vector_t ulower{Model::input_vector_t::Zero()};
+	Model::input_vector_t uupper_scaled{Model::input_vector_t::Zero()};
+	Model::input_vector_t ulower_scaled{Model::input_vector_t::Zero()};
 
 	/** @brief State and control scaling min, max values. */
-	std::vector<double> scaling_range;  // the range the variables scaled into [-1, 1] or any.
-	Model::state_vector_t xmin_for_scaling;
-	Model::state_vector_t xmax_for_scaling;
-	Model::input_vector_t umin_for_scaling;
-	Model::input_vector_t umax_for_scaling;
+	std::vector<double>
+		scaling_range{std::vector<double>(2, 0.0)};  // the range the variables scaled into [-1, 1] or any.
+	Model::state_vector_t xmin_for_scaling{Model::state_vector_t::Zero()};
+	Model::state_vector_t xmax_for_scaling{Model::state_vector_t::Zero()};
+	Model::input_vector_t umin_for_scaling{Model::input_vector_t::Zero()};
+	Model::input_vector_t umax_for_scaling{Model::input_vector_t::Zero()};
 
 	/** @brief State Q and control R weights for quadratic optimization. */
 	Model::state_diag_mat_t Q;     // !<@brief State weights [0, ... N-1]
@@ -154,10 +141,10 @@ struct ParamsOptimization
 	 * u = S_x * uhat + cu where u is scaled between [-1, 1]
 	 * */
 	Model::state_diag_mat_t Sx;  // Scaling state matrix
-	Model::state_vector_t Cx;
+	Model::state_vector_t Cx{Model::state_vector_t::Zero()};
 
 	Model::control_diag_mat_t Su;
-	Model::input_vector_t Cu;
+	Model::input_vector_t Cu{Model::input_vector_t::Zero()};
 
 	/** @brief For inverse scaling, xhat = Sxinv * (x-csclx) and control similarly. */
 	Model::state_diag_mat_t Sx_inv;
@@ -174,6 +161,19 @@ struct ParamsOptimization
 	double osqp_eps_rel{};
 	bool osqp_verbose{};
 	bool osqp_scaled_termination{};
+};
+
+struct ParamsCDOB
+{
+	int cdob_filt_order{1};
+	double cdob_filt_frq{10.};
+	double cdob_filt_damping{1.};
+
+	int dob_filt_order{2};
+	double dob_filt_frq{10.};
+	double dob_filt_damping{5.};
+
+	ns_cdob::sLyapMatrixVecs lyap_matsXY;
 };
 
 /**

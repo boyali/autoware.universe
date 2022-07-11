@@ -16,7 +16,6 @@
 
 #include "nonlinear_mpc_node/nonlinear_mpc_node.hpp"
 #include <algorithm>
-#include <cassert>
 #include <deque>
 #include <limits>
 #include <memory>
@@ -121,7 +120,7 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 
 	bspline_interpolator_ptr_ = std::make_unique<bspline_type_t>(0.5, true);
 	// bspline_interpolator_ptr_ =
-	// std::make_unique<ns_splines::BSplineSmoother>(ns_nmpc_interface::MPC_MAP_SMOOTHER_IN, 0.3);
+	// std::make_unique<ns_nmpc_splines::BSplineSmoother>(ns_nmpc_interface::MPC_MAP_SMOOTHER_IN, 0.3);
 
 	/**
 	 *  @brief assigns a Kalman filter to estimate the initial states.
@@ -140,85 +139,132 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 	// observer_speed_ = ns_filters::SimpleDisturbanceInputObserver(params_node_.observer_gain_speed);
 
 	// Vehicle motion finite state machine.
-	vehicle_motion_fsm_ = ns_states::VehicleMotionFSM(
-		params_node_.stop_state_entry_ego_speed, params_node_.stop_state_entry_target_speed,
-		params_node_.stop_state_keep_stopping_dist, params_node_.will_stop_state_dist);
+	vehicle_motion_fsm_ =
+		ns_states::VehicleMotionFSM(params_node_.stop_state_entry_ego_speed,
+																params_node_.stop_state_entry_target_speed,
+																params_node_.stop_state_keep_stopping_dist,
+																params_node_.will_stop_state_dist);
 
 	// Initialize the control input queue.
-	inputs_buffer_common_ = std::deque<std::array<double, 4>>(
-		params_node_.input_delay_discrete_nsteps, std::array<double, 4>());
+	inputs_buffer_common_ =
+		std::deque<std::array<double, 4>>(params_node_.input_delay_discrete_nsteps, std::array<double, 4>());
+
+	// Load CDOB DOB parameters and construct the CDOB - DOB objects
+	ns_data::ParamsCDOB params_cdob;
+	loadCDOB_DOB(params_cdob);
+
+	/**
+	* create observer and vehicle models for CDOB
+	* */
+
+	auto const &dt_cont = params_node_.control_period;
+	auto cdob_observer_model_ptr = std::make_shared<ns_cdob::linear_state_observer_model_t>(wheel_base_,
+																																													params_vehicle.steering_tau,
+																																													dt_cont);
+
+	auto cdob_vehicle_model_ptr = std::make_shared<ns_cdob::linear_vehicle_model_t>(wheel_base_,
+																																									params_vehicle.steering_tau,
+																																									dt_cont);
+
+	// Create CDOB
+	auto qfilter_lat_error_cdob = ns_cdob::get_nthOrderTF(params_cdob.cdob_filt_frq, params_cdob.cdob_filt_order);
+
+	cdob_compensator_ptr_ = ns_cdob::LateralCommunicationDelayCompensator_CDOB(cdob_observer_model_ptr,
+																																						 cdob_vehicle_model_ptr,
+																																						 qfilter_lat_error_cdob,
+																																						 params_cdob.lyap_matsXY,
+																																						 dt_cont);
+
+	// cdob_compensator_ptr_ = std::make_unique<ns_cdob::LateralCommunicationDelayCompensator_CDOB>(cdob_temp);
+
+	// Create DOB
+	int const remaining_order = params_cdob.dob_filt_order - 2;
+	auto qfilter_lat_error_dob = ns_cdob::get_nthOrderTFwithDampedPoles(params_cdob.dob_filt_frq,
+																																			remaining_order,
+																																			params_cdob.dob_filt_damping);
+
+	dob_compensator_ptr_ = ns_cdob::LateralDisturbanceCompensator_DOB(cdob_observer_model_ptr,
+																																		qfilter_lat_error_dob,
+																																		params_cdob.lyap_matsXY,
+																																		dt_cont);
+
+	// dob_compensator_ptr_ = std::make_unique<ns_cdob::LateralDisturbanceCompensator_DOB>(dob_temp);
+	// test if it loads and assigns.
+	//	cdob_compensator_ptr_->printLyapMatrices();
+	//	cdob_compensator_ptr_->printQfilterTFs();
+	//	dob_compensator_ptr_->printQfilterTFs();
 
 	// Initialize the timer.
 	initTimer(params_node_.control_period);
 
 	// DEBUG
-	//  ns_utils::print("\n\nVehicle parameters is loaded");
-	//  ns_utils::print("Wheelbase : ", params_vehicle.wheel_base);
-	//  ns_utils::print("lr to cog : ", params_vehicle.lr);
+	//  ns_nmpc_utils::print("\n\nVehicle parameters is loaded");
+	//  ns_nmpc_utils::print("Wheelbase : ", params_vehicle.wheel_base);
+	//  ns_nmpc_utils::print("lr to cog : ", params_vehicle.lr);
 
-	//  ns_utils::print("Steering tau : ", params_vehicle.steering_tau);
-	//  ns_utils::print("Speed tau : ", params_vehicle.speed_tau);
-	//  ns_utils::print("Node input delay : ", params_node_.input_delay_time);
-	//  ns_utils::print("Use delay model: ", params_vehicle.use_delay_model, "\n\n");
+	//  ns_nmpc_utils::print("Steering tau : ", params_vehicle.steering_tau);
+	//  ns_nmpc_utils::print("Speed tau : ", params_vehicle.speed_tau);
+	//  ns_nmpc_utils::print("Node input delay : ", params_node_.input_delay_time);
+	//  ns_nmpc_utils::print("Use delay model: ", params_vehicle.use_delay_model, "\n\n");
 
 	//  // Check if optimization parameters are read properly.
-	//  ns_utils::print("\nOptimization parameters: ");
-	//    ns_utils::print("'\nState weights Q ");
-	//    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Q));
+	//  ns_nmpc_utils::print("\nOptimization parameters: ");
+	//    ns_nmpc_utils::print("'\nState weights Q ");
+	//    ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Q));
 	//
-	//    ns_utils::print("\nState weights QN ");
-	//    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.QN));
+	//    ns_nmpc_utils::print("\nState weights QN ");
+	//    ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.QN));
 
-	//  ns_utils::print("\nControl weights R ");
-	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.R));
+	//  ns_nmpc_utils::print("\nControl weights R ");
+	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.R));
 
-	//  ns_utils::print("\nJerk weights Rj ");
-	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Rj));
+	//  ns_nmpc_utils::print("\nJerk weights Rj ");
+	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Rj));
 
-	//  ns_utils::print("\nxupper and lower ");
-	//  ns_eigen_utils::printEigenMat(params_optimization.xlower);
-	//  ns_eigen_utils::printEigenMat(params_optimization.xupper);
+	//  ns_nmpc_utils::print("\nxupper and lower ");
+	//  ns_nmpc_eigen_utils::printEigenMat(params_optimization.xlower);
+	//  ns_nmpc_eigen_utils::printEigenMat(params_optimization.xupper);
 
-	//  ns_utils::print("\nu_upper and lower ");
-	//  ns_eigen_utils::printEigenMat(params_optimization.ulower);
-	//  ns_eigen_utils::printEigenMat(params_optimization.uupper);
+	//  ns_nmpc_utils::print("\nu_upper and lower ");
+	//  ns_nmpc_eigen_utils::printEigenMat(params_optimization.ulower);
+	//  ns_nmpc_eigen_utils::printEigenMat(params_optimization.uupper);
 
-	//    ns_utils::print("\nScaling and scaling range, x, u ");
-	//    ns_eigen_utils::printEigenMat(params_optimization.xmin_for_scaling);
-	//    ns_eigen_utils::printEigenMat(params_optimization.xmax_for_scaling);
+	//    ns_nmpc_utils::print("\nScaling and scaling range, x, u ");
+	//    ns_nmpc_eigen_utils::printEigenMat(params_optimization.xmin_for_scaling);
+	//    ns_nmpc_eigen_utils::printEigenMat(params_optimization.xmax_for_scaling);
 
-	//  ns_eigen_utils::printEigenMat(params_optimization.umin_for_scaling);
-	//  ns_eigen_utils::printEigenMat(params_optimization.umax_for_scaling);
+	//  ns_nmpc_eigen_utils::printEigenMat(params_optimization.umin_for_scaling);
+	//  ns_nmpc_eigen_utils::printEigenMat(params_optimization.umax_for_scaling);
 
-	//  ns_utils::print_container(params_optimization.scaling_range);
+	//  ns_nmpc_utils::print_container(params_optimization.scaling_range);
 
-	//  ns_utils::print("Lyapunov Matrices Xs");
+	//  ns_nmpc_utils::print("Lyapunov Matrices Xs");
 	//  for (size_t k = 0; k < params_lpv.num_of_nonlinearities + 1; k++)
 	//  {
-	//  ns_eigen_utils::printEigenMat(params_lpv.lpvXcontainer[k]);
+	//  ns_nmpc_eigen_utils::printEigenMat(params_lpv.lpvXcontainer[k]);
 	//  }
 
-	//  ns_utils::print("Lyapunov Matrices Ys");
+	//  ns_nmpc_utils::print("Lyapunov Matrices Ys");
 	//  for (size_t k = 0; k < params_lpv.num_of_nonlinearities + 1; k++)
 	//  {
-	//  ns_eigen_utils::printEigenMat(params_lpv.lpvYcontainer[k]);
+	//  ns_nmpc_eigen_utils::printEigenMat(params_lpv.lpvYcontainer[k]);
 	//  }
 
 	//  // Check the if the scaling parameters are computed.
-	//  ns_utils::print("Scaling matrices and vectors Sx, Sx_inv, Su, Su_inv, Cx, Cu :");
-	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx));
-	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx_inv));
-	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su));
-	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su_inv));
-	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cx));
-	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cu));
+	//  ns_nmpc_utils::print("Scaling matrices and vectors Sx, Sx_inv, Su, Su_inv, Cx, Cu :");
+	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx));
+	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx_inv));
+	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su));
+	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su_inv));
+	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cx));
+	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cu));
 
-	//  ns_utils::print("Kalman filter parameters V, W, P : ");
-	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Vsqrt));
-	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Wsqrt));
-	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Psqrt));
+	//  ns_nmpc_utils::print("Kalman filter parameters V, W, P : ");
+	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Vsqrt));
+	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Wsqrt));
+	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Psqrt));
 
-	/*  ns_utils::print(
+	/*  ns_nmpc_utils::print(
 							"\nUnscented Kalman filter parameters alpha, beta, kappa : ", params_filters.ukf_alpha,
 							params_filters.ukf_beta, params_filters.ukf_kappa, "\n\n"); */
 
@@ -254,8 +300,8 @@ void NonlinearMPCNode::onTimer()
 	RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "Control frequency %g",
 																 params_node_.control_frequency);
 
-	// ns_utils::print("Control Frequency : ", params_node_.control_frequency);
-	// ns_utils::print("Logger string : ", get_logger().get_name());
+	// ns_nmpc_utils::print("Control Frequency : ", params_node_.control_frequency);
+	// ns_nmpc_utils::print("Logger string : ", get_logger().get_name());
 	// end of debug
 
 	// Update the current pose.
@@ -289,7 +335,7 @@ void NonlinearMPCNode::onTimer()
 	 * @brief MPC loop : THIS SCOPE is important to update and maintain the MPC_CORE object. The operations are in an
 	 * order.
 	 * */
-	double const &&timer_mpc_step = ns_utils::tic();
+	double const &&timer_mpc_step = ns_nmpc_utils::tic();
 
 	// Find the index of the prev and next waypoint.
 	findClosestPrevWayPointIdx();
@@ -306,10 +352,10 @@ void NonlinearMPCNode::onTimer()
 	vehicle_motion_fsm_.toggle(dist_v0_vnext);
 
 	// vehicle_motion_fsm_.printCurrentStateMsg();
-	//ns_utils::print("Distance, V0, Vnext ", dist_v0_vnext[0], dist_v0_vnext[1], dist_v0_vnext[2]);
+	//ns_nmpc_utils::print("Distance, V0, Vnext ", dist_v0_vnext[0], dist_v0_vnext[1], dist_v0_vnext[2]);
 
 	current_fsm_state_ = vehicle_motion_fsm_.getCurrentState();
-	// ns_utils::print("Finite state machine state numbers : ", ns_states::as_integer(current_fsm_state_));
+	// ns_nmpc_utils::print("Finite state machine state numbers : ", ns_states::as_integer(current_fsm_state_));
 
 	RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "\n[mpc_nonlinear] %s",
 																 vehicle_motion_fsm_.fsmMessage().c_str());
@@ -349,8 +395,8 @@ void NonlinearMPCNode::onTimer()
 	x0_predicted_.setZero();
 	nonlinear_mpc_controller_ptr_->getInitialState(x0_predicted_);
 
-	//  ns_utils::print("Initial state before prediction : ");
-	//  ns_eigen_utils::printEigenMat(x0_predicted_);
+	//  ns_nmpc_utils::print("Initial state before prediction : ");
+	//  ns_nmpc_eigen_utils::printEigenMat(x0_predicted_);
 
 	// If there is no input delay in the system, predict_initial_states is set to false automatically in the
 	// constructor.
@@ -365,8 +411,8 @@ void NonlinearMPCNode::onTimer()
 		predictDelayedInitialStateBy_MPCPredicted_Inputs(x0_predicted_);
 	}
 
-	//  ns_utils::print("Initial state after prediction : ");
-	//  ns_eigen_utils::printEigenMat(x0_predicted_);
+	//  ns_nmpc_utils::print("Initial state after prediction : ");
+	//  ns_nmpc_eigen_utils::printEigenMat(x0_predicted_);
 
 	// Update the initial state of the NMPCcore object.
 	nonlinear_mpc_controller_ptr_->updateInitialStates_x0(x0_predicted_);
@@ -404,7 +450,7 @@ void NonlinearMPCNode::onTimer()
 		}
 
 		// is_moving_state_ = true;
-		// ns_utils::print("the NMPC is initialized successfully  ...");
+		// ns_nmpc_utils::print("the NMPC is initialized successfully  ...");
 
 		// DEBUG
 		// Publish the predicted trajectories.
@@ -479,7 +525,7 @@ void NonlinearMPCNode::onTimer()
 		return;
 	}
 
-	//    ns_utils::print("the NMPC problem is solved ...");
+	//    ns_nmpc_utils::print("the NMPC problem is solved ...");
 
 	// Get MPC controls [acc, steering rate]
 	nonlinear_mpc_controller_ptr_->getControlSolutions(u_solution_);  // [acc, steering_rate]
@@ -520,12 +566,12 @@ void NonlinearMPCNode::onTimer()
 																				 control_cmd.lateral.steering_tire_rotation_rate    // steering value
 	};
 
-	//  ns_utils::print("\nControls put in the que :");
+	//  ns_nmpc_utils::print("\nControls put in the que :");
 	//
-	//  ns_utils::print("ax control", all_control_cmds[0]);
-	//  ns_utils::print("vx control", all_control_cmds[1]);
-	//  ns_utils::print("steering rate control", all_control_cmds[2]);
-	//  ns_utils::print("steering control", all_control_cmds[3]);
+	//  ns_nmpc_utils::print("ax control", all_control_cmds[0]);
+	//  ns_nmpc_utils::print("vx control", all_control_cmds[1]);
+	//  ns_nmpc_utils::print("steering rate control", all_control_cmds[2]);
+	//  ns_nmpc_utils::print("steering control", all_control_cmds[3]);
 
 	// Store the first control signal to be applied to the vehicle in the kalman
 	// control variable. input_buffer_[acc, vx, steering_rate, steering value]
@@ -538,19 +584,19 @@ void NonlinearMPCNode::onTimer()
 	inputs_buffer_common_.emplace_back(all_control_cmds);
 	// end of NMPC loop.
 
-	auto const &&current_mpc_solve_time_msec = ns_utils::toc(timer_mpc_step);
+	auto const &&current_mpc_solve_time_msec = ns_nmpc_utils::toc(timer_mpc_step);
 
 	// convert milliseconds to seconds.
 	auto &&current_mpc_solve_time_sec = current_mpc_solve_time_msec * 1e-3;
 	average_mpc_solve_time_ =
-		ns_utils::exponentialMovingAverage(average_mpc_solve_time_, 20, current_mpc_solve_time_sec);
+		ns_nmpc_utils::exponentialMovingAverage(average_mpc_solve_time_, 20, current_mpc_solve_time_sec);
 
 	// Set NMPC avg_mpc_computation_time.
 	nonlinear_mpc_controller_ptr_->setCurrentAvgMPCComputationTime(average_mpc_solve_time_);
 
-	ns_utils::print("\nOne step MPC step takes time to compute in milliseconds : ", current_mpc_solve_time_msec);
-	ns_utils::print("Average MPC solve time takes time to compute in milliseconds : ",
-									average_mpc_solve_time_ * 1000, "\n");
+	ns_nmpc_utils::print("\nOne step MPC step takes time to compute in milliseconds : ", current_mpc_solve_time_msec);
+	ns_nmpc_utils::print("Average MPC solve time takes time to compute in milliseconds : ",
+											 average_mpc_solve_time_ * 1000, "\n");
 
 	// ------------- END of the MPC loop. -------------
 	// Set Debug Marker next waypoint
@@ -561,8 +607,8 @@ void NonlinearMPCNode::onTimer()
 
 
 	// DEBUG
-	//  ns_utils::print("\nCurrent Pose : ");
-	//  ns_utils::print(
+	//  ns_nmpc_utils::print("\nCurrent Pose : ");
+	//  ns_nmpc_utils::print(
 	//    "x, y, z : ", current_pose_ptr_->pose.position.x, current_pose_ptr_->pose.position.y,
 	//    current_pose_ptr_->pose.position.z);
 	//
@@ -627,8 +673,8 @@ double NonlinearMPCNode::calcStopDistance(const size_t &prev_waypoint_index) con
 	}
 
 	// DEBUG
-	// ns_utils::print("\nStopping distance : ", stop_dist);
-	// ns_utils::print("prev waypoint ", prev_waypoint_index);
+	// ns_nmpc_utils::print("\nStopping distance : ", stop_dist);
+	// ns_nmpc_utils::print("prev waypoint ", prev_waypoint_index);
 	// end of debug
 
 	return stop_dist;
@@ -720,7 +766,7 @@ void NonlinearMPCNode::publishPerformanceVariables(ControlCmdMsg const &control_
 	pub_nmpc_performance_->publish(nmpc_performance_vars_);
 
 	// DEBUG
-	// ns_utils::print("IN performance vars Current FSMstate");
+	// ns_nmpc_utils::print("IN performance vars Current FSMstate");
 }
 
 ControlCmdMsg NonlinearMPCNode::getInitialControlCommand() const
@@ -773,7 +819,7 @@ void NonlinearMPCNode::loadNodeParameters()
 	params_node_.will_stop_state_dist = declare_parameter<double>("will_stop_state_dist", 2.0);
 
 	// Compute the discrete input_delay steps.
-	if (ns_utils::isEqual(params_node_.input_delay_time, 0.))
+	if (ns_nmpc_utils::isEqual(params_node_.input_delay_time, 0.))
 	{
 		params_node_.input_delay_discrete_nsteps = 1;
 		params_node_.predict_initial_states = false;
@@ -1161,7 +1207,7 @@ void NonlinearMPCNode::onTrajectory(const TrajectoryMsg::SharedPtr msg)
 	// DEBUG
 	RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "In the node onTrajectory() ");
 
-	//  ns_utils::print("The current number of trajectory is : ", current_trajectory_size_);
+	//  ns_nmpc_utils::print("The current number of trajectory is : ", current_trajectory_size_);
 	// end of DEBUG
 }
 
@@ -1235,9 +1281,7 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
 	// !<-@brief [s, x, y, z ] size [MPC_MAP_SMOOTHER_IN x 4]
 	map_matrix_in_t reference_map_sxyz(map_matrix_in_t::Zero());
 
-	bool const &&is_resampled = makeFixedSizeMat_sxyz(mpc_traj_raw, reference_map_sxyz);
-
-	if (!is_resampled)
+	if (bool const &&is_resampled = makeFixedSizeMat_sxyz(mpc_traj_raw, reference_map_sxyz);!is_resampled)
 	{
 		RCLCPP_ERROR(get_logger(), "[mpc_nonlinear - resampleRawTrajectoryToAFixedSize ] Could not interpolate the "
 															 "coordinates ...");
@@ -1249,10 +1293,10 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
 	bool const &&is_smoothed = createSmoothTrajectoriesWithCurvature(mpc_traj_raw, reference_map_sxyz);
 
 	// DEBUG
-	//  ns_utils::print("Eigen resampled map : ");
-	//  ns_eigen_utils::printEigenMat(reference_map_sxyz);
-	//  ns_utils::print("Raw trajectory time vector : ");
-	//  ns_utils::print_container(mpc_traj_raw.t);
+	//  ns_nmpc_utils::print("Eigen resampled map : ");
+	//  ns_nmpc_eigen_utils::printEigenMat(reference_map_sxyz);
+	//  ns_nmpc_utils::print("Raw trajectory time vector : ");
+	//  ns_nmpc_utils::print_container(mpc_traj_raw.t);
 	// end of debug
 
 	return is_smoothed;
@@ -1266,7 +1310,7 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVec
 	* to mpc interpolator_spline_pws size (ns_nmpc_interface::MPC_MAP_SMOOTHER_OUT).
 	*/
 
-	size_t const &map_in_fixed_size = ns_splines::MPC_MAP_SMOOTHER_IN;
+	size_t const &map_in_fixed_size = ns_nmpc_splines::MPC_MAP_SMOOTHER_IN;
 
 	// Create a new distance vector.
 	double const &initial_distance = mpc_traj_raw.s.front();  // s0
@@ -1276,17 +1320,17 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVec
 	* @brief A new coordinate vector for a fixed size trajectories.
 	**/
 	std::vector<double> s_fixed_size_coordinate =
-		ns_utils::linspace(initial_distance, final_distance, map_in_fixed_size);
+		ns_nmpc_utils::linspace(initial_distance, final_distance, map_in_fixed_size);
 
 	/**
 	* @brief Create a piece-wise cubic interpolator for x and y.
 	* */
-	ns_splines::InterpolatingSplinePCG interpolator_spline_pws(3);  // piecewise
+	ns_nmpc_splines::InterpolatingSplinePCG interpolator_spline_pws(3);  // piecewise
 
 	/**
 	* @brief Create a piece-wise linear interpolator for the rest of the coordinates.
 	* */
-	ns_splines::InterpolatingSplinePCG interpolator_linear(1);
+	ns_nmpc_splines::InterpolatingSplinePCG interpolator_linear(1);
 
 	// Interpolated vector containers.
 	std::vector<double> xinterp;
@@ -1313,38 +1357,38 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVec
 
 	// DEBUG
 	//
-	// ns_utils::print("mpc raw : s ");
-	// ns_utils::print_container(mpc_traj_raw.s);
-	// ns_utils::print("Fixed size s ");
-	// ns_utils::print_container(s_fixed_size_coordinate);
+	// ns_nmpc_utils::print("mpc raw : s ");
+	// ns_nmpc_utils::print_container(mpc_traj_raw.s);
+	// ns_nmpc_utils::print("Fixed size s ");
+	// ns_nmpc_utils::print_container(s_fixed_size_coordinate);
 	//
-	// ns_utils::print("mpc raw : t ");
-	// ns_utils::print_container(mpc_traj_raw.t);
+	// ns_nmpc_utils::print("mpc raw : t ");
+	// ns_nmpc_utils::print_container(mpc_traj_raw.t);
 	//
-	// ns_utils::print("mpc raw : x ");
-	// ns_utils::print_container(mpc_traj_raw.x);
+	// ns_nmpc_utils::print("mpc raw : x ");
+	// ns_nmpc_utils::print_container(mpc_traj_raw.x);
 	//
-	// ns_utils::print("Fixed size : x ");
-	// ns_utils::print_container(xinterp);
+	// ns_nmpc_utils::print("Fixed size : x ");
+	// ns_nmpc_utils::print_container(xinterp);
 	//
-	// ns_utils::print("mpc raw : y ");
-	// ns_utils::print_container(mpc_traj_raw.y);
+	// ns_nmpc_utils::print("mpc raw : y ");
+	// ns_nmpc_utils::print_container(mpc_traj_raw.y);
 	//
-	// ns_utils::print("Fixed size : y ");
-	// ns_utils::print_container(yinterp);
+	// ns_nmpc_utils::print("Fixed size : y ");
+	// ns_nmpc_utils::print_container(yinterp);
 	//
-	// ns_utils::print("mpc raw : z ");
-	// ns_utils::print_container(mpc_traj_raw.z);
+	// ns_nmpc_utils::print("mpc raw : z ");
+	// ns_nmpc_utils::print_container(mpc_traj_raw.z);
 	//
-	// ns_utils::print("Fixed size : z ");
-	// ns_utils::print_container(zinterp);
+	// ns_nmpc_utils::print("Fixed size : z ");
+	// ns_nmpc_utils::print_container(zinterp);
 	//
-	// ns_utils::print("mpc raw : yaw ");
-	// ns_utils::print_container(mpc_traj_raw.yaw);
+	// ns_nmpc_utils::print("mpc raw : yaw ");
+	// ns_nmpc_utils::print_container(mpc_traj_raw.yaw);
 	//
 
-	// ns_utils::print("mpc raw .vx ");
-	// ns_utils::print_container(mpc_traj_raw.vx);
+	// ns_nmpc_utils::print("mpc raw .vx ");
+	// ns_nmpc_utils::print_container(mpc_traj_raw.vx);
 
 	// end of DEBUG
 
@@ -1358,7 +1402,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 	auto const &&EPS = std::numeric_limits<double>::epsilon();
 
 	// Maps the raw trajectory into the MPC trajectory.
-	size_t const &map_out_mpc_size = ns_splines::MPC_MAP_SMOOTHER_OUT;  // to the NMPC
+	size_t const &map_out_mpc_size = ns_nmpc_splines::MPC_MAP_SMOOTHER_OUT;  // to the NMPC
 	ns_data::MPCdataTrajectoryVectors mpc_traj_smoothed(map_out_mpc_size);
 
 	Eigen::MatrixXd interpolated_map;  // [s, x, y, z]
@@ -1370,13 +1414,13 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 	 * @brief compute the first derivatives; xdot, ydot for the curvature computations.
 	 * rdot = [xdot, ydot]
 	 * */
-	Eigen::MatrixXd rdot_interp(static_cast<Eigen::Index>(ns_splines::MPC_MAP_SMOOTHER_OUT), 2);
+	Eigen::MatrixXd rdot_interp(static_cast<Eigen::Index>(ns_nmpc_splines::MPC_MAP_SMOOTHER_OUT), 2);
 
 	/**
 	 * @brief compute the second derivatives; xddot, yddot for the curvature computations.
 	 * rddot = [xddot, yddot]
 	 * */
-	Eigen::MatrixXd rddot_interp(static_cast<Eigen::Index>(ns_splines::MPC_MAP_SMOOTHER_OUT), 2);
+	Eigen::MatrixXd rddot_interp(static_cast<Eigen::Index>(ns_nmpc_splines::MPC_MAP_SMOOTHER_OUT), 2);
 
 	// Get the first and second derivatives of [x, y]
 	auto const &xy_data = fixed_map_ref_sxyz.middleCols(1, 2);  // start from x and gets xy
@@ -1384,7 +1428,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 	bspline_interpolator_ptr_->getSecondDerivative(xy_data, rddot_interp);
 
 	/** @brief Compute the curvature column. */
-	auto const &&curvature = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);
+	auto const &&curvature = ns_nmpc_eigen_utils::Curvature(rdot_interp, rddot_interp);
 
 	// Create smooth MPCtraj given, s, x, y, v and curvature.
 	std::vector<double> s_smooth_vect(interpolated_map.col(0).data(), interpolated_map.col(0).data() + map_out_mpc_size);
@@ -1398,7 +1442,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 	std::vector<double> v_smooth_vect;
 
 	// Prepare a linear interpolator.
-	ns_splines::InterpolatingSplinePCG interpolator_linear(1);
+	ns_nmpc_splines::InterpolatingSplinePCG interpolator_linear(1);
 
 	// Call signature (monotonic s or t, x(s, or t), new s or t series, interpolated x_hat)
 	interpolator_linear.Interpolate(mpc_traj_raw.s, mpc_traj_raw.vx, s_smooth_vect, v_smooth_vect);
@@ -1411,8 +1455,8 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 		yaw_smooth_vect.at(k) = std::atan2(rdot_interp(k, 1), rdot_interp(k, 0));
 	}
 
-	// ns_utils::computeYawFromXY(x_smooth_vect, y_smooth_vect, yaw_smooth_vect);
-	// ns_utils::interp1d_map_linear(
+	// ns_nmpc_utils::computeYawFromXY(x_smooth_vect, y_smooth_vect, yaw_smooth_vect);
+	// ns_nmpc_utils::interp1d_map_linear(
 	// mpc_traj_raw.s, mpc_traj_raw.yaw, s_smooth_vect, yaw_smooth_vect, true);
 
 	std::vector<double> curvature_smooth_vect(curvature.col(0).data(), curvature.col(0).data() + map_out_mpc_size);
@@ -1448,7 +1492,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 	acc_smooth_vect.rend()[-1] = acc_smooth_vect.rend()[-2]; //emplace_back(acc_smooth_vect.back());
 
 	// Convert smooth yaw to a monotonic series
-	ns_utils::convertEulerAngleToMonotonic(&yaw_smooth_vect);
+	ns_nmpc_utils::convertEulerAngleToMonotonic(&yaw_smooth_vect);
 
 	// Create the rest of the smooth vectors; handled in MPCtraj class.
 	mpc_traj_smoothed.setTrajectoryCoordinate('s', s_smooth_vect);
@@ -1470,8 +1514,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 	nonlinear_mpc_controller_ptr_->setMPCtrajectorySmoothVectorsPtr(mpc_traj_smoothed);
 
 	// Verify size
-	auto const &&size_of_mpc_smooth = mpc_traj_smoothed.size();
-	if (size_of_mpc_smooth == 0)
+	if (auto const &&size_of_mpc_smooth = mpc_traj_smoothed.size();size_of_mpc_smooth == 0)
 	{
 		RCLCPP_ERROR(get_logger(), "[mpc_nonlinear - resampleRawTrajectoryToAFixedSize ]  smooth "
 															 "MPCdataTrajectoryVectors  are not assigned properly ... ");
@@ -1481,10 +1524,9 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 	/**
 	 *  @brief update curvature spline interpolator data. This interpolator is used all across the node modules.
 	 * */
-	auto const &&is_updated =
-		interpolator_curvature_pws.Initialize(mpc_traj_smoothed.s, mpc_traj_smoothed.curvature);
 
-	if (!is_updated)
+	if (auto const &&is_updated =
+			interpolator_curvature_pws.Initialize(mpc_traj_smoothed.s, mpc_traj_smoothed.curvature);!is_updated)
 	{
 		RCLCPP_ERROR(get_logger(), "[mpc_nonlinear - resampling] Could not update the point-wise curvature "
 															 "interpolator_spline_pws  data ...");
@@ -1493,63 +1535,63 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 
 	// DEBUG
 	//
-	// ns_utils::print("Interpolated map");
-	// ns_eigen_utils::printEigenMat(interpolated_map);
+	// ns_nmpc_utils::print("Interpolated map");
+	// ns_nmpc_eigen_utils::printEigenMat(interpolated_map);
 	//
-	// ns_utils::print("rdot");
-	// ns_eigen_utils::printEigenMat(rdot_interp.topRows(10));
-	// ns_eigen_utils::printEigenMat(rdot_interp.bottomRows(10));
+	// ns_nmpc_utils::print("rdot");
+	// ns_nmpc_eigen_utils::printEigenMat(rdot_interp.topRows(10));
+	// ns_nmpc_eigen_utils::printEigenMat(rdot_interp.bottomRows(10));
 	//
-	// ns_utils::print("rddot");
-	// ns_eigen_utils::printEigenMat(rdot_interp.topRows(10));
-	// ns_eigen_utils::printEigenMat(rdot_interp.bottomRows(10));
+	// ns_nmpc_utils::print("rddot");
+	// ns_nmpc_eigen_utils::printEigenMat(rdot_interp.topRows(10));
+	// ns_nmpc_eigen_utils::printEigenMat(rdot_interp.bottomRows(10));
 
-	// ns_utils::print("MPC raw vs smooth data members, s, t, x, y, z, vx, acc");
+	// ns_nmpc_utils::print("MPC raw vs smooth data members, s, t, x, y, z, vx, acc");
 
-	//  ns_utils::print("\n Raw s -------------- \n");
-	//  ns_utils::print_container(mpc_traj_raw.s);
+	//  ns_nmpc_utils::print("\n Raw s -------------- \n");
+	//  ns_nmpc_utils::print_container(mpc_traj_raw.s);
 
-	//  ns_utils::print("\n Smooth s -------------- \n");
-	//  ns_utils::print_container(mpc_traj_smoothed.s);
+	//  ns_nmpc_utils::print("\n Smooth s -------------- \n");
+	//  ns_nmpc_utils::print_container(mpc_traj_smoothed.s);
 
-	//  ns_utils::print("\n Raw t -------------- \n");
-	//  ns_utils::print_container(mpc_traj_raw.t);
+	//  ns_nmpc_utils::print("\n Raw t -------------- \n");
+	//  ns_nmpc_utils::print_container(mpc_traj_raw.t);
 
-	//  ns_utils::print("\n Smooth t -------------- \n");
-	//  ns_utils::print_container(mpc_traj_raw.t);
+	//  ns_nmpc_utils::print("\n Smooth t -------------- \n");
+	//  ns_nmpc_utils::print_container(mpc_traj_raw.t);
 
-	//  ns_utils::print("\n Raw x -------------- \n");
-	//  ns_utils::print_container(mpc_traj_raw.x);
+	//  ns_nmpc_utils::print("\n Raw x -------------- \n");
+	//  ns_nmpc_utils::print_container(mpc_traj_raw.x);
 
-	//  ns_utils::print("\n Smooth x -------------- \n");
-	//  ns_utils::print_container(mpc_traj_smoothed.x);
+	//  ns_nmpc_utils::print("\n Smooth x -------------- \n");
+	//  ns_nmpc_utils::print_container(mpc_traj_smoothed.x);
 
-	//  ns_utils::print("\n Raw y -------------- \n");
-	//  ns_utils::print_container(mpc_traj_raw.y);
+	//  ns_nmpc_utils::print("\n Raw y -------------- \n");
+	//  ns_nmpc_utils::print_container(mpc_traj_raw.y);
 
-	//  ns_utils::print("\n Smooth y -------------- \n");
-	//  ns_utils::print_container(mpc_traj_smoothed.y);
+	//  ns_nmpc_utils::print("\n Smooth y -------------- \n");
+	//  ns_nmpc_utils::print_container(mpc_traj_smoothed.y);
 
-	//  ns_utils::print("\n Raw z -------------- \n");
-	//  ns_utils::print_container(mpc_traj_raw.z);
+	//  ns_nmpc_utils::print("\n Raw z -------------- \n");
+	//  ns_nmpc_utils::print_container(mpc_traj_raw.z);
 
-	//  ns_utils::print("\n Smooth z -------------- \n");
-	//  ns_utils::print_container(mpc_traj_smoothed.z);
+	//  ns_nmpc_utils::print("\n Smooth z -------------- \n");
+	//  ns_nmpc_utils::print_container(mpc_traj_smoothed.z);
 
-	// ns_utils::print("\n Reference yaw ------------ \n");
-	// ns_utils::print_container(mpc_traj_raw.yaw);
+	// ns_nmpc_utils::print("\n Reference yaw ------------ \n");
+	// ns_nmpc_utils::print_container(mpc_traj_raw.yaw);
 
-	// ns_utils::print("\n Smooth yaw ------------ \n");
-	// ns_utils::print_container(mpc_traj_smoothed.yaw);
+	// ns_nmpc_utils::print("\n Smooth yaw ------------ \n");
+	// ns_nmpc_utils::print_container(mpc_traj_smoothed.yaw);
 
-	//  ns_utils::print("\nvx -------------- ");
-	//  ns_utils::print_container(mpc_traj_smoothed.vx);
+	//  ns_nmpc_utils::print("\nvx -------------- ");
+	//  ns_nmpc_utils::print_container(mpc_traj_smoothed.vx);
 	//
-	// ns_utils::print("\nacc -------------- ");
-	// ns_utils::print_container(mpc_traj_smoothed.acc);
+	// ns_nmpc_utils::print("\nacc -------------- ");
+	// ns_nmpc_utils::print_container(mpc_traj_smoothed.acc);
 	//
-	//  ns_utils::print("\ncurvature -------------- ");
-	//  ns_utils::print_container(mpc_traj_smoothed.curvature);
+	//  ns_nmpc_utils::print("\ncurvature -------------- ");
+	//  ns_nmpc_utils::print_container(mpc_traj_smoothed.curvature);
 	//
 	// end of DEBUG
 
@@ -1615,16 +1657,17 @@ void NonlinearMPCNode::findClosestPrevWayPointIdx()
 								 current_trajectory_ptr_->points.cbegin(), std::back_inserter(projection_distances_ds),
 								 f_projection_dist);
 
-	//    // Lambda function to replace negative numbers with a large number.
-	//    auto fnc_check_if_negative = [](auto const &x) -> double
-	//    {
-	//        return x < 0 ? std::numeric_limits<double>::max() : x;
-	//    };
+	// Lambda function to replace negative numbers with a large number.
+	// auto fnc_check_if_negative = [](auto const &x) -> double
+	// {
+	// 	return x < 0 ? std::numeric_limits<double>::max() : x;
+	// };
 
-	//    /**
-	//     * We compute the projection of vehicle vector to all the waypoints on their intervals, and get the smallest
-	//     * positive distance which gives the waypoint that the vehicle has just left behind.
-	//     * */
+	/**
+	* We compute the projection of vehicle vector to all the waypoints on their intervals, and get the smallest
+	* positive distance which gives the waypoint that the vehicle has just left behind.
+	* */
+
 	//    std::vector<double> projections_distances_all_positive;
 	//    std::transform(projection_distances_ds.cbegin(), projection_distances_ds.cend(),
 	//                   std::back_inserter(projections_distances_all_positive), fnc_check_if_negative);
@@ -1664,23 +1707,23 @@ void NonlinearMPCNode::findClosestPrevWayPointIdx()
 	idx_next_wp_ptr_ = std::make_unique<size_t>(idx_next_wp_temp);
 
 	// DEBUG
-	// ns_utils::print("\nPrevious and next index points idx : ", *idx_prev_wp_ptr_, *idx_next_wp_ptr_);
-	// ns_utils::print("Current trajectory size : ", current_trajectory_ptr_->points.size());
-	//    ns_utils::print("Projection distances : \n");
-	//    ns_utils::print_container(projection_distances_ds);
+	// ns_nmpc_utils::print("\nPrevious and next index points idx : ", *idx_prev_wp_ptr_, *idx_next_wp_ptr_);
+	// ns_nmpc_utils::print("Current trajectory size : ", current_trajectory_ptr_->points.size());
+	//    ns_nmpc_utils::print("Projection distances : \n");
+	//    ns_nmpc_utils::print_container(projection_distances_ds);
 
-	//    ns_utils::print("Positive distances : \n");
-	//    ns_utils::print_container(projections_distances_all_positive);
+	//    ns_nmpc_utils::print("Positive distances : \n");
+	//    ns_nmpc_utils::print_container(projections_distances_all_positive);
 
 	//    auto x0 = current_trajectory_ptr_->points.at(0).pose.position.x;
 	//    auto y0 = current_trajectory_ptr_->points.at(0).pose.position.y;
 	//
-	//    ns_utils::print("Current relative vehicle position x, y ", current_COG_pose_ptr_->pose.position.x - x0,
+	//    ns_nmpc_utils::print("Current relative vehicle position x, y ", current_COG_pose_ptr_->pose.position.x - x0,
 	//                    current_COG_pose_ptr_->pose.position.y - y0, "\n");
 
 	//    for (auto const &point: current_trajectory_ptr_->points)
 	//    {
-	//        ns_utils::print("Current trajectory points x, y ", point.pose.position.x - x0, point.pose.position.y - y0);
+	//        ns_nmpc_utils::print("Current trajectory points x, y ", point.pose.position.x - x0, point.pose.position.y - y0);
 	//    }
 
 	// end of DEBUG
@@ -1721,7 +1764,7 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
 	double const &&dz_prev_to_next = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).pose.position.z -
 		current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.z;
 
-	double const &&dyaw_prev_to_next = ns_utils::angleDistance(next_yaw, prev_yaw);
+	double const &&dyaw_prev_to_next = ns_nmpc_utils::angleDistance(next_yaw, prev_yaw);
 
 	// Create a vector from p0 (prev) --> p1 (to next wp).
 	std::vector<double> v_prev_to_next_wp{dx_prev_to_next, dy_prev_to_next};
@@ -1765,7 +1808,7 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
 	 * */
 
 	// clamp signature (val, lower, upper)
-	double const &&ratio_t = ns_utils::clamp(ds_distance_p0_to_p_interp / magnitude_p0_to_p1, 0.0, 1.0);
+	double const &&ratio_t = ns_nmpc_utils::clamp(ds_distance_p0_to_p_interp / magnitude_p0_to_p1, 0.0, 1.0);
 
 	// InterpolateInCoordinates pose.position and pose.orientation
 	interpolated_traj_point.pose.position.x = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.x +
@@ -1778,9 +1821,9 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
 		ratio_t * dz_prev_to_next;
 
 	// InterpolateInCoordinates the yaw angle of pi : interpolated waypoint
-	double const &&interp_yaw_angle = ns_utils::wrapToPi(prev_yaw + ratio_t * dyaw_prev_to_next);
+	double const &&interp_yaw_angle = ns_nmpc_utils::wrapToPi(prev_yaw + ratio_t * dyaw_prev_to_next);
 
-	geometry_msgs::msg::Quaternion orient_msg = ns_utils::createOrientationMsgfromYaw(interp_yaw_angle);
+	geometry_msgs::msg::Quaternion orient_msg = ns_nmpc_utils::createOrientationMsgfromYaw(interp_yaw_angle);
 	interpolated_traj_point.pose.orientation = orient_msg;
 
 	// InterpolateInCoordinates the Vx longitudinal speed.
@@ -1807,12 +1850,12 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
 	current_interpolated_traj_point_ptr_ = std::make_unique<TrajectoryPoint>(interpolated_traj_point);
 
 	// DEBUG
-	// ns_utils::print("\nCurrent s0, current t0 : ", current_s0_, current_t0_);
-	// ns_utils::print("\nPrevious, current and next yaw_angles : ", prev_yaw, interp_yaw_angle, next_yaw);
+	// ns_nmpc_utils::print("\nCurrent s0, current t0 : ", current_s0_, current_t0_);
+	// ns_nmpc_utils::print("\nPrevious, current and next yaw_angles : ", prev_yaw, interp_yaw_angle, next_yaw);
 
-	// ns_utils::print("\nPrev, target, next trajectory speeds : ", vx_prev, vx_target, vx_next);
-	// ns_utils::print("ds, p0p1_mag, ratio_ : ", ds_distance_p0_to_p_interp, magnitude_p0_to_p1, ratio_t);
-	// ns_utils::print(" Current vehicle speed, target speed : ", current_velocity_ptr_->twist.twist.linear.x, vx_target);
+	// ns_nmpc_utils::print("\nPrev, target, next trajectory speeds : ", vx_prev, vx_target, vx_next);
+	// ns_nmpc_utils::print("ds, p0p1_mag, ratio_ : ", ds_distance_p0_to_p_interp, magnitude_p0_to_p1, ratio_t);
+	// ns_nmpc_utils::print(" Current vehicle speed, target speed : ", current_velocity_ptr_->twist.twist.linear.x, vx_target);
 
 	// end of debug.
 }
@@ -1849,12 +1892,13 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
 
 	// computeLateralError(trajectory_ref_xy, vehicle_xy).
 	auto const
-		&error_ey = ns_utils::computeLateralError(interpolated_pose_xy, current_pose_xy, /*current_pose_xy for rear axle*/
-																							vehicle_yaw_angle);
+		&error_ey =
+		ns_nmpc_utils::computeLateralError(interpolated_pose_xy, current_pose_xy, /*current_pose_xy for rear axle*/
+																			 vehicle_yaw_angle);
 
 	// Compute yaw angle error.
-	//double const &heading_yaw_error = -1.0 * ns_utils::angleDistance(vehicle_yaw_angle, target_yaw);
-	// double const &heading_yaw_error = 1.0 * ns_utils::wrapToPi(vehicle_yaw_angle - target_yaw);
+	//double const &heading_yaw_error = -1.0 * ns_nmpc_utils::angleDistance(vehicle_yaw_angle, target_yaw);
+	// double const &heading_yaw_error = 1.0 * ns_nmpc_utils::wrapToPi(vehicle_yaw_angle - target_yaw);
 
 	auto const &heading_yaw_error = autoware::common::helper_functions::wrap_angle(vehicle_yaw_angle - target_yaw);
 
@@ -1867,18 +1911,18 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
 	//        nonlinear_mpc_controller_ptr_->getVirtualCarDistance();
 
 	// DEBUG
-	//  ns_utils::print("Interpolated pose x : ", current_interpolated_traj_point_ptr_->pose.position.x);
-	//  ns_utils::print("Interpolated pose y : ", current_interpolated_traj_point_ptr_->pose.position.y);
-	//  ns_utils::print("Interpolated pose z : ", current_interpolated_traj_point_ptr_->pose.position.z);
+	//  ns_nmpc_utils::print("Interpolated pose x : ", current_interpolated_traj_point_ptr_->pose.position.x);
+	//  ns_nmpc_utils::print("Interpolated pose y : ", current_interpolated_traj_point_ptr_->pose.position.y);
+	//  ns_nmpc_utils::print("Interpolated pose z : ", current_interpolated_traj_point_ptr_->pose.position.z);
 	//
 
-	//    ns_utils::print("\nSmooth Target Yaw vs interpolated yaw  : ", target_yaw,
+	//    ns_nmpc_utils::print("\nSmooth Target Yaw vs interpolated yaw  : ", target_yaw,
 	//                    tf2::getYaw(current_interpolated_traj_point_ptr_->pose.orientation));
 
-	// ns_utils::print("Vehicle yaw : ", vehicle_yaw_angle);
+	// ns_nmpc_utils::print("Vehicle yaw : ", vehicle_yaw_angle);
 
-	//    ns_utils::print("\nLateral error e_y   : ", error_ey);
-	//    ns_utils::print("Heading error e_psi : ", heading_yaw_error);
+	//    ns_nmpc_utils::print("\nLateral error e_y   : ", error_ey);
+	//    ns_nmpc_utils::print("Heading error e_psi : ", heading_yaw_error);
 
 	// end of DEBUG
 	std::array<double, 2> const error_states{error_ey, 1.0 * heading_yaw_error};
@@ -1910,10 +1954,8 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 	x0_initial_states_(7) = static_cast<double>(current_steering_ptr_->steering_tire_angle);  // steering state
 
 	// compute the current curvature and store it.
-	auto const &&could_interpolate =
-		interpolator_curvature_pws.Interpolate(current_s0_, current_curvature_k0_);
-
-	if (!could_interpolate)
+	if (auto const &&could_interpolate =
+			interpolator_curvature_pws.Interpolate(current_s0_, current_curvature_k0_);!could_interpolate)
 	{
 		RCLCPP_ERROR(get_logger(), "[mpc_nonlinear] Could not interpolate the curvature in the initial state update "
 															 "method ...");
@@ -1977,10 +2019,10 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 	nmpc_performance_vars_.lateral_velocity = x0_kalman_est_(8);
 
 	// DEBUG
-	// ns_utils::print("Initial states : ");
-	// ns_eigen_utils::printEigenMat(x0_initial_states_);
-	// ns_utils::print("Kalman estimate: ");
-	// ns_eigen_utils::printEigenMat(x0_kalman_est_);
+	// ns_nmpc_utils::print("Initial states : ");
+	// ns_nmpc_eigen_utils::printEigenMat(x0_initial_states_);
+	// ns_nmpc_utils::print("Kalman estimate: ");
+	// ns_nmpc_eigen_utils::printEigenMat(x0_kalman_est_);
 	// end of DEBUG
 }
 
@@ -2003,9 +2045,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
 		double vxk{};                 // to interpolate the target speed (virtual car speed).
 
 		// set the interpolator re-using_coefficients=true. The spline data is updated in the onTime().
-		auto const &&could_interpolate = interpolator_curvature_pws.Interpolate(sd0, kappad0);
-
-		if (!could_interpolate)
+		if (auto const &&could_interpolate = interpolator_curvature_pws.Interpolate(sd0, kappad0);!could_interpolate)
 		{
 			RCLCPP_ERROR(get_logger(), "[nonlinear_mpc - predict initial state]: spline interpolator failed to compute  the  "
 																 "coefficients ...");
@@ -2018,7 +2058,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
 
 		params(0) = kappad0;
 		params(1) = vxk;
-		// ns_utils::print("Spline point interpolation could interpolate? :", could_interpolate);
+		// ns_nmpc_utils::print("Spline point interpolation could interpolate? :", could_interpolate);
 
 		// Use kappa estimated to call simulate method of mpc. The delay time-step is
 		// computed with the sampling time step: params_node_.control_period
@@ -2053,8 +2093,8 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
 	//    }
 
 	// DEBUG
-	//  ns_utils::print("virtual car distance : ");
-	//  ns_utils::print_container(virtual_car_distance_state_vect);
+	//  ns_nmpc_utils::print("virtual car distance : ");
+	//  ns_nmpc_utils::print_container(virtual_car_distance_state_vect);
 	// end of debug
 }
 
@@ -2096,15 +2136,15 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_TrajPlanner_Speeds(Model::st
 		}
 
 		// InterpolateInCoordinates the target v0, v1 on the trajectory.
-		ns_utils::interp1d_linear(tbase_vx_base[0], /*time vector*/
-															tbase_vx_base[1], /*vx speed vector*/
-															td0,              /*current simulation time*/
-															v0);
+		ns_nmpc_utils::interp1d_linear(tbase_vx_base[0], /*time vector*/
+																	 tbase_vx_base[1], /*vx speed vector*/
+																	 td0,              /*current simulation time*/
+																	 v0);
 
-		ns_utils::interp1d_linear(tbase_vx_base[0],
-															tbase_vx_base[1],
-															td0 + params_node_.control_period, /*next simulation time*/
-															v1);
+		ns_nmpc_utils::interp1d_linear(tbase_vx_base[0],
+																	 tbase_vx_base[1],
+																	 td0 + params_node_.control_period, /*next simulation time*/
+																	 v1);
 
 		params(0) = kappad0;
 		params(1) = v0;
@@ -2192,8 +2232,8 @@ visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectory
 
 		marker_poses.pose.position.z = 0.0;
 
-		auto const &&yaw_angle = ns_utils::wrapToPi(td.X.at(k)(2));
-		marker_poses.pose.orientation = ns_utils::getQuaternionFromYaw(yaw_angle);
+		auto const &&yaw_angle = ns_nmpc_utils::wrapToPi(td.X.at(k)(2));
+		marker_poses.pose.orientation = ns_nmpc_utils::getQuaternionFromYaw(yaw_angle);
 		marker_array.markers.emplace_back(marker_poses);
 	}
 
@@ -2211,10 +2251,8 @@ void NonlinearMPCNode::publishPredictedTrajectories(std::string const &ns, std::
 	std::array<double, 2> const xy0{current_COG_pose_ptr_->pose.position.x, current_COG_pose_ptr_->pose.position.y};
 
 	// Create visualization array for the predicted trajectory.
-	auto visualization_prediction_markers = createPredictedTrajectoryMarkers(ns, header_id, xy0, td);
-
-	// Publish.
-	if (!visualization_prediction_markers.markers.empty())
+	if (auto visualization_prediction_markers =
+			createPredictedTrajectoryMarkers(ns, header_id, xy0, td);!visualization_prediction_markers.markers.empty())
 	{
 		pub_debug_predicted_traj_->publish(visualization_prediction_markers);
 	}
@@ -2245,7 +2283,7 @@ void NonlinearMPCNode::setCurrentCOGPose(geometry_msgs::msg::PoseStamped const &
 	double const &&vehicle_yaw_angle = tf2::getYaw(ps.pose.orientation);
 
 	// Compute the COG pose.
-	auto const &&tangent_vec_of_vehicle = ns_utils::getTangentVector(vehicle_yaw_angle);
+	auto const &&tangent_vec_of_vehicle = ns_nmpc_utils::getTangentVector(vehicle_yaw_angle);
 
 	/**
 	 * @brief offset error computations from rear to the center of gravity.
@@ -2329,6 +2367,46 @@ std::array<double, 3> NonlinearMPCNode::getDistanceEgoTargetSpeeds() const
 
 	// state machine toggle(argument -> [distance_to_stop, vcurrent, vnext])
 	return std::array<double, 3>{distance_to_stopping_point, current_vel, target_vel};
+}
+void NonlinearMPCNode::loadCDOB_DOB(ns_data::ParamsCDOB &params_cdob)
+{
+	// Load CDOB - DOB parameters
+	// Control parameters.
+	params_cdob.cdob_filt_order = declare_parameter<int>("cdob_order", 1);
+	params_cdob.cdob_filt_frq = declare_parameter<double>("cdob_frq", 10.);
+	// auto cdob_damping = declare_parameter<double>("cdob_damping", 10.);
+
+	params_cdob.dob_filt_order = declare_parameter<int>("dob_order", 2);
+	params_cdob.dob_filt_frq = declare_parameter<double>("dob_frq", 2.);
+	params_cdob.dob_filt_damping = declare_parameter<double>("dob_damping", 5.);
+
+	// Read Lyaps
+	auto &lyap_matsXY = params_cdob.lyap_matsXY;
+
+	// Load the state observer Lyapunov matrices.
+	std::string labelX_tag = "Xo";  // No delay nodel for steering and longitudinal speed
+	std::string labelY_tag = "Yo";
+
+	for (size_t k = 0; k < ns_cdob::cx_NUMBER_OF_LYAP_MATS; k++)
+	{
+		auto labelX = labelX_tag + std::to_string(k + 1);
+
+		auto tempvX = declare_parameter<std::vector<double> >(labelX);
+		auto tempX = ns_cdob::state_matrix_observer_t::Map(tempvX.data());
+		lyap_matsXY.vXs.emplace_back(tempX);
+
+		auto labelY = labelY_tag + std::to_string(k + 1);
+		auto tempvY = declare_parameter<std::vector<double> >(labelY);
+		auto tempY = ns_cdob::measurement_matrix_observer_t::Map(tempvY.data());
+
+		lyap_matsXY.vYs.emplace_back(tempY);
+
+		// Debug
+		//		ns_nmpc_utils::print("In LoadCDOB ...");
+		//		ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(tempX));
+		//		ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(tempY));
+	}
+
 }
 
 } //namespace ns_mpc_nonlinear

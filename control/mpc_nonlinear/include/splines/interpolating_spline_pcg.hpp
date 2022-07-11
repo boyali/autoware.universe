@@ -27,7 +27,7 @@
 #include "utils/nmpc_utils.hpp"
 #include "utils/nmpc_utils_eigen.hpp"
 
-namespace ns_splines
+namespace ns_nmpc_splines
 {
 /*
  * An expanded version of the spline interpolator used in the Autoware. We use matrix containers
@@ -141,5 +141,5 @@ class InterpolatingSplinePCG
 	[[nodiscard]] double evaluatePolynomial(double const &ti, std::vector<double> const &coeffs) const;
 };
 
-}  // namespace ns_splines
+}  // namespace ns_nmpc_splines
 #endif  // SPLINES__INTERPOLATING_SPLINE_PCG_HPP_

@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include <algorithm>
+
 #include <functional>
 #include <splines/bsplines_interpolator.hpp>
 #include <vector>
 
-ns_splines::BSplineInterpolator::BSplineInterpolator(size_t base_signal_length,
-																										 size_t new_length,
-																										 double num_of_knots_ratio,
-																										 bool compute_derivatives)
+ns_nmpc_splines::BSplineInterpolator::BSplineInterpolator(size_t base_signal_length,
+																													size_t new_length,
+																													double num_of_knots_ratio,
+																													bool compute_derivatives)
 	: n_base_points_(base_signal_length),
 		new_npoints_(new_length),
 		knots_ratio_(num_of_knots_ratio),
@@ -40,7 +40,7 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(size_t base_signal_length,
 
 	// Create knot points.
 	// nknots_ = static_cast<Eigen::size_t>(static_cast<double>(base_signal_length) * num_of_knots_ratio);
-	knots_vec_ = ns_utils::linspace<double>(0, 1, nknots_);
+	knots_vec_ = ns_nmpc_utils::linspace<double>(0, 1, nknots_);
 
 	// Create the basis matrix from tvec_base to compute basis matrices for the base data.
 	// Number of polynomials items of  four + knots [1, t, t**2, t**3, (t-ki)**3, ....]
@@ -129,14 +129,14 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(size_t base_signal_length,
 	}
 }
 
-ns_splines::BSplineInterpolator::BSplineInterpolator(
+ns_nmpc_splines::BSplineInterpolator::BSplineInterpolator(
 	Eigen::MatrixXd const &tvec_base, Eigen::MatrixXd const &tvec_new, double num_of_knots_ratio,
 	bool compute_derivatives) : knots_ratio_(num_of_knots_ratio), compute_derivatives_{compute_derivatives}
 {
 	//  std::cout << "Normed tvec : \n";
-	//  ns_eigen_utils::printEigenMat(tvec_base);
+	//  ns_nmpc_eigen_utils::printEigenMat(tvec_base);
 	//  std::cout << "Normed new tvec : \n";
-	//  ns_eigen_utils::printEigenMat(tvec_new);
+	//  ns_nmpc_eigen_utils::printEigenMat(tvec_new);
 
 	std::vector<double> tvec_std(tvec_new.data(), tvec_new.data() + tvec_new.size());
 	auto isIncreasing_it = std::adjacent_find(tvec_std.begin(), tvec_std.end(), std::greater_equal<>());
@@ -161,16 +161,17 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
 																										 { return x / max_tvec_base; }));
 
 	//  std::cout << "Normed tvec : \n";
-	//  ns_eigen_utils::printEigenMat(tvec_base_normed);
+	//  ns_nmpc_eigen_utils::printEigenMat(tvec_base_normed);
 	//
 	//  std::cout << "Normed new tvec : \n";
-	//  ns_eigen_utils::printEigenMat(tvec_new_normed);
+	//  ns_nmpc_eigen_utils::printEigenMat(tvec_new_normed);
 
 	// Create knot points.
 	nknots_ = static_cast<size_t>(static_cast<double>(tvec_base_normed.size()) * num_of_knots_ratio);
-	knots_vec_ = ns_utils::linspace<double>(tvec_base_normed(0), tvec_base_normed(tvec_base_normed.rows() - 1), nknots_);
+	knots_vec_ =
+		ns_nmpc_utils::linspace<double>(tvec_base_normed(0), tvec_base_normed(tvec_base_normed.rows() - 1), nknots_);
 
-	//  ns_utils::print_container(knots_vec_);
+	//  ns_nmpc_utils::print_container(knots_vec_);
 	// Create the basis matrix from tvec_base to compute basis matrices for the base data.
 	// Number of polynomials 4 + knots [1, t, t**2, t**3, (t-ki)**3, ....]
 
@@ -223,7 +224,7 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
 
 		// createBasesMatrix(tvec_base_normed, basis_mat, basis_mat_dd);
 		// if we use second derivative as regularization.
-		// ns_eigen_utils::printEigenMat(basis_mat_dd);
+		// ns_nmpc_eigen_utils::printEigenMat(basis_mat_dd);
 		// Compute the new interpolation base matrices. The coefficients computed
 		// for the ybase and new bases.
 		// y, y', y" = B, B', B" @ coeff_base.
@@ -249,7 +250,7 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
 		// singularity arises. We need use identity matrix for regularization.
 		// solveByQR(basis_mat, basis_mat_dd);
 
-		// ns_eigen_utils::printEigenMat(projection_mat_base_);
+		// ns_nmpc_eigen_utils::printEigenMat(projection_mat_base_);
 
 		// Set Interpolating projection matrices
 		projection_mat_w_new_base_ = new_basis_mat * projection_mat_base_;
@@ -262,7 +263,7 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
  *  Create a basis matrix for the polynomial approximation. Basis matrix is parametrized by t, B = B(t)
  *
  * */
-void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &tvec, Eigen::MatrixXd &basis_mat)
+void ns_nmpc_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &tvec, Eigen::MatrixXd &basis_mat)
 {
 	/**
 	 *     bspline_primitive = lambda t, knots: [1., t, t ** 2, t ** 3] + \
@@ -288,7 +289,7 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &t
 
 		// std::cout << ki << " knot " << std::endl;
 	}
-	//  ns_eigen_utils::printEigenMat(basis_mat);
+	//  ns_nmpc_eigen_utils::printEigenMat(basis_mat);
 }
 
 /**
@@ -297,9 +298,9 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &t
  *  regularize the curvature approximation. D = Bdd is second derivative of
  *  the base polynomial matrix.
  * */
-void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &tvec,
-																												Eigen::MatrixXd &basis_mat,
-																												Eigen::MatrixXd &regularization_mat_dd)
+void ns_nmpc_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &tvec,
+																														 Eigen::MatrixXd &basis_mat,
+																														 Eigen::MatrixXd &regularization_mat_dd)
 {
 	/**
 	 *     bspline_primitive = lambda t, knots: [1., t, t ** 2, t ** 3] + \
@@ -344,7 +345,7 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &t
 																																	}));
 	}
 
-	//  ns_eigen_utils::printEigenMat(regularization_mat_dd);
+	//  ns_nmpc_eigen_utils::printEigenMat(regularization_mat_dd);
 	//  int a = 1;
 }
 
@@ -361,10 +362,10 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &t
  *
  * */
 
-void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &tvec,
-																												Eigen::MatrixXd &basis_mat,
-																												Eigen::MatrixXd &basis_dmat,
-																												Eigen::MatrixXd &basis_ddmat)
+void ns_nmpc_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &tvec,
+																														 Eigen::MatrixXd &basis_mat,
+																														 Eigen::MatrixXd &basis_dmat,
+																														 Eigen::MatrixXd &basis_ddmat)
 {
 	/**
 	 * bspline_primitive = lambda t, knots: [1., t, t ** 2, t ** 3] + \
@@ -399,8 +400,8 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &t
 	 *
 	 * */
 
-	//  ns_eigen_utils::printEigenMat(tvec);
-	//  ns_eigen_utils::printEigenMat(basis_dmat);
+	//  ns_nmpc_eigen_utils::printEigenMat(tvec);
+	//  ns_nmpc_eigen_utils::printEigenMat(basis_dmat);
 
 	basis_ddmat.leftCols(2).setZero();    // [0, 0]
 	basis_ddmat.col(2).setConstant(2.0);  // [0, 0, 2]
@@ -436,12 +437,12 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &t
 																												}));
 	}
 
-	//  ns_eigen_utils::printEigenMat(basis_dmat);
+	//  ns_nmpc_eigen_utils::printEigenMat(basis_dmat);
 	//  int a = 1;
 }
 
-void ns_splines::BSplineInterpolator::solveByDemmlerReisch(Eigen::MatrixXd const &basis_mat,
-																													 Eigen::MatrixXd const &penalizing_mat_D)
+void ns_nmpc_splines::BSplineInterpolator::solveByDemmlerReisch(Eigen::MatrixXd const &basis_mat,
+																																Eigen::MatrixXd const &penalizing_mat_D)
 {
 	// To be computed in the constructor.
 	/**
@@ -464,9 +465,9 @@ void ns_splines::BSplineInterpolator::solveByDemmlerReisch(Eigen::MatrixXd const
 	Eigen::MatrixXd &&R = cholRRT.matrixL();  // Take the square root of (B&T@B + eps*D) = R^T@R
 	Eigen::MatrixXd &&Rinv = R.inverse();
 
-	//  ns_eigen_utils::printEigenMat(Dc);
-	//  ns_eigen_utils::printEigenMat(Bc);
-	//  ns_eigen_utils::printEigenMat(Rinv);
+	//  ns_nmpc_eigen_utils::printEigenMat(Dc);
+	//  ns_nmpc_eigen_utils::printEigenMat(Bc);
+	//  ns_nmpc_eigen_utils::printEigenMat(Rinv);
 
 	// Compute SVD
 	Eigen::JacobiSVD<Eigen::MatrixXd> svd(Rinv.transpose() * Dc * Rinv, Eigen::ComputeFullU | Eigen::ComputeFullV);
@@ -494,11 +495,11 @@ void ns_splines::BSplineInterpolator::solveByDemmlerReisch(Eigen::MatrixXd const
 		A.transpose();                       // y_interp = A(A^T@A + )
 }
 
-void ns_splines::BSplineInterpolator::InterpolateInCoordinates(const Eigen::MatrixXd &ybase,
-																															 Eigen::MatrixXd &data_tobe_interpolated) const
+void ns_nmpc_splines::BSplineInterpolator::InterpolateInCoordinates(const Eigen::MatrixXd &ybase,
+																																		Eigen::MatrixXd &data_tobe_interpolated) const
 {
 	//  std::cout << "ybase passed " << std::endl;
-	//  ns_eigen_utils::printEigenMat(ybase);
+	//  ns_nmpc_eigen_utils::printEigenMat(ybase);
 
 	// Standardize or normalize the data and restore back.
 	auto numcols = static_cast<size_t>(ybase.cols());
@@ -520,14 +521,14 @@ void ns_splines::BSplineInterpolator::InterpolateInCoordinates(const Eigen::Matr
 																												 { return x / colmax; });
 	}
 
-	//  ns_eigen_utils::printEigenMat(ybase);
-	//  ns_eigen_utils::printEigenMat(ybase_normalized);
-	//  ns_eigen_utils::printEigenMat(projection_mat_w_new_base_);
+	//  ns_nmpc_eigen_utils::printEigenMat(ybase);
+	//  ns_nmpc_eigen_utils::printEigenMat(ybase_normalized);
+	//  ns_nmpc_eigen_utils::printEigenMat(projection_mat_w_new_base_);
 
 	auto &&normalized_interpolated_data = projection_mat_w_new_base_ * ybase_normalized;
 	data_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
 
-	//  ns_eigen_utils::printEigenMat(normalized_interpolated_data);
+	//  ns_nmpc_eigen_utils::printEigenMat(normalized_interpolated_data);
 	for (auto k = 0; k < numcols; k++)
 	{
 		auto const &colmax = colmaxvec[k];
@@ -535,18 +536,18 @@ void ns_splines::BSplineInterpolator::InterpolateInCoordinates(const Eigen::Matr
 																																									{ return x * colmax; });
 	}
 
-	//  ns_eigen_utils::printEigenMat(data_tobe_interpolated);
+	//  ns_nmpc_eigen_utils::printEigenMat(data_tobe_interpolated);
 
 	// If we want to skip normalization procedures above, just use the
 	// line below and comment out all the previous lines.
 	//  data_tobe_interpolated = projection_mat_w_new_base_ * ybase;
 }
 
-void ns_splines::BSplineInterpolator::solveByQR(Eigen::MatrixXd const &basis_mat,
-																								Eigen::MatrixXd const &penalizing_mat_D)
+void ns_nmpc_splines::BSplineInterpolator::solveByQR(Eigen::MatrixXd const &basis_mat,
+																										 Eigen::MatrixXd const &penalizing_mat_D)
 {
 	Eigen::MatrixXd lambdaD = lambda_ * penalizing_mat_D;
-	auto AD = ns_eigen_utils::vstack<double>(basis_mat, lambdaD);
+	auto AD = ns_nmpc_eigen_utils::vstack<double>(basis_mat, lambdaD);
 
 	// Take QR
 	Eigen::HouseholderQR<Eigen::MatrixXd> qrAD(AD);
@@ -564,12 +565,12 @@ void ns_splines::BSplineInterpolator::solveByQR(Eigen::MatrixXd const &basis_mat
 	auto &&Rinv = R.inverse();
 	auto RinvQ1T = Rinv * Q1.transpose();
 
-	//  ns_eigen_utils::printEigenMat(RinvQ1T);
+	//  ns_nmpc_eigen_utils::printEigenMat(RinvQ1T);
 	projection_mat_base_ = basis_mat * RinvQ1T;
 }
 
-void ns_splines::BSplineInterpolator::getFirstDerivative(const Eigen::MatrixXd &ybase,
-																												 Eigen::MatrixXd &data_dot_tobe_interpolated)
+void ns_nmpc_splines::BSplineInterpolator::getFirstDerivative(const Eigen::MatrixXd &ybase,
+																															Eigen::MatrixXd &data_dot_tobe_interpolated)
 {
 	if (!compute_derivatives_)
 	{
@@ -598,8 +599,8 @@ void ns_splines::BSplineInterpolator::getFirstDerivative(const Eigen::MatrixXd &
 																												 { return x / colmax; });
 	}
 
-	//  ns_eigen_utils::printEigenMat(ybase);
-	//  ns_eigen_utils::printEigenMat(ybase_normalized);
+	//  ns_nmpc_eigen_utils::printEigenMat(ybase);
+	//  ns_nmpc_eigen_utils::printEigenMat(ybase_normalized);
 
 	auto &&normalized_interpolated_data = projection_mat_w_new_base_dot_ * ybase_normalized;
 	data_dot_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
@@ -616,8 +617,8 @@ void ns_splines::BSplineInterpolator::getFirstDerivative(const Eigen::MatrixXd &
 	// data_dot_tobe_interpolated = projection_mat_w_new_base_ * ybase;
 }
 
-void ns_splines::BSplineInterpolator::getSecondDerivative(const Eigen::MatrixXd &ybase,
-																													Eigen::MatrixXd &data_dot_dot_tobe_interpolated)
+void ns_nmpc_splines::BSplineInterpolator::getSecondDerivative(const Eigen::MatrixXd &ybase,
+																															 Eigen::MatrixXd &data_dot_dot_tobe_interpolated)
 {
 	if (!compute_derivatives_)
 	{
@@ -649,8 +650,8 @@ void ns_splines::BSplineInterpolator::getSecondDerivative(const Eigen::MatrixXd 
 																 { return x / colmax; });
 	}
 
-	//  ns_eigen_utils::printEigenMat(ybase);
-	//  ns_eigen_utils::printEigenMat(ybase_normalized);
+	//  ns_nmpc_eigen_utils::printEigenMat(ybase);
+	//  ns_nmpc_eigen_utils::printEigenMat(ybase_normalized);
 
 	auto &&normalized_interpolated_data = projection_mat_w_new_base_dot_dot_ * ybase_normalized;
 	data_dot_dot_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());

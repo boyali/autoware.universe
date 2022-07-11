@@ -29,7 +29,7 @@
 	<depend>autoware_auto_system_msgs</depend>
 	<depend>autoware_auto_vehicle_msgs</depend>
 
-	<!--    <depend>autoware_control_toolbox</depend>-->
+	<depend>autoware_control_toolbox</depend>
 	<depend>motion_common</depend>
 	<depend>tier4_autoware_utils</depend>
 	<depend>visualization_msgs</depend>

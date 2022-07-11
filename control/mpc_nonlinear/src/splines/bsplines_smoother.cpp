@@ -18,17 +18,17 @@
 #include <algorithm>
 #include <vector>
 
-ns_splines::BSplineSmoother::BSplineSmoother(size_t base_signal_length,
-																						 double num_of_knots_ratio)
+ns_nmpc_splines::BSplineSmoother::BSplineSmoother(size_t base_signal_length,
+																									double num_of_knots_ratio)
 	: npoints_{base_signal_length}, knots_ratio_{num_of_knots_ratio}
 {
 	// Build Basis Matrix to be used in the penalized Least Squares.
 	// We keep te same dimension for smoothed and base signals.
-	auto tvec = ns_utils::linspace<double>(0, 1, npoints_);
+	auto tvec = ns_nmpc_utils::linspace<double>(0, 1, npoints_);
 
 	// Create knot points.
 	nknots_ = static_cast<Eigen::Index>(static_cast<double>(base_signal_length) * knots_ratio_);
-	knots_vec_ = ns_utils::linspace<double>(0, 1, nknots_);
+	knots_vec_ = ns_nmpc_utils::linspace<double>(0, 1, nknots_);
 
 	// Create the basis matrix from tvec and knots_vec with its first and second derivatives.
 	Eigen::MatrixXd basis_mat(npoints_, nknots_);
@@ -60,10 +60,10 @@ ns_splines::BSplineSmoother::BSplineSmoother(size_t base_signal_length,
 	//  solveByQR(basis_mat, basis_dmat, basis_ddmat);
 }
 
-void ns_splines::BSplineSmoother::createBasesMatrix(const std::vector<double> &tvec,
-																										Eigen::MatrixXd &basis_mat,
-																										Eigen::MatrixXd &basis_dmat,
-																										Eigen::MatrixXd &basis_ddmat)
+void ns_nmpc_splines::BSplineSmoother::createBasesMatrix(const std::vector<double> &tvec,
+																												 Eigen::MatrixXd &basis_mat,
+																												 Eigen::MatrixXd &basis_dmat,
+																												 Eigen::MatrixXd &basis_ddmat)
 {
 	for (auto k = 0; k < npoints_; k++)
 	{
@@ -76,14 +76,14 @@ void ns_splines::BSplineSmoother::createBasesMatrix(const std::vector<double> &t
 		basis_dmat.row(k) = Eigen::Map<Eigen::MatrixXd>(kk[1].data(), 1, static_cast<int32_t>(kk[1].size()));
 		basis_ddmat.row(k) = Eigen::Map<Eigen::MatrixXd>(kk[2].data(), 1, static_cast<int32_t>(kk[2].size()));
 	}
-	//  ns_eigen_utils::printEigenMat(basis_mat);
-	//  ns_eigen_utils::printEigenMat(basis_ddmat);
+	//  ns_nmpc_eigen_utils::printEigenMat(basis_mat);
+	//  ns_nmpc_eigen_utils::printEigenMat(basis_ddmat);
 }
 
-void ns_splines::BSplineSmoother::createBasesMatrix(Eigen::MatrixXd const &tvec,
-																										Eigen::MatrixXd &basis_mat,
-																										Eigen::MatrixXd &basis_dmat,
-																										Eigen::MatrixXd &basis_ddmat)
+void ns_nmpc_splines::BSplineSmoother::createBasesMatrix(Eigen::MatrixXd const &tvec,
+																												 Eigen::MatrixXd &basis_mat,
+																												 Eigen::MatrixXd &basis_dmat,
+																												 Eigen::MatrixXd &basis_ddmat)
 {
 	auto new_size = tvec.rows();
 	for (auto k = 0; k < new_size; k++)
@@ -99,7 +99,7 @@ void ns_splines::BSplineSmoother::createBasesMatrix(Eigen::MatrixXd const &tvec,
 	}
 }
 
-std::vector<std::vector<double>> ns_splines::BSplineSmoother::basisRowsWithDerivatives(const double &ti)
+std::vector<std::vector<double>> ns_nmpc_splines::BSplineSmoother::basisRowsWithDerivatives(const double &ti)
 {
 	std::vector<std::vector<double>> row_vectors{{1., ti}, {0., 1.}, {0., 0.}};
 
@@ -116,7 +116,7 @@ std::vector<std::vector<double>> ns_splines::BSplineSmoother::basisRowsWithDeriv
 	return row_vectors;
 }
 
-std::vector<double> ns_splines::BSplineSmoother::fPlusCube(double const &ti, double const &ki) const
+std::vector<double> ns_nmpc_splines::BSplineSmoother::fPlusCube(double const &ti, double const &ki) const
 {
 	auto it_final = std::prev(knots_vec_.cend());
 	auto it_prev_final = std::prev(it_final);
@@ -144,9 +144,9 @@ std::vector<double> ns_splines::BSplineSmoother::fPlusCube(double const &ti, dou
 	return std::vector<double>{dk0 - dK0, dk1 - dK1, dk2 - dK2};
 }
 
-void ns_splines::BSplineSmoother::solveByDemmlerReisch(Eigen::MatrixXd &basis_mat,
-																											 Eigen::MatrixXd &basis_dmat,
-																											 Eigen::MatrixXd &basis_ddmat)
+void ns_nmpc_splines::BSplineSmoother::solveByDemmlerReisch(Eigen::MatrixXd &basis_mat,
+																														Eigen::MatrixXd &basis_dmat,
+																														Eigen::MatrixXd &basis_ddmat)
 {
 	// Using the polynomial basis, obtain the projection matrix.
 	auto Dc = basis_ddmat.transpose() * basis_ddmat;  // for minimum curvature smoothing penalization matrix.
@@ -157,9 +157,9 @@ void ns_splines::BSplineSmoother::solveByDemmlerReisch(Eigen::MatrixXd &basis_ma
 	Eigen::MatrixXd &&R = cholRRT.matrixL();
 	Eigen::MatrixXd Rinv = R.inverse();
 
-	//  ns_eigen_utils::printEigenMat(Dc);
-	//  ns_eigen_utils::printEigenMat(Bc);
-	//  ns_eigen_utils::printEigenMat(Rinv);
+	//  ns_nmpc_eigen_utils::printEigenMat(Dc);
+	//  ns_nmpc_eigen_utils::printEigenMat(Bc);
+	//  ns_nmpc_eigen_utils::printEigenMat(Rinv);
 
 	// Compute SVD
 	Eigen::JacobiSVD<Eigen::MatrixXd> svd(Rinv.transpose() * Dc * Rinv, Eigen::ComputeFullU | Eigen::ComputeFullV);
@@ -171,12 +171,12 @@ void ns_splines::BSplineSmoother::solveByDemmlerReisch(Eigen::MatrixXd &basis_ma
 	auto A = basis_mat * Rinv * svd.matrixU();
 
 	//  std::cout << "Diagonal Matrix \n";
-	//  ns_eigen_utils::printEigenMat(Dc);
-	//  ns_eigen_utils::printEigenMat(Sdiag);
-	//  ns_eigen_utils::printEigenMat(A);
-	//  ns_eigen_utils::printEigenMat(Rinv);
-	//  ns_eigen_utils::printEigenMat(svd.matrixU());
-	//  ns_eigen_utils::printEigenMat(svd.matrixV());
+	//  ns_nmpc_eigen_utils::printEigenMat(Dc);
+	//  ns_nmpc_eigen_utils::printEigenMat(Sdiag);
+	//  ns_nmpc_eigen_utils::printEigenMat(A);
+	//  ns_nmpc_eigen_utils::printEigenMat(Rinv);
+	//  ns_nmpc_eigen_utils::printEigenMat(svd.matrixU());
+	//  ns_nmpc_eigen_utils::printEigenMat(svd.matrixV());
 
 	// To be computed in the constructor.
 	/**
@@ -195,21 +195,21 @@ void ns_splines::BSplineSmoother::solveByDemmlerReisch(Eigen::MatrixXd &basis_ma
 }
 
 // Direct interpolation skips computation of coefficients.
-void ns_splines::BSplineSmoother::InterpolateInCoordinates(const Eigen::MatrixXd &ybase,
-																													 Eigen::MatrixXd &data_tobe_interpolated)
+void ns_nmpc_splines::BSplineSmoother::InterpolateInCoordinates(const Eigen::MatrixXd &ybase,
+																																Eigen::MatrixXd &data_tobe_interpolated)
 {
 	// ynew = A {A_T A + lambda diag(s)}−1 A^T ybase =
 	// projection_mat_wb_ * ybase where {A_T A + lambda diag(s)}−1 are coeffs.
 	data_tobe_interpolated = projection_mat_wb_ * ybase;
 }
 
-void ns_splines::BSplineSmoother::solveByQR(Eigen::MatrixXd &basis_mat,
-																						Eigen::MatrixXd &basis_dmat,
-																						Eigen::MatrixXd &basis_ddmat)
+void ns_nmpc_splines::BSplineSmoother::solveByQR(Eigen::MatrixXd &basis_mat,
+																								 Eigen::MatrixXd &basis_dmat,
+																								 Eigen::MatrixXd &basis_ddmat)
 {
 
 	Eigen::MatrixXd lambdaD = lambda_ * basis_ddmat;
-	auto AD = ns_eigen_utils::vstack<double>(basis_mat, lambdaD);
+	auto AD = ns_nmpc_eigen_utils::vstack<double>(basis_mat, lambdaD);
 
 	// Take QR
 	Eigen::HouseholderQR<Eigen::MatrixXd> qrAD(AD);
@@ -236,13 +236,14 @@ void ns_splines::BSplineSmoother::solveByQR(Eigen::MatrixXd &basis_mat,
 	//  std::cout << "Rinv size " << R.rows() << " " << R.cols() << std::endl;
 }
 
-void ns_splines::BSplineSmoother::getFirstDerivative(const Eigen::MatrixXd &ybase, Eigen::MatrixXd &ybase_dot) const
+void ns_nmpc_splines::BSplineSmoother::getFirstDerivative(const Eigen::MatrixXd &ybase,
+																													Eigen::MatrixXd &ybase_dot) const
 {
 	ybase_dot = projection_mat_dot_wb_ * ybase;
 }
 
-void ns_splines::BSplineSmoother::getSecondDerivative(const Eigen::MatrixXd &ybase,
-																											Eigen::MatrixXd &ybase_dot_dot) const
+void ns_nmpc_splines::BSplineSmoother::getSecondDerivative(const Eigen::MatrixXd &ybase,
+																													 Eigen::MatrixXd &ybase_dot_dot) const
 {
 	ybase_dot_dot = projection_mat_ddot_wb_ * ybase;
 }

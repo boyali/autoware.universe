@@ -27,7 +27,7 @@
 #include "utils/nmpc_utils.hpp"
 #include "utils/nmpc_utils_eigen.hpp"
 
-namespace ns_splines
+namespace ns_nmpc_splines
 {
 /**
  * @brief Interpolates any given coordinate-data pair by fitting a global spline using BSpline methods.
@@ -183,7 +183,7 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(
 	new_npoints_ = Nout;
 
 	// Create knot points.
-	knots_vec_ = ns_utils::linspace<double>(0, 1, nknots_);
+	knots_vec_ = ns_nmpc_utils::linspace<double>(0, 1, nknots_);
 
 	// Initialize the Eigen matrix data members.
 	projection_mat_base_ = Eigen::MatrixXd::Zero(nknots_ + 4, Nin);
@@ -499,7 +499,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::solveByQR(
 {
 
 	Eigen::MatrixXd lambdaD(lambda_ * penalizing_mat_D);
-	auto const &&AD = ns_eigen_utils::vstack<double>(basis_mat, lambdaD);
+	auto const &&AD = ns_nmpc_eigen_utils::vstack<double>(basis_mat, lambdaD);
 
 	// Take QR
 	Eigen::HouseholderQR<Eigen::MatrixXd> qrAD(AD);
@@ -517,7 +517,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::solveByQR(
 	auto const &&Rinv = R.inverse();
 	auto const RinvQ1T = Rinv * Q1.transpose();
 
-	//  ns_eigen_utils::printEigenMat(RinvQ1T);
+	//  ns_nmpc_eigen_utils::printEigenMat(RinvQ1T);
 	projection_mat_base_ = basis_mat * RinvQ1T;
 }
 
@@ -692,7 +692,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::normalizeColumns_Back(const Eigen:
 
 	auto const &&numcols = normalized_estimate.cols();
 
-	//  ns_eigen_utils::printEigenMat(normalized_interpolated_data);
+	//  ns_nmpc_eigen_utils::printEigenMat(normalized_interpolated_data);
 	for (auto k = 0; k < numcols; ++k)
 	{
 		auto const &colmax = col_maxs[k];
@@ -700,5 +700,5 @@ void BSplineInterpolatorTemplated<Nin, Nout>::normalizeColumns_Back(const Eigen:
 																																						 { return x * colmax; });
 	}
 }
-}  // namespace ns_splines
+}  // namespace ns_nmpc_splines
 #endif  // SPLINES__BSPLINE_INTERPOLATOR_TEMPLATED_HPP_

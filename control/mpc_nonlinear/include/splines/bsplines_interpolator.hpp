@@ -30,7 +30,7 @@
 #include "utils/nmpc_utils.hpp"
 #include "utils/nmpc_utils_eigen.hpp"
 
-namespace ns_splines
+namespace ns_nmpc_splines
 {
 class BSplineInterpolator
 {
@@ -110,5 +110,5 @@ class BSplineInterpolator
 
 	void solveByQR(Eigen::MatrixXd const &basis_mat, Eigen::MatrixXd const &penalizing_mat_D);
 };
-}  // namespace ns_splines
+}  // namespace ns_nmpc_splines
 #endif  // SPLINES__BSPLINES_INTERPOLATOR_HPP_
