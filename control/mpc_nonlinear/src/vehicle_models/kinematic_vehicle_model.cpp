@@ -68,7 +68,9 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDyn
 	// Control states.
 	if (use_delay_models_)
 	{
-		f_xdot(6) = -(v - ax_acc_brk_input) / speed_tau_;
+		// f_xdot(6) = -(v - ax_acc_brk_input) / speed_tau_;
+
+		f_xdot(6) = ax_acc_brk_input;  // !<@brief acceleration brake input
 		f_xdot(7) = -(delta - steering_input) / steering_tau_;
 		//f_xdot(8) = -(f_xdot(3) - vx_virtual_car) / speed_tau_;
 
