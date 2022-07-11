@@ -1858,7 +1858,9 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
 
 	// Compute yaw angle error.
 	//double const &heading_yaw_error = -1.0 * ns_utils::angleDistance(vehicle_yaw_angle, target_yaw);
-	double const &heading_yaw_error = -1.0 * ns_utils::wrapToPi(vehicle_yaw_angle - target_yaw);
+	// double const &heading_yaw_error = 1.0 * ns_utils::wrapToPi(vehicle_yaw_angle - target_yaw);
+
+	auto const &heading_yaw_error = autoware::common::helper_functions::wrap_angle(vehicle_yaw_angle - target_yaw);
 
 	// Set nmpc_performance yaw angles.
 	nmpc_performance_vars_.yaw_angle_measured = vehicle_yaw_angle;
@@ -1883,7 +1885,7 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
 	//    ns_utils::print("Heading error e_psi : ", heading_yaw_error);
 
 	// end of DEBUG
-	std::array<double, 2> const error_states{error_ey, -1.0 * heading_yaw_error};
+	std::array<double, 2> const error_states{error_ey, 1.0 * heading_yaw_error};
 
 	return error_states;
 }

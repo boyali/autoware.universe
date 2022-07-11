@@ -16,13 +16,16 @@
 
 #include "nonlinear_mpc_core/nmpc_kalman_filter.hpp"
 
+namespace ns_filters
+{
+
 // Linear Kalman filter methods.
-ns_filters::KalmanFilter::KalmanFilter(KalmanFilter const &other)
+KalmanFilter::KalmanFilter(KalmanFilter const &other)
 	: model_ptr_{other.model_ptr_}, dt_{other.dt_}, V_{other.V_}, W_{other.W_}, P_{other.P_}
 {
 }
 
-ns_filters::KalmanFilter &ns_filters::KalmanFilter::operator=(KalmanFilter const &other)
+KalmanFilter &KalmanFilter::operator=(KalmanFilter const &other)
 {
 	if (this != &other)
 	{
@@ -37,8 +40,8 @@ ns_filters::KalmanFilter &ns_filters::KalmanFilter::operator=(KalmanFilter const
 	return *this;
 }
 
-void ns_filters::KalmanFilter::getStateEstimate(const Model::input_vector_t &u0, Model::param_vector_t const &params,
-																								const Model::state_vector_t &x_measured, Model::state_vector_t &xest)
+void KalmanFilter::getStateEstimate(const Model::input_vector_t &u0, Model::param_vector_t const &params,
+																		const Model::state_vector_t &x_measured, Model::state_vector_t &xest)
 {
 	KalmanPredictionUpdateStep(u0, params);
 	KalmanMeasurementUpdateStep(x_measured);
@@ -46,8 +49,8 @@ void ns_filters::KalmanFilter::getStateEstimate(const Model::input_vector_t &u0,
 	xest = x_est_full_;
 }
 
-void ns_filters::KalmanFilter::KalmanPredictionUpdateStep(const Model::input_vector_t &u0,
-																													Model::param_vector_t const &params)
+void KalmanFilter::KalmanPredictionUpdateStep(const Model::input_vector_t &u0,
+																							Model::param_vector_t const &params)
 {
 	//  the full states are [x, y, yaw, s, e_y, e_yaw, vx, steering]
 	Model::state_matrix_t Ad;    // discrete state transition matrix.
@@ -73,7 +76,7 @@ void ns_filters::KalmanFilter::KalmanPredictionUpdateStep(const Model::input_vec
 	// end of debug.
 }
 
-void ns_filters::KalmanFilter::KalmanMeasurementUpdateStep(Model::state_vector_t const &x_measured)
+void KalmanFilter::KalmanMeasurementUpdateStep(Model::state_vector_t const &x_measured)
 {
 	// Compute the measurement error.
 	auto y_error = x_measured - x_est_full_;
@@ -101,7 +104,7 @@ void ns_filters::KalmanFilter::KalmanMeasurementUpdateStep(Model::state_vector_t
 	// end of debug.
 }
 
-void ns_filters::KalmanFilter::updateParameters(ns_data::ParamsFilters const &params_filters)
+void KalmanFilter::updateParameters(ns_data::ParamsFilters const &params_filters)
 {
 	Model::state_matrix_t Vtemp(params_filters.Vsqrt);
 	V_ = Vtemp * Vtemp;
@@ -118,7 +121,7 @@ void ns_filters::KalmanFilter::updateParameters(ns_data::ParamsFilters const &pa
 	// ns_eigen_utils::printEigenMat(P_);
 }
 
-void ns_filters::KalmanFilter::Initialize_xest0(Model::state_vector_t const &x0)
+void KalmanFilter::Initialize_xest0(Model::state_vector_t const &x0)
 {
 	x_est_full_ = x0;
 	is_initialized_ = true;
@@ -126,7 +129,7 @@ void ns_filters::KalmanFilter::Initialize_xest0(Model::state_vector_t const &x0)
 
 // Unscented Kalman filter methods.
 
-void ns_filters::KalmanUnscented::computeWeightsAndCoeffs()
+void KalmanUnscented::computeWeightsAndCoeffs()
 {
 	xdim_ = static_cast<size_t>(V_.rows());
 	num_of_sigma_points_ = 2 * xdim_ + 1;
@@ -143,7 +146,7 @@ void ns_filters::KalmanUnscented::computeWeightsAndCoeffs()
 	Weight_common_ = 1. / (2.0 * (static_cast<double>(xdim_) + lambda_));
 }
 
-ns_filters::KalmanUnscented::KalmanUnscented(KalmanUnscented const &other)
+KalmanUnscented::KalmanUnscented(KalmanUnscented const &other)
 	: model_ptr_{other.model_ptr_},
 		dt_{other.dt_},
 		V_{other.V_},
@@ -160,7 +163,7 @@ ns_filters::KalmanUnscented::KalmanUnscented(KalmanUnscented const &other)
 	computeWeightsAndCoeffs();
 }
 
-ns_filters::KalmanUnscented &ns_filters::KalmanUnscented::operator=(KalmanUnscented const &other)
+KalmanUnscented &KalmanUnscented::operator=(KalmanUnscented const &other)
 {
 	if (this != &other)
 	{
@@ -185,7 +188,7 @@ ns_filters::KalmanUnscented &ns_filters::KalmanUnscented::operator=(KalmanUnscen
 	return *this;
 }
 
-void ns_filters::KalmanUnscented::updateParameters(ns_data::ParamsFilters const &params_filters)
+void KalmanUnscented::updateParameters(ns_data::ParamsFilters const &params_filters)
 {
 	Model::state_matrix_t Vtemp(params_filters.Vsqrt);
 	V_ = Vtemp * Vtemp;
@@ -210,7 +213,7 @@ void ns_filters::KalmanUnscented::updateParameters(ns_data::ParamsFilters const 
 			ns_utils::print("Uncented Kalman filter, alpha, beta, kappa", alpha_, beta_, kappa_); */
 }
 
-void ns_filters::KalmanUnscented::computeSQRTofCovarianceMatrix()
+void KalmanUnscented::computeSQRTofCovarianceMatrix()
 {
 	Psqrt_ = Model::state_matrix_t(P_.llt().matrixL());
 
@@ -219,7 +222,7 @@ void ns_filters::KalmanUnscented::computeSQRTofCovarianceMatrix()
 	// end of debug
 }
 
-void ns_filters::KalmanUnscented::propagateSigmaPoints_fx(
+void KalmanUnscented::propagateSigmaPoints_fx(
 	const Model::input_vector_t &u0, Model::param_vector_t const &params)
 {
 	sigmaPoints_fxfy_.setZero();
@@ -238,7 +241,7 @@ void ns_filters::KalmanUnscented::propagateSigmaPoints_fx(
 	// end of debug
 }
 
-void ns_filters::KalmanUnscented::generateSigmaPoints(sigma_point_mat_t &sigma_points)
+void KalmanUnscented::generateSigmaPoints(sigma_point_mat_t &sigma_points)
 {
 	sigma_points.setZero();
 	sigma_points.col(0) = x_est_mean_full_;
@@ -257,8 +260,8 @@ void ns_filters::KalmanUnscented::generateSigmaPoints(sigma_point_mat_t &sigma_p
 	// end of debug
 }
 
-void ns_filters::KalmanUnscented::getStateEstimate(Model::input_vector_t const &u0, Model::param_vector_t const &params,
-																									 Model::state_vector_t const &x_measured, Model::state_vector_t &xest)
+void KalmanUnscented::getStateEstimate(Model::input_vector_t const &u0, Model::param_vector_t const &params,
+																			 Model::state_vector_t const &x_measured, Model::state_vector_t &xest)
 {
 	KalmanUnscentedPredictionUpdateStep(u0, params);
 	KalmanUnscentedMeasurementUpdateStep(x_measured);
@@ -266,8 +269,8 @@ void ns_filters::KalmanUnscented::getStateEstimate(Model::input_vector_t const &
 	xest = x_est_mean_full_;
 }
 
-void ns_filters::KalmanUnscented::KalmanUnscentedPredictionUpdateStep(const Model::input_vector_t &u0,
-																																			Model::param_vector_t const &params)
+void KalmanUnscented::KalmanUnscentedPredictionUpdateStep(const Model::input_vector_t &u0,
+																													Model::param_vector_t const &params)
 {
 	generateSigmaPoints(sigmaPointsMat_x_);  // <-@brief generate sigma points of UKF
 	propagateSigmaPoints_fx(u0, params);     // <-@brief propagate sigma points X =\int f(x)
@@ -321,7 +324,7 @@ void ns_filters::KalmanUnscented::KalmanUnscentedPredictionUpdateStep(const Mode
 	// end of debug
 }
 
-void ns_filters::KalmanUnscented::KalmanUnscentedMeasurementUpdateStep(
+void KalmanUnscented::KalmanUnscentedMeasurementUpdateStep(
 	const Model::state_vector_t &x_measured)
 {
 	generateSigmaPoints(sigmaPointsMat_y_);
@@ -403,7 +406,7 @@ void ns_filters::KalmanUnscented::KalmanUnscentedMeasurementUpdateStep(
 	// end of debug
 }
 
-void ns_filters::KalmanUnscented::Initialize_xest0(Model::state_vector_t const &x0)
+void KalmanUnscented::Initialize_xest0(Model::state_vector_t const &x0)
 {
 	x_est_mean_full_ = x0;
 	is_initialized_ = true;
@@ -412,7 +415,7 @@ void ns_filters::KalmanUnscented::Initialize_xest0(Model::state_vector_t const &
 /////////////////////// UNSCENTED KALMAN SQRT VERSION ///////////////////////////
 // ---------- SQRT version of Unscented Kalman Filter ----------------------
 
-void ns_filters::KalmanUnscentedSQRT::computeWeightsAndCoeffs()
+void KalmanUnscentedSQRT::computeWeightsAndCoeffs()
 {
 	xdim_ = static_cast<size_t>(Vsqrt_.rows());
 	num_of_sigma_points_ = 2 * xdim_ + 1;
@@ -429,7 +432,27 @@ void ns_filters::KalmanUnscentedSQRT::computeWeightsAndCoeffs()
 	Weight_common_ = 1. / (2.0 * (static_cast<double>(xdim_) + lambda_));
 }
 
-ns_filters::KalmanUnscentedSQRT::KalmanUnscentedSQRT(KalmanUnscentedSQRT const &other)
+KalmanUnscentedSQRT::KalmanUnscentedSQRT(Model::model_ptr_t model, const double dt)
+	: model_ptr_(std::move(model)), dt_{dt}
+{
+	Vsqrt_.setIdentity();
+	Wsqrt_.setIdentity();
+
+	Sx_sqrt_.setZero();
+
+	Ck_.setZero();
+	Sy_sqrt_.setZero();
+	Kk_.setZero();
+
+	sigmaPointsMat_x_.setZero();
+	sigmaPointsMat_y_.setZero();
+	sigmaPoints_fxfy_.setZero();
+
+	x_est_mean_full_.setZero();
+	y_est_mean_full_.setZero();
+}
+
+KalmanUnscentedSQRT::KalmanUnscentedSQRT(KalmanUnscentedSQRT const &other)
 	: model_ptr_{other.model_ptr_},
 		dt_{other.dt_},
 		Vsqrt_{other.Vsqrt_},
@@ -452,8 +475,7 @@ ns_filters::KalmanUnscentedSQRT::KalmanUnscentedSQRT(KalmanUnscentedSQRT const &
 	computeWeightsAndCoeffs();
 }
 
-ns_filters::KalmanUnscentedSQRT &ns_filters::KalmanUnscentedSQRT::operator=(
-	KalmanUnscentedSQRT const &other)
+KalmanUnscentedSQRT &KalmanUnscentedSQRT::operator=(KalmanUnscentedSQRT const &other)
 {
 	if (this != &other)
 	{
@@ -484,8 +506,7 @@ ns_filters::KalmanUnscentedSQRT &ns_filters::KalmanUnscentedSQRT::operator=(
 	return *this;
 }
 
-void ns_filters::KalmanUnscentedSQRT::updateParameters(
-	ns_data::ParamsFilters const &params_filters)
+void KalmanUnscentedSQRT::updateParameters(ns_data::ParamsFilters const &params_filters)
 {
 	Vsqrt_ = Model::state_matrix_t(params_filters.Vsqrt);  // Sqrt of covariance matrices
 	Wsqrt_ = Model::state_matrix_t(params_filters.Wsqrt);
@@ -512,7 +533,7 @@ void ns_filters::KalmanUnscentedSQRT::updateParameters(
 			ns_utils::print("Uncented Kalman filter, alpha, beta, kappa", alpha_, beta_, kappa_); */
 }
 
-void ns_filters::KalmanUnscentedSQRT::propagateSigmaPoints_fx(
+void KalmanUnscentedSQRT::propagateSigmaPoints_fx(
 	const Model::input_vector_t &u0, Model::param_vector_t const &params)
 {
 	sigmaPoints_fxfy_.setZero();
@@ -531,7 +552,7 @@ void ns_filters::KalmanUnscentedSQRT::propagateSigmaPoints_fx(
 	// end of debug
 }
 
-void ns_filters::KalmanUnscentedSQRT::generateSigmaPoints(sigma_point_mat_t &sigma_points)
+void KalmanUnscentedSQRT::generateSigmaPoints(sigma_point_mat_t &sigma_points)
 {
 	sigma_points.setZero();
 	sigma_points.col(0) = x_est_mean_full_;
@@ -548,10 +569,10 @@ void ns_filters::KalmanUnscentedSQRT::generateSigmaPoints(sigma_point_mat_t &sig
 	// end of debug
 }
 
-void ns_filters::KalmanUnscentedSQRT::getStateEstimate(Model::input_vector_t const &u0,
-																											 Model::param_vector_t const &params,
-																											 Model::state_vector_t const &x_measured,
-																											 Model::state_vector_t &xest)
+void KalmanUnscentedSQRT::getStateEstimate(Model::input_vector_t const &u0,
+																					 Model::param_vector_t const &params,
+																					 Model::state_vector_t const &x_measured,
+																					 Model::state_vector_t &xest)
 {
 	KalmanUnscentedPredictionUpdateStep(u0, params);
 	KalmanUnscentedMeasurementUpdateStep(x_measured);
@@ -560,9 +581,9 @@ void ns_filters::KalmanUnscentedSQRT::getStateEstimate(Model::input_vector_t con
 }
 
 template<class Derived>
-void ns_filters::KalmanUnscentedSQRT::choleskyOneRankUpdate(Model::state_matrix_t &R,
-																														Eigen::MatrixBase<Derived> const &U,
-																														double const &weight)
+void KalmanUnscentedSQRT::choleskyOneRankUpdate(Model::state_matrix_t &R,
+																								Eigen::MatrixBase<Derived> const &U,
+																								double const &weight)
 {
 	//    double rowsum{};
 	//    Model::state_matrix_t R(Rsqrt);
@@ -622,10 +643,10 @@ void ns_filters::KalmanUnscentedSQRT::choleskyOneRankUpdate(Model::state_matrix_
 	//    ns_eigen_utils::printEigenMat(Rsqrt.eval());
 }
 
-void ns_filters::KalmanUnscentedSQRT::choleskyUpdateFromSigmaPoints(Model::state_matrix_t &matrix_sqrt_tobe_updated,
-																																		sigma_point_mat_t const &sigma_points,
-																																		sigma_concat_mat_t &sigma_concatenated,
-																																		double const &weight)
+void KalmanUnscentedSQRT::choleskyUpdateFromSigmaPoints(Model::state_matrix_t &matrix_sqrt_tobe_updated,
+																												sigma_point_mat_t const &sigma_points,
+																												sigma_concat_mat_t &sigma_concatenated,
+																												double const &weight)
 {
 	// Get the first colum of the sigma points
 	auto first_column = sigma_points.col(0);
@@ -657,8 +678,8 @@ void ns_filters::KalmanUnscentedSQRT::choleskyUpdateFromSigmaPoints(Model::state
 	// End of DEBUG
 }
 
-void ns_filters::KalmanUnscentedSQRT::KalmanUnscentedPredictionUpdateStep(const Model::input_vector_t &u0,
-																																					Model::param_vector_t const &params)
+void KalmanUnscentedSQRT::KalmanUnscentedPredictionUpdateStep(const Model::input_vector_t &u0,
+																															Model::param_vector_t const &params)
 {
 	generateSigmaPoints(sigmaPointsMat_x_);  // <-@brief generate sigma points of UKF
 	propagateSigmaPoints_fx(u0, params);     // <-@brief propagate sigma points X =\int f(x)
@@ -712,7 +733,7 @@ void ns_filters::KalmanUnscentedSQRT::KalmanUnscentedPredictionUpdateStep(const 
 	// end of debug
 }
 
-void ns_filters::KalmanUnscentedSQRT::KalmanUnscentedMeasurementUpdateStep(const Model::state_vector_t &x_measured)
+void KalmanUnscentedSQRT::KalmanUnscentedMeasurementUpdateStep(const Model::state_vector_t &x_measured)
 {
 	generateSigmaPoints(sigmaPointsMat_y_);
 
@@ -838,8 +859,9 @@ void ns_filters::KalmanUnscentedSQRT::KalmanUnscentedMeasurementUpdateStep(const
 	// end of debug
 }
 
-void ns_filters::KalmanUnscentedSQRT::Initialize_xest0(Model::state_vector_t const &x0)
+void KalmanUnscentedSQRT::Initialize_xest0(Model::state_vector_t const &x0)
 {
 	x_est_mean_full_ = x0;
 	is_initialized_ = true;
 }
+} // namespace ns_fitlers

@@ -195,8 +195,9 @@ class KalmanUnscented
 
 	// Placeholders
 	sigma_point_mat_t sigmaPointsMat_x_{sigma_point_mat_t::Zero()};  // !<-@brief sigma points generated from the states.
-	sigma_point_mat_t
-		sigmaPointsMat_y_{sigma_point_mat_t::Zero()};  // !<-@brief sigma points generated from the measurements.
+
+	// !<-@brief sigma points generated from the measurements.
+	sigma_point_mat_t sigmaPointsMat_y_{sigma_point_mat_t::Zero()};
 
 	// !<-@brief sigma points placeholder for the propagated states and measurements.
 	sigma_point_mat_t sigmaPoints_fxfy_{sigma_point_mat_t::Zero()};
@@ -205,10 +206,11 @@ class KalmanUnscented
 	 * @brief xest updated state estimates.
 	 * */
 
-	Model::state_vector_t x_est_mean_full_{
-		Model::state_vector_t::Zero()};  // !<-@brief mean of full state for Jacobian computations.
-	Model::state_vector_t y_est_mean_full_{
-		Model::state_vector_t::Zero()};  // !<-@brief mean of full state for the measurements.
+	// !<-@brief mean of full state for Jacobian computations.
+	Model::state_vector_t x_est_mean_full_{Model::state_vector_t::Zero()};
+
+	// !<-@brief mean of full state for the measurements.
+	Model::state_vector_t y_est_mean_full_{Model::state_vector_t::Zero()};
 
 	// !<-@brief whether the initial state estimate is initialized or not.
 	bool is_initialized_{false};
@@ -216,8 +218,7 @@ class KalmanUnscented
 	// Class methods.
 	void computeSQRTofCovarianceMatrix();
 
-	void KalmanUnscentedPredictionUpdateStep(
-		const Model::input_vector_t &u0, Model::param_vector_t const &params);
+	void KalmanUnscentedPredictionUpdateStep(const Model::input_vector_t &u0, Model::param_vector_t const &params);
 
 	void KalmanUnscentedMeasurementUpdateStep(Model::state_vector_t const &x_measured);
 
@@ -228,40 +229,24 @@ class KalmanUnscented
 	/**
 	 * @brief propagates sigma points by integrating them one-step; xnext = \int '\dot{x}=f(x).
 	 **/
-	void propagateSigmaPoints_fx(
-		const Model::input_vector_t &u0, Model::param_vector_t const &params);
+	void propagateSigmaPoints_fx(const Model::input_vector_t &u0, Model::param_vector_t const &params);
 };
 
 class KalmanUnscentedSQRT
 {
  public:
 	using sigma_point_mat_t = Eigen::Matrix<double, Model::state_dim, ns_filters::UKF_NUM_OF_SIGMAS>;
-	using sigma_concat_mat_t =
-		Eigen::Matrix<double, Model::state_dim, ns_filters::UKF_NUM_OF_SIGMAS + Model::state_dim - 1>;
-	using sigma_concat_mat_t_T =
-		Eigen::Matrix<double, ns_filters::UKF_NUM_OF_SIGMAS + Model::state_dim - 1, Model::state_dim>;
+
+	using sigma_concat_mat_t = Eigen::Matrix<double, Model::state_dim,
+																					 ns_filters::UKF_NUM_OF_SIGMAS + Model::state_dim - 1>;
+
+	using sigma_concat_mat_t_T = Eigen::Matrix<double,
+																						 ns_filters::UKF_NUM_OF_SIGMAS + Model::state_dim - 1,
+																						 Model::state_dim>;
 
 	KalmanUnscentedSQRT() = default;
 
-	explicit KalmanUnscentedSQRT(Model::model_ptr_t const &model, double const dt)
-		: model_ptr_(model), dt_{dt}
-	{
-		Vsqrt_.setIdentity();
-		Wsqrt_.setIdentity();
-
-		Sx_sqrt_.setZero();
-
-		Ck_.setZero();
-		Sy_sqrt_.setZero();
-		Kk_.setZero();
-
-		sigmaPointsMat_x_.setZero();
-		sigmaPointsMat_y_.setZero();
-		sigmaPoints_fxfy_.setZero();
-
-		x_est_mean_full_.setZero();
-		y_est_mean_full_.setZero();
-	}
+	explicit KalmanUnscentedSQRT(Model::model_ptr_t model, double const dt);
 
 	KalmanUnscentedSQRT(KalmanUnscentedSQRT const &other);
 
@@ -295,6 +280,11 @@ class KalmanUnscentedSQRT
 	{
 		x_est_mean_full_.setZero();
 		is_initialized_ = false;
+	}
+
+	void resetStateEstimate(size_t const &ind, double value)
+	{
+		x_est_mean_full_(ind) = value;
 	}
 
  private:

@@ -55,7 +55,7 @@
 
 // Autoware headers.
 #include "common/types.hpp"
-
+#include "helper_functions/angle_utils.hpp"
 #include "motion_common/motion_common.hpp"
 #include "motion_common/trajectory_common.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
