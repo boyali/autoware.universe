@@ -47,67 +47,66 @@ namespace ns_splines
  * */
 class BSplineSmoother
 {
-public:
-  BSplineSmoother() = default;
+ public:
+	BSplineSmoother() = default;
 
-  explicit BSplineSmoother(size_t base_signal_length, double num_of_knots_ratio = 0.3);
+	explicit BSplineSmoother(size_t base_signal_length, double num_of_knots_ratio = 0.3);
 
-  // Multicolumn matrix can also be interpolated. MatrixBase and Interpolated matrix must have
-  // the same size.
-  void InterpolateInCoordinates(
-    Eigen::MatrixXd const & ybase, Eigen::MatrixXd & data_tobe_interpolated);
+	// Multicolumn matrix can also be interpolated. MatrixBase and Interpolated matrix must have
+	// the same size.
+	void InterpolateInCoordinates(Eigen::MatrixXd const &ybase, Eigen::MatrixXd &data_tobe_interpolated);
 
-  void getFirstDerivative(Eigen::MatrixXd const & ybase, Eigen::MatrixXd & ybase_dot);
+	void getFirstDerivative(Eigen::MatrixXd const &ybase, Eigen::MatrixXd &ybase_dot) const;
 
-  void getSecondDerivative(Eigen::MatrixXd const & ybase, Eigen::MatrixXd & ybase_dot_dot);
+	void getSecondDerivative(Eigen::MatrixXd const &ybase, Eigen::MatrixXd &ybase_dot_dot) const;
 
-private:
-  // Pre-settings. Increasing lambda yield more smooth and flattened curve.
-  // smoothing factor used in normal form of LS; B*B + (lambda**2)*D*D, D is f''(x).
-  double lambda_ = 0.001;
+ private:
+	// Pre-settings. Increasing lambda yield more smooth and flattened curve.
+	// smoothing factor used in normal form of LS; B*B + (lambda**2)*D*D, D is f''(x).
+	double lambda_ = 0.001;
 
-  // Initialized during instantiation.
-  size_t npoints_{};      // !<-@brief number of points in the signal to be smoothed.
-  double knots_ratio_{};  // !<-@brief ratio of the number of knots to num of interpolation points.
-  size_t nknots_{};
-  std::vector<double> knots_vec_;  // knot points of the global smoother.
+	// Initialized during instantiation.
+	size_t npoints_{};      // !<-@brief number of points in the signal to be smoothed.
+	double knots_ratio_{};  // !<-@brief ratio of the number of knots to num of interpolation points.
+	size_t nknots_{};
+	std::vector<double> knots_vec_;  // knot points of the global smoother.
 
-  // To be computed in the constructor.
-  /*
-   *   y = Ax --> At*y = At*x -- > x = coeffs = inv(At*A)*A*ybase_data and A = A(t parameter)
-   *   -- > ynew = Anew(t) * x  = Anew(t) * coeffs  = Anew(t) * inv(At*A)*A * ydata
-   *   -- > projection matrix p = inv(At*A)*A
-   *   ---> projection with base included  Anew(t) * inv(At*A)*A
-   * */
-  Eigen::MatrixXd projection_mat_base_;
+	// To be computed in the constructor.
+	/*
+	 *   y = Ax --> At*y = At*x -- > x = coeffs = inv(At*A)*A*ybase_data and A = A(t parameter)
+	 *   -- > ynew = Anew(t) * x  = Anew(t) * coeffs  = Anew(t) * inv(At*A)*A * ydata
+	 *   -- > projection matrix p = inv(At*A)*A
+	 *   ---> projection with base included  Anew(t) * inv(At*A)*A
+	 * */
+	Eigen::MatrixXd projection_mat_base_;
 
-  // !<-@brief coeffs = ProjectionMat @ ydata and ysmooth = Basis_mat*ydata
-  Eigen::MatrixXd projection_mat_wb_;
+	// !<-@brief coeffs = ProjectionMat @ ydata and ysmooth = Basis_mat*ydata
+	Eigen::MatrixXd projection_mat_wb_;
 
-  // !<-@brief ysmooth_dot = basis_dot * projection_mat_dot*ydata
-  Eigen::MatrixXd projection_mat_dot_wb_;
+	// !<-@brief ysmooth_dot = basis_dot * projection_mat_dot*ydata
+	Eigen::MatrixXd projection_mat_dot_wb_;
 
-  // !<-@brief ysmooth_ddot = basis_ddot * projection_mat_ddot*ydata - second derivative
-  Eigen::MatrixXd projection_mat_ddot_wb_;
+	// !<-@brief ysmooth_ddot = basis_ddot * projection_mat_ddot*ydata - second derivative
+	Eigen::MatrixXd projection_mat_ddot_wb_;
 
-  // Inner Methods.
-  void createBasesMatrix(
-    std::vector<double> const & tvec, Eigen::MatrixXd & basis_mat, Eigen::MatrixXd & basis_dmat,
-    Eigen::MatrixXd & basis_ddmat);
+	// Inner Methods.
+	void createBasesMatrix(std::vector<double> const &tvec,
+												 Eigen::MatrixXd &basis_mat,
+												 Eigen::MatrixXd &basis_dmat,
+												 Eigen::MatrixXd &basis_ddmat);
 
-  std::vector<std::vector<double>> basisRowsWithDerivatives(double const & ti);
+	std::vector<std::vector<double>> basisRowsWithDerivatives(double const &ti);
 
-  std::vector<double> fPlusCube(double const & ti, double const & ki);  // returns max(0, t);
-  void solveByDemmlerReisch(
-    Eigen::MatrixXd & basis_mat, Eigen::MatrixXd & basis_dmat,
-    Eigen::MatrixXd & basis_ddmat);  // set projection mat.
+	std::vector<double> fPlusCube(double const &ti, double const &ki) const;  // returns max(0, t);
+	void solveByDemmlerReisch(Eigen::MatrixXd &basis_mat, Eigen::MatrixXd &basis_dmat,
+														Eigen::MatrixXd &basis_ddmat);  // set projection mat.
 
-  void solveByQR(
-    Eigen::MatrixXd & basis_mat, Eigen::MatrixXd & basis_dmat, Eigen::MatrixXd & basis_ddmat);
+	void solveByQR(Eigen::MatrixXd &basis_mat, Eigen::MatrixXd &basis_dmat, Eigen::MatrixXd &basis_ddmat);
 
-  void createBasesMatrix(
-    const Eigen::MatrixXd & tvec, Eigen::MatrixXd & basis_mat, Eigen::MatrixXd & basis_dmat,
-    Eigen::MatrixXd & basis_ddmat);
+	void createBasesMatrix(const Eigen::MatrixXd &tvec,
+												 Eigen::MatrixXd &basis_mat,
+												 Eigen::MatrixXd &basis_dmat,
+												 Eigen::MatrixXd &basis_ddmat);
 };
 }  // namespace ns_splines
 #endif  // SPLINES__BSPLINES_SMOOTHER_HPP_

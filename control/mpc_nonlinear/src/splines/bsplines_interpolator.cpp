@@ -26,7 +26,8 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(size_t base_signal_length,
 	: n_base_points_(base_signal_length),
 		new_npoints_(new_length),
 		knots_ratio_(num_of_knots_ratio),
-		compute_derivatives_{compute_derivatives}
+		compute_derivatives_{compute_derivatives},
+		nknots_{static_cast<Eigen::size_t>(static_cast<double>(base_signal_length) * num_of_knots_ratio)}
 {
 	/**
 	 *  This interpolation class is designed to get re-sampled vectors or matrices. The entire signals are
@@ -38,7 +39,7 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(size_t base_signal_length,
 	auto tvec_new = Eigen::VectorXd::LinSpaced(static_cast<int32_t>(new_length), 0.0, 1.0);
 
 	// Create knot points.
-	nknots_ = static_cast<Eigen::size_t>(static_cast<double>(base_signal_length) * num_of_knots_ratio);
+	// nknots_ = static_cast<Eigen::size_t>(static_cast<double>(base_signal_length) * num_of_knots_ratio);
 	knots_vec_ = ns_utils::linspace<double>(0, 1, nknots_);
 
 	// Create the basis matrix from tvec_base to compute basis matrices for the base data.
@@ -278,14 +279,12 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &t
 	for (auto k = 4; k < basis_mat.cols(); k++)
 	{
 		auto ki = knots_vec_[static_cast<size_t>(k - 4)];
-		basis_mat.col(k) = Eigen::VectorXd(
-			tvec.unaryExpr(
-				[&ki](auto const &x)
-				{
-					auto val_pos = std::max(0.0, (x - ki));
+		basis_mat.col(k) = Eigen::VectorXd(tvec.unaryExpr([&ki](auto const &x)
+																											{
+																												auto val_pos = std::max(0.0, (x - ki));
 
-					return std::pow(val_pos, 3);
-				}));
+																												return std::pow(val_pos, 3);
+																											}));
 
 		// std::cout << ki << " knot " << std::endl;
 	}
@@ -298,7 +297,8 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &t
  *  regularize the curvature approximation. D = Bdd is second derivative of
  *  the base polynomial matrix.
  * */
-void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &tvec, Eigen::MatrixXd &basis_mat,
+void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &tvec,
+																												Eigen::MatrixXd &basis_mat,
 																												Eigen::MatrixXd &regularization_mat_dd)
 {
 	/**
@@ -329,14 +329,12 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(const Eigen::VectorXd &t
 	for (auto k = 4; k < basis_mat.cols(); k++)
 	{
 		auto ki = knots_vec_[static_cast<size_t>(k - 4)];
-		basis_mat.col(k) = Eigen::VectorXd(
-			tvec.unaryExpr(
-				[&ki](auto const &x)
-				{
-					auto val_pos = std::max(0.0, (x - ki));
+		basis_mat.col(k) = Eigen::VectorXd(tvec.unaryExpr([&ki](auto const &x)
+																											{
+																												auto val_pos = std::max(0.0, (x - ki));
 
-					return std::pow(val_pos, 3);
-				}));
+																												return std::pow(val_pos, 3);
+																											}));
 
 		regularization_mat_dd.col(k) = Eigen::VectorXd(tvec.unaryExpr([&ki](auto const &x)
 																																	{
@@ -497,16 +495,15 @@ void ns_splines::BSplineInterpolator::solveByDemmlerReisch(Eigen::MatrixXd const
 }
 
 void ns_splines::BSplineInterpolator::InterpolateInCoordinates(const Eigen::MatrixXd &ybase,
-																															 Eigen::MatrixXd &data_tobe_interpolated)
+																															 Eigen::MatrixXd &data_tobe_interpolated) const
 {
 	//  std::cout << "ybase passed " << std::endl;
 	//  ns_eigen_utils::printEigenMat(ybase);
 
 	// Standardize or normalize the data and restore back.
 	auto numcols = static_cast<size_t>(ybase.cols());
-	auto numrows = static_cast<size_t>(ybase.rows());
 
-	if (numrows <= 1)
+	if (auto numrows = static_cast<size_t>(ybase.rows()); numrows <= 1)
 	{
 		std::cout << "\nNumber of rows must be more than 1 " << std::endl;
 		return;
@@ -515,7 +512,7 @@ void ns_splines::BSplineInterpolator::InterpolateInCoordinates(const Eigen::Matr
 	std::vector<double> colmaxvec(numcols);  // keep max(abs) in this vector for re-normalization.
 	Eigen::MatrixXd ybase_normalized(ybase.rows(), ybase.cols());
 
-	for (size_t k = 0; k < numcols; k++)
+	for (auto k = 0; k < numcols; k++)
 	{
 		auto &&colmax = ybase.col(k).cwiseAbs().maxCoeff();  // normalize each columns
 		colmaxvec[k] = colmax;
@@ -531,9 +528,9 @@ void ns_splines::BSplineInterpolator::InterpolateInCoordinates(const Eigen::Matr
 	data_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
 
 	//  ns_eigen_utils::printEigenMat(normalized_interpolated_data);
-	for (size_t k = 0; k < numcols; k++)
+	for (auto k = 0; k < numcols; k++)
 	{
-		auto &&colmax = colmaxvec[k];
+		auto const &colmax = colmaxvec[k];
 		data_tobe_interpolated.col(k) = normalized_interpolated_data.col(k).unaryExpr([colmax](auto const &x)
 																																									{ return x * colmax; });
 	}
@@ -584,9 +581,7 @@ void ns_splines::BSplineInterpolator::getFirstDerivative(const Eigen::MatrixXd &
 
 	// Standardize or normalize the data and restore back.
 	auto numcols = ybase.cols();
-	auto numrows = ybase.rows();
-
-	if (numrows <= 1)
+	if (auto numrows = ybase.rows(); numrows <= 1)
 	{
 		std::cout << "\nNumber of rows must be more than 1 " << std::endl;
 		return;

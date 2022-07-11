@@ -23,64 +23,10 @@ ns_splines::InterpolatingSplinePCG::InterpolatingSplinePCG(size_t interpolating_
 	: interp_type_{interpolating_type}
 {}
 
-// Copy constructors.
-ns_splines::InterpolatingSplinePCG::InterpolatingSplinePCG(const ns_splines::InterpolatingSplinePCG &other)
-{
-	interp_type_ = other.interp_type_;
-	pcg_ = other.pcg_;
-	coefficients_ = other.coefficients_;
-
-	initialized_ = other.initialized_;
-	tbase_ = other.tbase_;
-	ybase_ = other.ybase_;
-}
-
-ns_splines::InterpolatingSplinePCG &ns_splines::InterpolatingSplinePCG::InterpolatingSplinePCG::operator=(const InterpolatingSplinePCG &other)
-{
-	if (this != &other)
-	{
-		interp_type_ = other.interp_type_;
-		pcg_ = other.pcg_;
-		coefficients_ = other.coefficients_;
-
-		initialized_ = other.initialized_;
-		tbase_ = other.tbase_;
-		ybase_ = other.ybase_;
-	}
-	return *this;
-}
-
-// Move constructors.
-ns_splines::InterpolatingSplinePCG::InterpolatingSplinePCG(ns_splines::InterpolatingSplinePCG &&other) noexcept
-{
-	interp_type_ = other.interp_type_;
-	pcg_ = other.pcg_;
-	coefficients_ = std::move(other.coefficients_);
-
-	initialized_ = other.initialized_;
-	tbase_ = std::move(other.tbase_);
-	ybase_ = std::move(other.ybase_);
-}
-
-ns_splines::InterpolatingSplinePCG &ns_splines::InterpolatingSplinePCG::InterpolatingSplinePCG::operator=(
-	InterpolatingSplinePCG &&other)
-noexcept
-{
-	if (this != &other)
-	{
-		interp_type_ = other.interp_type_;
-		pcg_ = other.pcg_;
-		coefficients_ = std::move(other.coefficients_);
-
-		initialized_ = other.initialized_;
-		tbase_ = std::move(other.tbase_);
-		ybase_ = std::move(other.ybase_);
-	}
-	return *this;
-}
-
-bool ns_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &tbase, std::vector<double> const &ybase,
-																										 std::vector<double> const &tnew, std::vector<double> &ynew)
+bool ns_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &tbase,
+																										 std::vector<double> const &ybase,
+																										 std::vector<double> const &tnew,
+																										 std::vector<double> &ynew)
 {
 
 	if (tnew[0] < tbase[0] && tnew.back() > tbase.back())
@@ -88,8 +34,7 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &
 		std::cout << " The scalar new coordinates is out of the base coordinates, extrapolation is "
 								 "requested ...\n";
 
-		std::cout <<
-							" Please make sure that the requested point within the base coordinate interval \n";
+		std::cout << " Please make sure that the requested point within the base coordinate interval \n";
 		return false;
 	}
 
@@ -147,7 +92,6 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &
 		// Compute dt.
 		auto const &&dt = (ti - tbase_[left_ind]) / (tbase_[left_ind + 1] - tbase_[left_ind]);
 
-		//    std::cout << dt << std::endl;
 		auto const &&yval = evaluatePolynomial(dt, picewise_coeffs);
 		ynew.emplace_back(yval);
 	}
@@ -226,7 +170,7 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(const double &tnew, double 
 
 bool ns_splines::InterpolatingSplinePCG::compute_coefficients(std::vector<double> const &ybase)
 {
-	int dimy(static_cast<int>(ybase.size()));
+	auto dimy(static_cast<int>(ybase.size()));
 	Eigen::Index dimy_eig(dimy);
 
 	// Jacobi Preconditioner Iteration.
@@ -252,8 +196,9 @@ bool ns_splines::InterpolatingSplinePCG::compute_coefficients(std::vector<double
 										 return std::vector<double>{ai, bi};
 									 });
 		return true;
+	}
 
-	} else if (interp_type_ == 3)
+	if (interp_type_ == 3)
 	{
 		// First prepare cmat diagonals for Jacobi iterations. And pass it to PCG.
 		/**
@@ -300,25 +245,23 @@ bool ns_splines::InterpolatingSplinePCG::compute_coefficients(std::vector<double
 
 		//    std::vector<double> solution_c(dimy);
 		std::vector<double> solution_c(static_cast<size_t>(dimy));
-		bool const &&isSolved = pcg_.solve(Asprs, b, solution_c);  // Solve Ax = b.
 
-		if (isSolved)
+		// Solve Ax = b.
+		if (bool const &&isSolved = pcg_.solve(Asprs, b, solution_c);isSolved)
 		{
 			// Set Coefficients
-			set_bd_coeffs_(const_cast<std::vector<double> &>(ybase), solution_c);
+			set_bd_coeffs_(ybase, solution_c);
 			initialized_ = true;  // set for the further use if coefficients are initialized.
 			return true;
 
-		} else
-		{
-			std::cout << "Failed to solve for interpolating coefficients .. \n";
-			return false;
 		}
-	} else
-	{
-		std::cout << "\nOnly polynomial degrees one and three are implemented ... \n ";
+		std::cout << "Failed to solve for interpolating coefficients .. \n";
 		return false;
+
 	}
+	std::cout << "\nOnly polynomial degrees one and three are implemented ... \n ";
+	return false;
+
 }
 
 void ns_splines::InterpolatingSplinePCG::set_bd_coeffs_(std::vector<double> const &ybase,
@@ -359,18 +302,16 @@ void ns_splines::InterpolatingSplinePCG::set_bd_coeffs_(std::vector<double> cons
 bool ns_splines::InterpolatingSplinePCG::prepareCoefficients(std::vector<double> const &tbase,
 																														 std::vector<double> const &ybase)
 {
-	bool const &&isMonotonic = checkIfMonotonic(tbase);  // Just produce a warning.
-
-	if (!isMonotonic)
+	// Just produce a warning.
+	if (bool const &&isMonotonic = checkIfMonotonic(tbase);!isMonotonic)
 	{
 		return false;  // Data is not a monotonic series.
 	}
 
 	// Reset previously computed values.
 	coefficients_.clear();
-	bool const &&couldSolve = compute_coefficients(ybase);
 
-	if (!couldSolve)
+	if (bool const &&couldSolve = compute_coefficients(ybase);!couldSolve)
 	{
 		std::cout << "[spline_pcg]: Couldn't solve the problem ...\n";
 		return false;  // couldn't solve.
@@ -384,8 +325,7 @@ bool ns_splines::InterpolatingSplinePCG::checkIfMonotonic(const std::vector<doub
 	// Check if interpolating coordinates is monotonic.
 	auto const &&isIncreasing_it = std::adjacent_find(std::cbegin(tbase), std::cend(tbase), std::greater_equal<>());
 
-	auto const &&isDecreasing_it =
-		std::adjacent_find(std::cbegin(tbase), std::cend(tbase), std::less_equal<>());
+	auto const &&isDecreasing_it = std::adjacent_find(std::cbegin(tbase), std::cend(tbase), std::less_equal<>());
 
 	bool const &&isMonotonic = !(isDecreasing_it == tbase.cend() && isIncreasing_it == tbase.cend());
 
@@ -402,8 +342,7 @@ bool ns_splines::InterpolatingSplinePCG::checkIfMonotonic(const std::vector<doub
  *  using the existing parameters we need to initialize the interpolator setting reusing_coefficients=false, so that
  *  the interpolator re-computes the interpolation coefficients.
  * */
-bool ns_splines::InterpolatingSplinePCG::Initialize(
-	std::vector<double> const &tbase, std::vector<double> const &ybase)
+bool ns_splines::InterpolatingSplinePCG::Initialize(std::vector<double> const &tbase, std::vector<double> const &ybase)
 {
 	double const &t0 = tbase[0];
 	double y0{};
@@ -431,8 +370,9 @@ double ns_splines::InterpolatingSplinePCG::evaluatePolynomial(double const &ti, 
 	return sum_ttimes_coeff;
 }
 
-bool ns_splines::PCG::solve(Eigen::SparseMatrix<double> const &Asparse, Eigen::VectorXd const &b,
-														std::vector<double> &solution_c)
+bool ns_splines::PCG::solve(Eigen::SparseMatrix<double> const &Asparse,
+														Eigen::VectorXd const &b,
+														std::vector<double> &solution_c) const
 {
 	// Initialize a solution vector xn with zero.
 	Eigen::VectorXd xn(b.rows(), 1);  // solution to Ax = b, xn is the coefficients of a polynomial
@@ -516,7 +456,6 @@ bool ns_splines::PCG::solve(Eigen::SparseMatrix<double> const &Asparse, Eigen::V
 bool ns_splines::PCG::isConvergedL1(Eigen::VectorXd const &residuals) const
 {
 	auto const &&l1norm = residuals.cwiseAbs().sum();
-	//  std::cout << "L1 norm of the residuals is : " << l1norm << std::endl;
 	return l1norm < eps_;
 }
 

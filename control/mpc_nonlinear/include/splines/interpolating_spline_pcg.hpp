@@ -27,7 +27,8 @@
 #include "utils/nmpc_utils.hpp"
 #include "utils/nmpc_utils_eigen.hpp"
 
-namespace ns_splines {
+namespace ns_splines
+{
 /*
  * An expanded version of the spline interpolator used in the Autoware. We use matrix containers
  * along with:
@@ -36,122 +37,109 @@ namespace ns_splines {
  *    - re-usable curve coefficients.
  * */
 // Preconditioned Conjugate Gradients.
-    class PCG {
-    public:
-        PCG() {
-            maxiter_ = 50;
-            eps_ = 1e-5;
-        }
+class PCG
+{
+ public:
+	PCG() = default;
 
-        ~PCG() = default;
+	/*
+	 *  Solves A x = b.
+	 *  diag_lower = diag(A, k=-11) upper diagonal
+	 *  diag       = diag(A, k=0)
+	 *  diag_upper = diag(A, k=1) upper diagonal
+	 * */
 
-        /*
-         *  Solves A x = b.
-         *  diag_lower = diag(A, k=-11) upper diagonal
-         *  diag       = diag(A, k=0)
-         *  diag_upper = diag(A, k=1) upper diagonal
-         * */
+	bool solve(Eigen::SparseMatrix<double> const &Asparse,
+						 Eigen::VectorXd const &b,
+						 std::vector<double> &solution_coeffs_c) const;
 
-        bool solve(
-                Eigen::SparseMatrix<double> const &Asparse, Eigen::VectorXd const &b,
-                std::vector<double> &solution_coeffs_c);
+ private:
+	size_t maxiter_{50};  // maximum number of iterations
+	double eps_{1e-5};      // convergence threshold
 
-    private:
-        size_t maxiter_;  // maximum number of iterations
-        double eps_;      // convergence threshold
+	// Methods.
+	[[nodiscard]] bool isConvergedL1(Eigen::VectorXd const &residuals) const;
 
-        // Methods.
-        [[nodiscard]] bool isConvergedL1(Eigen::VectorXd const &residuals) const;
+	static double pApnorm(Eigen::MatrixXd const &p);
+};
 
-        static double pApnorm(Eigen::MatrixXd const &p);
-    };
+class InterpolatingSplinePCG
+{
+ public:
+	InterpolatingSplinePCG() = default;
 
-    class InterpolatingSplinePCG {
-    public:
-        InterpolatingSplinePCG()
-                : interp_type_{3} {}
+	/**
+	 * @param interpolating_type line=1 or spline interpolation=3
+	 * */
+	explicit InterpolatingSplinePCG(size_t interpolating_type);
 
-        /**
-         * @param interpolating_type line=1 or spline interpolation=3
-         * */
-        explicit InterpolatingSplinePCG(size_t interpolating_type);
 
-        // Copy constructors.
-        InterpolatingSplinePCG(InterpolatingSplinePCG const &other);
+	// Interpolation type 1 for line 3 for spline.
+	/**
+	 * @brief Interpolate a vector at the given coordinates given a base coordinates and base vector.
+	 *
+	 * @param tbase base coordinate vector,
+	 * @param ybase base vector,
+	 * @param tnew new coordinate vector,
+	 * @param ynew interpolated vector to be computed,
+	 *
+	 * */
+	bool Interpolate(std::vector<double> const &tbase,
+									 std::vector<double> const &ybase,
+									 std::vector<double> const &tnew,
+									 std::vector<double> &ynew);
 
-        InterpolatingSplinePCG &operator=(InterpolatingSplinePCG const &other);
+	/**
+	 * @brief Interpolate a vector at the given coordinates given a base coordinates and base vector.
+	 *
+	 * @param tbase base coordinate vector,
+	 * @param ybase base vector,
+	 * @param tnew new coordinate point,
+	 * @param ynew interpolated point to be computed,
+	 *
+	 * */
+	bool Interpolate(std::vector<double> const &tbase,
+									 std::vector<double> const &ybase,
+									 double const &tnew,
+									 double &ynew);
 
-        // Move constructors.
-        InterpolatingSplinePCG(InterpolatingSplinePCG &&other) noexcept;
+	bool Interpolate(std::vector<double> const &tnew, std::vector<double> &ynew) const;
 
-        InterpolatingSplinePCG &operator=(InterpolatingSplinePCG &&other) noexcept;
+	bool Interpolate(double const &tnew, double &ynew) const;
 
-        ~InterpolatingSplinePCG() = default;
+	/**
+	 * @brief Initialize the interpolator to compute the coefficients and re-using it for the successive calls.
+	 * @param tbase base coordinate vector,
+	 * @param ybase base data vector.
+	 * */
+	bool Initialize(std::vector<double> const &tbase, std::vector<double> const &ybase);
 
-        // Interpolation type 1 for line 3 for spline.
-        /**
-         * @brief Interpolate a vector at the given coordinates given a base coordinates and base vector.
-         *
-         * @param tbase base coordinate vector,
-         * @param ybase base vector,
-         * @param tnew new coordinate vector,
-         * @param ynew interpolated vector to be computed,
-         *
-         * */
-        bool Interpolate(
-                std::vector<double> const &tbase, std::vector<double> const &ybase,
-                std::vector<double> const &tnew, std::vector<double> &ynew);
+ private:
+	size_t interp_type_{3};  // 1 or 3 for linear and spline interpolation, respectively.
+	PCG pcg_{};           // Preconditioned Conjugate Gradient object.
 
-        /**
-         * @brief Interpolate a vector at the given coordinates given a base coordinates and base vector.
-         *
-         * @param tbase base coordinate vector,
-         * @param ybase base vector,
-         * @param tnew new coordinate point,
-         * @param ynew interpolated point to be computed,
-         *
-         * */
-        bool Interpolate(
-                std::vector<double> const &tbase, std::vector<double> const &ybase, double const &tnew,
-                double &ynew);
+	// base coordinate and base data container.
+	std::vector<double> tbase_{};  // base coordinate, assigned when re-used.
+	std::vector<double> ybase_{};  // base data, assigned when re-used.
 
-        bool Interpolate(std::vector<double> const &tnew, std::vector<double> &ynew) const;
+	std::vector<std::vector<double>> coefficients_;  // if line [a, b] and spline [a, b, c, d]
+	bool initialized_{false};
 
-        bool Interpolate(double const &tnew, double &ynew) const;
+	// METHODS.
+	static bool checkIfMonotonic(const std::vector<double> &tbase);
 
-        /**
-         * @brief Initialize the interpolator to compute the coefficients and re-using it for the successive calls.
-         * @param tbase base coordinate vector,
-         * @param ybase base data vector.
-         * */
-        bool Initialize(std::vector<double> const &tbase, std::vector<double> const &ybase);
+	// Checks if the coefficients to be reused, checks monotonicity.
+	bool prepareCoefficients(std::vector<double> const &tbase, std::vector<double> const &ybase);
 
-    private:
-        size_t interp_type_;  // 1 or 3 for linear and spline interpolation, respectively.
-        PCG pcg_{};           // Preconditioned Conjugate Gradient object.
+	// Computes coefficients for the given base data.
+	bool compute_coefficients(std::vector<double> const &ybase);
 
-        // base coordinate and base data container.
-        std::vector<double> tbase_{};  // base coordinate, assigned when re-used.
-        std::vector<double> ybase_{};  // base data, assigned when re-used.
+	// set remaining coeffs b and d
+	void set_bd_coeffs_(std::vector<double> const &ydata, std::vector<double> const &c_coeffs);
 
-        std::vector<std::vector<double>> coefficients_;  // if line [a, b] and spline [a, b, c, d]
-        bool initialized_{false};
-
-        // METHODS.
-        static bool checkIfMonotonic(const std::vector<double> &tbase);
-
-        // Checks if the coefficients to be reused, checks monotonicity.
-        bool prepareCoefficients(std::vector<double> const &tbase, std::vector<double> const &ybase);
-
-        // Computes coefficients for the given base data.
-        bool compute_coefficients(std::vector<double> const &ybase);
-
-        // set remaining coeffs b and d
-        void set_bd_coeffs_(std::vector<double> const &ydata, std::vector<double> const &c_coeffs);
-
-        // Polynomial evaluation function.
-        [[nodiscard]] double evaluatePolynomial(double const &ti, std::vector<double> const &coeffs) const;
-    };
+	// Polynomial evaluation function.
+	[[nodiscard]] double evaluatePolynomial(double const &ti, std::vector<double> const &coeffs) const;
+};
 
 }  // namespace ns_splines
 #endif  // SPLINES__INTERPOLATING_SPLINE_PCG_HPP_

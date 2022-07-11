@@ -18,7 +18,8 @@
 #include <algorithm>
 #include <vector>
 
-ns_splines::BSplineSmoother::BSplineSmoother(size_t base_signal_length, double num_of_knots_ratio)
+ns_splines::BSplineSmoother::BSplineSmoother(size_t base_signal_length,
+																						 double num_of_knots_ratio)
 	: npoints_{base_signal_length}, knots_ratio_{num_of_knots_ratio}
 {
 	// Build Basis Matrix to be used in the penalized Least Squares.
@@ -26,12 +27,14 @@ ns_splines::BSplineSmoother::BSplineSmoother(size_t base_signal_length, double n
 	auto tvec = ns_utils::linspace<double>(0, 1, npoints_);
 
 	// Create knot points.
-	nknots_ = static_cast<Eigen::Index>(base_signal_length * knots_ratio_);
+	nknots_ = static_cast<Eigen::Index>(static_cast<double>(base_signal_length) * knots_ratio_);
 	knots_vec_ = ns_utils::linspace<double>(0, 1, nknots_);
 
 	// Create the basis matrix from tvec and knots_vec with its first and second derivatives.
-	Eigen::MatrixXd basis_mat(npoints_, nknots_), basis_dmat(npoints_, nknots_),
-		basis_ddmat(npoints_, nknots_);
+	Eigen::MatrixXd basis_mat(npoints_, nknots_);
+	Eigen::MatrixXd basis_dmat(npoints_, nknots_);
+	Eigen::MatrixXd basis_ddmat(npoints_, nknots_);
+
 	basis_mat.setZero();
 	basis_dmat.setZero();
 	basis_ddmat.setZero();
@@ -41,14 +44,14 @@ ns_splines::BSplineSmoother::BSplineSmoother(size_t base_signal_length, double n
 
 	// Compute smoother projection matrices with pre-multiplication by bases.
 	/*
-		 *   y = Basis * coeffs
-		 *   coeffs = projection_mat * ydata_original
-		 *
-		 *   y = Basis* projection_mat * (any data of original length) - (Basis* projection_mat can be reused).
-		 *
-		 *   Same applies for the derivatives.
-		 *
-		 * */
+	*   y = Basis * coeffs
+	*   coeffs = projection_mat * ydata_original
+	*
+	*   y = Basis* projection_mat * (any data of original length) - (Basis* projection_mat can be reused).
+	*
+	*   Same applies for the derivatives.
+	*
+	* */
 
 	// Call solver to obtain the projection matrix.
 	solveByDemmlerReisch(basis_mat, basis_dmat, basis_ddmat);
@@ -113,7 +116,7 @@ std::vector<std::vector<double>> ns_splines::BSplineSmoother::basisRowsWithDeriv
 	return row_vectors;
 }
 
-std::vector<double> ns_splines::BSplineSmoother::fPlusCube(double const &ti, double const &ki)
+std::vector<double> ns_splines::BSplineSmoother::fPlusCube(double const &ti, double const &ki) const
 {
 	auto it_final = std::prev(knots_vec_.cend());
 	auto it_prev_final = std::prev(it_final);
@@ -233,12 +236,13 @@ void ns_splines::BSplineSmoother::solveByQR(Eigen::MatrixXd &basis_mat,
 	//  std::cout << "Rinv size " << R.rows() << " " << R.cols() << std::endl;
 }
 
-void ns_splines::BSplineSmoother::getFirstDerivative(const Eigen::MatrixXd &ybase, Eigen::MatrixXd &ybase_dot)
+void ns_splines::BSplineSmoother::getFirstDerivative(const Eigen::MatrixXd &ybase, Eigen::MatrixXd &ybase_dot) const
 {
 	ybase_dot = projection_mat_dot_wb_ * ybase;
 }
 
-void ns_splines::BSplineSmoother::getSecondDerivative(const Eigen::MatrixXd &ybase, Eigen::MatrixXd &ybase_dot_dot)
+void ns_splines::BSplineSmoother::getSecondDerivative(const Eigen::MatrixXd &ybase,
+																											Eigen::MatrixXd &ybase_dot_dot) const
 {
 	ybase_dot_dot = projection_mat_ddot_wb_ * ybase;
 }
