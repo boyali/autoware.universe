@@ -62,6 +62,10 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 	sub_vehicle_steering_ = create_subscription<SteeringMeasuredMsg>(
 		"~/input/current_steering", rclcpp::QoS{1}, std::bind(&NonlinearMPCNode::onSteeringMeasured, this, _1));
 
+	// Request wheel_base parameter.
+	const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+	wheel_base_ = vehicle_info.wheel_base_m;
+
 	// Load the parameters.
 	/**
 	 * @brief loads parameters used for the node operations.
@@ -755,34 +759,29 @@ ControlCmdMsg NonlinearMPCNode::getStopControlCommand()
 void NonlinearMPCNode::loadNodeParameters()
 {
 	// Control parameters.
-	params_node_.control_frequency = declare_parameter("control_frequency", 30.0);
+	params_node_.control_frequency = declare_parameter<double>("control_frequency", 30.);
 	params_node_.control_period = 1. / params_node_.control_frequency;
 
-	// Delay related parameters.
-	// Steering and speed models.
-	params_node_.use_delay_sim_model = declare_parameter("use_delay_sim_model", true);
+	// Delay related parameters :: steering and speed models.
+	params_node_.use_delay_sim_model = declare_parameter<bool>("use_delay_sim_model", true);
 
 	// Input delay.
 	params_node_.input_delay_time = declare_parameter("input_delay_time", 0.24);
-	params_node_.use_acceleration_inputs = declare_parameter("use_acceleration_inputs", true);
-	params_node_.use_kalman = declare_parameter("use_kalman", true);
+	params_node_.use_acceleration_inputs = declare_parameter<bool>("use_acceleration_inputs", true);
+	params_node_.use_kalman = declare_parameter<bool>("use_kalman", true);
 
 	// Stop state parameters.
-	params_node_.stop_state_entry_ego_speed = declare_parameter("stop_state_entry_ego_speed", 0.2);
-
-	params_node_.stop_state_entry_target_speed =
-		declare_parameter("stop_state_entry_target_speed", 0.5);
-
-	params_node_.stop_state_keep_stopping_dist =
-		declare_parameter("stop_state_keep_stopping_dist", 0.5);
-
-	params_node_.will_stop_state_dist = declare_parameter("will_stop_state_dist", 2.0);
+	params_node_.stop_state_entry_ego_speed = declare_parameter<double>("stop_state_entry_ego_speed", 0.2);
+	params_node_.stop_state_entry_target_speed = declare_parameter<double>("stop_state_entry_target_speed", 0.5);
+	params_node_.stop_state_keep_stopping_dist = declare_parameter<double>("stop_state_keep_stopping_dist", 0.5);
+	params_node_.will_stop_state_dist = declare_parameter<double>("will_stop_state_dist", 2.0);
 
 	// Compute the discrete input_delay steps.
-	if (params_node_.input_delay_time < std::numeric_limits<double>::epsilon())
+	if (ns_utils::isEqual(params_node_.input_delay_time, 0.))
 	{
 		params_node_.input_delay_discrete_nsteps = 1;
 		params_node_.predict_initial_states = false;
+
 	} else
 	{
 		params_node_.input_delay_discrete_nsteps =
@@ -792,19 +791,14 @@ void NonlinearMPCNode::loadNodeParameters()
 
 	// Initialization parameters.
 	params_node_.use_linear_trajectory_initialization =
-		declare_parameter("use_linear_trajectory_initialization", false);
+		declare_parameter<bool>("use_linear_trajectory_initialization", false);
 
 	// Control options.
-	params_node_.use_mpc_controller = declare_parameter("use_mpc_controller", true);
-	params_node_.number_of_sqp_iterations = declare_parameter("number_of_sqp_iterations", 1);
+	params_node_.use_mpc_controller = declare_parameter<bool>("use_mpc_controller", true);
+	params_node_.number_of_sqp_iterations = declare_parameter<uint8_t>("number_of_sqp_iterations", 1);
 
 	// Read the vehicle parameters.
-	params_node_.lr = declare_parameter("cog_rear_lr", 1.4);
-
-	// Request wheel_base parameter.
-	const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
-	wheel_base_ = vehicle_info.wheel_base_m;
-
+	params_node_.lr = declare_parameter<double>("cog_rear_lr", 1.4);
 }
 
 void NonlinearMPCNode::loadFilterParameters(ns_data::ParamsFilters &params_filters)
@@ -813,14 +807,14 @@ void NonlinearMPCNode::loadFilterParameters(ns_data::ParamsFilters &params_filte
 	params_filters.Vsqrt.setZero();
 	std::vector<double> temp(Model::state_dim);
 	std::vector<double> default_vec{0.2, 0.2, 0.05, 0.2, 0.05, 0.02, 0.15, 0.03, 0.05};
-	temp = declare_parameter("Vprocess", default_vec);
+	temp = declare_parameter<std::vector<double> >("Vprocess", default_vec);
 	params_filters.Vsqrt.diagonal() = Model::state_vector_t::Map(temp.data());
 
 	params_filters.Wsqrt.setZero();
 	temp.clear();
 	temp.reserve(Model::state_dim);
 	default_vec = std::vector<double>{0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.01, 0.05, 0.2};
-	temp = declare_parameter("Wmeasurement", default_vec);
+	temp = declare_parameter<std::vector<double> >("Wmeasurement", default_vec);
 	params_filters.Wsqrt.diagonal() = Model::state_vector_t::Map(temp.data());
 
 	// Updated covariance matrix.
@@ -828,13 +822,12 @@ void NonlinearMPCNode::loadFilterParameters(ns_data::ParamsFilters &params_filte
 	temp.clear();
 	temp.reserve(Model::state_dim);
 	default_vec = std::vector<double>{0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.1, 0.07, 0.25};
-	temp = declare_parameter("Pkalman", default_vec);
+	temp = declare_parameter<std::vector<double> >("Pkalman", default_vec);
 	params_filters.Psqrt.diagonal() = Model::state_vector_t::Map(temp.data());
 
 	// UKF specific parameters.
 	params_filters.ukf_alpha = declare_parameter("alpha", 0.9);
 	params_filters.ukf_beta = declare_parameter("beta", 2.0);
-	params_filters.ukf_kappa = declare_parameter("kappa", 0.0);
 }
 
 void NonlinearMPCNode::loadVehicleParameters(ns_models::ParamsVehicle &params_vehicle)
@@ -842,97 +835,92 @@ void NonlinearMPCNode::loadVehicleParameters(ns_models::ParamsVehicle &params_ve
 	params_vehicle.wheel_base = wheel_base_;
 	params_vehicle.lr = params_node_.lr;
 
-	params_vehicle.steering_tau = declare_parameter("steering_time_constant", 0.27);
-	params_vehicle.speed_tau = declare_parameter("speed_time_constant", 0.61);
+	params_vehicle.steering_tau = declare_parameter<double>("steering_time_constant", 0.27);
+	params_vehicle.speed_tau = declare_parameter<double>("speed_time_constant", 0.61);
 	params_vehicle.use_delay_model = params_node_.use_delay_sim_model;
 }
 
-void NonlinearMPCNode::loadNMPCoreParameters(
-	ns_data::data_nmpc_core_type_t &data_nmpc_core, ns_data::param_lpv_type_t &params_lpv,
-	ns_data::ParamsOptimization &params_optimization)
+void NonlinearMPCNode::loadNMPCoreParameters(ns_data::data_nmpc_core_type_t &data_nmpc_core,
+																						 ns_data::param_lpv_type_t &params_lpv,
+																						 ns_data::ParamsOptimization &params_optimization)
 {
-	// Set wheel base to be used throught the nmpc core.
-	const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
-	data_nmpc_core.wheel_base = vehicle_info.wheel_base_m;
+	data_nmpc_core.wheel_base = wheel_base_;
 
 	// mpc_timestep_dt is already set in the constructor.
 	data_nmpc_core.input_delay_time = params_node_.input_delay_time;
 
 	// Set reference speed scaling factor for a simple feed-forward control.
 	data_nmpc_core.feedforward_speed_set_point_scale =
-		declare_parameter("feedforward_speed_set_point_scale", 1.0);
+		declare_parameter<double>("feedforward_speed_set_point_scale", 1.0);
+
 
 	// Load optimization parameters.
 	// State and control weights. Q. Reads only the diagonal terms .
 	std::vector<double> temp(Model::state_dim);
 	std::vector<double> default_vec{0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0., 0.0};
-	temp = declare_parameter("state_weights", default_vec);
+	temp = declare_parameter<std::vector<double> >("state_weights", default_vec);
 	params_optimization.Q.diagonal() = Model::state_vector_t::Map(temp.data());
 
 	// QN
 	temp.clear();
 	temp.reserve(Model::state_dim);
 	default_vec = std::vector<double>{0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0};
-	temp = declare_parameter("state_weights_terminal", default_vec);
+	temp = declare_parameter<std::vector<double> >("state_weights_terminal", default_vec);
 	params_optimization.QN.diagonal() = Model::state_vector_t::Map(temp.data());
 
 	// R - Control weights.
 	temp.clear();
 	temp.reserve(Model::input_dim);
 	default_vec = std::vector<double>{0.001, 0.0001};
-	temp = declare_parameter("control_weights", default_vec);
+	temp = declare_parameter<std::vector<double> >("control_weights", default_vec);
 	params_optimization.R.diagonal() = Model::input_vector_t::Map(temp.data());
 
 	// Rj - Jerk weights.
 	temp.clear();
 	temp.reserve(Model::input_dim);
 	default_vec = std::vector<double>{1., 1.};
-	temp = declare_parameter("jerk_weights", default_vec);
+	temp = declare_parameter<std::vector<double> >("jerk_weights", default_vec);
 	params_optimization.Rj.diagonal() = Model::input_vector_t::Map(temp.data());
 
 	// State and input bounds. xlower bound.
-
 	temp.clear();
 	temp.reserve(Model::state_dim);
-	default_vec = std::vector<double>{-kInfinity, -kInfinity, -kInfinity, -kInfinity, -2.0,
-																		-1.0, 0.0, -0.69, -kInfinity};
-	temp = declare_parameter("xlower", default_vec);
+	default_vec =
+		std::vector<double>{-kInfinity, -kInfinity, -kInfinity, -kInfinity, -2.0, -1.0, 0.0, -0.69, -kInfinity};
+	temp = declare_parameter<std::vector<double> >("xlower", default_vec);
 	params_optimization.xlower = Model::state_vector_t::Map(temp.data());
 
 	// State and input bounds. xupper bound.
 	temp.clear();
 	temp.reserve(Model::state_dim);
-	default_vec = std::vector<double>{kInfinity, kInfinity, kInfinity, kInfinity, 2.0,
-																		1.0, 25.0, 0.69, kInfinity};
-	temp = declare_parameter("xupper", default_vec);
+	default_vec = std::vector<double>{kInfinity, kInfinity, kInfinity, kInfinity, 2.0, 1.0, 25.0, 0.69, kInfinity};
+	temp = declare_parameter<std::vector<double> >("xupper", default_vec);
 	params_optimization.xupper = Model::state_vector_t::Map(temp.data());
 
 	// State and input bounds. ulower bound.
 	temp.clear();
 	temp.reserve(Model::input_dim);
-	default_vec = std::vector<double>{-50., -1.};
-	temp = declare_parameter("ulower", default_vec);
+	default_vec = std::vector<double>{-30., -1.};
+	temp = declare_parameter<std::vector<double> >("ulower", default_vec);
 	params_optimization.ulower = Model::input_vector_t::Map(temp.data());
 
 	temp.clear();
 	temp.reserve(Model::input_dim);
-	default_vec = std::vector<double>{50., 1.};
-	temp = declare_parameter("uupper", default_vec);
+	default_vec = std::vector<double>{30., 1.};
+	temp = declare_parameter<std::vector<double> >("uupper", default_vec);
 	params_optimization.uupper = Model::input_vector_t::Map(temp.data());
 
-	// xmax bound. xmax is used for scaling, whereas xlower is related to
-	// whether there is an upper bound.
-
+	// xmax bound: xmax is used for scaling, whereas xlower is related to whether there is an upper bound.
 	temp.clear();
 	temp.reserve(Model::state_dim);
 	default_vec = std::vector<double>{-50., -50., -3.14, 0.0, -3.0, -1.0, 0.0, -0.69, -5.0};
-	temp = declare_parameter("xmin_for_scaling", default_vec);
+	temp = declare_parameter<std::vector<double> >("xmin_for_scaling", default_vec);
 	params_optimization.xmin_for_scaling = Model::state_vector_t::Map(temp.data());
 
 	temp.clear();
 	temp.reserve(Model::state_dim);
 	default_vec = std::vector<double>{50., 50., 3.14, 40.0, 3.0, 1.0, 10.0, 0.69, 5.0};
-	temp = declare_parameter("xmax_for_scaling", default_vec);
+	temp = declare_parameter<std::vector<double> >("xmax_for_scaling", default_vec);
 	params_optimization.xmax_for_scaling = Model::state_vector_t::Map(temp.data());
 
 	temp.clear();
@@ -944,25 +932,24 @@ void NonlinearMPCNode::loadNMPCoreParameters(
 	temp.clear();
 	temp.reserve(Model::input_dim);
 	default_vec = std::vector<double>{50., 1.0};
-	temp = declare_parameter("umax_for_scaling", default_vec);
+	temp = declare_parameter<std::vector<double> >("umax_for_scaling", default_vec);
 	params_optimization.umax_for_scaling = Model::input_vector_t::Map(temp.data());
 
 	// Load the normalization scaling range.
-	params_optimization.scaling_range.reserve(2);
 	params_optimization.scaling_range =
-		declare_parameter("scaling_range", std::vector<double>{-1., 1.});
+		declare_parameter<std::vector<double >>("scaling_range", std::vector<double>{-1., 1.});
 
 	// OSQP parameters
-	params_optimization.osqp_warm_start = declare_parameter("osqp_warm_start", true);
-	params_optimization.osqp_polishing = declare_parameter("osqp_polishing", true);
-	params_optimization.osqp_scaling = declare_parameter("osqp_scaling", true);
+	params_optimization.osqp_warm_start = declare_parameter<bool>("osqp_warm_start", true);
+	params_optimization.osqp_polishing = declare_parameter<bool>("osqp_polishing", true);
+	params_optimization.osqp_scaling = declare_parameter<bool>("osqp_scaling", true);
 
-	params_optimization.osqp_max_iters = declare_parameter("osqp_max_iters", 200);
-	params_optimization.osqp_eps_abs = declare_parameter("osqp_eps_abs", 1e-5);
-	params_optimization.osqp_eps_rel = declare_parameter("osqp_eps_rel", 1e-5);
-	params_optimization.osqp_verbose = declare_parameter("osqp_verbose", true);
-	params_optimization.osqp_polish_iters = declare_parameter("osqp_polish_iters", 50);
-	params_optimization.osqp_time_limit = declare_parameter("osqp_time_limit", 0.2);
+	params_optimization.osqp_max_iters = declare_parameter<int64_t>("osqp_max_iters", 200);
+	params_optimization.osqp_eps_abs = declare_parameter<double>("osqp_eps_abs", 1e-5);
+	params_optimization.osqp_eps_rel = declare_parameter<double>("osqp_eps_rel", 1e-5);
+	params_optimization.osqp_verbose = declare_parameter<bool>("osqp_verbose", true);
+	params_optimization.osqp_polish_iters = declare_parameter<int64_t>("osqp_polish_iters", 50);
+	params_optimization.osqp_time_limit = declare_parameter<double>("osqp_time_limit", 0.2);
 	params_optimization.osqp_scaled_termination = declare_parameter("osqp_scaled_termination", false);
 
 	// LOAD LPV parameters
@@ -1214,7 +1201,7 @@ bool NonlinearMPCNode::isValidTrajectory(const TrajectoryMsg &msg_traj) const
 																			const auto &wxf = point.front_wheel_angle_rad;
 																			const auto &wxr = point.rear_wheel_angle_rad;
 
-																			return static_cast<bool8_t>(isfinite(p.x) && isfinite(p.y)
+																			return static_cast<bool>(isfinite(p.x) && isfinite(p.y)
 																				&& isfinite(p.z) && isfinite(o.x)
 																				&& isfinite(o.y) && isfinite(o.z) && isfinite(o.w) && isfinite(vx)
 																				&& isfinite(vy)
@@ -1404,17 +1391,13 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 	auto const &&curvature = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);
 
 	// Create smooth MPCtraj given, s, x, y, v and curvature.
-	std::vector<double> s_smooth_vect(
-		interpolated_map.col(0).data(), interpolated_map.col(0).data() + map_out_mpc_size);
+	std::vector<double> s_smooth_vect(interpolated_map.col(0).data(), interpolated_map.col(0).data() + map_out_mpc_size);
 
-	std::vector<double> x_smooth_vect(
-		interpolated_map.col(1).data(), interpolated_map.col(1).data() + map_out_mpc_size);
+	std::vector<double> x_smooth_vect(interpolated_map.col(1).data(), interpolated_map.col(1).data() + map_out_mpc_size);
 
-	std::vector<double> y_smooth_vect(
-		interpolated_map.col(2).data(), interpolated_map.col(2).data() + map_out_mpc_size);
+	std::vector<double> y_smooth_vect(interpolated_map.col(2).data(), interpolated_map.col(2).data() + map_out_mpc_size);
 
-	std::vector<double> z_smooth_vect(
-		interpolated_map.col(3).data(), interpolated_map.col(3).data() + map_out_mpc_size);
+	std::vector<double> z_smooth_vect(interpolated_map.col(3).data(), interpolated_map.col(3).data() + map_out_mpc_size);
 
 	std::vector<double> v_smooth_vect;
 
@@ -1664,16 +1647,17 @@ void NonlinearMPCNode::findClosestPrevWayPointIdx()
 	// Check if the computed closest point index is valid.
 	if (*idx_prev_wp_ptr_ > current_trajectory_size_)
 	{
-		RCLCPP_ERROR(
-			get_logger(),
-			"[mpc_nonlinear] The computed closest point indices are out of trajectory size ...");
+		RCLCPP_ERROR(get_logger(),
+								 "[mpc_nonlinear] The computed closest point indices are out of trajectory size ...");
 	}
 
 	// Set the next waypoint index.
 	size_t idx_next_wp_temp{};
 	if (*idx_prev_wp_ptr_ < current_trajectory_size_ - 1)
-	{  // we are not at the last point.
+	{
+		// we are not at the last point.
 		idx_next_wp_temp = *idx_prev_wp_ptr_ + 1;
+
 	} else
 	{
 		// The current prev. waypoint id is the last point. Set the next waypoint as the last point.
@@ -1727,11 +1711,9 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
 	 * */
 
 	// First get yaw angles of all three poses
-	double const &&prev_yaw =
-		tf2::getYaw(current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.orientation);
+	double const &&prev_yaw = tf2::getYaw(current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.orientation);
 
-	double const &&next_yaw =
-		tf2::getYaw(current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).pose.orientation);
+	double const &&next_yaw = tf2::getYaw(current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).pose.orientation);
 
 	// Previous waypoint to next waypoint
 	double const &&dx_prev_to_next = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).pose.position.x -
@@ -2143,6 +2125,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_TrajPlanner_Speeds(Model::st
 	}
 
 	// Set the current predicted trajectory.
+	// Set the current predicted trajectory.
 	current_predicted_s0_ = xd0(3);
 	nonlinear_mpc_controller_ptr_->setCurrent_s0_predicted(current_predicted_s0_);
 
@@ -2287,16 +2270,18 @@ void NonlinearMPCNode::setCurrentCOGPose(geometry_msgs::msg::PoseStamped const &
 	current_COG_pose_ptr_ = std::make_unique<geometry_msgs::msg::PoseStamped>(pose_temp);
 }
 
-ControlCmdMsg NonlinearMPCNode::createControlCommand(double const &ax, double const &vx, double const &steering_rate,
+ControlCmdMsg NonlinearMPCNode::createControlCommand(double const &ax,
+																										 double const &vx,
+																										 double const &steering_rate,
 																										 double const &steering_val) const
 {
 	ControlCmdMsg ctrl_cmd;
 
-	ctrl_cmd.lateral.steering_tire_rotation_rate = steering_rate;
-	ctrl_cmd.lateral.steering_tire_angle = steering_val + current_feedforward_steering_;
+	ctrl_cmd.lateral.steering_tire_rotation_rate = static_cast<float>(steering_rate);
+	ctrl_cmd.lateral.steering_tire_angle = static_cast<float>(steering_val) + current_feedforward_steering_;
 
-	ctrl_cmd.longitudinal.acceleration = ax;
-	ctrl_cmd.longitudinal.speed = vx;
+	ctrl_cmd.longitudinal.acceleration = static_cast<float>(ax);
+	ctrl_cmd.longitudinal.speed = static_cast<float>(vx);
 
 	return ctrl_cmd;
 }

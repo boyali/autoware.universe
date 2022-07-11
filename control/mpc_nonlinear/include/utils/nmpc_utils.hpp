@@ -331,6 +331,19 @@ std::vector<size_t> sort_indices(const std::vector<T> &v)
 	return idx;
 }
 
+// Comparing data types.
+template<class T, typename std::enable_if<std::is_integral<T>::value, bool>::type * = nullptr>
+bool isEqual(T a, T b)
+{
+	return a == b;
+}
+
+template<class T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type * = nullptr>
+bool isEqual(T a, T b)
+{
+	return abs(a - b) < std::numeric_limits<T>::epsilon();
+}
+
 }  // namespace ns_utils
 
 #endif  // UTILS__NMPC_UTILS_HPP_

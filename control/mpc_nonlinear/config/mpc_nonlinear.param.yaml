@@ -15,7 +15,7 @@
 
     # -- Use time or arc-length as the interpolation coordinates for predictions --
     use_acceleration_inputs: true                  # if false, traj speeds are used in the simulations
-    use_linear_trajectory_initialization: true    # if false LPV feedback initialization is used.
+    use_linear_trajectory_initialization: linear    # if false LPV feedback initialization is used.
 
     # -- State and Control Weights.
     # -- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay'] --
@@ -32,8 +32,8 @@
     # xlower: [ -.inf, -.inf, -.inf, -.inf, -3.0, -2.0, -0.5, -0.65, -.inf ]
     xlower: [ -.inf, -.inf, -.inf, -.inf, -3.0, -1.0, 0.0, -0.65, -4.0 ]
     xupper: [ .inf,  .inf,   .inf, .inf,  3.0,  1.0, 25.0, 0.65, 4.0 ]
-    ulower: [ -7., -1.0 ]  # vx speed input [m/s], steering input [rad]
-    uupper: [ 7.,  1.0 ]
+    ulower: [ -7., -5.0 ]  # vx speed input [m/s], steering input [rad]
+    uupper: [ 7.,  5.0 ]
 
     # -- Scaling Mats ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay'] --
     scaling_range: [ -1., 1. ]
