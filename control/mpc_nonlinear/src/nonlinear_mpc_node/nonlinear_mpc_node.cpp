@@ -64,10 +64,10 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 
 	// Load the parameters.
 	/**
-		 * @brief loads parameters used for the node operations.
-		 * @param is_testing is a boolean parameter used for gtests (true if testing).
-		 * Its aim is to eliminate other node dependency to load the wheel_base.
-		 */
+	 * @brief loads parameters used for the node operations.
+	 * @param is_testing is a boolean parameter used for gtests (true if testing).
+	 * Its aim is to eliminate other node dependency to load the wheel_base.
+	 */
 	loadNodeParameters();  // read the parameters used by the node.
 
 	// Load vehicle model parameters.
@@ -138,8 +138,10 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 
 	// Vehicle motion finite state machine.
 	vehicle_motion_fsm_ =
-		ns_states::VehicleMotionFSM(params_node_.stop_state_entry_ego_speed, params_node_.stop_state_entry_target_speed,
-																params_node_.stop_state_keep_stopping_dist, params_node_.will_stop_state_dist);
+		ns_states::VehicleMotionFSM(params_node_.stop_state_entry_ego_speed,
+																params_node_.stop_state_entry_target_speed,
+																params_node_.stop_state_keep_stopping_dist,
+																params_node_.will_stop_state_dist);
 
 	// Initialize the control input queue.
 	inputs_buffer_common_ =
@@ -307,9 +309,8 @@ void NonlinearMPCNode::onTimer()
 	current_fsm_state_ = vehicle_motion_fsm_.getCurrentState();
 	// ns_utils::print("Finite state machine state numbers : ", ns_states::as_integer(current_fsm_state_));
 
-	RCLCPP_WARN_SKIPFIRST_THROTTLE(
-		get_logger(), *get_clock(), (1000ms).count(), "\n[mpc_nonlinear] %s",
-		vehicle_motion_fsm_.fsmMessage().c_str());
+	RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "\n[mpc_nonlinear] %s",
+																 vehicle_motion_fsm_.fsmMessage().c_str());
 
 	//    if (current_fsm_state_ == ns_states::motionStateEnums::isAtCompleteStop ||
 	//        current_fsm_state_ == ns_states::motionStateEnums::isInEmergency)
@@ -355,9 +356,9 @@ void NonlinearMPCNode::onTimer()
 	if (params_node_.predict_initial_states)
 	{
 		/**
-		 * If the NMPC vx input is computed, we can use it to predict the initial states due to delayed
-		 * inputs.
-		 * */
+		* If the NMPC vx input is computed, we can use it to predict the initial states due to delayed
+		* inputs.
+		* */
 
 		predictDelayedInitialStateBy_MPCPredicted_Inputs(x0_predicted_);
 	}
@@ -392,11 +393,9 @@ void NonlinearMPCNode::onTimer()
 		{
 			// vehicle_motion_fsm_.setEmergencyFlag(true);
 
-			RCLCPP_WARN_SKIPFIRST_THROTTLE(
-				get_logger(), *get_clock(), (1000ms).count(),
-				"[mpc_nonlinear] "
-				"Couldn't initialize the LPV controller ... %s \n",
-				vehicle_motion_fsm_.fsmMessage().c_str());
+			RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
+																		 "[mpc_nonlinear] Couldn't initialize the LPV controller ... %s \n",
+																		 vehicle_motion_fsm_.fsmMessage().c_str());
 
 			// Publish previous control command.
 			publishControlsAndUpdateVars(ctrl_cmd_prev_);
@@ -1816,7 +1815,8 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
 	double const &vx_next = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).longitudinal_velocity_mps;
 	double const &&vx_target = vx_prev + ratio_t * (vx_next - vx_prev);
 
-	interpolated_traj_point.longitudinal_velocity_mps = vx_target;
+	interpolated_traj_point.longitudinal_velocity_mps = static_cast<decltype(interpolated_traj_point
+		.longitudinal_velocity_mps)>(vx_target);
 
 	// Set the current target speed of nmpc_performance_vars_.
 	nmpc_performance_vars_.long_velocity_target = vx_target;

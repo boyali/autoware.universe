@@ -5,17 +5,17 @@
     mpc_prediction_dt: 0.1           # prediction time step length [s]
 
     # -- Vehicle Model Parameters --
-    steering_time_constant: 0.3  # [s]
-    speed_time_constant: 0.61    # [s]
+    steering_time_constant: 0.27  # [s]
+    speed_time_constant: 0.1    # [s]
 
     # -- Simulation model for planning simulator --
     use_mpc_controller: true    # if false it uses the feedback controllers.
     use_delay_sim_model: true   # for DELAY_STEER planning simulator model. For debugging only.
-    input_delay_time: 0.24 # 0.3    # input dead-time [s]
+    input_delay_time: 0.0 # 0.3    # input dead-time [s]
 
     # -- Use time or arc-length as the interpolation coordinates for predictions --
     use_acceleration_inputs: true                  # if false, traj speeds are used in the simulations
-    use_linear_trajectory_initialization: false    # if false LPV feedback initialization is used.
+    use_linear_trajectory_initialization: true    # if false LPV feedback initialization is used.
 
     # -- State and Control Weights.
     # -- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay'] --

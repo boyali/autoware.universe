@@ -120,6 +120,7 @@ ament_auto_add_library(bspline_lib SHARED ${SPLINES_LIB_SOURCE})
 
 ## ----------------- Nonlinear MPC Library headers and sources ---------------
 # ---------------------- Vehicle Models --------------------------------------
+
 set(VEHICLE_MODEL_SOURCE
 	src/vehicle_models/vehicle_dynamics_base.cpp
 	src/vehicle_models/vehicle_models_base.cpp
@@ -128,6 +129,7 @@ set(VEHICLE_MODEL_SOURCE
 set(VEHICLE_MODEL_INCLUDE_DIR include/vehicle_models)
 
 # ------------------ NMPC core library --------------------------------------
+
 set(NMPC_CORE mpc_nonlinear_lib_core)
 
 set(NONLINEAR_MPC_CORE_SOURCE
@@ -170,8 +172,7 @@ ament_auto_add_library(mpc_nonlinear_node SHARED
 
 #--------------- NMPC Core ------------------------------------------------------
 set(NONLINEAR_MPC_CORE_SOURCE
-	src/nonlinear_mpc_core/nmpc_core.cpp
-	)
+	src/nonlinear_mpc_core/nmpc_core.cpp)
 
 set(NONLINEAR_MPC_CORE_INCLUDE_DIR
 	include/nonlinear_mpc_core
@@ -189,5 +190,6 @@ rclcpp_components_register_node(${NMPC_NODE}
 ament_auto_package(INSTALL_TO_SHARE
 	launch
 	config)
+
 
 # -------------  PROTOTYPES ---------------------------------------------------
