@@ -31,7 +31,7 @@
 // #include "utils/codegen_eigen_support.hpp"
 #include "utils/nmpc_utils.hpp"
 
-#define CODEGEN false
+#define CODEGEN true
 #if CODEGEN
 #include <cppad/cg.hpp>
 #else

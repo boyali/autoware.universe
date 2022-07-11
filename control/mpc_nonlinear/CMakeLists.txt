@@ -159,7 +159,7 @@ ament_auto_add_library(${NMPC_CORE}
 target_link_libraries(mpc_nonlinear_lib_core
 	bspline_lib
 	osqp-cpp
-	Eigen3::Eigen
+	#	Eigen3::Eigen
 	)
 
 # -------------- NMPC Node ---------------------------------------------
