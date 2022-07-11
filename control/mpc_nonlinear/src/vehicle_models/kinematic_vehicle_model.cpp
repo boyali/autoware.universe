@@ -27,11 +27,10 @@ void ns_models::KinematicModelSingleTrackModel::updateParameters(
 	use_delay_models_ = params_vehicle.use_delay_model;
 }
 
-void ns_models::KinematicModelSingleTrackModel::systemEquations(
-	const VehicleDynamicsBase::state_vector_ad_t &x,
-	const VehicleDynamicsBase::input_vector_ad_t &u,
-	const VehicleDynamicsBase::param_vector_ad_t &params,
-	VehicleDynamicsBase::state_vector_ad_t &f_xdot)
+void ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDynamicsBase::state_vector_ad_t &x,
+																																const VehicleDynamicsBase::input_vector_ad_t &u,
+																																const VehicleDynamicsBase::param_vector_ad_t &params,
+																																VehicleDynamicsBase::state_vector_ad_t &f_xdot)
 {
 	// For guarding zero division.
 	auto constexpr EPS = std::numeric_limits<double>::epsilon();
@@ -122,8 +121,8 @@ void ns_models::KinematicModelSingleTrackModel::testModel()
 	ns_eigen_utils::printEigenMat(B);
 }
 
-double ns_models::KinematicModelSingleTrackModel::getLongSpeedDynamics_vdot(
-	const double &current_long_speed, const double &current_speed_input) const
+double ns_models::KinematicModelSingleTrackModel::getLongSpeedDynamics_vdot(const double &current_long_speed,
+																																						const double &current_speed_input) const
 {
 	auto const &v = current_long_speed;
 	auto const &vx_acc_brk_input = current_long_speed;
@@ -142,8 +141,8 @@ double ns_models::KinematicModelSingleTrackModel::getLongSpeedDynamics_vdot(
 	return vdot;
 }
 
-double ns_models::KinematicModelSingleTrackModel::getSteeringDynamics_deltadot(
-	const double &current_steering, const double &current_steering_input) const
+double ns_models::KinematicModelSingleTrackModel::getSteeringDynamics_deltadot(const double &current_steering,
+																																							 const double &current_steering_input) const
 {
 	auto &&delta = current_steering;
 	auto &&steering_input = current_steering_input;

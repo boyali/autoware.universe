@@ -14,13 +14,13 @@ cd /tmp/cppadcg_deps
 #tar -xzf 20200000.3.tar.gz
 #cd CppAD-20200000.3
 
-wget https://github.com/coin-or/CppAD/archive/20210000.7.tar.gz
-tar -xzf 20210000.7.tar.gz
-cd CppAD-20210000.7
+#wget https://github.com/coin-or/CppAD/archive/20210000.7.tar.gz
+#tar -xzf 20210000.7.tar.gz
+#cd CppAD-20210000.7
 
-#wget https://github.com/coin-or/CppAD/archive/refs/tags/20220000.4.tar.gz
-#tar -xzf 20220000.4.tar.gz
-#cd CppAD-20220000.4
+wget https://github.com/coin-or/CppAD/archive/refs/tags/20220000.4.tar.gz
+tar -xzf 20220000.4.tar.gz
+cd CppAD-20220000.4
 
 mkdir build
 cd build

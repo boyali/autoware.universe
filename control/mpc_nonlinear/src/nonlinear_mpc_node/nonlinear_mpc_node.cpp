@@ -438,8 +438,7 @@ void NonlinearMPCNode::onTimer()
 	/**
 	 * All inputs of the NMPC [vx, steering] are applied and the system is simulated.
 	 * */
-	nonlinear_mpc_controller_ptr_->simulateControlSequenceByPredictedInputs(
-		x0_predicted_, interpolator_curvature_pws);
+	nonlinear_mpc_controller_ptr_->simulateControlSequenceByPredictedInputs(x0_predicted_, interpolator_curvature_pws);
 
 	// Model::input_vector_t u_model_solution_; // [velocity input - m/s, steering input - rad]
 	// If we choose to use MPC. Get solution from OSQP into the traj_data_.
@@ -549,11 +548,9 @@ void NonlinearMPCNode::onTimer()
 	// Set NMPC avg_mpc_computation_time.
 	nonlinear_mpc_controller_ptr_->setCurrentAvgMPCComputationTime(average_mpc_solve_time_);
 
-	//  ns_utils::print(
-	//    "\nOne step MPC step takes time to compute in milliseconds : ", current_mpc_solve_time_msec);
-	//  ns_utils::print(
-	//    "Average MPC solve time takes time to compute in milliseconds : ",
-	//    average_mpc_solve_time_ * 1000, "\n");
+	ns_utils::print("\nOne step MPC step takes time to compute in milliseconds : ", current_mpc_solve_time_msec);
+	ns_utils::print("Average MPC solve time takes time to compute in milliseconds : ",
+									average_mpc_solve_time_ * 1000, "\n");
 
 	// ------------- END of the MPC loop. -------------
 	// Set Debug Marker next waypoint
@@ -1190,8 +1187,7 @@ void NonlinearMPCNode::onVelocity(VelocityMsg::SharedPtr msg)
 	current_velocity_ptr_ = msg;
 
 	// DEBUG
-	RCLCPP_WARN_SKIPFIRST_THROTTLE(
-		get_logger(), *get_clock(), (1000ms).count(), "In the node onVelocity() ");
+	RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "In the node onVelocity() ");
 	// end of DEBUG
 }
 
@@ -1230,7 +1226,7 @@ bool NonlinearMPCNode::isValidTrajectory(const TrajectoryMsg &msg_traj) const
 
 bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
 {
-	// Creating MPCtrajectory instance.
+	// Creating MPC trajectory instance.
 	ns_data::MPCdataTrajectoryVectors mpc_traj_raw(current_trajectory_size_);
 	mpc_traj_raw.emplace_back(*current_trajectory_ptr_);
 
@@ -1260,16 +1256,14 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
 
 	if (!is_resampled)
 	{
-		RCLCPP_ERROR(get_logger(),
-								 "[mpc_nonlinear - resampleRawTrajectoryToAFixedSize ] Could not interpolate the "
-								 "coordinates ...");
+		RCLCPP_ERROR(get_logger(), "[mpc_nonlinear - resampleRawTrajectoryToAFixedSize ] Could not interpolate the "
+															 "coordinates ...");
 		return false;
 	}
 
 	// ------------------- Smooth Trajectories ---------------------------------------
 	// Create MPCtraj smooth_ref_traj.
-	bool const &&is_smoothed =
-		createSmoothTrajectoriesWithCurvature(mpc_traj_raw, reference_map_sxyz);
+	bool const &&is_smoothed = createSmoothTrajectoriesWithCurvature(mpc_traj_raw, reference_map_sxyz);
 
 	// DEBUG
 	//  ns_utils::print("Eigen resampled map : ");

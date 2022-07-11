@@ -5,7 +5,7 @@ find_package(autoware_cmake REQUIRED)
 find_package(Eigen3 CONFIG)
 autoware_package()
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 # -------------  FLAGS ---------------------------------------------------
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -47,13 +47,13 @@ endif()
 set(CMAKE_BUILD_TYPE "Debug")
 
 if(NOT CMAKE_CXX_STANDARD)
-	set(CMAKE_CXX_STANDARD 14)
+	set(CMAKE_CXX_STANDARD 17)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
 	set(CMAKE_CXX_EXTENSIONS OFF)
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+#set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 ## ------------------ External Library Dependencies ------------------------
 # For Eigen vectorization.
@@ -66,17 +66,17 @@ endif()
 
 
 # CppAD
-message("\n### Configuring CppAD ###")
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppAD)
-execute_process(COMMAND cmake ${CMAKE_CURRENT_LIST_DIR}/runtime_lib/CppAD
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppAD)
+#message("\n### Configuring CppAD ###")
+#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppAD)
+#execute_process(COMMAND cmake ${CMAKE_CURRENT_LIST_DIR}/runtime_lib/CppAD
+#	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppAD)
 
-# CppADCodegen
-message("\n### Configuring CppADCodegen ###")
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppADCodegen)
-execute_process(COMMAND cmake -DCPPAD_HOME=${CMAKE_CURRENT_LIST_DIR}/lib/CppAD/include
-	${CMAKE_CURRENT_LIST_DIR}/runtime_lib/CppADCodegen
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppADCodegen)
+## CppADCodeGen
+#message("\n### Configuring CppADCodeGen ###")
+#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppADCodeGen)
+#execute_process(COMMAND cmake -DCPPAD_HOME=${CMAKE_CURRENT_LIST_DIR}/lib/CppAD/include
+#	${CMAKE_CURRENT_LIST_DIR}/runtime_lib/CppADCodeGen
+#	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppADCodeGen)
 
 # --------------- TEMPORARY ADD-ONs ---------------------
 ## BOOST
@@ -193,3 +193,5 @@ ament_auto_package(INSTALL_TO_SHARE
 
 
 # -------------  PROTOTYPES ---------------------------------------------------
+#add_executable(main_vehicle main_vehicle_test.cpp)
+#target_link_libraries(main_vehicle mpc_nonlinear_lib_core)
