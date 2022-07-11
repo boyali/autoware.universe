@@ -5,7 +5,10 @@ find_package(autoware_cmake REQUIRED)
 find_package(Eigen3 CONFIG)
 autoware_package()
 
-set(CMAKE_CXX_STANDARD 17)
+# set(CMAKE_CXX_STANDARD 17)
+# Release, Debug, RelWithDebInfo, MinSizeRel
+#set(CMAKE_BUILD_TYPE "Release")
+#set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # -------------  FLAGS ---------------------------------------------------
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -43,8 +46,6 @@ if(TIDY_WITH_CLANG)
 		"readability-*")
 endif()
 
-# Release, Debug, RelWithDebInfo, MinSizeRel
-set(CMAKE_BUILD_TYPE "Debug")
 
 if(NOT CMAKE_CXX_STANDARD)
 	set(CMAKE_CXX_STANDARD 17)
@@ -53,7 +54,6 @@ if(NOT CMAKE_CXX_STANDARD)
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-#set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 ## ------------------ External Library Dependencies ------------------------
 # For Eigen vectorization.
