@@ -22,7 +22,6 @@
 #include "active_model.hpp"
 #include "nonlinear_mpc_core/nmpc_data_discretization.hpp"
 #include "nonlinear_mpc_core/nmpc_data_trajectory.hpp"
-#include "cdob_dob/cdob_dob_core.hpp"
 
 namespace ns_data
 {
@@ -163,19 +162,6 @@ struct ParamsOptimization
 	bool osqp_scaled_termination{};
 };
 
-struct ParamsCDOB
-{
-	int cdob_filt_order{1};
-	double cdob_filt_frq{10.};
-	double cdob_filt_damping{1.};
-
-	int dob_filt_order{2};
-	double dob_filt_frq{10.};
-	double dob_filt_damping{5.};
-
-	ns_cdob::sLyapMatrixVecs lyap_matsXY;
-};
-
 /**
  * @brief Parameter container for the LPV initializer.
  * @tparam numOfNonlinearTerms number of nonlinear terms in the state transition matrix.
@@ -183,7 +169,6 @@ struct ParamsCDOB
 template<size_t numOfNonlinearTerms>
 struct ParamsLPVFeedback
 {
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	ParamsLPVFeedback() : num_of_nonlinearities{numOfNonlinearTerms}
 	{

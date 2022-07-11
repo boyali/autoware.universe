@@ -143,16 +143,14 @@ set(NONLINEAR_MPC_CORE_SOURCE
 	src/nonlinear_mpc_core/nmpc_kalman_filter.cpp
 	src/nonlinear_mpc_core/initialization_lpv.cpp
 	src/utils/nmpc_utils.cpp
-	#CDOB-DOB
-	src/cdob_dob/cdob_dob_core.cpp
-	src/cdob_dob/cdob_models.cpp
+
 	)
 
 set(NONLINEAR_MPC_CORE_INCLUDE_DIR
 	include/nonlinear_mpc_core
 	include/utils
 	include/vehicle_models
-	include/cdob_dob)
+	)
 
 
 ament_auto_add_library(${NMPC_CORE}

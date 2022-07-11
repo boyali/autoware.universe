@@ -34,8 +34,6 @@
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "nonlinear_mpc_node/nonlinear_mpc_node_visualization.hpp"
-#include "cdob_dob/cdob_dob_core.hpp"
-
 #include <vehicle_info_util/vehicle_info_util.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
@@ -180,14 +178,6 @@ class NonlinearMPCNode : public rclcpp::Node
 	 * */
 	ns_states::VehicleMotionFSM vehicle_motion_fsm_{};
 
-	/**
-	* @brief Time delay compensators.
-	* */
-	// std::shared_ptr<ns_cdob::linear_state_observer_model_t> cdob_observer_model_ptr_{nullptr};
-	// std::shared_ptr<ns_cdob::linear_vehicle_model_t> cdob_vehicle_model_ptr_{nullptr};
-	ns_cdob::LateralCommunicationDelayCompensator_CDOB cdob_compensator_ptr_;
-	ns_cdob::LateralDisturbanceCompensator_DOB dob_compensator_ptr_;
-
 	// Pointers to the received messages.
 	size_t current_trajectory_size_{};
 	TrajectoryMsg::SharedPtr current_trajectory_ptr_{nullptr};
@@ -302,8 +292,6 @@ class NonlinearMPCNode : public rclcpp::Node
 														 ns_data::ParamsOptimization &params_optimization);
 
 	void loadFilterParameters(ns_data::ParamsFilters &params_filters);
-
-	void loadCDOB_DOB(ns_data::ParamsCDOB &params_cdob);
 
 	/**
 	 *   @brief We use state and control scaling for within the optimization algorithms.

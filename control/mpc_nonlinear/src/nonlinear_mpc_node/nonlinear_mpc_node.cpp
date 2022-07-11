@@ -149,51 +149,6 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 	inputs_buffer_common_ =
 		std::deque<std::array<double, 4>>(params_node_.input_delay_discrete_nsteps, std::array<double, 4>());
 
-	// Load CDOB DOB parameters and construct the CDOB - DOB objects
-	ns_data::ParamsCDOB params_cdob;
-	loadCDOB_DOB(params_cdob);
-
-	/**
-	* create observer and vehicle models for CDOB
-	* */
-
-	auto const &dt_cont = params_node_.control_period;
-	auto cdob_observer_model_ptr = std::make_shared<ns_cdob::linear_state_observer_model_t>(wheel_base_,
-																																													params_vehicle.steering_tau,
-																																													dt_cont);
-
-	auto cdob_vehicle_model_ptr = std::make_shared<ns_cdob::linear_vehicle_model_t>(wheel_base_,
-																																									params_vehicle.steering_tau,
-																																									dt_cont);
-
-	// Create CDOB
-	auto qfilter_lat_error_cdob = ns_cdob::get_nthOrderTF(params_cdob.cdob_filt_frq, params_cdob.cdob_filt_order);
-
-	cdob_compensator_ptr_ = ns_cdob::LateralCommunicationDelayCompensator_CDOB(cdob_observer_model_ptr,
-																																						 cdob_vehicle_model_ptr,
-																																						 qfilter_lat_error_cdob,
-																																						 params_cdob.lyap_matsXY,
-																																						 dt_cont);
-
-	// cdob_compensator_ptr_ = std::make_unique<ns_cdob::LateralCommunicationDelayCompensator_CDOB>(cdob_temp);
-
-	// Create DOB
-	int const remaining_order = params_cdob.dob_filt_order - 2;
-	auto qfilter_lat_error_dob = ns_cdob::get_nthOrderTFwithDampedPoles(params_cdob.dob_filt_frq,
-																																			remaining_order,
-																																			params_cdob.dob_filt_damping);
-
-	dob_compensator_ptr_ = ns_cdob::LateralDisturbanceCompensator_DOB(cdob_observer_model_ptr,
-																																		qfilter_lat_error_dob,
-																																		params_cdob.lyap_matsXY,
-																																		dt_cont);
-
-	// dob_compensator_ptr_ = std::make_unique<ns_cdob::LateralDisturbanceCompensator_DOB>(dob_temp);
-	// test if it loads and assigns.
-	//	cdob_compensator_ptr_->printLyapMatrices();
-	//	cdob_compensator_ptr_->printQfilterTFs();
-	//	dob_compensator_ptr_->printQfilterTFs();
-
 	// Initialize the timer.
 	initTimer(params_node_.control_period);
 
@@ -721,7 +676,6 @@ void NonlinearMPCNode::publishControlCommands(ControlCmdMsg &ctrl_cmd) const
 
 void NonlinearMPCNode::publishControlsAndUpdateVars(ControlCmdMsg &ctrl_cmd)
 {
-
 	// publish the control command.
 	publishControlCommands(ctrl_cmd);
 
@@ -735,8 +689,6 @@ void NonlinearMPCNode::publishControlsAndUpdateVars(ControlCmdMsg &ctrl_cmd)
 	// Update inputs for the Kalman model.
 	u0_kalman_(0) = inputs_buffer_common_.front()[0];  // ax
 	u0_kalman_(1) = inputs_buffer_common_.front()[3];  // steering angle
-
-
 }
 
 void NonlinearMPCNode::publishPerformanceVariables(ControlCmdMsg const &control_cmd)
@@ -841,6 +793,10 @@ void NonlinearMPCNode::loadNodeParameters()
 
 	// Read the vehicle parameters.
 	params_node_.lr = declare_parameter<double>("cog_rear_lr", 1.4);
+
+	// CDOB - DOB options
+	params_node_.use_cdob = declare_parameter<bool>("use_cdob", false);
+	params_node_.use_dob = declare_parameter<bool>("use_dob", false);
 }
 
 void NonlinearMPCNode::loadFilterParameters(ns_data::ParamsFilters &params_filters)
@@ -2367,46 +2323,6 @@ std::array<double, 3> NonlinearMPCNode::getDistanceEgoTargetSpeeds() const
 
 	// state machine toggle(argument -> [distance_to_stop, vcurrent, vnext])
 	return std::array<double, 3>{distance_to_stopping_point, current_vel, target_vel};
-}
-void NonlinearMPCNode::loadCDOB_DOB(ns_data::ParamsCDOB &params_cdob)
-{
-	// Load CDOB - DOB parameters
-	// Control parameters.
-	params_cdob.cdob_filt_order = declare_parameter<int>("cdob_order", 1);
-	params_cdob.cdob_filt_frq = declare_parameter<double>("cdob_frq", 10.);
-	// auto cdob_damping = declare_parameter<double>("cdob_damping", 10.);
-
-	params_cdob.dob_filt_order = declare_parameter<int>("dob_order", 2);
-	params_cdob.dob_filt_frq = declare_parameter<double>("dob_frq", 2.);
-	params_cdob.dob_filt_damping = declare_parameter<double>("dob_damping", 5.);
-
-	// Read Lyaps
-	auto &lyap_matsXY = params_cdob.lyap_matsXY;
-
-	// Load the state observer Lyapunov matrices.
-	std::string labelX_tag = "Xo";  // No delay nodel for steering and longitudinal speed
-	std::string labelY_tag = "Yo";
-
-	for (size_t k = 0; k < ns_cdob::cx_NUMBER_OF_LYAP_MATS; k++)
-	{
-		auto labelX = labelX_tag + std::to_string(k + 1);
-
-		auto tempvX = declare_parameter<std::vector<double> >(labelX);
-		auto tempX = ns_cdob::state_matrix_observer_t::Map(tempvX.data());
-		lyap_matsXY.vXs.emplace_back(tempX);
-
-		auto labelY = labelY_tag + std::to_string(k + 1);
-		auto tempvY = declare_parameter<std::vector<double> >(labelY);
-		auto tempY = ns_cdob::measurement_matrix_observer_t::Map(tempvY.data());
-
-		lyap_matsXY.vYs.emplace_back(tempY);
-
-		// Debug
-		//		ns_nmpc_utils::print("In LoadCDOB ...");
-		//		ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(tempX));
-		//		ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(tempY));
-	}
-
 }
 
 } //namespace ns_mpc_nonlinear
