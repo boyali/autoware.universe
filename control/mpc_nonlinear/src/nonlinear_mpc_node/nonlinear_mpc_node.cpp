@@ -388,18 +388,14 @@ void NonlinearMPCNode::onTimer()
 		auto const &use_linear_initialization = params_node_.use_linear_trajectory_initialization;
 
 		// Compute the initial reference trajectories and discretisize the system.
-		auto const &&is_initialized = nonlinear_mpc_controller_ptr_->initializeTrajectories(
-			interpolator_curvature_pws, use_linear_initialization);
-
-		if (!is_initialized)
+		if (auto const &&is_initialized = nonlinear_mpc_controller_ptr_->initializeTrajectories(interpolator_curvature_pws,
+																																														use_linear_initialization);!is_initialized)
 		{
 			// vehicle_motion_fsm_.setEmergencyFlag(true);
 
-			RCLCPP_WARN_SKIPFIRST_THROTTLE(
-				get_logger(), *get_clock(), (1000ms).count(),
-				"[mpc_nonlinear] "
-				"Couldn't initialize the LPV controller ... %s \n",
-				vehicle_motion_fsm_.fsmMessage().c_str());
+			RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
+																		 "[mpc_nonlinear] Couldn't initialize the LPV controller ... %s \n",
+																		 vehicle_motion_fsm_.fsmMessage().c_str());
 
 			// Publish previous control command.
 			publishControlsAndUpdateVars(ctrl_cmd_prev_);
@@ -2325,7 +2321,7 @@ void NonlinearMPCNode::estimateDisturbanceInput()
 /**
  * Gets the values of distance to stop, current ego speed and target velocity at the next point.
  * */
-std::array<double, 3> NonlinearMPCNode::getDistanceEgoTargetSpeeds()
+std::array<double, 3> NonlinearMPCNode::getDistanceEgoTargetSpeeds() const
 {
 	auto const &&distance_to_stopping_point = calcStopDistance(*idx_prev_wp_ptr_);
 	auto const &current_vel = current_velocity_ptr_->twist.twist.linear.x;

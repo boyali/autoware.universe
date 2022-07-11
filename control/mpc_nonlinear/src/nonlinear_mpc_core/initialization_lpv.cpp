@@ -125,13 +125,11 @@ bool LPVinitializer::simulateWithFeedback(
 		// Get the s-state (distance travelled) and interpolate for the curvature
 		// value at this distance point.
 		auto const &s0 = xk(3);
-		double kappa0;
-
-		auto const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);
+		double kappa0{};
 
 		// ns_utils::print("s vs curvature in LPV feedback : ", s0, kappa0);
 
-		if (!could_interpolate)
+		if (auto const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);!could_interpolate)
 		{
 			// std::cerr <<"[nonlinear_mpc]: LPV spline interpolator failed to compute the
 			// coefficients..." << std::endl;
@@ -173,7 +171,7 @@ bool LPVinitializer::simulateWithFeedback(
 		/**
 		 * X = sum(theta_i * X_i).
 		 * */
-		thetas_ = std::vector<double>{th1, th2, th3, th4, th5, th6, th7};
+		thetas_ = std::vector < double > {th1, th2, th3, th4, th5, th6, th7};
 
 		// Extract the first X0, Y0, we save the first X0 and Y0 at the end.
 		Xr = params_lpv.lpvXcontainer.back();  // We keep the first X0, Y0 at the end of the containers.
@@ -201,15 +199,12 @@ bool LPVinitializer::simulateWithFeedback(
 		auto const &Kfb = Yr * Pr;      // State feedback coefficients matrix.
 		uk = Kfb * x_error;              // Feedback control signal.
 
-		uk(0) = ns_utils::clamp(
-			uk(0), params_opt.ulower(0) * narrow_boundries, params_opt.uupper(0) * narrow_boundries);
+		uk(0) = ns_utils::clamp(uk(0), params_opt.ulower(0) * narrow_boundries, params_opt.uupper(0) * narrow_boundries);
 
-		uk(1) = ns_utils::clamp(
-			uk(1), params_opt.ulower(1) * narrow_boundries, params_opt.uupper(1) * narrow_boundries);
+		uk(1) = ns_utils::clamp(uk(1), params_opt.ulower(1) * narrow_boundries, params_opt.uupper(1) * narrow_boundries);
 
 		// Saturate xk(7) delta
-		xk(7) = ns_utils::clamp(
-			xk(7), params_opt.xlower(7) * narrow_boundries, params_opt.xupper(7) * narrow_boundries);
+		xk(7) = ns_utils::clamp(xk(7), params_opt.xlower(7) * narrow_boundries, params_opt.xupper(7) * narrow_boundries);
 
 		ns_sim::simulateNonlinearModel_zoh(model_ptr, uk, params, dt, xk);
 
@@ -277,11 +272,12 @@ bool LPVinitializer::simulateWithFeedback(
 	return true;
 }
 
-bool LPVinitializer::computeSingleFeedbackControls(
-	Model::model_ptr_t const &model_ptr,
-	ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-	ns_data::param_lpv_type_t const &params_lpv, ns_data::ParamsOptimization const &params_opt,
-	ns_data::data_nmpc_core_type_t &nmpc_data, double const &dt)
+bool LPVinitializer::computeSingleFeedbackControls(Model::model_ptr_t const &model_ptr,
+																									 ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+																									 ns_data::param_lpv_type_t const &params_lpv,
+																									 ns_data::ParamsOptimization const &params_opt,
+																									 ns_data::data_nmpc_core_type_t &nmpc_data,
+																									 double const &dt)
 {
 	// Prepare an error state vector.
 	/**
@@ -291,9 +287,9 @@ bool LPVinitializer::computeSingleFeedbackControls(
 	Model::lpv_state_vector_t x_error;
 	x_error.setZero();
 
-	double s0;
-	double kappa0;  // curvature placeholder
-	bool could_interpolate;
+	double s0{};
+	double kappa0{};  // curvature placeholder
+	bool could_interpolate{};
 
 	// Set instrumental x, u to keep the results of the simulation (inplace integration) computations.
 	auto xk = nmpc_data.trajectory_data.X[0];  // Copy the current value of x0.
@@ -370,7 +366,7 @@ bool LPVinitializer::computeSingleFeedbackControls(
 	 *
 	 * */
 
-	thetas_ = std::vector<double>{th1, th2, th3, th4, th5, th6, th7};
+	thetas_ = std::vector < double > {th1, th2, th3, th4, th5, th6, th7};
 
 	// Extract the first X0, Y0.
 	Xr = params_lpv.lpvXcontainer.back();  // We keep the first X0, Y0 at the end of the containers.

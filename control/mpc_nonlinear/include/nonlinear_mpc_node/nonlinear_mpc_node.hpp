@@ -345,7 +345,7 @@ class NonlinearMPCNode : public rclcpp::Node
 	double calcStopDistance(const size_t &prev_waypoint_index) const;
 
 	// Gets the distance to the stopping point, ego speed and the speed at the next traj. point.
-	std::array<double, 3> getDistanceEgoTargetSpeeds();
+	std::array<double, 3> getDistanceEgoTargetSpeeds() const;
 
 	/** @brief Get average MPC computation time in seconds. */
 	void getAverageMPCcomputeTime(double &avg_compute_time_in_sec) const;

@@ -133,14 +133,13 @@ void ns_nmpc_interface::NonlinearMPCController::getRawRelativeTimeAtIdx(const si
 	}
 }
 
-void ns_nmpc_interface::NonlinearMPCController::updateInitialStates_x0(
-	const Model::state_vector_t &x0)
+void ns_nmpc_interface::NonlinearMPCController::updateInitialStates_x0(const Model::state_vector_t &x0)
 {
 	data_nmpc_.trajectory_data.X[0] = x0;
 
 	// DEBUG
-	/*     ns_utils::print("After updating the initial states in NMPCCore");
-					ns_eigen_utils::printEigenMat(data_nmpc_.trajectory_data.X[0]); */
+	//	ns_utils::print("After updating the initial states in NMPCCore");
+	//	ns_eigen_utils::printEigenMat(data_nmpc_.trajectory_data.X[0]);
 	// end of DEBUG
 }
 
@@ -207,9 +206,7 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredict
 		double const &s0 = xk(3);  // always (k-1)th. x[k-1].
 
 		// We don't need to use could_interpolate, as the interpolator is verified inside.
-		bool const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);
-
-		if (!could_interpolate)
+		if (bool const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);!could_interpolate)
 		{
 			RCLCPP_ERROR(
 				rclcpp::get_logger(node_logger_name_),
@@ -275,12 +272,10 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceUseVaryin
 		double s0 = xk(3);  // always (k-1)th. x[k-1].
 
 		// We don't need to use could_interpolate, as the interpolator is verified inside
-		auto could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);
-
-		if (!could_interpolate)
+		if (auto could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);!could_interpolate)
 		{
 			RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
-									 "[nonlinear-mpc - simulate varying speed sequence],				the spline could not interpolate ...");
+									 "[nonlinear-mpc - simulate varying speed sequence], the spline could not interpolate ...");
 			return;
 		}
 
@@ -481,12 +476,10 @@ void ns_nmpc_interface::NonlinearMPCController::getPredictedArcLengthDistanceVec
 
 	ns_splines::InterpolatingSplinePCG time_speed_interpolator(1);
 
-	bool const &&is_interpolated = time_speed_interpolator.Interpolate(current_MPCtraj_smooth_vects_ptr_->t,
-																																		 current_MPCtraj_smooth_vects_ptr_->vx,
-																																		 t_predicted_coords,
-																																		 vx_interpolated_vect);
-
-	if (!is_interpolated)
+	if (bool const &&is_interpolated = time_speed_interpolator.Interpolate(current_MPCtraj_smooth_vects_ptr_->t,
+																																				 current_MPCtraj_smooth_vects_ptr_->vx,
+																																				 t_predicted_coords,
+																																				 vx_interpolated_vect);!is_interpolated)
 	{
 		RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
 								 "[nonlinear_mpc]: getPredictedArcLengthDistanceVector spline interpolator failed to compute "
@@ -496,8 +489,7 @@ void ns_nmpc_interface::NonlinearMPCController::getPredictedArcLengthDistanceVec
 
 	// Integrate the speeds by the trapezoidal rule and mpc_time step duration.
 	std::transform(vx_interpolated_vect.cbegin(), vx_interpolated_vect.cend(), vx_interpolated_vect.cbegin() + 1,
-								 std::back_inserter(ds_steps),
-								 [&dt](auto const &v0, auto const &v1)
+								 std::back_inserter(ds_steps), [&dt](auto const &v0, auto const &v1)
 								 { return (v0 + v1) * dt / 2; });
 
 	// Integrate the ds_steps starting from current_s0_.

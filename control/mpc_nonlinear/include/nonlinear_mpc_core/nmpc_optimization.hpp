@@ -130,7 +130,8 @@ class OptimizationProblemOSQP
 	void getSolution(ns_data::ParamsOptimization const &params_optimization, Model::trajectory_data_t &td);
 
 	// Setters.
-	bool setUPOSQP_useTriplets(Model::state_vector_t const &x0, ns_data::data_nmpc_core_type_t const &data_nmpc,
+	bool setUPOSQP_useTriplets(Model::state_vector_t const &x0,
+														 ns_data::data_nmpc_core_type_t const &data_nmpc,
 														 ns_data::ParamsOptimization const &param_opt);
 
 	bool updateOSQP(ns_data::data_nmpc_core_type_t const &data_nmpc,
@@ -518,8 +519,9 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 
 	for (size_t k = 1; k < K; ++k)
 	{
-		auto &&zk = discretization_data.z.at(k - 1) + discretization_data.A.at(k - 1) * Cx +
-			discretization_data.B.at(k - 1) * Cu - Cx;
+		auto &&zk =
+			discretization_data.z.at(k - 1) + discretization_data.A.at(k - 1) * Cx
+				+ discretization_data.B.at(k - 1) * Cu - Cx;
 
 		osqp_instance_.lower_bounds.template segment<STATE_DIM>(k * STATE_DIM) = -zk;
 		osqp_instance_.upper_bounds.template segment<STATE_DIM>(k * STATE_DIM) = -zk;
@@ -535,18 +537,14 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 	for (size_t k = 0; k < K - 1; ++k)
 	{
 		// Set state bounds.
-		osqp_instance_.upper_bounds.segment<STATE_DIM>(row_aineq + k * STATE_DIM) =
-			params_optimization.xupper_scaled;
+		osqp_instance_.upper_bounds.segment<STATE_DIM>(row_aineq + k * STATE_DIM) = params_optimization.xupper_scaled;
 
-		osqp_instance_.lower_bounds.segment<STATE_DIM>(row_aineq + k * STATE_DIM) =
-			params_optimization.xlower_scaled;
+		osqp_instance_.lower_bounds.segment<STATE_DIM>(row_aineq + k * STATE_DIM) = params_optimization.xlower_scaled;
 
 		// Set control bounds.
-		osqp_instance_.upper_bounds.segment<INPUT_DIM>(row_inq_u + k * INPUT_DIM) =
-			params_optimization.uupper_scaled;
+		osqp_instance_.upper_bounds.segment<INPUT_DIM>(row_inq_u + k * INPUT_DIM) = params_optimization.uupper_scaled;
 
-		osqp_instance_.lower_bounds.segment<INPUT_DIM>(row_inq_u + k * INPUT_DIM) =
-			params_optimization.ulower_scaled;
+		osqp_instance_.lower_bounds.segment<INPUT_DIM>(row_inq_u + k * INPUT_DIM) = params_optimization.ulower_scaled;
 
 		// Set jerk bounds.
 		osqp_instance_.upper_bounds.segment<INPUT_DIM>(row_inq_j + k * INPUT_DIM) << kInfinity, kInfinity;
@@ -593,47 +591,47 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 	Aconst_.template setFromTriplets(triplets_A.cbegin(), triplets_A.cend());
 
 	// Initialize the solver.
-	{
-		osqp_settings_.warm_start = params_optimization.osqp_warm_start;
-		osqp_settings_.polish = params_optimization.osqp_polishing;
-		osqp_settings_.scaling = params_optimization.osqp_scaling;
-		osqp_settings_.max_iter = params_optimization.osqp_max_iters;
-		osqp_settings_.polish_refine_iter = params_optimization.osqp_polish_iters;
-		// osqp_settings_.time_limit = params_optimization.osqp_time_limit;
-		osqp_settings_.scaled_termination = params_optimization.osqp_scaled_termination;
 
-		// Set accuracy.
-		osqp_settings_.eps_abs = params_optimization.osqp_eps_abs;
-		osqp_settings_.eps_rel = params_optimization.osqp_eps_rel;
+	osqp_settings_.warm_start = params_optimization.osqp_warm_start;
+	osqp_settings_.polish = params_optimization.osqp_polishing;
+	osqp_settings_.scaling = params_optimization.osqp_scaling;
+	osqp_settings_.max_iter = params_optimization.osqp_max_iters;
+	osqp_settings_.polish_refine_iter = params_optimization.osqp_polish_iters;
+	// osqp_settings_.time_limit = params_optimization.osqp_time_limit;
+	osqp_settings_.scaled_termination = params_optimization.osqp_scaled_termination;
 
-		// Set verbosity.
-		osqp_settings_.verbose = params_optimization.osqp_verbose;
+	// Set accuracy.
+	osqp_settings_.eps_abs = params_optimization.osqp_eps_abs;
+	osqp_settings_.eps_rel = params_optimization.osqp_eps_rel;
 
-		// Set OSQP instance - Pmatrix must be upper diagonal.
-		// On the diagonals of P we add a small value to force it not to behave ill-conditioned.
-		// osqp_instance_.objective_matrix = Pcost_;
-		auto &&EPS = std::numeric_limits<double>::epsilon();
-		osqp_instance_.objective_matrix = (Pcost_ + EPS * Psmall_diags).triangularView<Eigen::Upper>();
-		osqp_instance_.constraint_matrix = Aconst_;
+	// Set verbosity.
+	osqp_settings_.verbose = params_optimization.osqp_verbose;
 
-		auto status = osqp_solver_.Init(osqp_instance_, osqp_settings_);
-		ns_utils::print("Is the solver initialized : ", status());
+	// Set OSQP instance - Pmatrix must be upper diagonal.
+	// On the diagonals of P we add a small value to force it not to behave ill-conditioned.
+	// osqp_instance_.objective_matrix = Pcost_;
+	auto &&EPS = std::numeric_limits<double>::epsilon();
+	osqp_instance_.objective_matrix = (Pcost_ + EPS * Psmall_diags).triangularView<Eigen::Upper>();
+	osqp_instance_.constraint_matrix = Aconst_;
 
-		is_initialized_ = osqp_solver_.IsInitialized();
+	auto status = osqp_solver_.Init(osqp_instance_, osqp_settings_);
+	ns_utils::print("Is the solver initialized : ", status());
 
-		// DEBUG
-		ns_utils::print("\nOsqp Pdim cost matrix : ", osqp_dims_.Pdim);
-		ns_utils::print("Osqp Adim constraint matrix : ", osqp_dims_.Acol_dim);
+	is_initialized_ = osqp_solver_.IsInitialized();
 
-		//  ns_utils::print("\nP - cost matrix : ");
-		//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Pcost_.toDense()));
-		//  ns_utils::print("\nA - constraint matrix : ");
-		//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Aconst_.toDense()));
+	// DEBUG
+	ns_utils::print("\nOsqp Pdim cost matrix : ", osqp_dims_.Pdim);
+	ns_utils::print("Osqp Adim constraint matrix : ", osqp_dims_.Acol_dim);
 
-		// end of debug.
+	//  ns_utils::print("\nP - cost matrix : ");
+	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Pcost_.toDense()));
+	//  ns_utils::print("\nA - constraint matrix : ");
+	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Aconst_.toDense()));
 
-		return is_initialized_;
-	}
+	// end of debug.
+
+	return is_initialized_;
+
 }
 
 /**
@@ -755,9 +753,9 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
 		//  -1 * Q *  target_references.X[k];
 
 		// scale the targets in [-1, 1]
-		auto &xref_hat = params_optimization.Sx_inv *
-			(target_references.X[k] * data_nmpc.feedforward_speed_set_point_scale -
-				params_optimization.Cx);
+		auto
+			&xref_hat = params_optimization.Sx_inv * (target_references.X[k] * data_nmpc.feedforward_speed_set_point_scale -
+			params_optimization.Cx);
 
 		new_objective_vector.template segment<STATE_DIM>(k * STATE_DIM) = -1 * Q * xref_hat;
 

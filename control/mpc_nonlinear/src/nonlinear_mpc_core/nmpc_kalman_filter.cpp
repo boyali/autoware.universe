@@ -457,7 +457,7 @@ KalmanUnscentedSQRT::KalmanUnscentedSQRT(KalmanUnscentedSQRT const &other)
 		dt_{other.dt_},
 		Vsqrt_{other.Vsqrt_},
 		Wsqrt_{other.Wsqrt_},
-
+		Sx_sqrt_{other.Sx_sqrt_},
 		alpha_{other.alpha_},
 		beta_{other.beta_},
 		kappa_{other.kappa_}
@@ -469,7 +469,6 @@ KalmanUnscentedSQRT::KalmanUnscentedSQRT(KalmanUnscentedSQRT const &other)
 	sigma_and_Wsqrt.setZero();
 	sigma_and_Wsqrt.rightCols(Wsqrt_.cols()) = Wsqrt_;
 
-	Sx_sqrt_ = other.Sx_sqrt_;
 	Sy_sqrt_.setZero();
 	Ck_.setZero();
 	computeWeightsAndCoeffs();
@@ -625,13 +624,11 @@ void KalmanUnscentedSQRT::choleskyOneRankUpdate(Model::state_matrix_t &R,
 			auto const &&s = x(k, 0) / R(k, k);
 			R(k, k) = r;
 
-			auto &&rhs_R = (R.row(k).rightCols(nrows - 1 - k)
-				+ sign * s * x.bottomRows(nrows - 1 - k).transpose()) / c;
+			auto &&rhs_R = (R.row(k).rightCols(nrows - 1 - k) + sign * s * x.bottomRows(nrows - 1 - k).transpose()) / c;
 
 			R.row(k).rightCols(nrows - 1 - k) = rhs_R.eval();
 
-			auto &&rhs_x =
-				c * x.bottomRows(nrows - k - 1) - s * R.row(k).rightCols(nrows - 1 - k).transpose();
+			auto &&rhs_x = c * x.bottomRows(nrows - k - 1) - s * R.row(k).rightCols(nrows - 1 - k).transpose();
 			x.bottomRows(nrows - k - 1).noalias() = rhs_x.eval();
 		}
 	}
@@ -651,8 +648,7 @@ void KalmanUnscentedSQRT::choleskyUpdateFromSigmaPoints(Model::state_matrix_t &m
 	// Get the first colum of the sigma points
 	auto first_column = sigma_points.col(0);
 	auto const &&d_sigma_points_first_col_excluded = sigma_points.rightCols(num_of_sigma_points_ - 1);
-	sigma_concatenated.leftCols(num_of_sigma_points_ - 1) =
-		std::sqrt(Weight_common_) * d_sigma_points_first_col_excluded;
+	sigma_concatenated.leftCols(num_of_sigma_points_ - 1) = std::sqrt(Weight_common_) * d_sigma_points_first_col_excluded;
 
 	//    ns_utils::print("Concatenated Sigma Points : ");
 	//    ns_eigen_utils::printEigenMat(sigma_concatenated);
@@ -694,9 +690,9 @@ void KalmanUnscentedSQRT::KalmanUnscentedPredictionUpdateStep(const Model::input
 	auto &&right_columns = Weight_common_ * sigmaPoints_fxfy_.rightCols(num_of_sigma_points_ - 1);
 
 	/**
-	 * @brief Update the prior of mean with the prediction update.
-	 *
-		 **/
+	* @brief Update the prior of mean with the prediction update.
+	*
+	**/
 	x_est_mean_full_ = first_column + right_columns.rowwise().sum();
 
 	// <-@brief Update Covariance using the mean prior computed.

@@ -204,13 +204,13 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
 	f_ = CppAD::ADFun<scalar_t>(x, dynamic_vector_ad_t(dx));
 	f_.optimize();
 
-	CppAD::cg::ModelCSourceGen<double> cgen(f_, "model_");
+	CppAD::cg::ModelCSourceGen cgen(f_, "model_");
 	cgen.setCreateForwardZero(true);
 	cgen.setCreateJacobian(true);
-	CppAD::cg::ModelLibraryCSourceGen<double> libcgen(cgen);
+	CppAD::cg::ModelLibraryCSourceGen libcgen(cgen);
 
 	// Compile source code.
-	CppAD::cg::DynamicModelLibraryProcessor<double> p(libcgen);
+	CppAD::cg::DynamicModelLibraryProcessor p(libcgen);
 
 	CppAD::cg::GccCompiler<double> compiler;
 	compiler.addCompileFlag("-O3");
