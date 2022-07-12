@@ -466,7 +466,7 @@ LateralDisturbanceCompensator::estimateVehicleStates(const observers::state_vect
 }
 void observers::LateralDisturbanceCompensator::resetInitialState()
 {
-	xhat0_prev_.setZero();
+	xhat0_prev_.bottomRows<1>()(0) = 0; // .setZero();
 	is_vehicle_initial_states_set_ = false;
 }
 
