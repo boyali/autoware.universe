@@ -184,8 +184,7 @@ void CommunicationDelayCompensatorNode::onCurrentVelocity(const VelocityMsg::Sha
 	RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Velocity");
 }
 
-void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(
-	ControllerErrorReportMsg::SharedPtr const msg)
+void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(ControllerErrorReportMsg::SharedPtr const msg)
 {
 	prev_long_errors_ptr_ = current_long_errors_ptr_;
 	current_long_errors_ptr_ = std::make_shared<ControllerErrorReportMsg>(*msg);
@@ -205,8 +204,7 @@ void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(
 	// end of debug
 }
 
-void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
-	ControllerErrorReportMsg::SharedPtr const msg)
+void CommunicationDelayCompensatorNode::onCurrentLateralErrors(ControllerErrorReportMsg::SharedPtr const msg)
 {
 	prev_lat_errors_ptr_ = current_lat_errors_ptr_;
 	current_lat_errors_ptr_ = std::make_shared<ControllerErrorReportMsg>(*msg);

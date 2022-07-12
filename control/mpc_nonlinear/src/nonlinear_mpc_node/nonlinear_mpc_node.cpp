@@ -392,6 +392,17 @@ void NonlinearMPCNode::onTimer()
 	// Update the initial state of the NMPCcore object.
 	nonlinear_mpc_controller_ptr_->updateInitialStates_x0(x0_predicted_);
 
+	// ns_nmpc_utils::print("before using comm delay error refs...");
+	if (params_node_.use_cdob && current_comm_delay_ptr_)
+	{
+		x0_predicted_(4) = current_comm_delay_ptr_->lateral_deviation_error_compensation_ref;
+		x0_predicted_(5) = current_comm_delay_ptr_->heading_angle_error_compensation_ref;
+		x0_predicted_(7) = current_comm_delay_ptr_->steering_compensation_ref;
+
+		// ns_nmpc_utils::print("NMPC using error references...");
+	}
+
+
 	/**
 	 * Target states are predicted based-on the NMPC input trajectory [vx input, steering input].
 	 * */
@@ -1982,15 +1993,15 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 	x0_initial_states_(6) = vx_meas;  // vx longitudinal speed state
 	x0_initial_states_(7) = static_cast<double>(current_steering_ptr_->steering_tire_angle);  // steering state
 
-	// ns_nmpc_utils::print("before using comm delay error refs...");
-	if (params_node_.use_cdob && current_comm_delay_ptr_)
-	{
-		x0_initial_states_(4) = current_comm_delay_ptr_->lateral_deviation_error_compensation_ref;
-		x0_initial_states_(5) = current_comm_delay_ptr_->heading_angle_error_compensation_ref;
-		x0_initial_states_(7) = current_comm_delay_ptr_->steering_compensation_ref;
-
-		// ns_nmpc_utils::print("NMPC using error references...");
-	}
+//	// ns_nmpc_utils::print("before using comm delay error refs...");
+//	if (params_node_.use_cdob && current_comm_delay_ptr_)
+//	{
+//		x0_initial_states_(4) = current_comm_delay_ptr_->lateral_deviation_error_compensation_ref;
+//		x0_initial_states_(5) = current_comm_delay_ptr_->heading_angle_error_compensation_ref;
+//		x0_initial_states_(7) = current_comm_delay_ptr_->steering_compensation_ref;
+//
+//		// ns_nmpc_utils::print("NMPC using error references...");
+//	}
 
 
 	// compute the current curvature and store it.
