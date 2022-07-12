@@ -37,8 +37,7 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 	// Initialize the publishers.
 	pub_control_cmd_ = create_publisher<ControlCmdMsg>("~/output/control_cmd", 1);
 
-	pub_predicted_traj_ =
-		create_publisher<TrajectoryMsg>("~/output/predicted_trajectory", 1);
+	pub_predicted_traj_ = create_publisher<TrajectoryMsg>("~/output/predicted_trajectory", 1);
 
 	// Debug publishers.
 	pub_closest_point_debug_marker_ =
@@ -48,6 +47,12 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 	pub_debug_predicted_traj_ =
 		create_publisher<visualization_msgs::msg::MarkerArray>("debug/nmpc_predicted_trajectory", 1);
 
+
+	//  Error reports
+	pub_nmpc_error_report_ = create_publisher<ErrorReportMsg>("/nmpc_error_report", 1);
+
+
+	// NMPC performance variables for visualizing.
 	pub_nmpc_performance_ = create_publisher<NonlinearMPCPerformanceMsg>("~/debug/nmpc_predicted_performance_vars", 1);
 
 	// Initialize the subscribers.
@@ -293,11 +298,18 @@ void NonlinearMPCNode::onTimer()
 	double const &&timer_mpc_step = ns_nmpc_utils::tic();
 
 	// Find the index of the prev and next waypoint.
+	current_error_report_ = ErrorReportMsg{};
 	findClosestPrevWayPointIdx();
 	computeClosestPointOnTraj();
 
 	// Update the measured initial states.
 	updateInitialStatesAndControls_fromMeasurements();
+
+	/**
+	* Publish the error before the controller computes the control signal based on this error for the time-delay
+	* compensators.
+	* */
+	publishErrorReport(current_error_report_);
 
 	// Vehicle Motion State Machine keep tracks of if vehicle is moving, stopping.
 	auto const &&dist_v0_vnext = getDistanceEgoTargetSpeeds();
@@ -1862,7 +1874,6 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
 	nmpc_performance_vars_.yaw_angle_measured = vehicle_yaw_angle;
 	nmpc_performance_vars_.yaw_angle_target = target_yaw;
 
-
 	// nmpc_performance_vars_.virtual_car_distance =
 	//        nonlinear_mpc_controller_ptr_->getVirtualCarDistance();
 
@@ -1882,6 +1893,11 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
 
 	// end of DEBUG
 	std::array<double, 2> const error_states{error_ey, 1.0 * heading_yaw_error};
+
+	/** set the computed error */
+	current_error_report_.lateral_deviation_read = error_ey;
+	current_error_report_.heading_angle_error_read = heading_yaw_error;
+	current_error_report_.steering_read = current_steering_ptr_->steering_tire_angle;
 
 	return error_states;
 }
@@ -2321,8 +2337,14 @@ std::array<double, 3> NonlinearMPCNode::getDistanceEgoTargetSpeeds() const
 	auto const &current_vel = current_velocity_ptr_->twist.twist.linear.x;
 	auto const &target_vel = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).longitudinal_velocity_mps;
 
-	// state machine toggle(argument -> [distance_to_stop, vcurrent, vnext])
+	// state machine toggle(argument -> [distance_to_stop, vx_current, vx_next])
 	return std::array<double, 3>{distance_to_stopping_point, current_vel, target_vel};
+}
+void NonlinearMPCNode::publishErrorReport(ErrorReportMsg &error_rpt_msg)
+{
+	error_rpt_msg.stamp = this->now();
+	pub_nmpc_error_report_->publish(error_rpt_msg);
+
 }
 
 } //namespace ns_mpc_nonlinear

@@ -36,6 +36,8 @@
 #include "nonlinear_mpc_node/nonlinear_mpc_node_visualization.hpp"
 #include <vehicle_info_util/vehicle_info_util.hpp>
 #include <visualization_msgs/msg/marker.hpp>
+#include "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
+#include "autoware_auto_vehicle_msgs/msg/controller_error_report.hpp"
 
 // ROS headers
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
@@ -84,6 +86,10 @@ using SteeringMeasuredMsg = autoware_auto_vehicle_msgs::msg::SteeringReport;
 using NonlinearMPCPerformanceMsg = autoware_auto_vehicle_msgs::msg::NonlinearMPCPerformanceReport;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using namespace std::chrono_literals;
+
+using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
+using ErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
+using ControllerErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
 
 struct DebugData
 {
@@ -137,6 +143,9 @@ class NonlinearMPCNode : public rclcpp::Node
 
 	// <-@brief publishes the nonlinear mpc performance variables.
 	rclcpp::Publisher<NonlinearMPCPerformanceMsg>::SharedPtr pub_nmpc_performance_{nullptr};
+
+	// <-@brief publishes the nonlinear mpc error variables.
+	rclcpp::Publisher<ErrorReportMsg>::SharedPtr pub_nmpc_error_report_{nullptr};
 
 	// SUBSCRIBERS.
 	// subscribe to the trajectory.
@@ -196,6 +205,11 @@ class NonlinearMPCNode : public rclcpp::Node
 	 * @brief exact location of the vehicle projection on the current trajectory.
 	 * */
 	std::unique_ptr<TrajectoryPoint> current_interpolated_traj_point_ptr_{nullptr};
+
+	/**
+	 * @brief current error msg.
+	 * */
+	ErrorReportMsg current_error_report_{};
 
 	// Computed trajectory variables.
 	// !<-@brief current distance on trajectory at vehicle position projection point.
@@ -427,6 +441,8 @@ class NonlinearMPCNode : public rclcpp::Node
 	void publishPredictedTrajectories(std::string const &ns, std::string const &frame_id) const;
 
 	void publishClosestPointMarker(std::string const &ns) const;
+
+	void publishErrorReport(ErrorReportMsg &error_rpt_msg);
 
 	visualization_msgs::msg::MarkerArray createPredictedTrajectoryMarkers(std::string const &ns,
 																																				std::string const &frame_id,
