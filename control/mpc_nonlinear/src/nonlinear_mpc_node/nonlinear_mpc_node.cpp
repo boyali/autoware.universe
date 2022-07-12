@@ -515,7 +515,7 @@ void NonlinearMPCNode::onTimer()
 	if (params_node_.use_dob)
 	{
 		auto dob_steering_ff = current_comm_delay_ptr_->steering_dob;
-		u_solution_(1) += dob_steering_ff;
+		u_solution_(1) -= dob_steering_ff;
 	}
 
 	auto const
