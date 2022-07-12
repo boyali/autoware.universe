@@ -512,6 +512,12 @@ void NonlinearMPCNode::onTimer()
 	auto const mpc_vx = current_velocity_ptr_->twist.twist.linear.x + u_solution_(0) * params_node_.control_period;
 
 	// Compute the steering rate by numerical differentiation.
+	if (params_node_.use_dob)
+	{
+		auto dob_steering_ff = current_comm_delay_ptr_->steering_dob;
+		u_solution_(1) += dob_steering_ff;
+	}
+
 	auto const
 		steering_rate = (u_solution_(1) - ctrl_cmd_prev_.lateral.steering_tire_angle) / params_node_.control_period;
 
@@ -519,6 +525,7 @@ void NonlinearMPCNode::onTimer()
 	ControlCmdMsg control_cmd;
 
 	// Set the control command.
+
 	control_cmd = createControlCommand(u_solution_(0), /* ax */
 																		 mpc_vx,   /* vx input */
 																		 steering_rate, /* steering_rate */

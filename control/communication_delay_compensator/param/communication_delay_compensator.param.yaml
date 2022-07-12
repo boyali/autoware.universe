@@ -1,11 +1,11 @@
 /**:
   ros__parameters:
     # -- System --
-    cdob_ctrl_period: 0.03     # sampling period.
+    cdob_ctrl_period: 0.033     # sampling period.
 
     # -- Q-filters --
-    qfilter_lateral_error_cdob_order: 2  # must be ==1 as the state observer needed to be redesigned.
-    qfilter_lateral_error_cdob_freq: 20.  #qfilter frequency in Hz for lateral error
+    qfilter_lateral_error_cdob_order: 1  # must be ==1 as the state observer needed to be redesigned.
+    qfilter_lateral_error_cdob_freq: 10.  #qfilter frequency in Hz for lateral error
 
     qfilter_longitudinal_error_order: 2  # longitudinal control qfilter.
     qfilter_longitudinal_error_freq: 5.  #qfilter frequency in Hz for heading error
@@ -16,8 +16,8 @@
 
     # -- Vehicle Model Selection -- Currently we have only one.
     steering_time_constant_: 0.27 # first order steering model time-constant  delta_dot = -1/tau *delta + 1/tau * u
-    velocity_time_constant_: 0.2 # first order velocity model time-constant
-    acc_time_constant_: 0.2 # first order velocity model time-constant
+    velocity_time_constant_: 0.1 # first order velocity model time-constant
+    acc_time_constant_: 0.1 # first order velocity model time-constant
 
     # Observer parameters for the LPV system
     Xn1: [ -0.00021857036458138604, 0.0012743981744613214, 0.0010116991474823029, -0.0005396400151106543, 0.0012743981744613214, 0.0008696563609508597, 0.0012347211965813315, -0.0003762786347182012, 0.0010116991474823029, 0.0012347211965813315, 0.001429345159079951, -0.0005315516953973381, -0.0005396400151106543, -0.0003762786347182012, -0.0005315516953973381, 0.00022176876895209534 ]

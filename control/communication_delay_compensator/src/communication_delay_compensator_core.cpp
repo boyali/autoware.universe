@@ -230,14 +230,14 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(stat
 {
 
 	/**
-	 *        xbar = A @ x0_hat + B * u_prev + Bwd
-	 *        ybar = C @ xbar + D * uk_qf
-	 * */
-	//  FIRST STEP: propagate the previous states.
+* xbar = A @ x0_hat + B * u_prev + Bwd
+* ybar = C @ xbar + D * uk_qf
+* */
+	// FIRST STEP: propagate the previous states.
 	xbar_temp_ = xhat0_prev_.eval();
 	observer_vehicle_model_ptr_->simulateOneStep(ybar_temp_, xbar_temp_, prev_steering_control_cmd);
 
-	xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - current_measurements);  // # xhat_k
+	xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - current_measurements); // # xhat_k
 
 	// Before updating the observer states, use xhat0 current estimate to simulate the disturbance input.
 	// Apply the q-filter to the disturbance state
@@ -250,6 +250,7 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(stat
 	* */
 	df_d0_ = ss_qfilter_lat_.simulateOneStep(xd0_, current_steering_cmd - dist_state);
 
+	// dist_qfiltered_ = ss_qfilter_lat_.simulateOneStep(xd0_, current_steering_cmd - dist_state);
 
 	// UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.
 	observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);
@@ -258,8 +259,16 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(stat
 	// xv_d0_ = current_yobs_.eval(); // xhat0_prev_.topRows<3>().eval();
 
 	// yu-yd + yd
+	// xv_d0_ = xv_d0_.setZero(); //current_yobs_.eval(); //xhat0_prev_.eval().topRows<3>();
+	// vehicle_model_ptr_->simulateOneStepZeroState(yv_d0_, xv_d0_, current_steering_cmd - dist_qfiltered_);
+	// yv_d0_ += current_measurements; //current_yobs_;
+
+	// xv_d0_ = current_measurements.eval(); //xhat0_prev_.eval().topRows<3>();
+	// vehicle_model_ptr_->simulateOneStepZeroState(yv_d0_, xv_d0_, current_qfiltered_control_cmd_ - dist_qfiltered_);
+
 	xv_d0_ = current_measurements.eval(); //xhat0_prev_.eval().topRows<3>();
 	vehicle_model_ptr_->simulateOneStepZeroState(yv_d0_, xv_d0_, df_d0_);
+
 
 	// yv_d0_ += current_measurements;
 
@@ -395,36 +404,59 @@ void observers::LateralDisturbanceCompensator::estimateVehicleStates(const obser
 																																		 const float64_t &prev_steering_control_cmd,
 																																		 const float64_t &current_steering_cmd)
 {
-
 	/**
-	 *   xbar = A @ x0_hat + B * u_prev + Bwd + Lobs*(yhat - ytime_delay_compensator)
-	 *   ybar = C @ xbar + D * uk_qf
-	 *
-	 * x and y belong to the VEHICLE state observer.
-	 * */
+	*   xbar = A @ x0_hat + B * u_prev + Bwd + Lobs*(yhat - ytime_delay_compensator)
+	*   ybar = C @ xbar + D * uk_qf
+	*
+	* x and y belong to the VEHICLE state observer.
+	* */
 
 	// First filter the time-delay compensator estimated outputs.
 	/**
 	 * Q-filter three states
 	 * */
 
-	observer_vehicle_model_ptr_->getObservedValues_y(yv_d0_); // Get it from CDOB.
+	observer_vehicle_model_ptr_->getObservedValues_y(yv_td0_);
+
+//  double sum_ = yv_td0_.cwiseAbs().sum();
+//  if (ns_utils::isEqual(sum_, 0.))
+//  {
+//    yv_td0_ = current_measurements;
+//  }
+
+	//  observer_vehicle_model_ptr_->getIdealRefSteering(current_ideal_steering_);
+
+//  yv_f0_(0) = ss_qfilter_lat_.simulateOneStep(x_yvd0_, yv_td0_(0)); // filter ey_of time delay
+//  yv_f0_(1) = ss_qfilter_lat_.simulateOneStep(x_yvd1_, yv_td0_(1)); // filter eyaw_of time delay
+//  yv_f0_(2) = ss_qfilter_lat_.simulateOneStep(x_yvd2_, yv_td0_(2));
+	// filter steering of time delay
+
+	/**
+	* Qfilter the time-delay state estimator output ytime_delay = y(without delay) - dcurvature
+	* dcurvature is an output disturbance, we want to find out an input causing this output.
+	* */
 
 	// FIRST STEP: propagate the previous states.
 	xbar_temp_ = xhat0_prev_.eval();
 	observer_vehicle_model_ptr_->simulateOneStep(ybar_temp_, xbar_temp_, prev_steering_control_cmd);
 
 	/**
-	 * Here using yv_d0_ is the point of DDOB. The last row of xhat is the disturbance input estimated for compensation.
-	 * */
-	xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - yv_d0_); // # xhat_k
-
+	* Here using yv_d0_ is the point of DDOB. The last row of xhat is the disturbance input estimated for compensation.
+	* */
+	xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - yv_td0_); // # xhat_k
 	dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_,
 																								xhat0_prev_.bottomRows<1>()(0));
+
+
 	/**
 	 * UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.
 	 * */
 	observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);
+
+	// Send the qfiltered disturbance input to the vehicle model to get the response.
+	//  dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_,
+	//                                                xhat0_prev_.bottomRows<1>()(0));
+
 
 }
 
