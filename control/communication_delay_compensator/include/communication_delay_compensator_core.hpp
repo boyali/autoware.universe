@@ -82,6 +82,7 @@ class LateralCommunicationDelayCompensator
 											 std::shared_ptr<DelayCompensatorDebugMsg> &msg_debug_results);
 
 	void setInitialStates();
+	void resetInitialState();
 
  private:
 	obs_model_ptr_t observer_vehicle_model_ptr_{}; // state observer model

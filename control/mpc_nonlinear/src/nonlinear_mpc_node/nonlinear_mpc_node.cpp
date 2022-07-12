@@ -515,7 +515,7 @@ void NonlinearMPCNode::onTimer()
 	if (params_node_.use_dob)
 	{
 		auto dob_steering_ff = current_comm_delay_ptr_->steering_dob;
-		u_solution_(1) -= dob_steering_ff;
+		u_solution_(1) += dob_steering_ff;
 	}
 
 	auto const
@@ -1922,7 +1922,9 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
 	//double const &heading_yaw_error = -1.0 * ns_nmpc_utils::angleDistance(vehicle_yaw_angle, target_yaw);
 	// double const &heading_yaw_error = 1.0 * ns_nmpc_utils::wrapToPi(vehicle_yaw_angle - target_yaw);
 
-	auto const &heading_yaw_error = autoware::common::helper_functions::wrap_angle(vehicle_yaw_angle - target_yaw);
+	// auto const &heading_yaw_error = autoware::common::helper_functions::wrap_angle(vehicle_yaw_angle - target_yaw);
+	double heading_yaw_error = 1.0 * ns_nmpc_utils::angleDistance(vehicle_yaw_angle, target_yaw);
+	heading_yaw_error = autoware::common::helper_functions::wrap_angle(heading_yaw_error);
 
 	// Set nmpc_performance yaw angles.
 	nmpc_performance_vars_.yaw_angle_measured = vehicle_yaw_angle;

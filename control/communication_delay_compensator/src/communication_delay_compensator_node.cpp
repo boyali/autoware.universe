@@ -124,8 +124,7 @@ void CommunicationDelayCompensatorNode::onTimer()
 
 	// Update vehicle model.
 	updateVehicleModelsWithPreviousTargets();
-
-	//  updateVehicleModelsWithCurrentTargets();
+	// updateVehicleModelsWithCurrentTargets();
 
 	// dist_td_obs_vehicle_model_ptr_->printDiscreteSystem();
 	// dist_td_obs_vehicle_model_ptr_->printContinuousSystem();
@@ -140,6 +139,7 @@ void CommunicationDelayCompensatorNode::onTimer()
 	}
 	{
 		// DOB Reset
+		cdob_lateral_ptr_->resetInitialState();
 		dob_lateral_ptr_->resetInitialState();
 	}
 
@@ -419,7 +419,7 @@ rcl_interfaces::msg::SetParametersResult CommunicationDelayCompensatorNode::onPa
 bool8_t CommunicationDelayCompensatorNode::isVehicleStopping()
 {
 	auto current_vel = current_velocity_ptr_->twist.twist.linear.x;
-	return std::fabs(current_vel) <= 0.5;
+	return std::fabs(current_vel) <= 0.1;
 }
 
 /**
@@ -431,8 +431,8 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithPreviousTargets()
 	// auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
 
 	// Update the matrices
-	dist_td_obs_vehicle_model_ptr_->updateStateSpace(previous_velocity_, prev_ideal_steering_);
-	vehicle_model_ptr_->updateStateSpace(previous_velocity_, prev_ideal_steering_);
+	dist_td_obs_vehicle_model_ptr_->updateStateSpace(previous_velocity_, previous_steering_angle_);
+	vehicle_model_ptr_->updateStateSpace(previous_velocity_, previous_steering_angle_);
 
 	// Update the initial state.
 
@@ -441,10 +441,10 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithPreviousTargets()
 		float64_t ey{static_cast<float64_t>(current_lat_errors_ptr_->lateral_deviation_read)};
 		float64_t eyaw{static_cast<float64_t>(current_lat_errors_ptr_->heading_angle_error_read)};
 		float64_t steering_angle{static_cast<float64_t>(current_lat_errors_ptr_->steering_read)};
-		float64_t vx{current_velocity_};
+		float64_t current_vx{current_velocity_};
 
-		dist_td_obs_vehicle_model_ptr_->updateInitialStates(ey, eyaw, steering_angle, vx, prev_curvature_);
-		vehicle_model_ptr_->updateInitialStates(ey, eyaw, steering_angle, vx, prev_curvature_);
+		dist_td_obs_vehicle_model_ptr_->updateInitialStates(ey, eyaw, steering_angle, current_vx, current_curvature_);
+		vehicle_model_ptr_->updateInitialStates(ey, eyaw, steering_angle, current_vx, current_curvature_);
 	}
 
 	// ns_utils::print(" Previous target speed :", previous_target_velocity_);
@@ -459,8 +459,8 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithCurrentTargets()
 	// auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
 
 	// Update the matrices
-	dist_td_obs_vehicle_model_ptr_->updateStateSpace(current_target_velocity_, current_ideal_steering_);
-	vehicle_model_ptr_->updateStateSpace(current_target_velocity_, current_ideal_steering_);
+	dist_td_obs_vehicle_model_ptr_->updateStateSpace(current_target_velocity_, current_steering_angle_);
+	vehicle_model_ptr_->updateStateSpace(current_target_velocity_, current_steering_angle_);
 
 	// Update the initial state.
 

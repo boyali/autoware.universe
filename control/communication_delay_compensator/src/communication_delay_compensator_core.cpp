@@ -137,6 +137,13 @@ void observers::LateralCommunicationDelayCompensator::setInitialStates()
 	}
 }
 
+void observers::LateralCommunicationDelayCompensator::resetInitialState()
+{
+
+	xhat0_prev_.setZero();
+	is_observer_model_initial_states_set_ = false;
+}
+
 void observers::LateralCommunicationDelayCompensator::simulateOneStep(const state_vector_vehicle_t &current_measurements,
 																																			float64_t const &prev_steering_control_cmd,
 																																			float64_t const &current_steering_cmd,
@@ -267,10 +274,8 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(stat
 	// vehicle_model_ptr_->simulateOneStepZeroState(yv_d0_, xv_d0_, current_qfiltered_control_cmd_ - dist_qfiltered_);
 
 	xv_d0_ = current_measurements.eval(); //xhat0_prev_.eval().topRows<3>();
-	vehicle_model_ptr_->simulateOneStepZeroState(yv_d0_, xv_d0_, df_d0_);
+	vehicle_model_ptr_->simulateOneStepZeroState(yv_d0_, xv_d0_, df_d0_); // equivalent to yv_d0_ += current_measurements;
 
-
-	// yv_d0_ += current_measurements;
 
 	// DEBUG
 	//  ns_utils::print("Current observer state ");
@@ -401,9 +406,10 @@ void observers::LateralDisturbanceCompensator::qfilterControlCommand(const float
 	// First give the output, then update the states.
 	current_qfiltered_control_cmd_ = ss_qfilter_lat_.simulateOneStep(xu0_, current_control_cmd);
 }
-void observers::LateralDisturbanceCompensator::estimateVehicleStates(const observers::state_vector_vehicle_t &current_measurements,
-																																		 const float64_t &prev_steering_control_cmd,
-																																		 const float64_t &current_steering_cmd)
+void observers::
+LateralDisturbanceCompensator::estimateVehicleStates(const observers::state_vector_vehicle_t &/**current_measurements*/,
+																										 const float64_t &prev_steering_control_cmd,
+																										 const float64_t &current_steering_cmd)
 {
 	/**
 	*   xbar = A @ x0_hat + B * u_prev + Bwd + Lobs*(yhat - ytime_delay_compensator)
@@ -454,8 +460,7 @@ void observers::LateralDisturbanceCompensator::estimateVehicleStates(const obser
 	observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);
 
 	// Send the qfiltered disturbance input to the vehicle model to get the response.
-	//  dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_,
-	//                                                xhat0_prev_.bottomRows<1>()(0));
+	//  dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_, xhat0_prev_.bottomRows<1>()(0));
 
 
 }
@@ -463,6 +468,5 @@ void observers::LateralDisturbanceCompensator::resetInitialState()
 {
 	xhat0_prev_.setZero();
 	is_vehicle_initial_states_set_ = false;
-
 }
 
