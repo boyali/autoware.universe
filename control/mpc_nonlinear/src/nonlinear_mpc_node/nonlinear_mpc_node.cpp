@@ -1940,6 +1940,7 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
 	current_error_report_.lateral_deviation_read = error_ey;
 	current_error_report_.heading_angle_error_read = heading_yaw_error;
 	current_error_report_.steering_read = current_steering_ptr_->steering_tire_angle;
+	current_error_report_.curvature_read = current_curvature_k0_;
 
 	return error_states;
 }
@@ -1967,11 +1968,14 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 	x0_initial_states_(6) = vx_meas;  // vx longitudinal speed state
 	x0_initial_states_(7) = static_cast<double>(current_steering_ptr_->steering_tire_angle);  // steering state
 
+	// ns_nmpc_utils::print("before using comm delay error refs...");
 	if (params_node_.use_cdob && current_comm_delay_ptr_)
 	{
 		x0_initial_states_(4) = current_comm_delay_ptr_->lateral_deviation_error_compensation_ref;
 		x0_initial_states_(5) = current_comm_delay_ptr_->heading_angle_error_compensation_ref;
 		x0_initial_states_(7) = current_comm_delay_ptr_->steering_compensation_ref;
+
+		// ns_nmpc_utils::print("NMPC using error references...");
 	}
 
 
@@ -2029,6 +2033,8 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 	// Set the performance variable msg.
 	nmpc_performance_vars_.nmpc_lateral_error = error_states[0];
 	nmpc_performance_vars_.nmpc_yaw_error = error_states[1];
+	nmpc_performance_vars_.yaw_angle_ukf = x0_kalman_est_[2];
+
 	nmpc_performance_vars_.long_velocity_measured = current_velocity_ptr_->twist.twist.linear.x;
 
 	nmpc_performance_vars_.lateral_error_ukf = x0_kalman_est_(4);

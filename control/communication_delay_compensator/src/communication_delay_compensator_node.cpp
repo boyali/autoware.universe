@@ -493,13 +493,14 @@ void CommunicationDelayCompensatorNode::setLateralCDOB_DOBs(sLyapMatrixVecs cons
 
 	// Set the DOB
 	auto const &order_lat_error_dob = params_node_.qfilter_lateral_dob_order;
+	auto const &remaining_order_lat_error_dob = order_lat_error_dob - 2;
 	auto const &wc_lat_error_dob = params_node_.qfilter_lateral_dob_freq;
 	auto const &damping_val = params_node_.qfilter_lateral_dob_damping;
 
 	ns_control_toolbox::tf qfilter_lat_error_dob;
 	if (order_lat_error_dob > 1)
 	{
-		qfilter_lat_error_dob = get_nthOrderTFwithDampedPoles(wc_lat_error_dob, order_lat_error_dob, damping_val);
+		qfilter_lat_error_dob = get_nthOrderTFwithDampedPoles(wc_lat_error_dob, remaining_order_lat_error_dob, damping_val);
 	} else
 	{
 
@@ -554,7 +555,9 @@ void CommunicationDelayCompensatorNode::computeLateralCDOB()
 
 	// DEBUG
 	{
-		// ns_utils::print("Current readings : ", current_lat_error, current_heading_error, current_steering);
+		ns_utils::print("Current readings [ey, eyaw, delta, ideal steer, curvature] : ", current_lat_error,
+										current_heading_error, current_steering,
+										prev_ideal_steering_, prev_curvature_);
 
 		//    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
 		//

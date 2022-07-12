@@ -90,7 +90,7 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
 	}
 
 	// Convert heading angle to a monotonic series
-	ns_nmpc_utils::convertEulerAngleToMonotonic(&yaw);
+	// ns_nmpc_utils::convertEulerAngleToMonotonic(&yaw);
 
 	// Set curvature to zero for the raw trajectory that we do not use.
 	curvature = std::vector<double>(s.size(), 0.0);

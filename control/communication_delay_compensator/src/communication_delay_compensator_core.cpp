@@ -40,9 +40,9 @@ observers::tf_t observers::get_nthOrderTF(
 	return q_tf;
 }
 
-observers::tf_t observers::get_nthOrderTFwithDampedPoles(
-	const autoware::common::types::float64_t &w_cut_off_hz, const int &remaining_order,
-	const autoware::common::types::float64_t &damping_val)
+observers::tf_t observers::get_nthOrderTFwithDampedPoles(const autoware::common::types::float64_t &w_cut_off_hz,
+																												 const int &remaining_order,
+																												 const autoware::common::types::float64_t &damping_val)
 {
 	auto &&wc_rad_sec = 2.0 * M_PI * w_cut_off_hz;  // in [rad/sec]
 
@@ -126,27 +126,25 @@ void observers::LateralCommunicationDelayCompensator::printLyapMatrices() const
 
 void observers::LateralCommunicationDelayCompensator::setInitialStates()
 {
-	if (!is_observer_model_initial_states_set_)
+	if (!is_observer_model_initial_states_set_ && observer_vehicle_model_ptr_->areInitialStatesSet())
 	{
-		if (observer_vehicle_model_ptr_->areInitialStatesSet())
-		{
-			auto const vehicle_states = observer_vehicle_model_ptr_->getInitialStates();
 
-			xhat0_prev_ << vehicle_states(0), vehicle_states(1), vehicle_states(2), 0.;
-			is_observer_model_initial_states_set_ = true;
-		}
+		auto const vehicle_states = observer_vehicle_model_ptr_->getInitialStates();
+
+		xhat0_prev_ << vehicle_states(0), vehicle_states(1), vehicle_states(2), 0.;
+		is_observer_model_initial_states_set_ = true;
+
 	}
 }
 
-void observers::LateralCommunicationDelayCompensator::simulateOneStep(
-	const state_vector_vehicle_t &current_measurements,
-	float64_t const &prev_steering_control_cmd,
-	float64_t const &current_steering_cmd,
-	std::shared_ptr<DelayCompensatatorMsg> &msg_compensation_results,
-	std::shared_ptr<DelayCompensatorDebugMsg> &msg_debug_results)
+void observers::LateralCommunicationDelayCompensator::simulateOneStep(const state_vector_vehicle_t &current_measurements,
+																																			float64_t const &prev_steering_control_cmd,
+																																			float64_t const &current_steering_cmd,
+																																			std::shared_ptr<DelayCompensatatorMsg> &msg_compensation_results,
+																																			std::shared_ptr<DelayCompensatorDebugMsg> &msg_debug_results)
 {
 	// If the initial states of the state observer are not set, sets it.
-	// setInitialStates();
+	setInitialStates();
 
 	// Compute the observer gain matrix for the current operating conditions.
 	computeObserverGains(current_measurements);
@@ -199,8 +197,8 @@ void observers::LateralCommunicationDelayCompensator::computeObserverGains(
 	// P(th) = P0 + th1*P1 + ...
 	for (size_t k = 0; k < vXs_.size() - 1; ++k)
 	{
-		Xc += theta_params_(k) * vXs_[k];
-		Yc += theta_params_(k) * vYs_[k];
+		Xc += theta_params_(static_cast<Eigen::Index>(k)) * vXs_[k];
+		Yc += theta_params_(static_cast<Eigen::Index>(k)) * vYs_[k];
 	}
 
 	Lobs_ = Yc * Xc.inverse();

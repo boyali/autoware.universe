@@ -353,6 +353,31 @@ constexpr auto toUType(E e) noexcept
 	return static_cast<std::underlying_type_t<E>>(e);
 }
 
+template<typename T>
+int sgn(T val)
+{
+	return (T(0) < val) - (val < T(0));
+}
+
+/**
+ * @brief Implements heuristic angle distance for the angles that are wrapped to pi
+ * */
+//template<typename T>
+//constexpr T angleDistanceHeuristics(T const &target_angle, T const &reference_angle)
+//{
+//	auto th_t = target_angle;
+//	auto th_r = reference_angle;
+//
+//	auto sign_result = sgn(th_t * th_r);
+//
+//	if (sign_result < 0)
+//	{
+//		sgn(th_t) < 0 ? th_t : th_r += 2 * M_PI;
+//	}
+//
+//	return;
+//}
+
 }  // namespace ns_nmpc_utils
 
 #endif  // UTILS__NMPC_UTILS_HPP_

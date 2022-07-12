@@ -19,113 +19,6 @@
 namespace ns_filters
 {
 
-// Linear Kalman filter methods.
-KalmanFilter::KalmanFilter(KalmanFilter const &other)
-	: model_ptr_{other.model_ptr_}, dt_{other.dt_}, V_{other.V_}, W_{other.W_}, P_{other.P_}
-{
-}
-
-KalmanFilter &KalmanFilter::operator=(KalmanFilter const &other)
-{
-	if (this != &other)
-	{
-		model_ptr_ = other.model_ptr_;
-		dt_ = other.dt_;
-
-		V_ = other.V_;
-		W_ = other.W_;
-		P_ = other.P_;
-	}
-
-	return *this;
-}
-
-void KalmanFilter::getStateEstimate(const Model::input_vector_t &u0, Model::param_vector_t const &params,
-																		const Model::state_vector_t &x_measured, Model::state_vector_t &xest)
-{
-	KalmanPredictionUpdateStep(u0, params);
-	KalmanMeasurementUpdateStep(x_measured);
-
-	xest = x_est_full_;
-}
-
-void KalmanFilter::KalmanPredictionUpdateStep(const Model::input_vector_t &u0,
-																							Model::param_vector_t const &params)
-{
-	//  the full states are [x, y, yaw, s, e_y, e_yaw, vx, steering]
-	Model::state_matrix_t Ad;    // discrete state transition matrix.
-	Model::control_matrix_t Bd;  // discrete control matrix.
-
-	// Get Ad, Bd from one of the discretization methods.
-	ns_discretization::multipleShootingSingleStep(model_ptr_, x_est_full_, u0, params, dt_, Ad, Bd);
-
-	//    ns_discretization::bilinearTransformationOneStep(
-	//            model_ptr_, x_est_full_, u0, curvature_0, dt_, Ad, Bd);
-
-	// Estimate the next state by the discrete time linear equations.
-	x_est_full_ = Ad * x_est_full_ + Bd * u0;
-
-	// Update the next covariance matrix.
-	P_ = Ad * P_ * Ad.transpose() + V_;
-
-	// DEBUG
-	/*     ns_nmpc_utils::print("\nIn Kalman filter Predict Step");
-					ns_nmpc_utils::print("\nUpdated covariance matrix in the Kalman prediction : ");
-					ns_nmpc_eigen_utils::printEigenMat(P_); */
-
-	// end of debug.
-}
-
-void KalmanFilter::KalmanMeasurementUpdateStep(Model::state_vector_t const &x_measured)
-{
-	// Compute the measurement error.
-	auto y_error = x_measured - x_est_full_;
-
-	auto Sk = P_ + W_;  // <-@brief innovation (or pre-fit residual) covariance
-	auto &&Skinv = Sk.inverse();
-	auto Kk = P_ * Skinv;  // <-@brief Kalman gain
-
-	// Update the state estimate.
-	x_est_full_ = x_est_full_ + Kk * y_error;
-
-	// Update the covariance matrix.
-	P_ = P_ - Kk * Sk * Kk.transpose();
-
-	// DEBUG
-	/*     ns_nmpc_utils::print("\nIn Kalman filter Update Step");
-					ns_nmpc_utils::print("\nUpdated covariance matrix in the Kalman update : ");
-					ns_nmpc_eigen_utils::printEigenMat(P_);
-
-					ns_nmpc_utils::print("\nError in estimation yk_error : ");
-					ns_nmpc_eigen_utils::printEigenMat(y_error); */
-
-	//    ns_nmpc_utils::print("\nEstimated state ");
-	//    ns_nmpc_eigen_utils::printEigenMat(x_est_full_);
-	// end of debug.
-}
-
-void KalmanFilter::updateParameters(ns_data::ParamsFilters const &params_filters)
-{
-	Model::state_matrix_t Vtemp(params_filters.Vsqrt);
-	V_ = Vtemp * Vtemp;
-
-	Model::state_matrix_t Wtemp(params_filters.Wsqrt);
-	W_ = Wtemp * Wtemp;
-
-	Model::state_matrix_t Ptemp(params_filters.Psqrt);
-	P_ = Ptemp * Ptemp;
-
-	// ns_nmpc_utils::print("Kalman filter parameters V, W, P in Kalman filter : ");
-	// ns_nmpc_eigen_utils::printEigenMat(V_);
-	// ns_nmpc_eigen_utils::printEigenMat(W_);
-	// ns_nmpc_eigen_utils::printEigenMat(P_);
-}
-
-void KalmanFilter::Initialize_xest0(Model::state_vector_t const &x0)
-{
-	x_est_full_ = x0;
-	is_initialized_ = true;
-}
 
 // Unscented Kalman filter methods.
 
@@ -377,14 +270,22 @@ void KalmanUnscented::KalmanUnscentedMeasurementUpdateStep(
 
 	// Normalize the angle variables
 	Model::state_vector_t innovation_error = (x_measured - y_est_mean_full_);
-	innovation_error(2) = ns_nmpc_utils::wrapToPi(innovation_error(2));  // yaw angle
-	innovation_error(5) = ns_nmpc_utils::wrapToPi(innovation_error(5));  // yaw_error
+
+	/**
+	 *
+	 * */
+
+	innovation_error(2) = autoware::common::helper_functions::wrap_angle(innovation_error(2)); // yaw error diffs.
+	innovation_error(5) = autoware::common::helper_functions::wrap_angle(innovation_error(5));  // yaw_error
 
 	x_est_mean_full_ = x_est_mean_full_ + Kk_ * innovation_error;
 
 	// Normalize after the update.
-	x_est_mean_full_(2) = ns_nmpc_utils::wrapToPi(x_est_mean_full_(2));  // normalize integrated e_yaw
-	x_est_mean_full_(5) = ns_nmpc_utils::wrapToPi(x_est_mean_full_(5));  // normalize integrated e_yaw
+	x_est_mean_full_(2) =
+		autoware::common::helper_functions::wrap_angle(x_est_mean_full_(2));  // normalize integrated e_yaw
+
+	x_est_mean_full_(5) =
+		autoware::common::helper_functions::wrap_angle(x_est_mean_full_(5));  // normalize integrated e_yaw
 
 	// DEBUG
 	/*   ns_nmpc_utils::print("First column operation : ");
@@ -860,4 +761,4 @@ void KalmanUnscentedSQRT::Initialize_xest0(Model::state_vector_t const &x0)
 	x_est_mean_full_ = x0;
 	is_initialized_ = true;
 }
-} // namespace ns_fitlers
+} // namespace ns_filters

@@ -121,5 +121,5 @@
     feedforward_speed_set_point_scale: 1.0 # Scale the reference longitudinal speed.
 
     # CDOB - DOB parameters.
-    use_cdob: true
+    use_cdob: false
     use_dob: true

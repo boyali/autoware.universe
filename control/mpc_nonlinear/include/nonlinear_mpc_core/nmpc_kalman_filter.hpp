@@ -22,79 +22,14 @@
 #include "nonlinear_mpc_core/nmpc_discretization.hpp"
 #include "nonlinear_mpc_core/nmpc_simulation.hpp"
 
+#include "common/types.hpp"
+#include "helper_functions/angle_utils.hpp"
+
 /**
  * @brief Linear Kalman filter applied to the incremental states x[k+1] - z[k] = Ad* \delta_x +  Bd*u[k]
  * */
 namespace ns_filters
 {
-/**
- * @brief Linear Kalman filter
- * */
-
-class KalmanFilter
-{
- public:
-	KalmanFilter() = default;
-
-	explicit KalmanFilter(Model::model_ptr_t const &model, double const dt)
-		: model_ptr_(model), dt_{dt}
-	{
-		V_.setIdentity();
-		W_.setIdentity();
-		P_.setZero();
-		x_est_full_.setZero();
-	}
-
-	KalmanFilter(KalmanFilter const &other);
-
-	KalmanFilter &operator=(KalmanFilter const &other);
-
-	~KalmanFilter() = default;
-
-	/**
-	 * @brief   implements the linear Kalman filter prediction and update steps.
-	 * @param previous_input u0 is the input signal sent to the vehicle.
-	 * @param current_curvature current curvature of the path,
-	 * @param x_measured full states including [x, y, ...]
-	 * */
-
-	void getStateEstimate(Model::input_vector_t const &u0, Model::param_vector_t const &params,
-												Model::state_vector_t const &x_measured, Model::state_vector_t &xest);
-
-	/**
-	 * @brief set covariance matrices, V, W, P.
-	 * @param Vsqrt process uncertainty variance (independent state assumption),
-	 * @param Wsqrt measurement uncertainty variance,
-	 * @param Psqrt updated variance .
-	 * */
-	void updateParameters(ns_data::ParamsFilters const &params_filters);
-
-	void Initialize_xest0(Model::state_vector_t const &xe0);
-
-	[[nodiscard]] bool isInitialized() const
-	{ return is_initialized_; }
-
- private:
-	Model::model_ptr_t model_ptr_{nullptr};
-	double dt_{};  // <-@brief model update time step.
-
-	Model::state_matrix_t V_;   // <-@brief process uncertainty covariance matrix.
-	Model::state_matrix_t W_;  // <-@brief measurement uncertainty covariance matrix.
-	Model::state_matrix_t P_;  // <-@brief initial and updated covariance.
-
-	/**
-	 * @brief xest updated state estimates.
-	 * */
-
-	Model::state_vector_t x_est_full_;  // <-@full state for Jacobian computations.
-
-	bool is_initialized_{false};  // <-@brief keeps the initialization status of the object.
-
-	// Class methods
-	void KalmanPredictionUpdateStep(const Model::input_vector_t &u0, Model::param_vector_t const &params);
-
-	void KalmanMeasurementUpdateStep(Model::state_vector_t const &x_measured);
-};
 
 class KalmanUnscented
 {
