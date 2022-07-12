@@ -1967,6 +1967,14 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 	x0_initial_states_(6) = vx_meas;  // vx longitudinal speed state
 	x0_initial_states_(7) = static_cast<double>(current_steering_ptr_->steering_tire_angle);  // steering state
 
+	if (params_node_.use_cdob && current_comm_delay_ptr_)
+	{
+		x0_initial_states_(4) = current_comm_delay_ptr_->lateral_deviation_error_compensation_ref;
+		x0_initial_states_(5) = current_comm_delay_ptr_->heading_angle_error_compensation_ref;
+		x0_initial_states_(7) = current_comm_delay_ptr_->steering_compensation_ref;
+	}
+
+
 	// compute the current curvature and store it.
 	if (auto const &&could_interpolate =
 			interpolator_curvature_pws.Interpolate(current_s0_, current_curvature_k0_);!could_interpolate)
