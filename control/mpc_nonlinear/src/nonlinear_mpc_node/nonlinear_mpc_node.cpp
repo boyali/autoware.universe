@@ -63,8 +63,16 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 		create_subscription<VelocityMsg>("~/input/current_velocity", rclcpp::QoS{1},
 																		 std::bind(&NonlinearMPCNode::onVelocity, this, _1));
 
-	sub_vehicle_steering_ = create_subscription<SteeringMeasuredMsg>(
-		"~/input/current_steering", rclcpp::QoS{1}, std::bind(&NonlinearMPCNode::onSteeringMeasured, this, _1));
+	sub_vehicle_steering_ = create_subscription<SteeringMeasuredMsg>("~/input/current_steering",
+																																	 rclcpp::QoS{1},
+																																	 std::bind(&NonlinearMPCNode::onSteeringMeasured,
+																																						 this,
+																																						 _1));
+
+	sub_com_delay_ = create_subscription<DelayCompensationRefs>("~/input/current_com_delay", rclcpp::QoS{1},
+																															std::bind(&NonlinearMPCNode::onCommDelayCompensation,
+																																				this,
+																																				_1));
 
 	// Request wheel_base parameter.
 	const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -574,6 +582,19 @@ void NonlinearMPCNode::onTimer()
 
 
 	// DEBUG
+	ns_nmpc_utils::print("Current use cdob parameter : ", params_node_.use_cdob);
+
+	if (current_comm_delay_ptr_)
+	{
+		ns_nmpc_utils::print("Current delay compensation steering ref : ",
+												 current_comm_delay_ptr_->steering_compensation_ref);
+
+		ns_nmpc_utils::print("Current delay compensation ey ref : ",
+												 current_comm_delay_ptr_->lateral_deviation_error_compensation_ref);
+
+		ns_nmpc_utils::print("Current delay compensation eyaw ref : ",
+												 current_comm_delay_ptr_->heading_angle_error_compensation_ref);
+	}
 	//  ns_nmpc_utils::print("\nCurrent Pose : ");
 	//  ns_nmpc_utils::print(
 	//    "x, y, z : ", current_pose_ptr_->pose.position.x, current_pose_ptr_->pose.position.y,
@@ -1186,6 +1207,27 @@ void NonlinearMPCNode::onVelocity(VelocityMsg::SharedPtr msg)
 	// DEBUG
 	RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "In the node onVelocity() ");
 	// end of DEBUG
+}
+
+void NonlinearMPCNode::onCommDelayCompensation(const DelayCompensationRefs::SharedPtr msg)
+{
+	current_comm_delay_ptr_ = msg;
+
+//	if (current_comm_delay_ptr_)
+//	{
+//		RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
+//												 "In lateral control, ey refs read  %4.2f ",
+//												 msg->lateral_deviation_error_compensation_ref);
+//
+//		RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
+//												 "In lateral control, eyaw refs read  %4.2f ",
+//												 msg->heading_angle_error_compensation_ref);
+//
+//		RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
+//												 "In lateral control, eyaw refs read  %4.2f ",
+//												 msg->steering_compensation_ref);
+//	}
+
 }
 
 void NonlinearMPCNode::onSteeringMeasured(SteeringMeasuredMsg::SharedPtr msg)

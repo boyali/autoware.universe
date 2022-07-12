@@ -87,9 +87,8 @@ using NonlinearMPCPerformanceMsg = autoware_auto_vehicle_msgs::msg::NonlinearMPC
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using namespace std::chrono_literals;
 
-using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
+using autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
 using ErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
-using ControllerErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
 
 struct DebugData
 {
@@ -157,6 +156,9 @@ class NonlinearMPCNode : public rclcpp::Node
 	// subscribe to the measured vehicle steering.
 	rclcpp::Subscription<SteeringMeasuredMsg>::SharedPtr sub_vehicle_steering_;
 
+	//!< @brief subscription for current communication delay compensator messages.
+	rclcpp::Subscription<DelayCompensationRefs>::SharedPtr sub_com_delay_;
+
 	// subscribe to the measured vehicle steering.
 	tf2::BufferCore tf_buffer_{tf2::BUFFER_CORE_DEFAULT_CACHE_TIME};
 	tf2_ros::TransformListener tf_listener_{tf_buffer_};
@@ -196,6 +198,9 @@ class NonlinearMPCNode : public rclcpp::Node
 
 	// !<=@brief measured steering.
 	SteeringMeasuredMsg::SharedPtr current_steering_ptr_{nullptr};
+
+	//!< @brief current communication delay message pointer.
+	DelayCompensationRefs::SharedPtr current_comm_delay_ptr_{nullptr};
 
 	// !<-@brief measured pose.
 	geometry_msgs::msg::PoseStamped::SharedPtr current_pose_ptr_{nullptr};
@@ -331,6 +336,11 @@ class NonlinearMPCNode : public rclcpp::Node
 	 * @brief set current measured longitudinal speed.
 	 */
 	void onVelocity(VelocityMsg::SharedPtr msg);
+
+	/**
+	 * @brief received communication time delay compensation message.
+	 */
+	void onCommDelayCompensation(const DelayCompensationRefs::SharedPtr msg);
 
 	/**
 	* @brief set current measured steering with received message
