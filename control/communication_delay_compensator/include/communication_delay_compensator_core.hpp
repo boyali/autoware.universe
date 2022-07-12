@@ -184,6 +184,8 @@ class LateralDisturbanceCompensator
 
 	void setInitialStates();
 
+	void resetInitialState();
+
  private:
 	obs_model_ptr_t observer_vehicle_model_ptr_{}; // state observer model
 

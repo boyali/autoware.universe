@@ -131,12 +131,19 @@ void CommunicationDelayCompensatorNode::onTimer()
 	// dist_td_obs_vehicle_model_ptr_->printContinuousSystem();
 	// vehicle_model_ptr_->printDiscreteSystem();
 
-	// Compute lateral CDOB references.
-	//        if (!isVehicleStopping()) {
-	//            computeLateralCDOB();
-	//        }
+	is_vehicle_stopped_ = isVehicleStopping();
 
-	computeLateralCDOB();
+	// Compute lateral CDOB references.
+	if (!is_vehicle_stopped_)
+	{
+		computeLateralCDOB();
+	}
+	{
+		// DOB Reset
+		dob_lateral_ptr_->resetInitialState();
+	}
+
+	// computeLateralCDOB();
 
 	// Publish delay compensation reference.
 	publishCompensationReferences();

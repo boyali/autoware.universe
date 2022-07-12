@@ -344,15 +344,14 @@ void observers::LateralDisturbanceCompensator::printLyapMatrices() const
 
 void observers::LateralDisturbanceCompensator::setInitialStates()
 {
-	if (!is_vehicle_initial_states_set_)
+	if (!is_vehicle_initial_states_set_ && observer_vehicle_model_ptr_->areInitialStatesSet())
 	{
-		if (observer_vehicle_model_ptr_->areInitialStatesSet())
-		{
-			auto const vehicle_states = observer_vehicle_model_ptr_->getInitialStates();
 
-			xhat0_prev_ << vehicle_states(0), vehicle_states(1), vehicle_states(2), 0.;
-			is_vehicle_initial_states_set_ = true;
-		}
+		auto const vehicle_states = observer_vehicle_model_ptr_->getInitialStates();
+
+		xhat0_prev_ << vehicle_states(0), vehicle_states(1), vehicle_states(2), 0.;
+		is_vehicle_initial_states_set_ = true;
+
 	}
 }
 
@@ -369,8 +368,8 @@ void observers::LateralDisturbanceCompensator::computeObserverGains(const observ
 	// P(th) = P0 + th1*P1 + ...
 	for (size_t k = 0; k < vXs_.size() - 1; ++k)
 	{
-		Xc += theta_params_(k) * vXs_[k];
-		Yc += theta_params_(k) * vYs_[k];
+		Xc += theta_params_(static_cast<Eigen::Index>(k)) * vXs_[k];
+		Yc += theta_params_(static_cast<Eigen::Index>(k)) * vYs_[k];
 	}
 
 	Lobs_ = Yc * Xc.inverse();
@@ -381,6 +380,8 @@ void observers::LateralDisturbanceCompensator::simulateOneStep(const observers::
 																															 std::shared_ptr<DelayCompensatatorMsg> &msg_compensation_results
 )
 {
+
+	setInitialStates();
 
 	// Compute the observer gain matrix for the current operating conditions.
 	computeObserverGains(current_measurements);
@@ -444,8 +445,7 @@ void observers::LateralDisturbanceCompensator::estimateVehicleStates(const obser
 	* Here using yv_d0_ is the point of DDOB. The last row of xhat is the disturbance input estimated for compensation.
 	* */
 	xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - yv_td0_); // # xhat_k
-	dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_,
-																								xhat0_prev_.bottomRows<1>()(0));
+	dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_, xhat0_prev_.bottomRows<1>()(0));
 
 
 	/**
@@ -457,6 +457,12 @@ void observers::LateralDisturbanceCompensator::estimateVehicleStates(const obser
 	//  dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_,
 	//                                                xhat0_prev_.bottomRows<1>()(0));
 
+
+}
+void observers::LateralDisturbanceCompensator::resetInitialState()
+{
+	xhat0_prev_.setZero();
+	is_vehicle_initial_states_set_ = false;
 
 }
 

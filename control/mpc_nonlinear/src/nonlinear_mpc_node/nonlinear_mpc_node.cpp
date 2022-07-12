@@ -837,6 +837,11 @@ void NonlinearMPCNode::loadNodeParameters()
 	// CDOB - DOB options
 	params_node_.use_cdob = declare_parameter<bool>("use_cdob", false);
 	params_node_.use_dob = declare_parameter<bool>("use_dob", false);
+
+	if (params_node_.use_dob)
+	{
+		params_node_.use_cdob = true; // DOB depends on the CDOB states, cannot be used alone.
+	}
 }
 
 void NonlinearMPCNode::loadFilterParameters(ns_data::ParamsFilters &params_filters)

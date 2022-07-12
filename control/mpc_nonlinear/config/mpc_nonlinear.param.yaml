@@ -22,8 +22,8 @@
     # state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]     
     # state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]
 
-    state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.1, 0.0, 0.02 ]
-    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.2, 0.0, 0.02 ]
+    state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.5, 0.1, 0.1, 0.0, 0.02 ]
+    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.5, 0.1, 0.2, 0.0, 0.02 ]
     control_weights: [ 0.1, 0.1 ]    # [vx speed input, steering input]
     jerk_weights: [ 0.5, 0.5 ]        # [acc and steering_rate]
 
@@ -122,4 +122,4 @@
 
     # CDOB - DOB parameters.
     use_cdob: true
-    use_dob: true
+    use_dob: false # activating use_dob only enables use_cdob. They are both used. 
