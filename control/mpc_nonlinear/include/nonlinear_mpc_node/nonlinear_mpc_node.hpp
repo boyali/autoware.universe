@@ -272,7 +272,7 @@ class NonlinearMPCNode : public rclcpp::Node
 
   // BUFFERS. Use a single buffer.
 
-  std::map<ControlCmdMsg, ControlCmdMsg, s_controlCommandCompare> inputs_buffer_map_; // !< @brief  [ax, vx,
+  std::vector<ControlCmdMsg> inputs_buffer_; // !< @brief
   // steering_rate, steering]
 
   // Data members.
