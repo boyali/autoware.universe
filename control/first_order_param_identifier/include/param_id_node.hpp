@@ -27,14 +27,9 @@
 #include "common/types.hpp"
 #include "node_definitions.hpp"
 
-#include <vehicle_info_util/vehicle_info_util.hpp>
-
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
-#include "autoware_auto_vehicle_msgs/msg/controller_error_report.hpp"
-#include "autoware_auto_vehicle_msgs/msg/delay_compensation_debug.hpp"
-#include "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
+
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_msgs/msg/tf_message.hpp"
@@ -43,14 +38,13 @@
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
+#include "std_msgs/msg/float64.hpp"
 
 namespace sys_id
 {
 
 using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
-using VelocityMsg = nav_msgs::msg::Odometry;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
-using vehicle_info_util::VehicleInfoUtil;
 
 struct Parameters
 {
@@ -80,7 +74,7 @@ class ParameterIdentificationNode : public rclcpp::Node
    * @brief constructor
    */
 
-  ParameterIdentificationNode(const rclcpp::NodeOptions &node_options);
+  explicit ParameterIdentificationNode(const rclcpp::NodeOptions &node_options);
 
   /**
    * @brief destructor
@@ -100,7 +94,7 @@ class ParameterIdentificationNode : public rclcpp::Node
   rclcpp::Subscription<ControlCommand>::SharedPtr sub_control_cmds_;
 
   // Publishers
-  rclcpp::Publisher<float64_t>::SharedPtr pub_parameter_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_parameter_;
 
   // Pointers to the ROS topics.
   std::shared_ptr<ControlCommand> current_control_cmd_ptr_{nullptr};

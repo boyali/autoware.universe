@@ -25,7 +25,7 @@ ParameterIdentificationNode::ParameterIdentificationNode(const rclcpp::NodeOptio
 
   // Create Publishers
   pub_parameter_ =
-    create_publisher<float64_t>("~/output/steering_time_constant", 1);
+    create_publisher<std_msgs::msg::Float64>("~/output/steering_time_constant", 1);
 
   // Create subscriptions
   sub_control_cmds_ =
@@ -136,7 +136,10 @@ bool8_t ParameterIdentificationNode::isDataReady()
 
 void ParameterIdentificationNode::publishParameter()
 {
-  pub_parameter_->publish(10.);
+  auto msg = std_msgs::msg::Float64();
+  msg.data = 10.;
+
+  pub_parameter_->publish(msg);
 }
 
 } // namespace sys_id
