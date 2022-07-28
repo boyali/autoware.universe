@@ -74,8 +74,8 @@ void ParameterIdentificationNode::onTimer()
 
 
   // Debug
-  RCLCPP_WARN_SKIPFIRST_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Timer  ...");
+//  RCLCPP_WARN_SKIPFIRST_THROTTLE(
+//    get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Timer  ...");
 
 }
 
@@ -87,7 +87,7 @@ void ParameterIdentificationNode::onControlCommands(const ControlCommand::Shared
   // Debug
   // ns_utils::print("ACT On control method ");
   // ns_utils::print("Read parameter control period :", params_node_.cdob_ctrl_period);
-  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "onControlCommands");
+//  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "onControlCommands");
   // end of debug
 }
 
@@ -97,8 +97,8 @@ void ParameterIdentificationNode::onCurrentSteering(const SteeringReport::Shared
   current_steering_ptr_ = std::make_shared<SteeringReport>(*msg);
 
   // Debug
-  RCLCPP_WARN_SKIPFIRST_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Steering  ...");
+//  RCLCPP_WARN_SKIPFIRST_THROTTLE(
+//    get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Steering  ...");
   // ns_utils::print("ACT On steering method ");
   // end of debug
 }

@@ -81,7 +81,7 @@ target_link_libraries(${PARAM_ID_NODE}
         ${PARAM_ID_LIB})
 
 rclcpp_components_register_node(${PARAM_ID_NODE}
-        PLUGIN "sysid::ParameterIdentificationNode"
+        PLUGIN "sys_id::ParameterIdentificationNode"
         EXECUTABLE ${PARAM_ID_NODE}_exe
         )
 ## ----------------- Library Tests----------------------------------------------
@@ -92,7 +92,7 @@ if (BUILD_TESTING)
     find_package(ament_cmake_gtest REQUIRED)
 endif ()
 
-# -------------  PROTOTYPES ____________________________
+# -------------  INSTALL ____________________________
 ament_auto_package(INSTALL_TO_SHARE
         launch
         param)
