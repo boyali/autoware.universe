@@ -1,0 +1,20 @@
+/**:
+  ros__parameters:
+    # -- System --
+    sys_dt: 0.033     # sampling period.
+
+    # options
+    robust_options:
+      use_switching_sigma: true
+      use_deadzone: true
+      use_dynamic_normalization: true
+
+    projection_options:
+      smoother_eps: 0.05
+      forgetting_factor: 0.99
+
+    parameter_vars:
+      param_upper_bound: 1.
+      param_lower_bound: 0.1
+
+

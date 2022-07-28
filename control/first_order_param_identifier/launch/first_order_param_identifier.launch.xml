@@ -1,0 +1,20 @@
+<launch>
+    <arg name="first_order_param_identifier_path"
+         default="$(find-pkg-share first_order_param_identifier)/param/first_order_param_identifier.param.yaml"/>
+
+
+    <!-- vehicle info -->
+    <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml"/>
+
+    <node pkg="first_order_param_identifier" exec="first_order_param_identifier_node_exe"
+          name="first_order_param_identifier" output="screen">
+        <param from="$(var first_order_param_identifier_path)"/>
+        <!--        <param from="$(var vehicle_info_param_file)"/>-->
+
+        <remap from="~/input/control_cmd" to="/control/trajectory_follower/control_cmd"/>
+        <remap from="~/input/steering_state" to="/vehicle/status/steering_status"/>
+
+        <remap from="~/output/steering_time_constant" to="sys_id/steering_time_constant"/>
+
+    </node>
+</launch>

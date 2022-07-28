@@ -18,7 +18,6 @@
 #define COMMUNICATION_DELAY_COMPENSATOR__COMMUNICATION_DELAY_COMPENSATOR_NODE_HPP
 
 // Base Headers
-
 #include "eigen3/Eigen/Core"
 
 #include <cmath>
@@ -28,7 +27,6 @@
 
 // Autoware Headers
 #include "common/types.hpp"
-#include "control_performance_analysis/msg/error_stamped.hpp"
 #include "vehicle_models/vehicle_kinematic_error_model.hpp"
 
 #include <vehicle_info_util/vehicle_info_util.hpp>
