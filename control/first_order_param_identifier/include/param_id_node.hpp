@@ -22,10 +22,10 @@
 #include "eigen3/Eigen/Core"
 
 // Autoware headers
-
 #include "param_id_core.hpp"
 
 #include "common/types.hpp"
+#include "node_definitions.hpp"
 
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
@@ -100,7 +100,11 @@ class ParameterIdentificationNode : public rclcpp::Node
   rclcpp::Subscription<ControlCommand>::SharedPtr sub_control_cmds_;
 
   // Publishers
-  rclcpp::Publisher<float64_t>::SharedPtr pub_rameter_;
+  rclcpp::Publisher<float64_t>::SharedPtr pub_parameter_;
+
+  // Pointers to the ROS topics.
+  std::shared_ptr<ControlCommand> current_control_cmd_ptr_{nullptr};
+  std::shared_ptr<SteeringReport> current_steering_ptr_{nullptr};
 
   // Node Methods
   //!< initialize timer to work in real, simulation, and replay
@@ -123,6 +127,13 @@ class ParameterIdentificationNode : public rclcpp::Node
   void onCurrentSteering(const SteeringReport::SharedPtr msg);
 
   void loadParams();
+
+  void publishParameter();
+
+  /**
+   * @brief Check if data flows.
+   * */
+  bool8_t isDataReady();
 };
 
 } // namespace sys_id

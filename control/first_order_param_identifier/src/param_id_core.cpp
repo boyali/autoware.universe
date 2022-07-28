@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../include/param_id_core.hpp"
+#include "param_id_core.hpp"
 
-namespace sys_id
-{
-
-} // namespace sys_id
+//namespace sys_id
+//{
+//
+//} // namespace sys_id

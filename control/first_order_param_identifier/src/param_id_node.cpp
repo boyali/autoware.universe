@@ -18,15 +18,14 @@ namespace sys_id
 {
 
 ParameterIdentificationNode::ParameterIdentificationNode(const rclcpp::NodeOptions &node_options)
-  : Node("parameter_identification_node", node_options)
+  : Node("first_order_param_identifier", node_options)
 {
 
   using std::placeholders::_1;
 
   // Create Publishers
-  pub_rameter_ =
+  pub_parameter_ =
     create_publisher<float64_t>("~/output/steering_time_constant", 1);
-
 
   // Create subscriptions
   sub_control_cmds_ =
@@ -37,44 +36,65 @@ ParameterIdentificationNode::ParameterIdentificationNode(const rclcpp::NodeOptio
 
   sub_current_steering_ptr_ =
     create_subscription<SteeringReport>("~/input/steering_state", rclcpp::QoS{1},
-                                        std::bind(
-                                          &sys_id::ParameterIdentificationNode::onCurrentSteering,
-                                          this, std::placeholders::_1));
+                                        std::bind(&sys_id::ParameterIdentificationNode::onCurrentSteering,
+                                                  this, std::placeholders::_1));
+
+  loadParams();
+
+  initTimer(param_node_.sys_dt);
 
 }
 
 void ParameterIdentificationNode::initTimer(float64_t period_s)
 {
-  const auto
-    period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<float64_t>(period_s));
+  auto timer_callback = std::bind(&ParameterIdentificationNode::onTimer, this);
 
-  timer_ =
-    rclcpp::create_timer(this, get_clock(), period_ns,
-                         std::bind(&ParameterIdentificationNode::onTimer, this));
+  const auto period_ns =
+    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
+
+  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback) >>(this->get_clock(), period_ns,
+                                                                             std::move(timer_callback),
+                                                                             this->get_node_base_interface()->get_context());
+
+  this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
 
 void ParameterIdentificationNode::onTimer()
 {
+  ns_utils::print("OnTimer ()");
+
+  publishParameter();
+
+  if (!isDataReady())
+  {
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Not enough data to start the identification process");
+
+    return;
+  }
+
+
+  // Debug
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Timer  ...");
 
 }
 
 void ParameterIdentificationNode::onControlCommands(const ControlCommand::SharedPtr msg)
 {
-//  previous_control_cmd_ptr_ = current_control_cmd_ptr_;
-//  current_control_cmd_ptr_ = std::make_shared<ControlCommand>(*msg);
+
+  current_control_cmd_ptr_ = std::make_shared<ControlCommand>(*msg);
 
   // Debug
   // ns_utils::print("ACT On control method ");
   // ns_utils::print("Read parameter control period :", params_node_.cdob_ctrl_period);
-  // RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "onControlCommands");
+  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "onControlCommands");
   // end of debug
 }
 
 void ParameterIdentificationNode::onCurrentSteering(const SteeringReport::SharedPtr msg)
 {
-//  prev_steering_ptr_ = current_steering_ptr_;
-//  current_steering_ptr_ = std::make_shared<SteeringReport>(*msg);
+
+  current_steering_ptr_ = std::make_shared<SteeringReport>(*msg);
 
   // Debug
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
@@ -85,6 +105,38 @@ void ParameterIdentificationNode::onCurrentSteering(const SteeringReport::Shared
 void ParameterIdentificationNode::loadParams()
 {
 
+  // Read the filter orders.
+  param_node_.sys_dt = declare_parameter<float64_t>("sys_dt");  // reads sec.
+  param_node_.use_switching_sigma = declare_parameter<bool8_t>("robust_options.use_switching_sigma");  // reads sec.
+
+}
+
+bool8_t ParameterIdentificationNode::isDataReady()
+{
+  if (!current_steering_ptr_)
+  {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(),
+                                   *get_clock(),
+                                   (1000ms).count(),
+                                   "[first_order_param_identifier] Waiting for the steering measurement ...");
+    return false;
+  }
+
+  if (!current_control_cmd_ptr_)
+  {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(),
+                                   *get_clock(),
+                                   (1000ms).count(),
+                                   "[first_order_param_identifier] Waiting for the control command ...");
+    return false;
+  }
+
+  return true;
+}
+
+void ParameterIdentificationNode::publishParameter()
+{
+  pub_parameter_->publish(10.);
 }
 
 } // namespace sys_id

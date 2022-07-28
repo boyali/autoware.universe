@@ -49,7 +49,7 @@ constexpr size_t MPC_MAP_SMOOTHER_OUT = 80;  // !<-@brief Re-sampled points are 
 namespace ns_filters
 {
 constexpr size_t UKF_NUM_OF_SIGMAS = 2 * Model::state_dim + 1;
-}
+} // namespace ns_filters
 
 /**
  * @brief  Map matrix types. The Autoware trajectory is first re-sampled to a fixed number of
