@@ -5,7 +5,7 @@
 
     # options
     robust_options:
-      use_switching_sigma: true
+      use_switching_sigma: false
       use_deadzone: true
       use_dynamic_normalization: true
       tracking_tau: 0.2
