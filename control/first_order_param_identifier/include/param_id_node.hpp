@@ -19,6 +19,7 @@
 // Standard libraries.
 #include "memory"
 #include <vector>
+#include <deque>
 #include "eigen3/Eigen/Core"
 
 // Autoware headers
@@ -68,6 +69,8 @@ class ParameterIdentificationNode : public rclcpp::Node
   sNodeParameters params_node_{};
 
   std::array<float64_t, 2> current_param_estimate_ab_{};
+  std::deque<float64_t> steering_frquency_history_{std::deque<float64_t>(30, 0.)};
+
   // Core
   std::unique_ptr<ParamIDCore> param_id_core_{nullptr};
 

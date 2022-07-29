@@ -77,7 +77,8 @@ void ParameterIdentificationNode::onTimer()
   auto const &steering_measured = current_steering_ptr_->steering_tire_angle;
   auto const &steering_command = current_control_cmd_ptr_->lateral.steering_tire_angle;
 
-  param_id_core_->updateParameterEstimate(steering_measured, steering_command, current_param_estimate_ab_);
+  param_id_core_->updateParameterEstimate(static_cast< float64_t>(steering_measured),
+                                          static_cast<float64_t>(steering_command), current_param_estimate_ab_);
 
   sysIDmsg current_param_estimate_msg;
   current_param_estimate_msg.a = current_param_estimate_ab_[0];

@@ -106,7 +106,6 @@ class ParamIDCore
   void resetCovariance();
 
   [[nodiscard]] float64_t applyDeadzone(float64_t const &ehat) const;
-
   [[nodiscard]] float64_t getLeakageSigma(Eigen::Vector2d const &ab_normalized) const;
 
 };

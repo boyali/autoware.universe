@@ -10,7 +10,7 @@
       use_dynamic_normalization: true
 
       sigma_0: 0.01 # leakage sigma
-      deadzone_threshold: 0.05 # radian for steering.
+      deadzone_threshold: 0.1 # radian for steering.
       delta0_norm_: 0.1 # normalization dynamics time-constant
 
     projection_options:
