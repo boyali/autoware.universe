@@ -17,8 +17,12 @@
       forgetting_factor: 0.99
 
     parameter_vars:
-      param_upper_bound: 1.
-      param_lower_bound: 0.1
+      a_upper_bound: 1.
+      a_lower_bound: 0.1
+
+      b_upper_bound: 1.
+      b_lower_bound: 0.1
+
       param_normalized_upper_bound: 1. # normalized upper bound.
 
 

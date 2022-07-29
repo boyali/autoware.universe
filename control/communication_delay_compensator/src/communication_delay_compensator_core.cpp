@@ -92,20 +92,14 @@ observers::LateralCommunicationDelayCompensator::LateralCommunicationDelayCompen
   ss_one_min_qfilter_lat_ = ss_t(tf_one_minus_qfilter_lat_, dt_);
 
   /** initialize (1-Q) filter states */
-  xey0_ = Eigen::MatrixXd(tf_one_minus_qfilter_lat_.order(), 1);
-  xeyaw0_ = Eigen::MatrixXd(tf_one_minus_qfilter_lat_.order(), 1);
-  xsteer0_ = Eigen::MatrixXd(tf_one_minus_qfilter_lat_.order(), 1);
-
-  xey0_.setZero();
-  xeyaw0_.setZero();
-  xsteer0_.setZero();
+  xey0_ = Eigen::MatrixXd::Zero(tf_one_minus_qfilter_lat_.order(), 1);
+  xeyaw0_ = Eigen::MatrixXd::Zero(tf_one_minus_qfilter_lat_.order(), 1);
+  xsteer0_ = Eigen::MatrixXd::Zero(tf_one_minus_qfilter_lat_.order(), 1);
 
   /** Initialize input and disturbance filter states */
-  xu0_ = Eigen::MatrixXd(qfilter_order_, 1);
-  xd0_ = Eigen::MatrixXd(qfilter_order_, 1);
+  xu0_ = Eigen::MatrixXd::Zero(qfilter_order_, 1);
+  xd0_ = Eigen::MatrixXd::Zero(qfilter_order_, 1);
 
-  xu0_.setZero();
-  xd0_.setZero();
 }
 
 void observers::LateralCommunicationDelayCompensator::printQfilterTFs() const

@@ -45,8 +45,11 @@ struct sNodeParameters
   float64_t forgetting_factor{};
 
   // parameter variables (parameter to be identified).
-  float64_t param_upper_bound{};
-  float64_t param_lower_bound{};
+  float64_t a_upper_bound{};
+  float64_t a_lower_bound{};
+
+  float64_t b_upper_bound{};
+  float64_t b_lower_bound{};
   float64_t param_normalized_upper_bound{};
 
 };

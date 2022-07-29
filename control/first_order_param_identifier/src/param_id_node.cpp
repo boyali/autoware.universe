@@ -69,21 +69,25 @@ void ParameterIdentificationNode::onTimer()
 {
   publishParameter();
 
-//  if (!isDataReady())
-//  {
-//    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Not enough data to start the identification process");
-//
-//    return;
-//  }
+  if (!isDataReady())
+  {
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Not enough data to start the identification process");
+
+    return;
+  }
+
+  auto const &steering_measured = current_steering_ptr_->steering_tire_angle;
+  auto const &steering_command = current_control_cmd_ptr_->lateral.steering_tire_angle;
+
+  param_id_core_->updateParameterEstimate(steering_measured, steering_command, current_param_estimate_ab_);
 
 
   // Debug
-  RCLCPP_WARN_SKIPFIRST_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Timer  ...");
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Timer  ...");
 
   //  ns_utils::print("params sys_dt:", params_node_.sys_dt);
-  //  ns_utils::print("Read params lower bound :", params_node_.param_lower_bound);
-  param_id_core_->printModels();
+  //  ns_utils::print("Read params lower bound :", params_node_.a_lower_bound);
+  // param_id_core_->printModels();
 
 }
 
@@ -125,8 +129,11 @@ void ParameterIdentificationNode::loadParams()
   params_node_.forgetting_factor = declare_parameter<float64_t>("projection_options.forgetting_factor");
 
   // Since we identify the 1/tau, min max order changes.
-  params_node_.param_lower_bound = 1. / declare_parameter<float64_t>("parameter_vars.param_upper_bound");
-  params_node_.param_upper_bound = 1. / declare_parameter<float64_t>("parameter_vars.param_lower_bound");
+  params_node_.a_lower_bound = 1. / declare_parameter<float64_t>("parameter_vars.a_upper_bound");
+  params_node_.a_upper_bound = 1. / declare_parameter<float64_t>("parameter_vars.a_lower_bound");
+
+  params_node_.b_lower_bound = 1. / declare_parameter<float64_t>("parameter_vars.b_upper_bound");
+  params_node_.b_upper_bound = 1. / declare_parameter<float64_t>("parameter_vars.b_lower_bound");
 
   params_node_.param_normalized_upper_bound =
     declare_parameter<float64_t>("parameter_vars.param_normalized_upper_bound");

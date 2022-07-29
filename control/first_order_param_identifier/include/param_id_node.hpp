@@ -65,6 +65,7 @@ class ParameterIdentificationNode : public rclcpp::Node
  private:
   sNodeParameters params_node_{};
 
+  std::array<float64_t, 2> current_param_estimate_ab_{};
   // Core
   std::unique_ptr<ParamIDCore> param_id_core_{nullptr};
 
