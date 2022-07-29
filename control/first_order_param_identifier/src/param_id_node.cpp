@@ -41,7 +41,10 @@ ParameterIdentificationNode::ParameterIdentificationNode(const rclcpp::NodeOptio
 
   loadParams();
 
-  initTimer(param_node_.sys_dt);
+  initTimer(params_node_.sys_dt);
+
+  // Debug
+
 
 }
 
@@ -61,21 +64,22 @@ void ParameterIdentificationNode::initTimer(float64_t period_s)
 
 void ParameterIdentificationNode::onTimer()
 {
-  ns_utils::print("OnTimer ()");
-
   publishParameter();
 
-  if (!isDataReady())
-  {
-    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Not enough data to start the identification process");
-
-    return;
-  }
+//  if (!isDataReady())
+//  {
+//    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Not enough data to start the identification process");
+//
+//    return;
+//  }
 
 
   // Debug
-//  RCLCPP_WARN_SKIPFIRST_THROTTLE(
-//    get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Timer  ...");
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Timer  ...");
+
+  ns_utils::print("params sys_dt:", params_node_.sys_dt);
+  ns_utils::print("Read params lower bound :", params_node_.param_lower_bound);
 
 }
 
@@ -85,9 +89,8 @@ void ParameterIdentificationNode::onControlCommands(const ControlCommand::Shared
   current_control_cmd_ptr_ = std::make_shared<ControlCommand>(*msg);
 
   // Debug
-  // ns_utils::print("ACT On control method ");
-  // ns_utils::print("Read parameter control period :", params_node_.cdob_ctrl_period);
-//  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "onControlCommands");
+
+  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "onControlCommands");
   // end of debug
 }
 
@@ -97,17 +100,26 @@ void ParameterIdentificationNode::onCurrentSteering(const SteeringReport::Shared
   current_steering_ptr_ = std::make_shared<SteeringReport>(*msg);
 
   // Debug
-//  RCLCPP_WARN_SKIPFIRST_THROTTLE(
-//    get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Steering  ...");
-  // ns_utils::print("ACT On steering method ");
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Steering  ...");
+
   // end of debug
 }
 void ParameterIdentificationNode::loadParams()
 {
 
   // Read the filter orders.
-  param_node_.sys_dt = declare_parameter<float64_t>("sys_dt");  // reads sec.
-  param_node_.use_switching_sigma = declare_parameter<bool8_t>("robust_options.use_switching_sigma");  // reads sec.
+  params_node_.sys_dt = declare_parameter<float64_t>("sys_dt");  // reads sec.
+
+  params_node_.use_switching_sigma = declare_parameter<bool8_t>("robust_options.use_switching_sigma");
+  params_node_.use_deadzone = declare_parameter<bool8_t>("robust_options.use_deadzone");
+  params_node_.use_dynamic_normalization = declare_parameter<bool8_t>("robust_options.use_dynamic_normalization");
+
+  params_node_.smoother_eps = declare_parameter<float64_t>("projection_options.smoother_eps");
+  params_node_.forgetting_factor = declare_parameter<float64_t>("projection_options.forgetting_factor");
+
+  params_node_.param_upper_bound = declare_parameter<float64_t>("parameter_vars.param_upper_bound");
+  params_node_.param_lower_bound = declare_parameter<float64_t>("parameter_vars.param_lower_bound");
 
 }
 

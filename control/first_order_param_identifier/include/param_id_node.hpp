@@ -82,7 +82,7 @@ class ParameterIdentificationNode : public rclcpp::Node
   ~ParameterIdentificationNode() override = default;
 
  private:
-  Parameters param_node_{};
+  Parameters params_node_{};
 
   //!< @brief timer to update after a given interval
   rclcpp::TimerBase::SharedPtr timer_;

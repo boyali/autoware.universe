@@ -522,7 +522,7 @@ constexpr void print(T0 const &msg0, T1 const &msg1)
 template<typename... Args>
 void print(Args &&... args)
 {
-  ((std::cout << args << " "), ...);
+  ((std::cout << args << " "), ...) << std::endl;
 }
 
 // ------------ TIME MODULES -----------------------
