@@ -101,7 +101,6 @@ void ParamIDCore::updateParameterEstimate(const float64_t &x_measured, const flo
   auto const &csmoothing_term = (ab_hat_normalized.norm() - 1.) / smoothing_eps_;
 
   // Check if the parameter satisfies the projection requirements.
-
   if (auto const &needs_projections = needsProjection(theta_dot, ab_hat_normalized))
   {
     auto const &grad_theta = am_ab_hat_; // gradient of theta

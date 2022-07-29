@@ -29,6 +29,7 @@
 
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/sys_id.hpp"
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -45,6 +46,7 @@ namespace sys_id
 
 using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
+using sysIDmsg = autoware_auto_vehicle_msgs::msg::SysID;
 
 class ParameterIdentificationNode : public rclcpp::Node
 {
@@ -80,7 +82,7 @@ class ParameterIdentificationNode : public rclcpp::Node
   rclcpp::Subscription<ControlCommand>::SharedPtr sub_control_cmds_;
 
   // Publishers
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_parameter_;
+  rclcpp::Publisher<sysIDmsg>::SharedPtr pub_parameter_;
 
   // Pointers to the ROS topics.
   std::shared_ptr<ControlCommand> current_control_cmd_ptr_{nullptr};
@@ -108,7 +110,7 @@ class ParameterIdentificationNode : public rclcpp::Node
 
   void loadParams();
 
-  void publishParameter();
+  void publishParameter(sysIDmsg const &msg) const;
 
   /**
    * @brief Check if data flows.

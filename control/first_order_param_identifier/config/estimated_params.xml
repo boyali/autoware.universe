@@ -1,0 +1,359 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root>
+ <tabbed_widget name="Main Window" parent="main_window">
+  <Tab tab_name="Tracking" containers="1">
+   <Container>
+    <DockSplitter orientation="-" count="1" sizes="1">
+     <DockSplitter orientation="|" count="3" sizes="0.333021;0.333958;0.333021">
+      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="0.545808" left="0.425760" bottom="-0.070862"/>
+         <limitY/>
+         <curve name="/nmpc_performance_vars/nmpc_lateral_error" color="#ff0001"/>
+         <curve name="/nmpc_performance_vars/lateral_error_ukf" color="#25b41f"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="11.392957" left="0.425760" bottom="-0.277877"/>
+         <limitY/>
+         <curve name="/vehicle/status/velocity_status/longitudinal_velocity" color="#d62728"/>
+         <curve name="/nmpc_performance_vars/long_velocity_target" color="#1a62c9"/>
+         <curve name="/nmpc_performance_vars/long_velocity_ukf" color="#15db00"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="0.011259" left="0.425760" bottom="-0.070995"/>
+         <limitY/>
+         <curve name="/nmpc_performance_vars/nmpc_yaw_error" color="#0e39ff"/>
+         <curve name="/nmpc_performance_vars/yaw_error_ukf" color="#25fe00"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="0.100000" left="0.425760" bottom="-0.100000"/>
+         <limitY/>
+         <curve name="/vehicle/status/velocity_status/lateral_velocity" color="#1f77b4"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="0.025682" left="0.425760" bottom="-0.073907"/>
+         <limitY/>
+         <curve name="/vehicle/status/steering_status/steering_tire_angle" color="#0eff1f"/>
+         <curve name="/nmpc_performance_vars/steering_angle_ukf" color="#c91a9d"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="0.040435" left="0.425760" bottom="-0.045759"/>
+         <limitY/>
+         <curve name="/vehicle/status/velocity_status/heading_rate" color="#ff7f0e"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="Curvature and Yaw Angles" containers="1">
+   <Container>
+    <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+     <DockSplitter orientation="|" count="2" sizes="0.500468;0.499532">
+      <DockArea name="...">
+       <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+        <range right="100.000922" top="0.001479" left="0.425760" bottom="-0.000479"/>
+        <limitY/>
+        <curve name="/nmpc_performance_vars/nmpc_curvature" color="#17becf"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+        <range right="100.000922" top="0.027652" left="0.425760" bottom="-0.076574"/>
+        <limitY/>
+        <curve name="/nmpc_performance_vars/steering_angle_measured" color="#39bd22"/>
+        <curve name="/nmpc_performance_vars/steering_angle_input" color="#ff000a"/>
+        <curve name="/nmpc_performance_vars/steering_angle_ukf" color="#00bbff"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+     <DockSplitter orientation="|" count="2" sizes="0.502341;0.497659">
+      <DockArea name="...">
+       <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+        <range right="1.000000" top="1.000000" left="0.000000" bottom="0.000000"/>
+        <limitY/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+        <range right="1.000000" top="1.000000" left="0.000000" bottom="0.000000"/>
+        <limitY/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="Yaw Angles" containers="1">
+   <Container>
+    <DockSplitter orientation="-" count="1" sizes="1">
+     <DockSplitter orientation="|" count="2" sizes="0.500468;0.499532">
+      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="1.000000" top="1.000000" left="0.000000" bottom="0.000000"/>
+         <limitY/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="1.000000" top="1.000000" left="0.000000" bottom="0.000000"/>
+         <limitY/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+      <DockArea name="...">
+       <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+        <range right="100.000922" top="3.132617" left="0.425760" bottom="-0.076405"/>
+        <limitY/>
+        <curve name="/nmpc_performance_vars/yaw_angle_target" color="#1ac938"/>
+        <curve name="/nmpc_performance_vars/yaw_angle_measured" color="#ff0e18"/>
+        <curve name="/nmpc_performance_vars/yaw_angle_ukf" color="#1f77b4"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="Avg Time and Value" containers="1">
+   <Container>
+    <DockSplitter orientation="-" count="2" sizes="0.501203;0.498797">
+     <DockSplitter orientation="|" count="2" sizes="0.500468;0.499532">
+      <DockArea name="...">
+       <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+        <range right="100.000922" top="12.645717" left="0.425760" bottom="6.950264"/>
+        <limitY/>
+        <curve name="/nmpc_performance_vars/avg_nmpc_computation_time" color="#1f77b4"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+        <range right="100.000922" top="2.025000" left="0.425760" bottom="0.975000"/>
+        <limitY/>
+        <curve name="/nmpc_performance_vars/fsm_state" color="#ff7f0e"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+     <DockSplitter orientation="|" count="2" sizes="0.502341;0.497659">
+      <DockArea name="...">
+       <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+        <range right="100.000922" top="0.155591" left="0.425760" bottom="-16.808968"/>
+        <limitY/>
+        <curve name="/nmpc_performance_vars/nmpc_value" color="#d62728"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+        <range right="100.000922" top="113.202496" left="0.425760" bottom="27.673154"/>
+        <limitY/>
+        <curve name="/nmpc_performance_vars/distance_to_stop_point" color="#f14cc1"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="Time Delays" containers="1">
+   <Container>
+    <DockSplitter orientation="-" count="1" sizes="1">
+     <DockSplitter orientation="|" count="2" sizes="0.500468;0.499532">
+      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="0.105069" left="0.425760" bottom="0.094761"/>
+         <limitY/>
+         <curve name="/simulation/output/disturbance_generator/acc_time_delay_value" color="#1f77b4"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="2.537897" left="0.425760" bottom="-1.435932"/>
+         <limitY/>
+         <curve name="/simulation/output/disturbance_generator/acc_delayed_input" color="#f14cc1"/>
+         <curve name="/simulation/output/disturbance_generator/acc_original_input" color="#9467bd"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="0.284163" left="0.425760" bottom="0.256228"/>
+         <limitY/>
+         <curve name="/simulation/output/disturbance_generator/steer_time_delay_value" color="#d62728"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="0.028168" left="0.425760" bottom="-0.097695"/>
+         <limitY/>
+         <curve name="/simulation/output/disturbance_generator/steer_delayed_input" color="#1ac938"/>
+         <curve name="/simulation/output/disturbance_generator/steer_original_input" color="#ff7f0e"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="Delay Compensation" containers="1">
+   <Container>
+    <DockSplitter orientation="-" count="1" sizes="1">
+     <DockSplitter orientation="|" count="2" sizes="0.500468;0.499532">
+      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="0.027652" left="0.425760" bottom="-0.076574"/>
+         <limitY/>
+         <curve name="/vehicle/status/steering_status/steering_tire_angle" color="#00a307"/>
+         <curve name="/control/command/control_cmd/lateral/steering_tire_angle" color="#1f77b4"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="0.011259" left="0.425760" bottom="-0.070995"/>
+         <limitY/>
+         <curve name="/nmpc_performance_vars/nmpc_yaw_error" color="#f60600"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="0.545808" left="0.425760" bottom="-0.070862"/>
+         <limitY/>
+         <curve name="/nmpc_performance_vars/nmpc_lateral_error" color="#ff0007"/>
+        </plot>
+       </DockArea>
+       <DockSplitter orientation="|" count="2" sizes="0.502814;0.497186">
+        <DockArea name="...">
+         <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+          <range right="1.000000" top="1.000000" left="0.000000" bottom="0.000000"/>
+          <limitY/>
+         </plot>
+        </DockArea>
+        <DockArea name="...">
+         <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+          <range right="100.000922" top="0.025682" left="0.425760" bottom="-0.073907"/>
+          <limitY/>
+          <curve name="/vehicle/status/steering_status/steering_tire_angle" color="#d62728"/>
+         </plot>
+        </DockArea>
+       </DockSplitter>
+      </DockSplitter>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="Control Commands" containers="1">
+   <Container>
+    <DockSplitter orientation="-" count="1" sizes="1">
+     <DockSplitter orientation="|" count="2" sizes="0.5;0.5">
+      <DockArea name="...">
+       <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+        <range right="100.000922" top="0.027652" left="0.425760" bottom="-0.076574"/>
+        <limitY/>
+        <curve name="/control/command/control_cmd/lateral/steering_tire_angle" color="#1f77b4"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+        <range right="100.000922" top="1.930807" left="0.425760" bottom="-1.583678"/>
+        <limitY/>
+        <curve name="/control/command/control_cmd/longitudinal/acceleration" color="#d62728"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="Parameter Estimate" containers="1">
+   <Container>
+    <DockSplitter orientation="-" count="1" sizes="1">
+     <DockSplitter orientation="|" count="2" sizes="0.5;0.5">
+      <DockArea name="...">
+       <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+        <range right="100.000922" top="0.025682" left="0.425760" bottom="-0.073907"/>
+        <limitY/>
+        <curve name="/vehicle/status/steering_status/steering_tire_angle" color="#1ac938"/>
+       </plot>
+      </DockArea>
+      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="2.658946" left="0.425760" bottom="0.315761"/>
+         <limitY/>
+         <curve name="/sys_id/steering_time_constant/a" color="#1f77b4"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+         <range right="100.000922" top="2.195049" left="0.425760" bottom="0.741911"/>
+         <limitY/>
+         <curve name="/sys_id/steering_time_constant/b" color="#d62728"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="7"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="1"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <Plugins>
+  <plugin ID="DataLoad CSV">
+   <default delimiter="0" time_axis=""/>
+  </plugin>
+  <plugin ID="DataLoad ROS2 bags">
+   <use_header_stamp value="false"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+   <boolean_strings_to_number value="false"/>
+   <remove_suffix_from_strings value="false"/>
+  </plugin>
+  <plugin ID="DataLoad ULog"/>
+  <plugin ID="ROS2 Topic Subscriber">
+   <use_header_stamp value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="10"/>
+   <boolean_strings_to_number value="false"/>
+   <remove_suffix_from_strings value="false"/>
+  </plugin>
+  <plugin ID="UDP Server"/>
+  <plugin ID="WebSocket Server"/>
+  <plugin ID="Fast Fourier Transform"/>
+  <plugin ID="Quaternion to RPY"/>
+  <plugin ID="Reactive Script Editor">
+   <library code="--[[ Helper function to create a ScatterXY series from arrays.&#xa;&#xa; series_name: name of the created ScatterXY series&#xa; prefix:      prefix of the timeseries, before the index of the array&#xa; suffix_X:   suffix to complete the name of the series containing the X value.&#xa;             if [nil], the index of the array will be used.&#xa; suffix_Y:   suffix to complete the name of the series containing the Y value&#xa; timestamp:   usually the tracker_time variable&#xa;              &#xa; Example:&#xa; &#xa; Assuming we have multiple series in the form:&#xa; &#xa;   /trajectory/node.{N}/position/x&#xa;   /trajectory/node.{N}/position/y&#xa;   &#xa; where {N} is the index of the array (integer). We can create a reactive series from the array with:&#xa; &#xa;   CreateSeriesFromArray( &quot;my_trajectory&quot;, &quot;/trajectory/node&quot;,  &quot;position/x&quot;, &quot;position/y&quot;, tracker_time );&#xa;]]--&#xa;&#xa;function CreateSeriesFromArray( series_name, prefix, suffix_X, suffix_Y, timestamp )&#xa;  --- create a new series or overwite the previous one&#xa;  new_series = MutableScatterXY.new(series_name)&#xa;  &#xa;  --- Append points to new_series&#xa;  index = 0&#xa;  while(true) do&#xa;&#xa;    x = index;&#xa;    -- if not nil, get the X coordinate from a series&#xa;    if suffix_X ~= nil then &#xa;      series_x = TimeseriesView.find( string.format( &quot;%s.%d/%s&quot;, prefix, index, suffix_X) )&#xa;      if series_x == nil then break end&#xa;      x = series_x:atTime(timestamp)&#x9; &#xa;    end&#xa;    &#xa;    series_y = TimeseriesView.find( string.format( &quot;%s.%d/%s&quot;, prefix, index, suffix_Y) )&#xa;    if series_x == nil then break end &#xa;    y = series_y:atTime(timestamp)&#xa;    &#xa;    new_series:push_back(x,y)&#xa;    index = index+1&#xa;  end&#xa;end&#xa;"/>
+   <scripts/>
+  </plugin>
+  <plugin ID="CSV Exporter"/>
+  <plugin ID="ROS2 Topic Re-Publisher"/>
+ </Plugins>
+ <!-- - - - - - - - - - - - - - - -->
+ <previouslyLoaded_Datafiles/>
+ <previouslyLoaded_Streamer name="ROS2 Topic Subscriber"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <customMathEquations/>
+ <snippets/>
+ <!-- - - - - - - - - - - - - - - -->
+</root>
+

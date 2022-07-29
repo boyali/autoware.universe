@@ -24,8 +24,7 @@ ParameterIdentificationNode::ParameterIdentificationNode(const rclcpp::NodeOptio
   using std::placeholders::_1;
 
   // Create Publishers
-  pub_parameter_ =
-    create_publisher<std_msgs::msg::Float64>("~/output/steering_time_constant", 1);
+  pub_parameter_ = create_publisher<sysIDmsg>("~/output/steering_time_constant", 1);
 
   // Create subscriptions
   sub_control_cmds_ =
@@ -67,7 +66,6 @@ void ParameterIdentificationNode::initTimer(float64_t period_s)
 
 void ParameterIdentificationNode::onTimer()
 {
-  publishParameter();
 
   if (!isDataReady())
   {
@@ -81,6 +79,11 @@ void ParameterIdentificationNode::onTimer()
 
   param_id_core_->updateParameterEstimate(steering_measured, steering_command, current_param_estimate_ab_);
 
+  sysIDmsg current_param_estimate_msg;
+  current_param_estimate_msg.a = current_param_estimate_ab_[0];
+  current_param_estimate_msg.b = current_param_estimate_ab_[1];
+
+  publishParameter(current_param_estimate_msg);
 
   // Debug
   RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Timer  ...");
@@ -97,7 +100,6 @@ void ParameterIdentificationNode::onControlCommands(const ControlCommand::Shared
   current_control_cmd_ptr_ = std::make_shared<ControlCommand>(*msg);
 
   // Debug
-
   RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "onControlCommands");
   // end of debug
 }
@@ -108,8 +110,10 @@ void ParameterIdentificationNode::onCurrentSteering(const SteeringReport::Shared
   current_steering_ptr_ = std::make_shared<SteeringReport>(*msg);
 
   // Debug
-  RCLCPP_WARN_SKIPFIRST_THROTTLE(
-    get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Steering  ...");
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(),
+                                 *get_clock(),
+                                 (1000ms).count(),
+                                 "[communication_delay] On Steering  ...");
 
   // end of debug
 }
@@ -162,10 +166,8 @@ bool8_t ParameterIdentificationNode::isDataReady()
   return true;
 }
 
-void ParameterIdentificationNode::publishParameter()
+void ParameterIdentificationNode::publishParameter(sysIDmsg const &msg) const
 {
-  auto msg = std_msgs::msg::Float64();
-  msg.data = 10.;
 
   pub_parameter_->publish(msg);
 }
