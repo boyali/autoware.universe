@@ -26,6 +26,7 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
     a_upper_bound_{node_params.a_upper_bound},
     b_lower_bound_{node_params.b_lower_bound},
     b_upper_bound_{node_params.b_upper_bound},
+    tracking_tau_{node_params.tracking_tau},
     sigma_0_{node_params.sigma_0},
     deadzone_thr_{node_params.deadzone_threshold},
     delta0_norm_{node_params.delta0_norm_},
@@ -63,7 +64,7 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
 
   if (use_dynamic_normalization_)
   {
-    dynamic_normalization_tf_model_ = tf_t{{1.,}, {1., deadzone_thr_}}; //  1/ (s + am)
+    dynamic_normalization_tf_model_ = tf_t{{1.,}, {1., delta0_norm_}}; //  1/ (s + am)
     dynamic_normalization_ss_model_ = ss_t(dynamic_normalization_tf_model_, dt_);
   }
 
@@ -100,6 +101,7 @@ void ParamIDCore::updateParameterEstimate(const float64_t &x_measured, const flo
   {
     auto g0 = applyDeadzone(ehat);
     theta_dot = P_ * (ehat + g0) * phi_;
+
   } else
   {
     theta_dot = P_ * ehat * phi_;
@@ -182,12 +184,12 @@ void ParamIDCore::updateParameterEstimate(const float64_t &x_measured, const flo
  *      d = xhat_min - c*xmin
  */
 
-Eigen::Vector2d ParamIDCore::getNormalizedEstimate()
+Eigen::Vector2d ParamIDCore::getNormalizedEstimate() const
 {
   return c0_ * am_ab_hat_ + d0_;
 
 }
-void ParamIDCore::printModels()
+void ParamIDCore::printModels() const
 {
 
   ns_utils::print("The first order TF model: ");
@@ -258,5 +260,29 @@ float64_t ParamIDCore::getLeakageSigma(const Eigen::Vector2d &ab_normalized) con
     return w;
   }
   return 0.;
+}
+void ParamIDCore::trackingDifferentiator(Eigen::Vector2d &x, const float64_t &input_x) const
+{
+  auto const &r = 1. / tracking_tau_;
+
+  auto const &h0 = dt_ * 5;
+  auto const &r0 = r;
+
+  auto const &d = h0 * r0 * r0;
+  auto const &a0 = h0 * x(1);
+  auto const &y = x(0) - input_x + a0;
+
+  auto const &a1 = std::sqrt(d * (d + 8. * std::fabs(y)));
+  auto const &a2 = a0 + ns_utils::sgn(y) * (a1 - d) / 2.;
+
+  auto const &sy = (ns_utils::sgn(y + d) - ns_utils::sgn(y - d)) / 2.;
+  auto const &a = (a0 + y - a2) * sy + a2;
+  auto const &sa = (ns_utils::sgn(a + d) - ns_utils::sgn(a - d)) / 2.;
+
+  auto const &x0_dot = x(1);
+  auto const &x1_dot = -r * (a / d - ns_utils::sgn(a)) * sa - r * ns_utils::sgn(a);
+
+  x.noalias() = x + Eigen::Vector2d(x0_dot, x1_dot) * dt_;
+
 }
 } // namespace sys_id

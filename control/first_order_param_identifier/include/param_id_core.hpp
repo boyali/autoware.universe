@@ -25,11 +25,18 @@ class ParamIDCore
   ParamIDCore() = default;
   explicit ParamIDCore(sNodeParameters const &node_params);
 
-  void printModels();
+  void printModels() const;
 
   void updateParameterEstimate(float64_t const &x_measured,
                                float64_t const &u_applied,
                                std::array<float64_t, 2> &ab_param_estimate);
+
+  /**
+   * @brief Numerical derivative from  Active Disturbance Rejection Control
+   *       (ADRC) paper: From PID to Disturbance Rejection Control
+   * @param input_x: x, x_dot that tracks input_signal_x and its derivative
+   * */
+  void trackingDifferentiator(Eigen::Vector2d &x, float64_t const &input_x) const;
 
  private:
   float64_t dt_{};
@@ -54,6 +61,8 @@ class ParamIDCore
   float64_t ahat_{}; // @brief estimated parameter a
   float64_t bhat_{}; // @brief estimated parameter b
 
+  // tracking differentiator time constant
+  float64_t tracking_tau_{};
 
   // @brief  booleans
   float64_t sigma_0_{};
@@ -96,7 +105,7 @@ class ParamIDCore
    * Core methods.
    */
 
-  Eigen::Vector2d getNormalizedEstimate();
+  Eigen::Vector2d getNormalizedEstimate() const;
   [[nodiscard]] bool8_t needsProjection(Eigen::MatrixXd const &theta_dot,
                                         Eigen::Vector2d const &ahat_normalized) const;
   /**

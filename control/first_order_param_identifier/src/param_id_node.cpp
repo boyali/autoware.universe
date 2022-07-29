@@ -77,17 +77,27 @@ void ParameterIdentificationNode::onTimer()
   auto const &steering_measured = current_steering_ptr_->steering_tire_angle;
   auto const &steering_command = current_control_cmd_ptr_->lateral.steering_tire_angle;
 
+
+
+  /**
+   * Get steering time-derivative estimate.
+   * */
+  param_id_core_->trackingDifferentiator(steering_tracking_differentiator_x_,
+                                         static_cast<float64_t>(steering_command));
+
   param_id_core_->updateParameterEstimate(static_cast< float64_t>(steering_measured),
                                           static_cast<float64_t>(steering_command), current_param_estimate_ab_);
 
   sysIDmsg current_param_estimate_msg;
   current_param_estimate_msg.a = current_param_estimate_ab_[0];
   current_param_estimate_msg.b = current_param_estimate_ab_[1];
+  current_param_estimate_msg.xtracked = steering_tracking_differentiator_x_(0);
+  current_param_estimate_msg.xtracked_dot = steering_tracking_differentiator_x_(1);
 
   publishParameter(current_param_estimate_msg);
 
   // Debug
-  RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Timer  ...");
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "[Sys Id] On Timer  ...");
 
   //  ns_utils::print("params sys_dt:", params_node_.sys_dt);
   //  ns_utils::print("Read params lower bound :", params_node_.a_lower_bound);
@@ -132,8 +142,11 @@ void ParameterIdentificationNode::loadParams()
   params_node_.deadzone_threshold = declare_parameter<float64_t>("robust_options.deadzone_threshold");
   params_node_.delta0_norm_ = declare_parameter<float64_t>("robust_options.delta0_norm_");
 
+  params_node_.tracking_tau = declare_parameter<float64_t>("robust_options.tracking_tau");
+
   params_node_.smoother_eps = declare_parameter<float64_t>("projection_options.smoother_eps");
   params_node_.forgetting_factor = declare_parameter<float64_t>("projection_options.forgetting_factor");
+
 
   // Since we identify the 1/tau, min max order changes.
   params_node_.a_lower_bound = 1. / declare_parameter<float64_t>("parameter_vars.a_upper_bound");

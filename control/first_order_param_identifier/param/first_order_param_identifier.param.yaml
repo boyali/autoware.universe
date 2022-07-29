@@ -8,6 +8,7 @@
       use_switching_sigma: true
       use_deadzone: true
       use_dynamic_normalization: true
+      tracking_tau: 0.1
 
       sigma_0: 0.01 # leakage sigma
       deadzone_threshold: 0.1 # radian for steering.
