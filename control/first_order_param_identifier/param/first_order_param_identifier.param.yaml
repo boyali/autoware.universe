@@ -9,6 +9,7 @@
       use_deadzone: true
       use_dynamic_normalization: true
 
+      sigma_0: 0.01 # leakage sigma
       deadzone_threshold: 0.05 # radian for steering.
       delta0_norm_: 0.1 # normalization dynamics time-constant
 
@@ -18,10 +19,10 @@
 
     parameter_vars:
       a_upper_bound: 1.
-      a_lower_bound: 0.1
+      a_lower_bound: 0.01
 
       b_upper_bound: 1.
-      b_lower_bound: 0.1
+      b_lower_bound: 0.01
 
       param_normalized_upper_bound: 1. # normalized upper bound.
 

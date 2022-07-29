@@ -116,6 +116,7 @@ class ParameterIdentificationNode : public rclcpp::Node
    * @brief Check if data flows.
    * */
   bool8_t isDataReady();
+
 };
 
 } // namespace sys_id

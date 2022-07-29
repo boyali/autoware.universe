@@ -51,10 +51,15 @@ class ParamIDCore
   // @brief parameter estimate.
   float64_t am_{1.}; // @brief a proxy to parameter estimate to prevent instability.
   Eigen::MatrixXd am_ab_hat_{Eigen::MatrixXd::Zero(2, 1)}; // @brief estimated parameters
+  float64_t ahat_{}; // @brief estimated parameter a
+  float64_t bhat_{}; // @brief estimated parameter b
+
 
   // @brief  booleans
+  float64_t sigma_0_{};
   float64_t deadzone_thr_{};
   float64_t delta0_norm_{};
+
   bool8_t use_switching_sigma_{};
   bool8_t use_deadzone_{};
   bool8_t use_dynamic_normalization_{};
@@ -94,6 +99,15 @@ class ParamIDCore
   Eigen::Vector2d getNormalizedEstimate();
   [[nodiscard]] bool8_t needsProjection(Eigen::MatrixXd const &theta_dot,
                                         Eigen::Vector2d const &ahat_normalized) const;
+  /**
+   * @bried reset the covariance.
+   * */
+
+  void resetCovariance();
+
+  [[nodiscard]] float64_t applyDeadzone(float64_t const &ehat) const;
+
+  [[nodiscard]] float64_t getLeakageSigma(Eigen::Vector2d const &ab_normalized) const;
 
 };
 

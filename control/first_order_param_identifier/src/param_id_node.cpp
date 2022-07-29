@@ -126,6 +126,8 @@ void ParameterIdentificationNode::loadParams()
   params_node_.use_switching_sigma = declare_parameter<bool8_t>("robust_options.use_switching_sigma");
   params_node_.use_deadzone = declare_parameter<bool8_t>("robust_options.use_deadzone");
   params_node_.use_dynamic_normalization = declare_parameter<bool8_t>("robust_options.use_dynamic_normalization");
+
+  params_node_.sigma_0 = declare_parameter<float64_t>("robust_options.sigma_0");
   params_node_.deadzone_threshold = declare_parameter<float64_t>("robust_options.deadzone_threshold");
   params_node_.delta0_norm_ = declare_parameter<float64_t>("robust_options.delta0_norm_");
 

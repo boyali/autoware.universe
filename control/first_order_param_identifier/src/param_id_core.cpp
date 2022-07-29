@@ -24,10 +24,9 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
     M0_{node_params.param_normalized_upper_bound},
     a_lower_bound_{node_params.a_lower_bound},
     a_upper_bound_{node_params.a_upper_bound},
-
     b_lower_bound_{node_params.b_lower_bound},
     b_upper_bound_{node_params.b_upper_bound},
-
+    sigma_0_{node_params.sigma_0},
     deadzone_thr_{node_params.deadzone_threshold},
     delta0_norm_{node_params.delta0_norm_},
     use_switching_sigma_{node_params.use_switching_sigma},
@@ -44,8 +43,11 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
   d0_(1) = 1. - c0_(1, 1) * b_upper_bound_;
 
   // Initial estimate for the parameter: am_ab_hat_;
-  am_ab_hat_(0) = (a_upper_bound_ + a_lower_bound_) / 2. - am_ / 2.;
-  am_ab_hat_(1) = (b_upper_bound_ + b_lower_bound_) / 2.;
+  am_ab_hat_(0) = (a_upper_bound_ + a_lower_bound_) / 2. - am_ / 2.; // (am - ahat)
+  am_ab_hat_(1) = (b_upper_bound_ + b_lower_bound_) / 2.; // bhat
+
+  ahat_ = -am_ab_hat_(0) + am_;
+  bhat_ = am_ab_hat_(1);
 
   // Initialize the control models.
   // phi_dot[x, u] = am_ * phi + [x;u] filters the state and input.
@@ -88,14 +90,32 @@ void ParamIDCore::updateParameterEstimate(const float64_t &x_measured, const flo
   }
 
   // Compute the estimation error.
-  auto const &ehat = x_measured - xhat_(0) + zhat_(0);
+  auto const &ehat = x_measured - xhat_(0) - yout_zhat_;
 
   // Compute theta_dot = gamma * ehat * phi
   Pdot_ *= 0; // Reset the derivative of the parameter estimate.
-  Eigen::Vector2d theta_dot = P_ * ehat * phi_;
+  Eigen::Vector2d theta_dot;
+
+  if (use_deadzone_)
+  {
+    auto g0 = applyDeadzone(ehat);
+    theta_dot = P_ * (ehat + g0) * phi_;
+  } else
+  {
+    theta_dot = P_ * ehat * phi_;
+  }
+
 
   // Normalize the estimated parameter
   auto const &ab_hat_normalized = getNormalizedEstimate();
+
+  if (use_switching_sigma_)
+  {
+    auto const &w = getLeakageSigma(ab_hat_normalized);
+    theta_dot.noalias() = theta_dot - P_ * w * phi_;
+  }
+
+
 
   // Compute the smoothing term.
   auto const &csmoothing_term = (ab_hat_normalized.norm() - 1.) / smoothing_eps_;
@@ -127,12 +147,20 @@ void ParamIDCore::updateParameterEstimate(const float64_t &x_measured, const flo
   // update covariance
   P_.noalias() = P_ + dt_ * Pdot_;
 
+  // Check the covariance conditions and reset if necessary.
+  Eigen::VectorXcd const &eigvals = P_.eigenvalues();
+  auto const &lambda_min = eigvals.cwiseAbs().minCoeff();
+
   // update parameter estimates.
   am_ab_hat_ += theta_dot * dt_;
+  ahat_ = am_ - am_ab_hat_(0); // update ahat
+  bhat_ = am_ab_hat_(1); // update bhat
 
   // update xhat
   xhat_ = (am_ab_hat_.transpose() * phi_);
 
+  ab_param_estimate[0] = ahat_;
+  ab_param_estimate[1] = bhat_;
 
   // DEBUG
   //  ns_utils::print("x_measured: ", x_measured);
@@ -140,10 +168,8 @@ void ParamIDCore::updateParameterEstimate(const float64_t &x_measured, const flo
 
   ns_utils::print("Estimated a and b", am_ab_hat_(0), am_ab_hat_(1));
   ns_eigen_utils::printEigenMat(P_, "Covariance P");
-
-  ab_param_estimate[0] = am_ab_hat_(0);
-  ab_param_estimate[1] = am_ab_hat_(1);
-
+  ns_utils::print("lambda_min: ", lambda_min);
+  ns_utils::print("ehat : ", ehat);
 }
 
 /**
@@ -188,5 +214,49 @@ bool8_t ParamIDCore::needsProjection(Eigen::MatrixXd const &theta_dot,
 
   return condition1 || condition2;
 
+}
+
+void ParamIDCore::resetCovariance()
+{
+  P_.setIdentity();
+
+}
+float64_t ParamIDCore::applyDeadzone(const float64_t &ehat) const
+{
+  auto const &g0 = deadzone_thr_;
+  if (ehat < -g0)
+  {
+    return g0;
+  }
+  if (ehat > g0)
+  {
+    return -g0;
+  }
+
+  return -ehat;
+}
+float64_t ParamIDCore::getLeakageSigma(const Eigen::Vector2d &ab_normalized) const
+{
+  float64_t w{};
+  auto const &ab_norm = ab_normalized.norm();
+
+  if (ab_norm < M0_)
+  {
+    w = 0.;
+    return w; // no leakage
+  }
+
+  if (ab_norm <= 2. * M0_ && ab_norm >= M0_)
+  {
+    w = sigma_0_ * (ab_norm / M0_ - 1.);
+    return w;
+  }
+
+  if (ab_norm > 2. * M0_)
+  {
+    w = sigma_0_;
+    return w;
+  }
+  return 0.;
 }
 } // namespace sys_id

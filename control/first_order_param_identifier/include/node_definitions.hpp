@@ -37,6 +37,8 @@ struct sNodeParameters
   bool8_t use_switching_sigma{};
   bool8_t use_deadzone{};
   bool8_t use_dynamic_normalization{};
+
+  float64_t sigma_0{0.01};
   float64_t deadzone_threshold{};
   float64_t delta0_norm_{}; // normalization dynamics time-constant
 
