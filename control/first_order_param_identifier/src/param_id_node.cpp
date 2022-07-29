@@ -76,7 +76,7 @@ void ParameterIdentificationNode::onTimer()
   }
 
   auto const &steering_measured = current_steering_ptr_->steering_tire_angle;
-  auto const &steering_command = prev_control_cmd_ptr_->lateral.steering_tire_angle;
+  auto const &steering_command = current_control_cmd_ptr_->lateral.steering_tire_angle;
 
 
 
@@ -99,7 +99,7 @@ void ParameterIdentificationNode::onTimer()
 
   ns_utils::print("L1 norm: ", l1_norm);
 
-  if (l1_norm > 0.2)
+  if (l1_norm > 0.1)
   {
     param_id_core_->updateParameterEstimate(static_cast< float64_t>(steering_measured),
                                             static_cast<float64_t>(steering_command), current_param_estimate_ab_);

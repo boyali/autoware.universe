@@ -124,7 +124,6 @@ void ParamIDCore::updateParameterEstimate(const float64_t &x_measured, const flo
     theta_dot = P_ * ehat * phi_;
   }
 
-
   // Normalize the estimated parameter
   auto const &ab_hat_normalized = getNormalizedEstimate();
 
@@ -133,8 +132,6 @@ void ParamIDCore::updateParameterEstimate(const float64_t &x_measured, const flo
     auto const &w = getLeakageSigma(ab_hat_normalized);
     theta_dot.noalias() = theta_dot - P_ * w * phi_;
   }
-
-
 
   // Compute the smoothing term.
   auto const &csmoothing_term = (ab_hat_normalized.norm() - 1.) / smoothing_eps_;
