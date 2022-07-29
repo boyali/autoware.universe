@@ -93,7 +93,7 @@ void ParameterIdentificationNode::onTimer()
   current_param_estimate_msg.a = current_param_estimate_ab_[0];
   current_param_estimate_msg.b = current_param_estimate_ab_[1];
   current_param_estimate_msg.xtracked = steering_filtered(0);
-  current_param_estimate_msg.xtracked_dot = steering_tracking_differentiator_x_(1);
+  current_param_estimate_msg.xtracked_dot = steering_filtered(1);
 
   publishParameter(current_param_estimate_msg);
 

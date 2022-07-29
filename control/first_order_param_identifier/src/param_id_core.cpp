@@ -73,9 +73,17 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
   auto const &tau = tracking_tau_;
   double const damping_val{1.};
 
-  tracking_diff_tf_model = tf_t({1.}, {tau * tau, 2 * damping_val * tau, 1.});
-  tracking_diff_ss_model = ss_t(tracking_diff_tf_model, dt_);
+  auto tracking_sys_mats = ns_control_toolbox::ss_system();
+  tracking_sys_mats.A = Eigen::MatrixXd(2, 2);
+  tracking_sys_mats.B = Eigen::MatrixXd(2, 1);
+  tracking_sys_mats.C = Eigen::MatrixXd::Identity(2, 2);
+  tracking_sys_mats.D = Eigen::MatrixXd::Zero(2, 1);
 
+  tracking_sys_mats.A << 0., 1., -1. / (tau * tau), -damping_val / tau;
+  tracking_sys_mats.B << 0., 1. / (tau * tau);
+  tracking_diff_ss_model_ = ss_t(tracking_sys_mats, dt_);
+
+  // Initialize the signal derivative estimator.
   ms_x_ = Eigen::MatrixXd::Zero(1, 1);
 }
 
@@ -271,7 +279,7 @@ float64_t ParamIDCore::getLeakageSigma(const Eigen::Vector2d &ab_normalized) con
 }
 Eigen::MatrixXd ParamIDCore::trackingDifferentiator(Eigen::MatrixXd &x, const float64_t &input_x) const
 {
-  auto const &&y = tracking_diff_ss_model.simulateOneStep(x, input_x, ns_control_toolbox::full_output_tag());
+  auto const &&y = tracking_diff_ss_model_.simulateOneStep(x, input_x, ns_control_toolbox::full_output_tag());
   return y;
 }
 } // namespace sys_id

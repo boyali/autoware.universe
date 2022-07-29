@@ -80,8 +80,7 @@ class ParamIDCore
   tf_t dynamic_normalization_tf_model_{};
   ss_t dynamic_normalization_ss_model_{};
 
-  tf_t tracking_diff_tf_model{};
-  ss_t tracking_diff_ss_model{};
+  ss_t tracking_diff_ss_model_{};
 
   /**
    * States
