@@ -107,7 +107,7 @@ class ParamIDCore
    * Core methods.
    */
 
-  Eigen::Vector2d getNormalizedEstimate() const;
+  [[nodiscard]] Eigen::Vector2d getNormalizedEstimate() const;
   [[nodiscard]] bool8_t needsProjection(Eigen::MatrixXd const &theta_dot,
                                         Eigen::Vector2d const &ahat_normalized) const;
   /**

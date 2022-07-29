@@ -90,6 +90,8 @@ class ParameterIdentificationNode : public rclcpp::Node
 
   // Pointers to the ROS topics.
   std::shared_ptr<ControlCommand> current_control_cmd_ptr_{nullptr};
+  std::shared_ptr<ControlCommand> prev_control_cmd_ptr_{nullptr};
+
   std::shared_ptr<SteeringReport> current_steering_ptr_{nullptr};
 
   // Node Methods

@@ -76,7 +76,7 @@ void ParameterIdentificationNode::onTimer()
   }
 
   auto const &steering_measured = current_steering_ptr_->steering_tire_angle;
-  auto const &steering_command = current_control_cmd_ptr_->lateral.steering_tire_angle;
+  auto const &steering_command = prev_control_cmd_ptr_->lateral.steering_tire_angle;
 
 
 
@@ -86,8 +86,24 @@ void ParameterIdentificationNode::onTimer()
   auto const &steering_filtered = param_id_core_->trackingDifferentiator(steering_tracking_differentiator_x_,
                                                                          static_cast<float64_t>(steering_command));
 
-  param_id_core_->updateParameterEstimate(static_cast< float64_t>(steering_measured),
-                                          static_cast<float64_t>(steering_command), current_param_estimate_ab_);
+  /**
+   * Manage steering queue
+   * */
+
+  steering_frquency_history_.pop_front();
+  steering_frquency_history_.emplace_back(steering_filtered(1));
+
+  auto const &l1_norm = std::accumulate(steering_frquency_history_.begin(), steering_frquency_history_.end(), 0.0,
+                                        [](auto total, auto xitem)
+                                        { return total + std::fabs(xitem); });
+
+  ns_utils::print("L1 norm: ", l1_norm);
+
+  if (l1_norm > 0.2)
+  {
+    param_id_core_->updateParameterEstimate(static_cast< float64_t>(steering_measured),
+                                            static_cast<float64_t>(steering_command), current_param_estimate_ab_);
+  }
 
   sysIDmsg current_param_estimate_msg;
   current_param_estimate_msg.a = current_param_estimate_ab_[0];
@@ -108,6 +124,10 @@ void ParameterIdentificationNode::onTimer()
 
 void ParameterIdentificationNode::onControlCommands(const ControlCommand::SharedPtr msg)
 {
+  if (current_control_cmd_ptr_)
+  {
+    prev_control_cmd_ptr_ = current_control_cmd_ptr_;
+  }
 
   current_control_cmd_ptr_ = std::make_shared<ControlCommand>(*msg);
 
@@ -144,6 +164,7 @@ void ParameterIdentificationNode::loadParams()
   params_node_.delta0_norm_ = declare_parameter<float64_t>("robust_options.delta0_norm_");
 
   params_node_.tracking_tau = declare_parameter<float64_t>("robust_options.tracking_tau");
+  params_node_.am_stabilizing = declare_parameter<float64_t>("robust_options.am_stabilizing");
 
   params_node_.smoother_eps = declare_parameter<float64_t>("projection_options.smoother_eps");
   params_node_.forgetting_factor = declare_parameter<float64_t>("projection_options.forgetting_factor");
@@ -163,7 +184,7 @@ void ParameterIdentificationNode::loadParams()
 
 bool8_t ParameterIdentificationNode::isDataReady()
 {
-  if (!current_steering_ptr_)
+  if (!current_steering_ptr_ && !prev_control_cmd_ptr_)
   {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(),
                                    *get_clock(),

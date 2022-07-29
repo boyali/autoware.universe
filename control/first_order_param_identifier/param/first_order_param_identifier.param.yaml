@@ -5,10 +5,11 @@
 
     # options
     robust_options:
-      use_switching_sigma: true
-      use_deadzone: true
+      use_switching_sigma: false
+      use_deadzone: false
       use_dynamic_normalization: true
       tracking_tau: 0.2
+      am_stabilizing: 2. # the term to stabilize the amplitude of the signal xdot = (am - a)*x + b*u
 
       sigma_0: 0.01 # leakage sigma
       deadzone_threshold: 0.1 # radian for steering.
@@ -19,11 +20,11 @@
       forgetting_factor: 0.99
 
     parameter_vars:
-      a_upper_bound: 1.
-      a_lower_bound: 0.01
+      a_upper_bound: 1.     #~=tau_max
+      a_lower_bound: 0.01   #~=tau_min
 
-      b_upper_bound: 1.
-      b_lower_bound: 0.01
+      b_upper_bound: 1.     #~=tau_max
+      b_lower_bound: 0.01    # ~=tau_min
 
       param_normalized_upper_bound: 1. # normalized upper bound.
 

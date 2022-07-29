@@ -26,6 +26,7 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
     a_upper_bound_{node_params.a_upper_bound},
     b_lower_bound_{node_params.b_lower_bound},
     b_upper_bound_{node_params.b_upper_bound},
+    am_{node_params.am_stabilizing},
     tracking_tau_{node_params.tracking_tau},
     sigma_0_{node_params.sigma_0},
     deadzone_thr_{node_params.deadzone_threshold},
@@ -160,6 +161,7 @@ void ParamIDCore::updateParameterEstimate(const float64_t &x_measured, const flo
   yout_u_ = first_order_ss_models_.simulateOneStep(phi_u_, u_applied);
 
   phi_ << yout_xhat_, yout_u_;
+  //  phi_ << phi_x_, phi_u_;
 
 
   // update covariance
