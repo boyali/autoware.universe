@@ -36,7 +36,7 @@ class ParamIDCore
    *       (ADRC) paper: From PID to Disturbance Rejection Control
    * @param input_x: x, x_dot that tracks input_signal_x and its derivative
    * */
-  void trackingDifferentiator(Eigen::Vector2d &x, float64_t const &input_x) const;
+  Eigen::MatrixXd trackingDifferentiator(Eigen::MatrixXd &x, float64_t const &input_x) const;
 
  private:
   float64_t dt_{};
@@ -79,6 +79,9 @@ class ParamIDCore
 
   tf_t dynamic_normalization_tf_model_{};
   ss_t dynamic_normalization_ss_model_{};
+
+  tf_t tracking_diff_tf_model{};
+  ss_t tracking_diff_ss_model{};
 
   /**
    * States

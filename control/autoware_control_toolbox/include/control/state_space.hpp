@@ -35,6 +35,15 @@ namespace ns_control_toolbox
  *
  * */
 
+struct full_output_tag {};
+struct ss_system
+{
+  Eigen::MatrixXd A;
+  Eigen::MatrixXd B;
+  Eigen::MatrixXd C;
+  Eigen::MatrixXd D;
+};
+
 class tf2ss
 {
  public:
@@ -42,6 +51,7 @@ class tf2ss
   tf2ss() = default;
 
   explicit tf2ss(tf const &sys_tf, const double &Ts = 0.1);
+  explicit tf2ss(ss_system const &sys_ss, const double &Ts = 0.1);
 
   tf2ss(std::vector<double> const &num, std::vector<double> const &den, const double &Ts = 0.1);
 
@@ -80,6 +90,7 @@ class tf2ss
    * */
 
   double simulateOneStep(Eigen::MatrixXd &x0, double const &u) const;
+  Eigen::MatrixXd simulateOneStep(Eigen::MatrixXd &x0, double const &u, full_output_tag const &) const;
 
   /**
    * @brief Compute the system continuous time system matrices

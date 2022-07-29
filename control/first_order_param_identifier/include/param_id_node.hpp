@@ -70,7 +70,7 @@ class ParameterIdentificationNode : public rclcpp::Node
 
   std::array<float64_t, 2> current_param_estimate_ab_{};
   std::deque<float64_t> steering_frquency_history_{std::deque<float64_t>(30, 0.)};
-  Eigen::Vector2d steering_tracking_differentiator_x_{Eigen::Vector2d::Zero()};
+  Eigen::MatrixXd steering_tracking_differentiator_x_{Eigen::MatrixXd::Zero(2, 1)};
 
   // Core
   std::unique_ptr<ParamIDCore> param_id_core_{nullptr};

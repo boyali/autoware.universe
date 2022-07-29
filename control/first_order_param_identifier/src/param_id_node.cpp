@@ -57,9 +57,10 @@ void ParameterIdentificationNode::initTimer(float64_t period_s)
   const auto period_ns =
     std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
 
-  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback) >>(this->get_clock(), period_ns,
-                                                                             std::move(timer_callback),
-                                                                             this->get_node_base_interface()->get_context());
+  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback) >>
+    (this->get_clock(), period_ns,
+     std::move(timer_callback),
+     this->get_node_base_interface()->get_context());
 
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
@@ -82,8 +83,8 @@ void ParameterIdentificationNode::onTimer()
   /**
    * Get steering time-derivative estimate.
    * */
-  param_id_core_->trackingDifferentiator(steering_tracking_differentiator_x_,
-                                         static_cast<float64_t>(steering_command));
+  auto const &steering_filtered = param_id_core_->trackingDifferentiator(steering_tracking_differentiator_x_,
+                                                                         static_cast<float64_t>(steering_command));
 
   param_id_core_->updateParameterEstimate(static_cast< float64_t>(steering_measured),
                                           static_cast<float64_t>(steering_command), current_param_estimate_ab_);
@@ -91,7 +92,7 @@ void ParameterIdentificationNode::onTimer()
   sysIDmsg current_param_estimate_msg;
   current_param_estimate_msg.a = current_param_estimate_ab_[0];
   current_param_estimate_msg.b = current_param_estimate_ab_[1];
-  current_param_estimate_msg.xtracked = steering_tracking_differentiator_x_(0);
+  current_param_estimate_msg.xtracked = steering_filtered(0);
   current_param_estimate_msg.xtracked_dot = steering_tracking_differentiator_x_(1);
 
   publishParameter(current_param_estimate_msg);

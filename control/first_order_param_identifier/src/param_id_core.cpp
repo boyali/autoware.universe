@@ -68,6 +68,14 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
     dynamic_normalization_ss_model_ = ss_t(dynamic_normalization_tf_model_, dt_);
   }
 
+  // Signal derivative estimator
+  // A second order damped transfer function.
+  auto const &tau = tracking_tau_;
+  double const damping_val{1.};
+
+  tracking_diff_tf_model = tf_t({1.}, {tau * tau, 2 * damping_val * tau, 1.});
+  tracking_diff_ss_model = ss_t(tracking_diff_tf_model, dt_);
+
   ms_x_ = Eigen::MatrixXd::Zero(1, 1);
 }
 
@@ -261,28 +269,9 @@ float64_t ParamIDCore::getLeakageSigma(const Eigen::Vector2d &ab_normalized) con
   }
   return 0.;
 }
-void ParamIDCore::trackingDifferentiator(Eigen::Vector2d &x, const float64_t &input_x) const
+Eigen::MatrixXd ParamIDCore::trackingDifferentiator(Eigen::MatrixXd &x, const float64_t &input_x) const
 {
-  auto const &r = 1. / tracking_tau_;
-
-  auto const &h0 = dt_ * 5;
-  auto const &r0 = r;
-
-  auto const &d = h0 * r0 * r0;
-  auto const &a0 = h0 * x(1);
-  auto const &y = x(0) - input_x + a0;
-
-  auto const &a1 = std::sqrt(d * (d + 8. * std::fabs(y)));
-  auto const &a2 = a0 + ns_utils::sgn(y) * (a1 - d) / 2.;
-
-  auto const &sy = (ns_utils::sgn(y + d) - ns_utils::sgn(y - d)) / 2.;
-  auto const &a = (a0 + y - a2) * sy + a2;
-  auto const &sa = (ns_utils::sgn(a + d) - ns_utils::sgn(a - d)) / 2.;
-
-  auto const &x0_dot = x(1);
-  auto const &x1_dot = -r * (a / d - ns_utils::sgn(a)) * sa - r * ns_utils::sgn(a);
-
-  x.noalias() = x + Eigen::Vector2d(x0_dot, x1_dot) * dt_;
-
+  auto const &&y = tracking_diff_ss_model.simulateOneStep(x, input_x, ns_control_toolbox::full_output_tag());
+  return y;
 }
 } // namespace sys_id

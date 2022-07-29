@@ -22,30 +22,39 @@ ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf &sys_tf, const dou
 {
   // N_ = sys_tf.order(); // size of A will be order of the TF.
   auto const &nx = N_;
-  A_.resize(nx, nx);
-  B_.resize(nx, 1);
-  C_.resize(1, nx);
-  D_.resize(1, 1);
+  A_ = Eigen::MatrixXd::Zero(nx, nx);
+  B_ = Eigen::MatrixXd::Zero(nx, 1);
+  C_ = Eigen::MatrixXd::Zero(1, nx);
+  D_ = Eigen::MatrixXd::Zero(1, 1);
 
-  Ad_.resize(nx, nx);
-  Bd_.resize(nx, 1);
-  Cd_.resize(1, nx);
-  Dd_.resize(1, 1);
+  Ad_ = Eigen::MatrixXd::Zero(nx, nx);
+  Bd_ = Eigen::MatrixXd::Zero(nx, 1);
+  Cd_ = Eigen::MatrixXd::Zero(1, nx);
+  Dd_ = Eigen::MatrixXd::Zero(1, 1);
 
   Tsimilarity_mat_.resize(nx, nx);
-
-  A_.setZero();
-  B_.setZero();
-  C_.setZero();
-  D_.setZero();
-
-  Ad_.setZero();
-  Bd_.setZero();
-  Cd_.setZero();
-  Dd_.setZero();
   Tsimilarity_mat_.setIdentity();
 
   updateStateSpace(sys_tf);
+}
+
+Eigen::MatrixXd ns_control_toolbox::tf2ss::T() const
+{ return Tsimilarity_mat_; }
+ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::ss_system &sys_ss, const double &Ts)
+  : Ts_{Ts}, N_{sys_ss.A.rows()},
+    A_{sys_ss.A}, B_{sys_ss.B}, C_{sys_ss.C}, D_{sys_ss.D}
+{
+
+  auto const &nx = N_;
+
+  Ad_ = Eigen::MatrixXd::Zero(nx, nx);
+  Bd_ = Eigen::MatrixXd::Zero(nx, 1);
+  Cd_ = Eigen::MatrixXd::Zero(1, nx);
+  Dd_ = Eigen::MatrixXd::Zero(1, 1);
+
+  // Discretisize.
+  discretisize(Ts_);
+
 }
 
 void ns_control_toolbox::tf2ss::updateStateSpace(const ns_control_toolbox::tf &sys_tf)
@@ -367,5 +376,15 @@ double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd &x0, const dou
   return y;
 }
 
-Eigen::MatrixXd ns_control_toolbox::tf2ss::T() const
-{ return Tsimilarity_mat_; }
+Eigen::MatrixXd ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd &x0, const double &u,
+                                                           full_output_tag const &) const
+{
+  // First compute the output y.
+  auto const &y = Cd_ * x0.eval() + Dd_ * u;
+
+  // Then update x0;
+  x0 = Ad_ * x0.eval() + Bd_ * u;
+
+  return y;
+}
+
