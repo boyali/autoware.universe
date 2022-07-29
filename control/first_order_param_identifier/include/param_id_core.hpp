@@ -18,13 +18,50 @@
 
 namespace sys_id
 {
+
 class ParamIDCore
 {
  public:
   ParamIDCore() = default;
+  explicit ParamIDCore(sNodeParameters const &node_params);
+
+  void printModels();
+
+  float64_t updateParameterEstimate(float64_t const &x_measured, float64_t const &u_applied);
 
  private:
-  float64_t a{};
+  float64_t dt_{};
+  float64_t smoothing_eps_{};
+  float64_t forgetting_factor_{};
+
+  float64_t M0_{1.}; // @brief square of parameter upper bound (we normalize).
+
+  float64_t param_lower_bound_{};
+  float64_t param_upper_bound_{};
+
+  // @brief normalization coefficients (c, d).
+  float64_t c0_{};
+  float64_t d0_{};
+
+  // @brief parameter estimate.
+  float64_t am_{1.}; // @brief a proxy to parameter estimate to prevent instability.
+  float64_t ahat_{}; // @brief estimated parameter
+
+  // @brief  booleans
+  float64_t deadzone_thr_{};
+  float64_t delta0_norm_{};
+  bool8_t use_switching_sigma_{};
+  bool8_t use_deadzone_{};
+  bool8_t use_dynamic_normalization_{};
+
+  // @brief control models
+  tf_t first_order_tf_models_{}; // @brief phi[x, u, z],
+  ss_t first_order_ss_models_{};
+
+  tf_t dynamic_normalization_tf_model_{};
+  ss_t dynamic_normalization_s_model_{};
+
+  void normalizeTheParameterBounds();
 
 };
 

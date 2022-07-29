@@ -46,25 +46,6 @@ namespace sys_id
 using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 
-struct Parameters
-{
-  float64_t sys_dt{0.033};
-
-  // robust adaptation laws
-  bool8_t use_switching_sigma{};
-  bool8_t use_deadzone{};
-  bool8_t use_dynamic_normalization{};
-
-  // projection options
-  float64_t smoother_eps{};
-  float64_t forgetting_factor{};
-
-  // parameter variables (parameter to be identified).
-  float64_t param_upper_bound{};
-  float64_t param_lower_bound{};
-
-};
-
 class ParameterIdentificationNode : public rclcpp::Node
 {
 
@@ -82,8 +63,12 @@ class ParameterIdentificationNode : public rclcpp::Node
   ~ParameterIdentificationNode() override = default;
 
  private:
-  Parameters params_node_{};
+  sNodeParameters params_node_{};
 
+  // Core
+  std::unique_ptr<ParamIDCore> param_id_core_{nullptr};
+
+  // ROS publishers.
   //!< @brief timer to update after a given interval
   rclcpp::TimerBase::SharedPtr timer_;
 

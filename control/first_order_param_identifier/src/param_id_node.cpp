@@ -41,6 +41,9 @@ ParameterIdentificationNode::ParameterIdentificationNode(const rclcpp::NodeOptio
 
   loadParams();
 
+  param_id_core_ = std::make_unique<ParamIDCore>(params_node_);
+
+  // Create a timer to publish the parameter
   initTimer(params_node_.sys_dt);
 
   // Debug
@@ -78,8 +81,9 @@ void ParameterIdentificationNode::onTimer()
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     get_logger(), *get_clock(), (1000ms).count(), "[communication_delay] On Timer  ...");
 
-  ns_utils::print("params sys_dt:", params_node_.sys_dt);
-  ns_utils::print("Read params lower bound :", params_node_.param_lower_bound);
+  //  ns_utils::print("params sys_dt:", params_node_.sys_dt);
+  //  ns_utils::print("Read params lower bound :", params_node_.param_lower_bound);
+  param_id_core_->printModels();
 
 }
 
@@ -114,12 +118,18 @@ void ParameterIdentificationNode::loadParams()
   params_node_.use_switching_sigma = declare_parameter<bool8_t>("robust_options.use_switching_sigma");
   params_node_.use_deadzone = declare_parameter<bool8_t>("robust_options.use_deadzone");
   params_node_.use_dynamic_normalization = declare_parameter<bool8_t>("robust_options.use_dynamic_normalization");
+  params_node_.deadzone_threshold = declare_parameter<float64_t>("robust_options.deadzone_threshold");
+  params_node_.delta0_norm_ = declare_parameter<float64_t>("robust_options.delta0_norm_");
 
   params_node_.smoother_eps = declare_parameter<float64_t>("projection_options.smoother_eps");
   params_node_.forgetting_factor = declare_parameter<float64_t>("projection_options.forgetting_factor");
 
-  params_node_.param_upper_bound = declare_parameter<float64_t>("parameter_vars.param_upper_bound");
-  params_node_.param_lower_bound = declare_parameter<float64_t>("parameter_vars.param_lower_bound");
+  // Since we identify the 1/tau, min max order changes.
+  params_node_.param_lower_bound = 1. / declare_parameter<float64_t>("parameter_vars.param_upper_bound");
+  params_node_.param_upper_bound = 1. / declare_parameter<float64_t>("parameter_vars.param_lower_bound");
+
+  params_node_.param_normalized_upper_bound =
+    declare_parameter<float64_t>("parameter_vars.param_normalized_upper_bound");
 
 }
 
@@ -137,8 +147,7 @@ bool8_t ParameterIdentificationNode::isDataReady()
   if (!current_control_cmd_ptr_)
   {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(),
-                                   *get_clock(),
-                                   (1000ms).count(),
+                                   *get_clock(), (1000ms).count(),
                                    "[first_order_param_identifier] Waiting for the control command ...");
     return false;
   }
