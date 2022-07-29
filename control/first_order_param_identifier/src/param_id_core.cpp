@@ -45,7 +45,7 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
   d0_(1) = 1. - c0_(1, 1) * b_upper_bound_;
 
   // Initial estimate for the parameter: am_ab_hat_;
-  am_ab_hat_(0) = (a_upper_bound_ + a_lower_bound_) / 2. - am_ / 2.; // (am - ahat)
+  am_ab_hat_(0) = am_ - (a_upper_bound_ + a_lower_bound_) / 2.; // (am - ahat)
   am_ab_hat_(1) = (b_upper_bound_ + b_lower_bound_) / 2.; // bhat
 
   ahat_ = -am_ab_hat_(0) + am_;
@@ -54,7 +54,7 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
   // Initialize the control models.
   // phi_dot[x, u] = am_ * phi + [x;u] filters the state and input.
   first_order_tf_models_ = tf_t{{1.,}, {1., am_}}; //  1/ (s + am)
-  first_order_ss_models_ = ss_t(first_order_tf_models_);
+  first_order_ss_models_ = ss_t(first_order_tf_models_, dt_);
 
   phi_x_ = Eigen::MatrixXd::Zero(first_order_tf_models_.order(), 1);
   phi_u_ = Eigen::MatrixXd::Zero(first_order_tf_models_.order(), 1);

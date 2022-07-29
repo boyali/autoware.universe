@@ -6,13 +6,13 @@
     # options
     robust_options:
       use_switching_sigma: false
-      use_deadzone: false
+      use_deadzone: true
       use_dynamic_normalization: true
       tracking_tau: 0.2
-      am_stabilizing: 2. # the term to stabilize the amplitude of the signal xdot = (am - a)*x + b*u
+      am_stabilizing: 5. # the term to stabilize the amplitude of the signal xdot = (am - a)*x + b*u
 
       sigma_0: 0.01 # leakage sigma
-      deadzone_threshold: 0.1 # radian for steering.
+      deadzone_threshold: 0.05 # radian for steering.
       delta0_norm_: 0.1 # normalization dynamics time-constant
 
     projection_options:
