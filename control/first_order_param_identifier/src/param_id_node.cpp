@@ -99,13 +99,17 @@ void ParameterIdentificationNode::onTimer()
   steering_frquency_history_.pop_front();
   steering_frquency_history_.emplace_back(steering_filtered(1));
 
-  auto const &l1_norm = std::accumulate(steering_frquency_history_.begin(), steering_frquency_history_.end(), 0.0,
+  std::vector<float64_t> steer_sec_;  // steering_frquency_history_second_derivative;
+  std::adjacent_difference(steering_frquency_history_.begin(), steering_frquency_history_.end(),
+                           std::back_inserter(steer_sec_));
+
+  auto const &l1_norm = std::accumulate(steer_sec_.begin(), steer_sec_.end(), 0.0,
                                         [](auto total, auto xitem)
                                         { return total + std::fabs(xitem); });
 
   ns_utils::print("L1 norm: ", l1_norm);
 
-  if (l1_norm > 0.1 && current_velocity_ptr_->twist.twist.linear.x > 0.5)
+  if (l1_norm > 0.02 && current_velocity_ptr_->twist.twist.linear.x > 0.5)
   {
     param_id_core_->updateParameterEstimate(static_cast< float64_t>(steering_measured),
                                             static_cast<float64_t>(steering_command), current_param_estimate_ab_);
