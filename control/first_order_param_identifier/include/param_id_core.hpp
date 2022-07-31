@@ -65,7 +65,8 @@ class ParamIDCore
   float64_t tracking_tau_{};
 
   // @brief  booleans
-  float64_t sigma_0_{};
+  float64_t sigma_0_{}; // @brief robust adaptation sigma_0 for sigma-modification
+  float64_t e_nu_0_{};    // @brief robust adaptation e_nu0 for e-modification
   float64_t deadzone_thr_{};
   float64_t delta0_norm_{};
 

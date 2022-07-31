@@ -39,6 +39,7 @@ struct sNodeParameters
   bool8_t use_dynamic_normalization{};
 
   float64_t sigma_0{0.01};
+  float64_t e_nu_0{0.01};
   float64_t deadzone_threshold{};
   float64_t delta0_norm_{}; // normalization dynamics time-constant
   float64_t tracking_tau{0.1}; // tracking time-constant
