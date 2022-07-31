@@ -5,13 +5,14 @@
 
     # options
     robust_options:
-      use_switching_sigma: false # if false, e-modification
       use_deadzone: true
       use_dynamic_normalization: true
       tracking_tau: 0.2
       am_stabilizing: 0.5 # the term to stabilize the amplitude of the signal xdot = (am - a)*x + b*u
 
       # FOR STABILIZATION
+      use_leakage: false
+      use_switching_sigma: false # if false, e-modification
       sigma_0: 0.0001 # leakage sigma
       e_nu_0: 0.0001 # epsilon_nu for e-modification - to disable make these 0.
 

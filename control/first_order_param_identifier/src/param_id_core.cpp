@@ -32,6 +32,7 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
     e_nu_0_{node_params.e_nu_0},
     deadzone_thr_{node_params.deadzone_threshold},
     delta0_norm_{node_params.delta0_norm_},
+    use_leakage_{node_params.use_leakage},
     use_switching_sigma_{node_params.use_switching_sigma},
     use_deadzone_{node_params.use_deadzone},
     use_dynamic_normalization_{node_params.use_dynamic_normalization}
@@ -128,14 +129,17 @@ void ParamIDCore::updateParameterEstimate(const float64_t &x_measured, const flo
   // Normalize the estimated parameter
   auto const &ab_hat_normalized = getNormalizedEstimate();
 
-  if (use_switching_sigma_)
+  if (use_leakage_)
   {
-    auto const &w = getLeakageSigma(ab_hat_normalized);
-    theta_dot.noalias() = theta_dot - P_ * w * phi_;
-  } else // e-modification
-  {
-    auto const &w = std::fabs(ehat) * e_nu_0_;
-    theta_dot.noalias() = theta_dot - P_ * w * phi_;
+    if (use_switching_sigma_)
+    {
+      auto const &w = getLeakageSigma(ab_hat_normalized);
+      theta_dot.noalias() = theta_dot - P_ * w * phi_;
+    } else // e-modification
+    {
+      auto const &w = std::fabs(ehat) * e_nu_0_;
+      theta_dot.noalias() = theta_dot - P_ * w * phi_;
+    }
   }
 
   // Compute the smoothing term.

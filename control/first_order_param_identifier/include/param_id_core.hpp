@@ -70,6 +70,7 @@ class ParamIDCore
   float64_t deadzone_thr_{};
   float64_t delta0_norm_{};
 
+  bool8_t use_leakage_{};
   bool8_t use_switching_sigma_{};
   bool8_t use_deadzone_{};
   bool8_t use_dynamic_normalization_{};

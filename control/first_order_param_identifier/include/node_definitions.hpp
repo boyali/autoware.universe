@@ -34,6 +34,7 @@ struct sNodeParameters
   float64_t sys_dt{0.033};
 
   // robust adaptation laws
+  bool8_t use_leakage{};
   bool8_t use_switching_sigma{};
   bool8_t use_deadzone{};
   bool8_t use_dynamic_normalization{};

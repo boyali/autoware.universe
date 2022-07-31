@@ -38,6 +38,12 @@ ParameterIdentificationNode::ParameterIdentificationNode(const rclcpp::NodeOptio
                                         std::bind(&sys_id::ParameterIdentificationNode::onCurrentSteering,
                                                   this, std::placeholders::_1));
 
+  sub_current_velocity_ptr_ =
+    create_subscription<VelocityMsg>("~/input/current_odometry", rclcpp::QoS{1},
+                                     std::bind(
+                                       &sys_id::ParameterIdentificationNode::onCurrentVelocity,
+                                       this, std::placeholders::_1));
+
   loadParams();
 
   param_id_core_ = std::make_unique<ParamIDCore>(params_node_);
@@ -99,7 +105,7 @@ void ParameterIdentificationNode::onTimer()
 
   ns_utils::print("L1 norm: ", l1_norm);
 
-  if (l1_norm > 0.1)
+  if (l1_norm > 0.1 && current_velocity_ptr_->twist.twist.linear.x > 0.5)
   {
     param_id_core_->updateParameterEstimate(static_cast< float64_t>(steering_measured),
                                             static_cast<float64_t>(steering_command), current_param_estimate_ab_);
@@ -149,12 +155,25 @@ void ParameterIdentificationNode::onCurrentSteering(const SteeringReport::Shared
 
   // end of debug
 }
+
+void ParameterIdentificationNode::onCurrentVelocity(const VelocityMsg::SharedPtr msg)
+{
+
+  current_velocity_ptr_ = std::make_shared<VelocityMsg>(*msg);
+
+
+  // ns_utils::print("ACT On velocity method ");
+  // ns_utils::print("Read parameter control period :", params_node_.cdob_ctrl_period);
+  // RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Velocity");
+}
+
 void ParameterIdentificationNode::loadParams()
 {
 
   // Read the filter orders.
   params_node_.sys_dt = declare_parameter<float64_t>("sys_dt");  // reads sec.
 
+  params_node_.use_leakage = declare_parameter<bool8_t>("robust_options.use_leakage");
   params_node_.use_switching_sigma = declare_parameter<bool8_t>("robust_options.use_switching_sigma");
   params_node_.use_deadzone = declare_parameter<bool8_t>("robust_options.use_deadzone");
   params_node_.use_dynamic_normalization = declare_parameter<bool8_t>("robust_options.use_dynamic_normalization");
@@ -199,6 +218,14 @@ bool8_t ParameterIdentificationNode::isDataReady()
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(),
                                    *get_clock(), (1000ms).count(),
                                    "[first_order_param_identifier] Waiting for the control command ...");
+    return false;
+  }
+
+  if (!current_velocity_ptr_)
+  {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(),
+                                   *get_clock(), (1000ms).count(),
+                                   "[first_order_param_identifier] Waiting for the speed measurements ...");
     return false;
   }
 
