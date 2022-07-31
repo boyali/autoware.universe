@@ -7,7 +7,7 @@
     robust_options:
       use_deadzone: true
       use_dynamic_normalization: true
-      tracking_tau: 0.2
+      tracking_tau: 0.2 # for computing filtered derivative of a measured signal
       am_stabilizing: 0.5 # the term to stabilize the amplitude of the signal xdot = (am - a)*x + b*u
 
       # FOR STABILIZATION
@@ -21,8 +21,10 @@
       delta0_norm_: 0.1 # normalization dynamics time-constant
 
     projection_options:
+      use_time_varying_forgetting_factor: true
       smoother_eps: 0.05
-      forgetting_factor: 0.95
+      lambda_0: 0.5 # for forgetting factor dynamics
+      forgetting_factor: 0.95 # lambda_1 that varies in time or constant
 
     parameter_vars:
       a_upper_bound: 1.     #~=tau_max

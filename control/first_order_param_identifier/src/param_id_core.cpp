@@ -21,6 +21,8 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
   : dt_{node_params.sys_dt},
     smoothing_eps_{node_params.smoother_eps},
     forgetting_factor_{node_params.forgetting_factor},
+    lambda_0_{node_params.lambda_0},
+    lambda_1_{node_params.forgetting_factor},
     M0_{node_params.param_normalized_upper_bound},
     a_lower_bound_{node_params.a_lower_bound},
     a_upper_bound_{node_params.a_upper_bound},
@@ -33,28 +35,28 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
     deadzone_thr_{node_params.deadzone_threshold},
     delta0_norm_{node_params.delta0_norm_},
     use_leakage_{node_params.use_leakage},
+    use_time_varying_forgetting_factor_{node_params.use_time_varying_forgetting_factor},
     use_switching_sigma_{node_params.use_switching_sigma},
     use_deadzone_{node_params.use_deadzone},
     use_dynamic_normalization_{node_params.use_dynamic_normalization}
 {
 
-
-  // Compute the normalization coefficients.
+// Compute the normalization coefficients.
   c0_(0, 0) = 2. / (a_upper_bound_ - a_lower_bound_);
   d0_(0) = 1. - c0_(0, 0) * a_upper_bound_;
 
   c0_(1, 1) = 2. / (b_upper_bound_ - b_lower_bound_);
   d0_(1) = 1. - c0_(1, 1) * b_upper_bound_;
 
-  // Initial estimate for the parameter: am_ab_hat_;
+// Initial estimate for the parameter: am_ab_hat_;
   am_ab_hat_(0) = am_ - (a_upper_bound_ + a_lower_bound_) / 2.; // (am - ahat)
   am_ab_hat_(1) = (b_upper_bound_ + b_lower_bound_) / 2.; // bhat
 
   ahat_ = -am_ab_hat_(0) + am_;
   bhat_ = am_ab_hat_(1);
 
-  // Initialize the control models.
-  // phi_dot[x, u] = am_ * phi + [x;u] filters the state and input.
+// Initialize the control models.
+// phi_dot[x, u] = am_ * phi + [x;u] filters the state and input.
   first_order_tf_models_ = tf_t{{1.,}, {1., am_}}; //  1/ (s + am)
   first_order_ss_models_ = ss_t(first_order_tf_models_, dt_);
 
@@ -77,16 +79,20 @@ ParamIDCore::ParamIDCore(const sNodeParameters &node_params)
   double const damping_val{1.};
 
   auto tracking_sys_mats = ns_control_toolbox::ss_system();
-  tracking_sys_mats.A = Eigen::MatrixXd(2, 2);
-  tracking_sys_mats.B = Eigen::MatrixXd(2, 1);
-  tracking_sys_mats.C = Eigen::MatrixXd::Identity(2, 2);
-  tracking_sys_mats.D = Eigen::MatrixXd::Zero(2, 1);
+  tracking_sys_mats.
+                     A = Eigen::MatrixXd(2, 2);
+  tracking_sys_mats.
+                     B = Eigen::MatrixXd(2, 1);
+  tracking_sys_mats.
+                     C = Eigen::MatrixXd::Identity(2, 2);
+  tracking_sys_mats.
+                     D = Eigen::MatrixXd::Zero(2, 1);
 
   tracking_sys_mats.A << 0., 1., -1. / (tau * tau), -damping_val / tau;
   tracking_sys_mats.B << 0., 1. / (tau * tau);
   tracking_diff_ss_model_ = ss_t(tracking_sys_mats, dt_);
 
-  // Initialize the signal derivative estimator.
+// Initialize the signal derivative estimator.
   ms_x_ = Eigen::MatrixXd::Zero(1, 1);
 }
 
@@ -145,6 +151,16 @@ void ParamIDCore::updateParameterEstimate(const float64_t &x_measured, const flo
   // Compute the smoothing term.
   auto const &csmoothing_term = (ab_hat_normalized.norm() - 1.) / smoothing_eps_;
 
+  float64_t forgetting_factor{};
+  if (use_time_varying_forgetting_factor_)
+  {
+    forgetting_factor = getForgettingFactor();
+  } else
+  {
+    forgetting_factor = forgetting_factor_;
+  }
+
+
   // Check if the parameter satisfies the projection requirements.
   if (auto const &needs_projections = needsProjection(theta_dot, ab_hat_normalized))
   {
@@ -156,7 +172,7 @@ void ParamIDCore::updateParameterEstimate(const float64_t &x_measured, const flo
 
   } else
   {
-    Pdot_ = forgetting_factor_ * P_ - csmoothing_term * P_ * phi_ * phi_.transpose() * P_ / ms_sqr;
+    Pdot_ = forgetting_factor * P_ - csmoothing_term * P_ * phi_ * phi_.transpose() * P_ / ms_sqr;
   }
 
   // update zhat0
@@ -289,5 +305,10 @@ Eigen::MatrixXd ParamIDCore::trackingDifferentiator(Eigen::MatrixXd &x, const fl
 {
   auto const &&y = tracking_diff_ss_model_.simulateOneStep(x, input_x, ns_control_toolbox::full_output_tag());
   return y;
+}
+float64_t ParamIDCore::getForgettingFactor()
+{
+  lambda_1_ = lambda_0_ * lambda_1_ + 1. - lambda_0_;
+  return lambda_1_;
 }
 } // namespace sys_id

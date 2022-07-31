@@ -47,7 +47,10 @@ struct sNodeParameters
   float64_t am_stabilizing{0.1}; // tracking time-constant
 
   // projection options
+  bool8_t use_time_varying_forgetting_factor{};
   float64_t smoother_eps{};
+
+  float64_t lambda_0{};
   float64_t forgetting_factor{};
 
   // parameter variables (parameter to be identified).

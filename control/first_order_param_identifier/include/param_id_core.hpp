@@ -41,7 +41,11 @@ class ParamIDCore
  private:
   float64_t dt_{};
   float64_t smoothing_eps_{};
-  float64_t forgetting_factor_{};
+  float64_t forgetting_factor_{0.99};
+
+  // For dynamic forgetting factors.
+  float64_t lambda_0_{0.99};
+  float64_t lambda_1_{0.99};
 
   float64_t M0_{1.}; // @brief square of parameter upper bound (we normalize).
 
@@ -71,6 +75,7 @@ class ParamIDCore
   float64_t delta0_norm_{};
 
   bool8_t use_leakage_{};
+  bool8_t use_time_varying_forgetting_factor_{};
   bool8_t use_switching_sigma_{};
   bool8_t use_deadzone_{};
   bool8_t use_dynamic_normalization_{};
@@ -120,6 +125,8 @@ class ParamIDCore
 
   [[nodiscard]] float64_t applyDeadzone(float64_t const &ehat) const;
   [[nodiscard]] float64_t getLeakageSigma(Eigen::Vector2d const &ab_normalized) const;
+
+  [[nodiscard]] float64_t getForgettingFactor();
 
 };
 

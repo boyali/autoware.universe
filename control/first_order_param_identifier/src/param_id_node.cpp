@@ -191,6 +191,11 @@ void ParameterIdentificationNode::loadParams()
   params_node_.am_stabilizing = declare_parameter<float64_t>("robust_options.am_stabilizing");
 
   params_node_.smoother_eps = declare_parameter<float64_t>("projection_options.smoother_eps");
+
+  params_node_.use_time_varying_forgetting_factor =
+    declare_parameter<bool8_t>("projection_options.use_time_varying_forgetting_factor");
+
+  params_node_.lambda_0 = declare_parameter<float64_t>("projection_options.lambda_0");
   params_node_.forgetting_factor = declare_parameter<float64_t>("projection_options.forgetting_factor");
 
 
