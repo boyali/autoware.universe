@@ -23,8 +23,8 @@
     # state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]
     # state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]
 
-    state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.1, 0.1, 0.5, 0.0, 0.0 ]
-    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.1, 0.5, 0.5, 0.0, 0.0 ]
+    state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.05, 0.05, 0.5, 0.0, 0.0 ]
+    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.05, 0.05, 0.5, 0.0, 0.0 ]
     control_weights: [ 0.1, 0.1 ]    # [vx speed input, steering input]
     jerk_weights: [ 0.5, 0.5 ]        # [acc and steering_rate]
 
@@ -100,3 +100,10 @@
       Vprocess: [ 0.2, 0.2, 0.05, 0.1, 0.02, 0.01, 0.2, 0.03, 0.1 ]  # process [model] uncertainty variance estimate.
       Wmeasurement: [ 0.4, 0.4, 0.06, 0.2,  0.15, 0.1, 0.1, 0.02, 0.2 ]  # measurement uncertainty variance estimate
 
+
+    deadzone_params:
+      use_deadzone_inv: false
+      mr: 1.
+      br: 0.05
+      ml: 1.
+      bl: 0.05
