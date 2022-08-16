@@ -63,6 +63,9 @@ struct ParamsNMPCNode
   bool use_cdob{false};
   bool use_dob{false};
 
+  // Deadzone
+  bool use_deadzone_inverse{false};
+
 };
 
 struct ParamsFilters

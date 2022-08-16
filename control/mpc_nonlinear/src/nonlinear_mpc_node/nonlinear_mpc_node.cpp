@@ -88,6 +88,7 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
    * Its aim is to eliminate other node dependency to load the wheel_base.
    */
   loadNodeParameters();  // read the parameters used by the node.
+  loadDeadzoneParameters(); // reads the deadzone params and assigns the deadzone invertor.
 
   // Load vehicle model parameters.
   ns_models::ParamsVehicle params_vehicle{};
@@ -890,6 +891,21 @@ void NonlinearMPCNode::loadFilterParameters(ns_data::ParamsFilters &params_filte
   // UKF specific parameters.
   params_filters.ukf_alpha = declare_parameter("kalman_filters.alpha", 0.9);
   params_filters.ukf_beta = declare_parameter("kalman_filters.beta", 2.0);
+}
+
+void NonlinearMPCNode::loadDeadzoneParameters()
+{
+
+  // Deadzone
+  params_node_.use_deadzone_inverse = declare_parameter<bool>("deadzone_params.use_deadzone_inv");
+  auto const &mr = declare_parameter<double>("deadzone_params.mr");
+  auto const &br = declare_parameter<double>("deadzone_params.br");
+
+  auto const &ml = declare_parameter<double>("deadzone_params.ml");
+  auto const &bl = declare_parameter<double>("deadzone_params.bl");
+
+  deadzone_invertor_ = ns_deadzone::sDeadZone(mr, br, ml, bl);
+
 }
 
 void NonlinearMPCNode::loadVehicleParameters(ns_models::ParamsVehicle &params_vehicle)
