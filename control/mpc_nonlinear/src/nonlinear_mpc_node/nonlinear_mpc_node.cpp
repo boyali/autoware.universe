@@ -417,7 +417,6 @@ void NonlinearMPCNode::onTimer()
     x0_predicted_(4) = current_comm_delay_ptr_->lateral_deviation_error_compensation_ref;
     x0_predicted_(5) = current_comm_delay_ptr_->heading_angle_error_compensation_ref;
     x0_predicted_(7) = current_comm_delay_ptr_->steering_compensation_ref;
-
     // ns_utils::print("NMPC using error references...");
   }
 
@@ -543,12 +542,13 @@ void NonlinearMPCNode::onTimer()
 
   if (params_node_.use_deadzone_inverse)
   {
-    auto const &current_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
-    auto const &steering_deviation = current_steering - u_solution_(1);
+    nmpc_performance_vars_.mpc_steering_input_original = u_solution_(1);
+    auto const &predicted_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
+    auto const &steering_deviation = predicted_steering - u_solution_(1);
 
     auto const &w_inv_dz_diff = deadzone_invertor_.invDeadzoneOutput(steering_deviation);
 
-    u_solution_(1) = current_steering - w_inv_dz_diff;
+    u_solution_(1) = predicted_steering - w_inv_dz_diff;
   }
 
   auto const
