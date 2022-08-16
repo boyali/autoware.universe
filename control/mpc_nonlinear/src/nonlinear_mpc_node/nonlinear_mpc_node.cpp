@@ -541,6 +541,16 @@ void NonlinearMPCNode::onTimer()
     u_solution_(1) += dob_steering_ff;
   }
 
+  if (params_node_.use_deadzone_inverse)
+  {
+    auto const &current_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
+    auto const &steering_deviation = current_steering - u_solution_(1);
+
+    auto const &w_inv_dz_diff = deadzone_invertor_.invDeadzoneOutput(steering_deviation);
+
+    u_solution_(1) = current_steering - w_inv_dz_diff;
+  }
+
   auto const
     steering_rate =
     (u_solution_(1) - static_cast<double>(control_cmd_prev_.lateral.steering_tire_angle)) / params_node_.control_period;

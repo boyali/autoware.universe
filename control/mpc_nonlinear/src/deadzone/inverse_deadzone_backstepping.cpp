@@ -33,36 +33,77 @@ double sDeadZone::get_bl() const
 {
   return mlbl_ / ml_;
 }
-double sDeadZone::deadzoneOutput(const double &u) const
+
+/**
+ * @brief given a steering deviation, computes the deadzone function output.
+ * @param Du = steering - steering_control = δ - u
+ * */
+double sDeadZone::deadzoneOutput(const double &Du) const
 {
   auto const &br = get_br();
   auto const &bl = get_bl();
-  if (u >= br)
+
+  if (Du >= br)
   {
-    return mr_ * u - mrbr_;
+    return mr_ * Du - mrbr_ * 0;
   }
-  if (u <= bl)
+  if (Du <= bl)
   {
-    return ml_ * u - mlbl_;
+    return ml_ * Du - mlbl_ * 0;
   }
 
-  if (u > bl && u < br)
+  if (Du > bl && Du < br)
   {
     return 0.;
   }
 
   return 0;
 }
-double sDeadZone::invDeadzoneOutput(const double &u) const
+
+/**
+ * @brief given a steering deviation, computes the inverse deadzone function output.
+ * @param desired_Du = steering - steering_control = δ - u
+ * */
+
+double sDeadZone::invDeadzoneOutput(const double &desired_Du) const
 {
+  auto const &u = desired_Du;
   auto x = u / e0_;
 
   auto const &phi_r = exp(x) / (exp(x) + exp(-x));
   auto const &phi_l = exp(-x) / (exp(x) + exp(-x));
 
-  auto const &DzInv = phi_r * (u + mrbr_) / mr_ + phi_l * (u + mlbl_) / ml_;
+  auto const &dz_inv = phi_r * (u + mrbr_) / mr_ + phi_l * (u + mlbl_) / ml_;
 
-  return DzInv;
+  return dz_inv;
 }
+
+/**
+ * @brief computes u from delta_u = δ - u. --> u =  δ - delta_u
+ * invDu is the desired deadzone output computed by the inverted deadzone function.
+ * */
+//double sDeadZone::convertInverted_d_minus_u(double const &current_steering,
+//                                            double const &current_steering_cmd,
+//                                            const double &invDu) const
+//{
+//  auto const &br = get_br();
+//  auto const &bl = get_bl();
+//
+//  auto const &Du = current_steering - current_steering_cmd;
+//
+//  if (Du >= br)
+//  {
+//    return current_steering + invDu * mr_ + mrbr_;
+//  }
+//
+//  if (Du <= bl)
+//  {
+//    return current_steering + invDu * ml_ + mlbl_;
+//  }
+//
+//  return current_steering_cmd;
+//
+//  return current_steering;
+//}
 
 } // namespace ns_deadzone

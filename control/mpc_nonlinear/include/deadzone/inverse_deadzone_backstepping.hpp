@@ -44,8 +44,12 @@ struct sDeadZone
   [[nodiscard]] double get_br() const;
   [[nodiscard]] double get_bl() const;
 
-  [[nodiscard]] double deadzoneOutput(double const &u) const;
-  [[nodiscard]] double invDeadzoneOutput(double const &u) const;
+  [[nodiscard]] double deadzoneOutput(double const &Du) const;
+  [[nodiscard]] double invDeadzoneOutput(double const &desired_Du) const;
+
+//  [[nodiscard]] double convertInverted_d_minus_u(double const &current_steering,
+//                                                 double const &current_steering_cmd,
+//                                                 double const &invDu) const;
 
 };
 
