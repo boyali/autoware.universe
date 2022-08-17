@@ -531,7 +531,7 @@ void NonlinearMPCNode::onTimer()
 
   // Compute MPC model predicted longitudinal speed by Euler integration.
   // auto const mpc_vx = current_velocity_ptr_->twist.twist.linear.x + u_solution_(0) * params_node_.control_period;
-  auto const &mpc_vx = nonlinear_mpc_controller_ptr_->getEstimatedVxControl();
+  auto const &mpc_vx = nonlinear_mpc_controller_ptr_->getPredictedVxControl();
 
   // Compute the steering rate by numerical differentiation.
   if (params_node_.use_dob && current_comm_delay_ptr_)
@@ -543,6 +543,8 @@ void NonlinearMPCNode::onTimer()
   if (params_node_.use_deadzone_inverse)
   {
     nmpc_performance_vars_.mpc_steering_input_original = u_solution_(1);
+    nmpc_performance_vars_.mpc_steering_reference = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
+
     auto const &predicted_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
     auto const &steering_deviation = predicted_steering - u_solution_(1);
 

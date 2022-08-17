@@ -61,11 +61,11 @@ double sDeadZone::deadzoneOutput(const double &Du) const
 }
 
 /**
- * @brief given a steering deviation, computes the inverse deadzone function output.
+ * @brief given a steering deviation, computes the smooth inverse deadzone function output.
  * @param desired_Du = steering - steering_control = δ - u
  * */
 
-double sDeadZone::invDeadzoneOutput(const double &desired_Du) const
+double sDeadZone::invDeadzoneOutputSmooth(const double &desired_Du) const
 {
   auto const &u = desired_Du;
   auto x = u / e0_;
@@ -74,6 +74,29 @@ double sDeadZone::invDeadzoneOutput(const double &desired_Du) const
   auto const &phi_l = exp(-x) / (exp(x) + exp(-x));
 
   auto const &dz_inv = phi_r * (u + mrbr_) / mr_ + phi_l * (u + mlbl_) / ml_;
+
+  return dz_inv;
+}
+
+double sDeadZone::invDeadzoneOutput(const double &desired_Du) const
+{
+  auto const &u = desired_Du;
+
+  auto const &br = get_br();
+  auto const &bl = get_bl();
+
+  double dz_inv{};
+
+  if (desired_Du >= br)
+  {
+
+    return mr_ * u - mrbr_;
+  }
+
+  if (desired_Du <= bl)
+  {
+    return ml_ * u - mlbl_;
+  }
 
   return dz_inv;
 }

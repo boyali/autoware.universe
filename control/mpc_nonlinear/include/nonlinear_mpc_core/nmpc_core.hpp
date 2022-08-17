@@ -145,7 +145,9 @@ class NonlinearMPCController
 
   void getControlSolutions(Model::input_vector_t &u_solution);  // [ax, steering_rate]
 
-  double getEstimatedVxControl();
+  double getPredictedVxControl();
+
+  double getPredictedteeringState();
 
   /**
    * @brief apply state constraints to the given index.
