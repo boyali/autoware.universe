@@ -107,3 +107,9 @@
       br: 0.05
       ml: 1.
       bl: 0.05
+
+      use_extremum_seeker: false
+      K_ex: 1. # Gain
+      wl_ex: 1. #low-pass filter cut-off frequency
+      wh_ex: 1. #high-pass filter cut-off frequency
+      wd_ex: 1. #dither signal frequency

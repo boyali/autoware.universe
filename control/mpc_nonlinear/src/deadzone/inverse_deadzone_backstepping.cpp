@@ -129,4 +129,13 @@ double sDeadZone::invDeadzoneOutput(const double &desired_Du) const
 //  return current_steering;
 //}
 
+ExtremumSeeker::ExtremumSeeker(sExtremumSeekerParams const &es_params)
+  : K_{es_params.K},
+    wl_{es_params.wl},
+    wh_{es_params.wh},
+    wd_{es_params.wd},
+    dt_{es_params.dt}
+{
+
+}
 } // namespace ns_deadzone

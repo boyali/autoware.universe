@@ -88,7 +88,12 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
    * Its aim is to eliminate other node dependency to load the wheel_base.
    */
   loadNodeParameters();  // read the parameters used by the node.
-  loadDeadzoneParameters(); // reads the deadzone params and assigns the deadzone invertor.
+  loadDeadzoneParameters(); // reads the deadzone params and assigns the deadzone inverter.
+
+  ns_deadzone::sExtremumSeekerParams es_params;
+  es_params.dt = params_node_.control_period;
+
+  loadExtremumSeekerParameters(es_params);
 
   // Load vehicle model parameters.
   ns_models::ParamsVehicle params_vehicle{};
@@ -176,7 +181,6 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   // Initialize the timer.
   initTimer(params_node_.control_period);
 
-
   /**
    * Initialize input buffer map.
    * */
@@ -191,75 +195,75 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   }
 
   // DEBUG
-  ns_utils::print("\n\nVehicle parameters is loaded");
-  ns_utils::print("Wheelbase : ", params_vehicle.wheel_base);
-  ns_utils::print("lr to cog : ", params_vehicle.lr);
-
-  ns_utils::print("Steering tau : ", params_vehicle.steering_tau);
-  ns_utils::print("Speed tau : ", params_vehicle.speed_tau);
-  ns_utils::print("Node input delay : ", params_node_.input_delay_time);
-  ns_utils::print("Use delay model: ", params_vehicle.use_delay_model, "\n\n");
-
-  // Check if optimization parameters are read properly.
-  ns_utils::print("\nOptimization parameters: ");
-  ns_utils::print("'\nState weights Q ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Q));
-
-  ns_utils::print("\nState weights QN ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.QN));
-
-  ns_utils::print("\nControl weights R ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.R));
-
-  ns_utils::print("\nJerk weights Rj ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Rj));
-
-  ns_utils::print("\nxupper and lower ");
-  ns_eigen_utils::printEigenMat(params_optimization.xlower);
-  ns_eigen_utils::printEigenMat(params_optimization.xupper);
-
-  ns_utils::print("\nu_upper and lower ");
-  ns_eigen_utils::printEigenMat(params_optimization.ulower);
-  ns_eigen_utils::printEigenMat(params_optimization.uupper);
-
-  ns_utils::print("\nScaling and scaling range, x, u ");
-  ns_eigen_utils::printEigenMat(params_optimization.xmin_for_scaling);
-  ns_eigen_utils::printEigenMat(params_optimization.xmax_for_scaling);
-
-  ns_eigen_utils::printEigenMat(params_optimization.umin_for_scaling);
-  ns_eigen_utils::printEigenMat(params_optimization.umax_for_scaling);
-
-  ns_utils::print_container(params_optimization.scaling_range);
-  ns_utils::print("Number of nonlinear items : ", params_lpv.num_of_nonlinearities);
-
-  ns_utils::print("Lyapunov Matrices Xs");
-  for (size_t k = 0; k < params_lpv.num_of_nonlinearities; ++k)
-  {
-    ns_eigen_utils::printEigenMat(params_lpv.lpvXcontainer[k]);
-  }
-
-  ns_utils::print("Lyapunov Matrices Ys");
-  for (size_t k = 0; k < params_lpv.num_of_nonlinearities; ++k)
-  {
-    ns_eigen_utils::printEigenMat(params_lpv.lpvYcontainer[k]);
-  }
-
-  // Check the if the scaling parameters are computed.
-  ns_utils::print("Scaling matrices and vectors Sx, Sx_inv, Su, Su_inv, Cx, Cu :");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx));
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx_inv));
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su));
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su_inv));
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cx));
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cu));
-
-  ns_utils::print("Kalman filter parameters V, W, P : ");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Vsqrt));
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Wsqrt));
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Psqrt));
-
-  ns_utils::print("\nUnscented Kalman filter parameters alpha, beta, kappa : ", params_filters.ukf_alpha,
-                  params_filters.ukf_beta, params_filters.ukf_kappa, "\n\n");
+//  ns_utils::print("\n\nVehicle parameters is loaded");
+//  ns_utils::print("Wheelbase : ", params_vehicle.wheel_base);
+//  ns_utils::print("lr to cog : ", params_vehicle.lr);
+//
+//  ns_utils::print("Steering tau : ", params_vehicle.steering_tau);
+//  ns_utils::print("Speed tau : ", params_vehicle.speed_tau);
+//  ns_utils::print("Node input delay : ", params_node_.input_delay_time);
+//  ns_utils::print("Use delay model: ", params_vehicle.use_delay_model, "\n\n");
+//
+//  // Check if optimization parameters are read properly.
+//  ns_utils::print("\nOptimization parameters: ");
+//  ns_utils::print("'\nState weights Q ");
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Q));
+//
+//  ns_utils::print("\nState weights QN ");
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.QN));
+//
+//  ns_utils::print("\nControl weights R ");
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.R));
+//
+//  ns_utils::print("\nJerk weights Rj ");
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Rj));
+//
+//  ns_utils::print("\nxupper and lower ");
+//  ns_eigen_utils::printEigenMat(params_optimization.xlower);
+//  ns_eigen_utils::printEigenMat(params_optimization.xupper);
+//
+//  ns_utils::print("\nu_upper and lower ");
+//  ns_eigen_utils::printEigenMat(params_optimization.ulower);
+//  ns_eigen_utils::printEigenMat(params_optimization.uupper);
+//
+//  ns_utils::print("\nScaling and scaling range, x, u ");
+//  ns_eigen_utils::printEigenMat(params_optimization.xmin_for_scaling);
+//  ns_eigen_utils::printEigenMat(params_optimization.xmax_for_scaling);
+//
+//  ns_eigen_utils::printEigenMat(params_optimization.umin_for_scaling);
+//  ns_eigen_utils::printEigenMat(params_optimization.umax_for_scaling);
+//
+//  ns_utils::print_container(params_optimization.scaling_range);
+//  ns_utils::print("Number of nonlinear items : ", params_lpv.num_of_nonlinearities);
+//
+//  ns_utils::print("Lyapunov Matrices Xs");
+//  for (size_t k = 0; k < params_lpv.num_of_nonlinearities; ++k)
+//  {
+//    ns_eigen_utils::printEigenMat(params_lpv.lpvXcontainer[k]);
+//  }
+//
+//  ns_utils::print("Lyapunov Matrices Ys");
+//  for (size_t k = 0; k < params_lpv.num_of_nonlinearities; ++k)
+//  {
+//    ns_eigen_utils::printEigenMat(params_lpv.lpvYcontainer[k]);
+//  }
+//
+//  // Check the if the scaling parameters are computed.
+//  ns_utils::print("Scaling matrices and vectors Sx, Sx_inv, Su, Su_inv, Cx, Cu :");
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx));
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx_inv));
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su));
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su_inv));
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cx));
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cu));
+//
+//  ns_utils::print("Kalman filter parameters V, W, P : ");
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Vsqrt));
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Wsqrt));
+//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Psqrt));
+//
+//  ns_utils::print("\nUnscented Kalman filter parameters alpha, beta, kappa : ", params_filters.ukf_alpha,
+//                  params_filters.ukf_beta, params_filters.ukf_kappa, "\n\n");
 
   // end of debug.
 }
@@ -540,6 +544,8 @@ void NonlinearMPCNode::onTimer()
     u_solution_(1) += dob_steering_ff;
   }
 
+  extremum_seeker_.print();
+
   if (params_node_.use_deadzone_inverse)
   {
     nmpc_performance_vars_.mpc_steering_input_original = u_solution_(1);
@@ -548,7 +554,7 @@ void NonlinearMPCNode::onTimer()
     auto const &predicted_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
     auto const &steering_deviation = predicted_steering - u_solution_(1);
 
-    auto const &w_inv_dz_diff = deadzone_invertor_.invDeadzoneOutput(steering_deviation);
+    auto const &w_inv_dz_diff = deadzone_inverter_.invDeadzoneOutput(steering_deviation);
 
     u_solution_(1) = predicted_steering - w_inv_dz_diff;
   }
@@ -907,7 +913,6 @@ void NonlinearMPCNode::loadFilterParameters(ns_data::ParamsFilters &params_filte
 
 void NonlinearMPCNode::loadDeadzoneParameters()
 {
-
   // Deadzone
   params_node_.use_deadzone_inverse = declare_parameter<bool>("deadzone_params.use_deadzone_inv");
   auto const &mr = declare_parameter<double>("deadzone_params.mr");
@@ -915,8 +920,18 @@ void NonlinearMPCNode::loadDeadzoneParameters()
 
   auto const &ml = declare_parameter<double>("deadzone_params.ml");
   auto const &bl = declare_parameter<double>("deadzone_params.bl");
+  deadzone_inverter_ = ns_deadzone::sDeadZone(mr, br, ml, bl);
+}
 
-  deadzone_invertor_ = ns_deadzone::sDeadZone(mr, br, ml, bl);
+void NonlinearMPCNode::loadExtremumSeekerParameters(ns_deadzone::sExtremumSeekerParams &es_params)
+{
+  // Deadzone
+  params_node_.use_extremum_seeker = declare_parameter<bool>("deadzone_params.use_extremum_seeker");
+
+  es_params.K = declare_parameter<double>("deadzone_params.K_ex");
+  es_params.wl = declare_parameter<double>("deadzone_params.wl_ex");
+  es_params.wh = declare_parameter<double>("deadzone_params.wh_ex");
+  es_params.wd = declare_parameter<double>("deadzone_params.wd_ex");
 
 }
 

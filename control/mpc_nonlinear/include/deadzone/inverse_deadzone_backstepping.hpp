@@ -19,8 +19,24 @@
 #define MPC_NONLINEAR_INCLUDE_DEADZONE_INVERSE_DEADZONE_BACKSTEPPING_HPP_
 
 #include <cmath>
+#include "utils_act/act_utils.hpp"
+
 namespace ns_deadzone
 {
+
+constexpr double hertz2radsec(double x)
+{
+  return 2. * M_PI * x;
+}
+
+struct sExtremumSeekerParams
+{
+  double K{1.}; // Gain
+  double wl{1.}; // low-pass filter cut-off frequency
+  double wh{1.}; // high-pass filter cut-off frequency
+  double wd{1.}; // dither signal frequency
+  double dt{0.033};
+};
 
 struct sDeadZone
 {
@@ -54,13 +70,23 @@ struct sDeadZone
 
 };
 
-class BackSteppingController
+class ExtremumSeeker
 {
  public:
-  BackSteppingController() = default;
+  ExtremumSeeker() = default;
+  ExtremumSeeker(sExtremumSeekerParams const &es_params);
+
+  void print()
+  {
+    ns_utils::print("Extremum seeker is prepared...");
+  }
 
  private:
-  int a{};
+  double K_{1.}; // Gain
+  double wl_{1.}; // low-pass filter cut-off frequency
+  double wh_{1.}; // high-pass filter cut-off frequency
+  double wd_{1.}; // dither signal frequency
+  double dt_{0.033};
 
 };
 

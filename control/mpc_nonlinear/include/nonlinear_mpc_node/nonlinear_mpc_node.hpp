@@ -225,7 +225,8 @@ class NonlinearMPCNode : public rclcpp::Node
   /**
    * @brief Finite State Machine for tracking vehicle motion states.
    * */
-  ns_deadzone::sDeadZone deadzone_invertor_{};
+  ns_deadzone::sDeadZone deadzone_inverter_{};
+  ns_deadzone::ExtremumSeeker extremum_seeker_{};
 
   // Pointers to the received messages.
   size_t current_trajectory_size_{};
@@ -369,6 +370,7 @@ class NonlinearMPCNode : public rclcpp::Node
   void loadFilterParameters(ns_data::ParamsFilters &params_filters);
 
   void loadDeadzoneParameters();
+  void loadExtremumSeekerParameters(ns_deadzone::sExtremumSeekerParams &es_params);
 
   /**
    *   @brief We use state and control scaling for within the optimization algorithms.

@@ -65,6 +65,7 @@ struct ParamsNMPCNode
 
   // Deadzone
   bool use_deadzone_inverse{false};
+  bool use_extremum_seeker{false};
 
 };
 
