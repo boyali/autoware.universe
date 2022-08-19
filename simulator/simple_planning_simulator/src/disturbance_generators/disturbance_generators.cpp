@@ -301,13 +301,13 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double &delta_u)
   { // omit sinusoidal part.
     if (delta_u >= current_br_threshold_)
     {
-      delta_v = current_mr_slope_ * (delta_u - current_br_threshold_);
-      // delta_v = current_mr_slope_ * delta_u ;
+      // delta_v = current_mr_slope_ * (delta_u - current_br_threshold_);
+      delta_v = current_mr_slope_ * delta_u;
 
     } else if (delta_u <= current_bl_threshold_)
     {
-      delta_v = current_ml_slope_ * (delta_u - current_bl_threshold_);
-      // delta_v = current_ml_slope_ * delta_u;
+      // delta_v = current_ml_slope_ * (delta_u - current_bl_threshold_);
+      delta_v = current_ml_slope_ * delta_u;
 
     } else
     {
