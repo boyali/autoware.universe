@@ -110,11 +110,54 @@ double sDeadZone::invDeadzoneOutput(double const &u, const double &desired_Du) c
 
 ExtremumSeeker::ExtremumSeeker(sExtremumSeekerParams const &es_params)
   : K_{es_params.K},
-    wl_{es_params.wl},
-    wh_{es_params.wh},
-    wd_{es_params.wd},
+    ay_{es_params.ay},
+    wl_{hertz2radsec(es_params.freq_low_pass)},
+    wh_{hertz2radsec(es_params.freq_high_pass)},
+    wd_{hertz2radsec(es_params.freq_dither)},
     dt_{es_params.dt}
 {
+  auto const &tau_wl = 1. / wl_; // low-pass filter tau
+  auto const &tau_wh = 1. / wh_; // high-pass filter tau
 
+  // create the filter transfer functions.
+  lpf_tf_ = ns_control_toolbox::tf({1.}, {tau_wl, 1.});
+  hpf_tf_ = ns_control_toolbox::tf({1., 0.,}, {tau_wh, 1.});
+
+  // create the discrete state space systems.
+  lpf_ss_ = ns_control_toolbox::tf2ss(lpf_tf_, dt_);
+  hpf_ss_ = ns_control_toolbox::tf2ss(hpf_tf_, dt_);
+
+  // Initialize the filter states.
+  xl0_ = Eigen::MatrixXd(lpf_tf_.order(), 1);
+  xh0_ = Eigen::MatrixXd(hpf_tf_.order(), 1);
+
+  xl0_.setZero();
+  xh0_.setZero();
+
+}
+double ExtremumSeeker::getTheta(double const &error)
+{
+  cum_dt_ += dt_; // for simulating time-varying sinusoidal perturbation.
+
+  ns_utils::print("In extremum seeker - current time : ", cum_dt_);
+
+  // High-pass filter the error sqr, to remove trends.
+  auto const &error_sqr_filt = hpf_ss_.simulateOneStep(xh0_, error);
+
+  ns_utils::print("High-pass filtered : ", error_sqr_filt);
+
+//  // Compute the dither signal.
+//  auto const &dither_sig = ay_ * sin(wd_ * cum_dt_);
+//
+//  // Low-pass filter the dither signal
+//  auto const &xi = lpf_ss_.simulateOneStep(xl0_, dither_sig * error_sqr_filt);
+//
+//  // Integrate the filtered signal
+//  theta_hat_ += K_ * xi * dt_;
+//
+//  // excite theta_hat_;
+//  auto const &theta = theta_hat_ + ay_ * sin(wd_ * cum_dt_);
+
+  return 0.;
 }
 } // namespace ns_deadzone

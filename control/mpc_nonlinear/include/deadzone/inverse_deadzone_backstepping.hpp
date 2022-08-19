@@ -20,6 +20,7 @@
 
 #include <cmath>
 #include "utils_act/act_utils.hpp"
+#include "autoware_control_toolbox.hpp"
 
 namespace ns_deadzone
 {
@@ -32,15 +33,12 @@ constexpr double hertz2radsec(double x)
 struct sExtremumSeekerParams
 {
   double K{1.}; // Gain
-  double wl{1.}; // low-pass filter cut-off frequency
-  double wh{1.}; // high-pass filter cut-off frequency
-  double wd{1.}; // dither signal frequency
+  double ay{0.05}; // Gain
+  double freq_low_pass{1.}; // low-pass filter cut-off frequency
+  double freq_high_pass{1.}; // high-pass filter cut-off frequency
+  double freq_dither{1.}; // dither signal frequency
   double dt{0.033};
 };
-
-struct stag_dxu {};
-
-struct stag_u {};
 
 struct sDeadZone
 {
@@ -82,15 +80,45 @@ class ExtremumSeeker
 
   void print() const
   {
-    ns_utils::print("Extremum seeker is prepared...");
+    ns_utils::print("ES params wh, wl, wd", wh_, wl_, wd_);
+    ns_utils::print("High-pass filter transfer function");
+    hpf_tf_.print();
+
+    ns_utils::print("Low-pass filter transfer function");
+    lpf_tf_.print();
+
+    ns_utils::print("High-pass filter continuous state-space");
+    hpf_ss_.print();
+
+    ns_utils::print("Low-pass filter continuous state-space");
+    lpf_ss_.print();
   }
+
+  double getTheta(double const &error);
 
  private:
   double K_{1.}; // Gain
-  double wl_{1.}; // low-pass filter cut-off frequency
-  double wh_{1.}; // high-pass filter cut-off frequency
+  double ay_{0.1}; // Dither sinus amplitude
+  double wl_{1.}; // low-pass filter cut-off frequency [rad/sec]
+  double wh_{1.}; // high-pass filter cut-off frequency [rad/sec]
   double wd_{1.}; // dither signal frequency
   double dt_{0.033};
+
+  // cumulative time.
+  double cum_dt_{};
+
+  // Filters
+  ns_control_toolbox::tf lpf_tf_{}; // low-pass filter
+  ns_control_toolbox::tf hpf_tf_{}; // high-pass filter
+
+  ns_control_toolbox::tf2ss lpf_ss_{}; // low-pass filter
+  ns_control_toolbox::tf2ss hpf_ss_{}; // high-pass filter
+
+  // Filter states
+  Eigen::MatrixXd xh0_; // high-pass filter internal state
+  Eigen::MatrixXd xl0_; // low-pass filter internal state
+
+  double theta_hat_{}; // integrated dither signal.
 
 };
 

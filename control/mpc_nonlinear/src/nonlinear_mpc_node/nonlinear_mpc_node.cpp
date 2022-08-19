@@ -94,6 +94,7 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   es_params.dt = params_node_.control_period;
 
   loadExtremumSeekerParameters(es_params);
+  extremum_seeker_ = ns_deadzone::ExtremumSeeker(es_params);
 
   // Load vehicle model parameters.
   ns_models::ParamsVehicle params_vehicle{};
@@ -488,7 +489,7 @@ void NonlinearMPCNode::onTimer()
 
   // Model::input_vector_t u_model_solution_; // [velocity input - m/s, steering input - rad]
   // If we choose to use MPC. Get solution from OSQP into the traj_data_.
-  // Prepare the solution vector place holder and set it zero before fetching it.
+  // Prepare the solution vector placeholder and set it zero before fetching it.
   u_solution_.setZero();
 
   // use the NMPC.
@@ -544,12 +545,36 @@ void NonlinearMPCNode::onTimer()
     u_solution_(1) += dob_steering_ff;
   }
 
-  // extremum_seeker_.print();
 
+  /**
+   * @brief Extremum-seeker optimal deadzone threshold finder.
+   * */
+  auto const &current_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
+
+  if (params_node_.use_extremum_seeker)
+  {
+    auto const &ey = x0_predicted_(ns_utils::toUType(VehicleStateIds::ey)); // lateral error
+    auto const &eyaw = x0_predicted_(ns_utils::toUType(VehicleStateIds::eyaw)); // heading error
+
+    auto const &predicted_steering = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
+    auto const &e_steering = predicted_steering - current_steering; // steering error
+
+    auto const &error_es = std::hypot(ey, eyaw, e_steering);
+//    auto const &theta = extremum_seeker_.getTheta(error_es);
+//    nmpc_performance_vars_.es_theta = theta;
+
+    extremum_seeker_.print();
+
+    //ns_utils::print("In ...", theta);
+  }
+
+  /**
+   * @brief Deadzone inversion code block
+   * */
   if (params_node_.use_deadzone_inverse)
   {
-    auto const &predicted_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
-    auto const &steering_deviation = predicted_steering - u_solution_(1);
+
+    auto const &steering_deviation = current_steering - u_solution_(1);
 
     auto const &u_steer_dz_inv = deadzone_inverter_.invDeadzoneOutput(u_solution_(1), steering_deviation);
     u_solution_(1) = u_steer_dz_inv;
@@ -929,9 +954,10 @@ void NonlinearMPCNode::loadExtremumSeekerParameters(ns_deadzone::sExtremumSeeker
   params_node_.use_extremum_seeker = declare_parameter<bool>("deadzone_params.use_extremum_seeker");
 
   es_params.K = declare_parameter<double>("deadzone_params.K_ex");
-  es_params.wl = declare_parameter<double>("deadzone_params.wl_ex");
-  es_params.wh = declare_parameter<double>("deadzone_params.wh_ex");
-  es_params.wd = declare_parameter<double>("deadzone_params.wd_ex");
+  es_params.ay = declare_parameter<double>("deadzone_params.ay");
+  es_params.freq_low_pass = declare_parameter<double>("deadzone_params.freq_low_ex");
+  es_params.freq_high_pass = declare_parameter<double>("deadzone_params.freq_high_ex");
+  es_params.freq_dither = declare_parameter<double>("deadzone_params.freq_dither_ex");
 
 }
 
