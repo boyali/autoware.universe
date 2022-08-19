@@ -103,20 +103,20 @@ class tf2ss
    *	C_ = ss_system.bottomLeftCorner(1, nx);
    *	D_ = ss_system.bottomRightCorner(1, 1);
    * */
-  Eigen::MatrixXd Tsimilarity_mat_{};  // Similarity mat of A, Aprime = Tinv * A *T.
+  Eigen::MatrixXd Tsimilarity_mat_{Eigen::MatrixXd::Identity(1, 1)};  // Similarity mat of A, Aprime = Tinv * A *T.
 
   // Data members
   // Continuous time state-space model
-  Eigen::MatrixXd A_{};
-  Eigen::MatrixXd B_{};
-  Eigen::MatrixXd C_{};
-  Eigen::MatrixXd D_{};
+  Eigen::MatrixXd A_{Eigen::MatrixXd::Identity(1, 1)};
+  Eigen::MatrixXd B_{Eigen::MatrixXd::Zero(1, 1)};
+  Eigen::MatrixXd C_{Eigen::MatrixXd::Zero(1, 1)};
+  Eigen::MatrixXd D_{Eigen::MatrixXd::Zero(1, 1)};
 
   // Discrete time state-space model
-  Eigen::MatrixXd Ad_{};
-  Eigen::MatrixXd Bd_{};
-  Eigen::MatrixXd Cd_{};
-  Eigen::MatrixXd Dd_{};
+  Eigen::MatrixXd Ad_{Eigen::MatrixXd::Zero(1, 1)};
+  Eigen::MatrixXd Bd_{Eigen::MatrixXd::Zero(1, 1)};
+  Eigen::MatrixXd Cd_{Eigen::MatrixXd::Zero(1, 1)};
+  Eigen::MatrixXd Dd_{Eigen::MatrixXd::Zero(1, 1)};
 };
 
 // Type definitions.

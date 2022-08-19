@@ -128,8 +128,8 @@ ExtremumSeeker::ExtremumSeeker(sExtremumSeekerParams const &es_params)
   hpf_ss_ = ns_control_toolbox::tf2ss(hpf_tf_, dt_);
 
   // Initialize the filter states.
-  xl0_ = Eigen::MatrixXd(lpf_tf_.order(), 1);
-  xh0_ = Eigen::MatrixXd(hpf_tf_.order(), 1);
+  xl0_ = Eigen::MatrixXd::Zero(lpf_tf_.order(), 1);
+  xh0_ = Eigen::MatrixXd::Zero(hpf_tf_.order(), 1);
 
   xl0_.setZero();
   xh0_.setZero();

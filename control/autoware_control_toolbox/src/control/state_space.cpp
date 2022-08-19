@@ -22,28 +22,17 @@ ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf &sys_tf, const dou
 {
   // N_ = sys_tf.order(); // size of A will be order of the TF.
   auto const &nx = N_;
-  A_.resize(nx, nx);
-  B_.resize(nx, 1);
-  C_.resize(1, nx);
-  D_.resize(1, 1);
+  A_ = Eigen::MatrixXd::Zero(nx, nx);
+  B_ = Eigen::MatrixXd::Zero(nx, 1);
+  C_ = Eigen::MatrixXd::Zero(1, nx);
+  D_ = Eigen::MatrixXd::Zero(1, 1);
 
-  Ad_.resize(nx, nx);
-  Bd_.resize(nx, 1);
-  Cd_.resize(1, nx);
-  Dd_.resize(1, 1);
+  Ad_ = Eigen::MatrixXd::Zero(nx, nx);
+  Bd_ = Eigen::MatrixXd::Zero(nx, 1);
+  Cd_ = Eigen::MatrixXd::Zero(1, nx);
+  Dd_ = Eigen::MatrixXd::Zero(1, 1);
 
-  Tsimilarity_mat_.resize(nx, nx);
-
-  A_.setZero();
-  B_.setZero();
-  C_.setZero();
-  D_.setZero();
-
-  Ad_.setZero();
-  Bd_.setZero();
-  Cd_.setZero();
-  Dd_.setZero();
-  Tsimilarity_mat_.setIdentity();
+  Tsimilarity_mat_ = Eigen::MatrixXd::Identity(nx, nx);
 
   updateStateSpace(sys_tf);
 }
@@ -101,27 +90,17 @@ ns_control_toolbox::tf2ss::tf2ss(
 
   // Initialize the system matrices.
   auto const &nx = N_;
-  A_.resize(nx, nx);
-  B_.resize(nx, 1);
-  C_.resize(1, nx);
-  D_.resize(1, 1);
+  A_ = Eigen::MatrixXd::Zero(nx, nx);
+  B_ = Eigen::MatrixXd::Zero(nx, 1);
+  C_ = Eigen::MatrixXd::Zero(1, nx);
+  D_ = Eigen::MatrixXd::Zero(1, 1);
 
-  Ad_.resize(nx, nx);
-  Bd_.resize(nx, 1);
-  Cd_.resize(1, nx);
-  Dd_.resize(1, 1);
+  Ad_ = Eigen::MatrixXd::Zero(nx, nx);
+  Bd_ = Eigen::MatrixXd::Zero(nx, 1);
+  Cd_ = Eigen::MatrixXd::Zero(1, nx);
+  Dd_ = Eigen::MatrixXd::Zero(1, 1);
 
-  Tsimilarity_mat_.resize(nx, nx);
-
-  A_.setZero();
-  B_.setZero();
-  C_.setZero();
-  D_.setZero();
-
-  Ad_.setZero();
-  Bd_.setZero();
-  Cd_.setZero();
-  Dd_.setZero();
+  Tsimilarity_mat_ = Eigen::MatrixXd::Identity(nx, nx);
 
   // Compute the system matrices.
   computeSystemMatrices(num, den);
@@ -140,27 +119,17 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double> 
 
   if (A_.rows() != nx && A_.cols() != nx)
   {
-    A_.resize(nx, nx);
-    B_.resize(nx, 1);
-    C_.resize(1, nx);
-    D_.resize(1, 1);
+    A_ = Eigen::MatrixXd::Zero(nx, nx);
+    B_ = Eigen::MatrixXd::Zero(nx, 1);
+    C_ = Eigen::MatrixXd::Zero(1, nx);
+    D_ = Eigen::MatrixXd::Zero(1, 1);
 
-    Ad_.resize(nx, nx);
-    Bd_.resize(nx, 1);
-    Cd_.resize(1, nx);
-    Dd_.resize(1, 1);
+    Ad_ = Eigen::MatrixXd::Zero(nx, nx);
+    Bd_ = Eigen::MatrixXd::Zero(nx, 1);
+    Cd_ = Eigen::MatrixXd::Zero(1, nx);
+    Dd_ = Eigen::MatrixXd::Zero(1, 1);
 
-    Tsimilarity_mat_.resize(nx, nx);
-
-    A_.setZero();
-    B_.setZero();
-    C_.setZero();
-    D_.setZero();
-
-    Ad_.setZero();
-    Bd_.setZero();
-    Cd_.setZero();
-    Dd_.setZero();
+    Tsimilarity_mat_ = Eigen::MatrixXd::Identity(nx, nx);
   }
 
   B_ = Eigen::MatrixXd::Identity(nx, 1);

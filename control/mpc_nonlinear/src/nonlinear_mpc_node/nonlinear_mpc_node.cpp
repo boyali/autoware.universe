@@ -94,7 +94,7 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   es_params.dt = params_node_.control_period;
 
   loadExtremumSeekerParameters(es_params);
-  extremum_seeker_ = ns_deadzone::ExtremumSeeker(es_params);
+  extremum_seeker_ptr_ = std::make_unique<ns_deadzone::ExtremumSeeker>(ns_deadzone::ExtremumSeeker(es_params));
 
   // Load vehicle model parameters.
   ns_models::ParamsVehicle params_vehicle{};
@@ -563,7 +563,7 @@ void NonlinearMPCNode::onTimer()
 //    auto const &theta = extremum_seeker_.getTheta(error_es);
 //    nmpc_performance_vars_.es_theta = theta;
 
-    extremum_seeker_.print();
+    extremum_seeker_ptr_->print();
 
     //ns_utils::print("In ...", theta);
   }

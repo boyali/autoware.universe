@@ -79,6 +79,10 @@ int main()
   Qss.print_discrete_system();
 
   // Test on the vehicle model.
+  // Copy test
+  ns_utils::print("Testing copy");
+  auto sys_ss4 = sys_ss2;
+  sys_ss4.print_discrete_system();
 
   return 0;
 }

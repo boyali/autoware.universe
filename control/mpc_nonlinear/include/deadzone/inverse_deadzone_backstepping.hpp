@@ -115,8 +115,8 @@ class ExtremumSeeker
   ns_control_toolbox::tf2ss hpf_ss_{}; // high-pass filter
 
   // Filter states
-  Eigen::MatrixXd xh0_; // high-pass filter internal state
-  Eigen::MatrixXd xl0_; // low-pass filter internal state
+  Eigen::MatrixXd xh0_{Eigen::MatrixXd::Zero(1, 1)}; // high-pass filter internal state
+  Eigen::MatrixXd xl0_{Eigen::MatrixXd::Zero(1, 1)}; // low-pass filter internal state
 
   double theta_hat_{}; // integrated dither signal.
 
