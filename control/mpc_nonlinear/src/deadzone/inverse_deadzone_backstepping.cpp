@@ -38,26 +38,16 @@ double sDeadZone::get_bl() const
  * @brief given a steering deviation, computes the deadzone function output.
  * @param Du = steering - steering_control = δ - u
  * */
-double sDeadZone::deadzoneOutput(const double &Du) const
+double sDeadZone::deadzoneOutput(const double &u, const double &Du) const
 {
   auto const &br = get_br();
   auto const &bl = get_bl();
 
-  if (Du >= br)
-  {
-    return mr_ * Du - mrbr_ * 0;
-  }
-  if (Du <= bl)
-  {
-    return ml_ * Du - mlbl_ * 0;
-  }
+  auto const &indicator_pos = Du >= br ? 1. : 0.;
+  auto const &indicator_neg = Du <= bl ? 1. : 0.;
+  auto const &u_dz = (u + br) * indicator_pos + (u + bl) * indicator_neg;
 
-  if (Du > bl && Du < br)
-  {
-    return 0.;
-  }
-
-  return 0;
+  return u_dz;
 }
 
 /**
@@ -78,27 +68,16 @@ double sDeadZone::invDeadzoneOutputSmooth(const double &desired_Du) const
   return dz_inv;
 }
 
-double sDeadZone::invDeadzoneOutput(const double &desired_Du) const
+double sDeadZone::invDeadzoneOutput(double const &u, const double &desired_Du) const
 {
-  auto const &u = desired_Du;
 
   auto const &br = get_br();
   auto const &bl = get_bl();
 
-  double dz_inv{};
-
-  if (desired_Du >= br)
-  {
-
-    return mr_ * u - mrbr_;
-  }
-
-  if (desired_Du <= bl)
-  {
-    return ml_ * u - mlbl_;
-  }
-
-  return dz_inv;
+  auto const &indicator_pos = desired_Du >= 0. ? 1. : 0.;
+  auto const &indicator_neg = desired_Du <= 0. ? 1. : 0.;
+  auto const &u_dz = (u - br) * indicator_pos + (u - bl) * indicator_neg;
+  return u_dz;
 }
 
 /**

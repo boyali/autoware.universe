@@ -104,9 +104,9 @@
     deadzone_params:
       use_deadzone_inv: true
       mr: 1.
-      br: 0.05
+      br: 0.055
       ml: 1.
-      bl: 0.05
+      bl: 0.055
 
       use_extremum_seeker: false
       K_ex: 1. # Gain

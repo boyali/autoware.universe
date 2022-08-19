@@ -544,19 +544,15 @@ void NonlinearMPCNode::onTimer()
     u_solution_(1) += dob_steering_ff;
   }
 
-  extremum_seeker_.print();
+  // extremum_seeker_.print();
 
   if (params_node_.use_deadzone_inverse)
   {
-    nmpc_performance_vars_.mpc_steering_input_original = u_solution_(1);
-    nmpc_performance_vars_.mpc_steering_reference = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
-
     auto const &predicted_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
     auto const &steering_deviation = predicted_steering - u_solution_(1);
 
-    auto const &w_inv_dz_diff = deadzone_inverter_.invDeadzoneOutput(steering_deviation);
-
-    u_solution_(1) = predicted_steering - w_inv_dz_diff;
+    auto const &u_steer_dz_inv = deadzone_inverter_.invDeadzoneOutput(u_solution_(1), steering_deviation);
+    u_solution_(1) = u_steer_dz_inv;
   }
 
   auto const
@@ -792,6 +788,10 @@ void NonlinearMPCNode::publishPerformanceVariables(ControlCmdMsg const &control_
 
   // Average computation time.
   nmpc_performance_vars_.avg_nmpc_computation_time = average_mpc_solve_time_ * 1000;  // s->ms
+
+  // Predicted next steering angle.
+  nmpc_performance_vars_.mpc_steering_input_original = u_solution_(1);
+  nmpc_performance_vars_.mpc_steering_reference = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
 
   pub_nmpc_performance_->publish(nmpc_performance_vars_);
 

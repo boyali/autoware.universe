@@ -38,6 +38,10 @@ struct sExtremumSeekerParams
   double dt{0.033};
 };
 
+struct stag_dxu {};
+
+struct stag_u {};
+
 struct sDeadZone
 {
   // Constructors
@@ -60,9 +64,9 @@ struct sDeadZone
   [[nodiscard]] double get_br() const;
   [[nodiscard]] double get_bl() const;
 
-  [[nodiscard]] double deadzoneOutput(double const &Du) const;
-  [[nodiscard]] double invDeadzoneOutputSmooth(double const &desired_Du) const;
-  [[nodiscard]] double invDeadzoneOutput(double const &desired_Du) const;
+  [[nodiscard]] double deadzoneOutput(double const &u, double const &Du) const;
+  [[nodiscard]] double invDeadzoneOutputSmooth(double const &Du) const;
+  [[nodiscard]] double invDeadzoneOutput(double const &u, double const &Du) const;
 
 //  [[nodiscard]] double convertInverted_d_minus_u(double const &current_steering,
 //                                                 double const &current_steering_cmd,
@@ -74,9 +78,9 @@ class ExtremumSeeker
 {
  public:
   ExtremumSeeker() = default;
-  ExtremumSeeker(sExtremumSeekerParams const &es_params);
+  explicit ExtremumSeeker(sExtremumSeekerParams const &es_params);
 
-  void print()
+  void print() const
   {
     ns_utils::print("Extremum seeker is prepared...");
   }
