@@ -231,6 +231,94 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double> 
   //	ns_eigen_utils::printEigenMat(Tsimilarity_mat_.inverse());
 }
 
+ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf2ss &other)
+{
+  if (this != &other)
+  {
+    this->Ts_ = other.Ts_;
+    this->N_ = other.N_;
+
+    this->A_ = other.A_;
+    this->B_ = other.B_;
+    this->C_ = other.C_;
+    this->D_ = other.D_;
+
+    this->Ad_ = other.Ad_;
+    this->Bd_ = other.Bd_;
+    this->Cd_ = other.Cd_;
+    this->Dd_ = other.Dd_;
+
+    this->Tsimilarity_mat_ = other.Tsimilarity_mat_;
+  }
+}
+
+ns_control_toolbox::tf2ss &ns_control_toolbox::tf2ss::operator=(const ns_control_toolbox::tf2ss &other)
+{
+  if (this != &other)
+  {
+    this->Ts_ = other.Ts_;
+    this->N_ = other.N_;
+
+    this->A_ = other.A_;
+    this->B_ = other.B_;
+    this->C_ = other.C_;
+    this->D_ = other.D_;
+
+    this->Ad_ = other.Ad_;
+    this->Bd_ = other.Bd_;
+    this->Cd_ = other.Cd_;
+    this->Dd_ = other.Dd_;
+
+    this->Tsimilarity_mat_ = other.Tsimilarity_mat_;
+  }
+  return *this;
+}
+
+ns_control_toolbox::tf2ss::tf2ss(ns_control_toolbox::tf2ss &&other) noexcept
+{
+  if (this != &other)
+  {
+    this->Ts_ = other.Ts_;
+    this->N_ = other.N_;
+
+    this->A_ = std::move(other.A_);
+    this->B_ = std::move(other.B_);
+    this->C_ = std::move(other.C_);
+    this->D_ = std::move(other.D_);
+
+    this->Ad_ = std::move(other.Ad_);
+    this->Bd_ = std::move(other.Bd_);
+    this->Cd_ = std::move(other.Cd_);
+    this->Dd_ = std::move(other.Dd_);
+
+    this->Tsimilarity_mat_ = std::move(other.Tsimilarity_mat_);
+  }
+}
+
+ns_control_toolbox::tf2ss &ns_control_toolbox::tf2ss::operator=(ns_control_toolbox::tf2ss &&other)
+noexcept
+{
+  if (this != &other)
+  {
+    this->Ts_ = other.Ts_;
+    this->N_ = other.N_;
+
+    this->A_ = std::move(other.A_);
+    this->B_ = std::move(other.B_);
+    this->C_ = std::move(other.C_);
+    this->D_ = std::move(other.D_);
+
+    this->Ad_ = std::move(other.Ad_);
+    this->Bd_ = std::move(other.Bd_);
+    this->Cd_ = std::move(other.Cd_);
+    this->Dd_ = std::move(other.Dd_);
+
+    this->Tsimilarity_mat_ = std::move(other.Tsimilarity_mat_);
+  }
+
+  return *this;
+}
+
 void ns_control_toolbox::tf2ss::print() const
 {
   ns_utils::print("A : ");
@@ -338,3 +426,4 @@ double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd &x0, const dou
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::T() const
 { return Tsimilarity_mat_; }
+

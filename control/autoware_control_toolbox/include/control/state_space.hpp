@@ -45,6 +45,15 @@ class tf2ss
 
   tf2ss(std::vector<double> const &num, std::vector<double> const &den, const double &Ts = 0.1);
 
+  // Copy constructor
+  tf2ss(tf2ss const &other);
+  tf2ss &operator=(const tf2ss &other);
+
+  tf2ss(tf2ss &&other) noexcept;
+  tf2ss &operator=(tf2ss &&other) noexcept;
+
+  ~tf2ss() = default;
+
   // Public methods
   // Currently only Tustin - Bilinear discretization is implemented.
   void discretisize(double const &Ts);
