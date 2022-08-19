@@ -84,5 +84,8 @@ int main()
   auto sys_ss4 = sys_ss2;
   sys_ss4.print_discrete_system();
 
+  ns_utils::print("Testing print", 1, 2, 3);
+  ns_utils::print("Testing print", 5, 2, 3);
+
   return 0;
 }

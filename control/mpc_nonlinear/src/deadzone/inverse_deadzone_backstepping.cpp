@@ -124,15 +124,12 @@ ExtremumSeeker::ExtremumSeeker(sExtremumSeekerParams const &es_params)
   hpf_tf_ = ns_control_toolbox::tf({1., 0.,}, {tau_wh, 1.});
 
   // create the discrete state space systems.
-  lpf_ss_ = ns_control_toolbox::tf2ss(lpf_tf_, dt_);
-  hpf_ss_ = ns_control_toolbox::tf2ss(hpf_tf_, dt_);
+//  lpf_ss_ = ns_control_toolbox::tf2ss(lpf_tf_, dt_);
+//  hpf_ss_ = ns_control_toolbox::tf2ss(hpf_tf_, dt_);
 
   // Initialize the filter states.
   xl0_ = Eigen::MatrixXd::Zero(lpf_tf_.order(), 1);
   xh0_ = Eigen::MatrixXd::Zero(hpf_tf_.order(), 1);
-
-  xl0_.setZero();
-  xh0_.setZero();
 
 }
 double ExtremumSeeker::getTheta(double const &error)
