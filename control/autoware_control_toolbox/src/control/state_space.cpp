@@ -368,6 +368,7 @@ ns_control_toolbox::scalarFilters_ss::scalarFilters_ss(const ns_control_toolbox:
   {
     auto a0 = num[0];
     auto a1 = num[1];
+
     auto b0 = den[0];
     auto b1 = den[1];
 
@@ -376,14 +377,15 @@ ns_control_toolbox::scalarFilters_ss::scalarFilters_ss(const ns_control_toolbox:
     b_ = 1 / b0;
 
     c_ = a1 - a0 * b1 / b0;
-    d_ = -1. / b0;
+    d_ = a0 / b0;
   }
 
-  auto inv_a = 1. - a_ * Ts / 2;
+  auto inv_a = 1. / (1. - a_ * Ts / 2);
+
   ad_ = inv_a * (1. + a_ * Ts / 2.);
   bd_ = inv_a * b_ * Ts;
   cd_ = c_ * inv_a;
-  dd_ = d_ + d_ * bd_ / 2.;
+  dd_ = d_ + c_ * bd_ / 2.;
 
 }
 double ns_control_toolbox::scalarFilters_ss::simulateOneStep(const double &u)

@@ -140,18 +140,18 @@ double ExtremumSeeker::getTheta(double const &error)
 
   ns_utils::print("High-pass filtered : ", error_sqr_filt);
 
-//  // Compute the dither signal.
-//  auto const &dither_sig = ay_ * sin(wd_ * cum_dt_);
-//
-//  // Low-pass filter the dither signal
-//  auto const &xi = lpf_ss_.simulateOneStep(xl0_, dither_sig * error_sqr_filt);
-//
-//  // Integrate the filtered signal
-//  theta_hat_ += K_ * xi * dt_;
-//
-//  // excite theta_hat_;
-//  auto const &theta = theta_hat_ + ay_ * sin(wd_ * cum_dt_);
+  // Compute the dither signal.
+  auto const &dither_sig = ay_ * sin(wd_ * cum_dt_);
 
-  return 0.;
+  // Low-pass filter the dither signal
+  auto const &xi = lpf_ss_.simulateOneStep(dither_sig * error_sqr_filt);
+
+  // Integrate the filtered signal
+  theta_hat_ += K_ * xi * dt_;
+
+  // excite theta_hat_;
+  auto const &theta = theta_hat_ + ay_ * sin(wd_ * cum_dt_);
+
+  return theta;
 }
 } // namespace ns_deadzone

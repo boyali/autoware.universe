@@ -553,18 +553,17 @@ void NonlinearMPCNode::onTimer()
 
   if (params_node_.use_extremum_seeker)
   {
-//    auto const &ey = x0_predicted_(ns_utils::toUType(VehicleStateIds::ey)); // lateral error
-//    auto const &eyaw = x0_predicted_(ns_utils::toUType(VehicleStateIds::eyaw)); // heading error
-//
-//    auto const &predicted_steering = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
-//    auto const &e_steering = predicted_steering - current_steering; // steering error
-//
-//    auto const &error_es = std::hypot(ey, eyaw, e_steering);
-//    auto const &theta = extremum_seeker_.getTheta(error_es);
-//    nmpc_performance_vars_.es_theta = theta;
+    auto const &ey = x0_predicted_(ns_utils::toUType(VehicleStateIds::ey)); // lateral error
+    auto const &eyaw = x0_predicted_(ns_utils::toUType(VehicleStateIds::eyaw)); // heading error
+
+    auto const &predicted_steering = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
+    auto const &e_steering = predicted_steering - current_steering; // steering error
+
+    auto const &error_es = std::hypot(ey, eyaw, e_steering);
+    auto const &theta = extremum_seeker_.getTheta(error_es);
+    nmpc_performance_vars_.es_theta = theta;
 
     extremum_seeker_.print();
-
     //ns_utils::print("In ...", theta);
   }
 
