@@ -21,6 +21,7 @@
 #include <cmath>
 #include "utils_act/act_utils.hpp"
 #include "autoware_control_toolbox.hpp"
+#include "eigen3/Eigen/Core"
 
 namespace ns_deadzone
 {
@@ -75,6 +76,7 @@ struct sDeadZone
 class ExtremumSeeker
 {
  public:
+
   ExtremumSeeker() = default;
   explicit ExtremumSeeker(sExtremumSeekerParams const &es_params);
 
@@ -94,6 +96,7 @@ class ExtremumSeeker
     lpf_ss_.print();
   }
 
+  // Methods
   double getTheta(double const &error);
 
  private:
@@ -106,19 +109,14 @@ class ExtremumSeeker
 
   // cumulative time.
   double cum_dt_{};
-
-  // Filters
-  ns_control_toolbox::tf lpf_tf_{}; // low-pass filter
-  ns_control_toolbox::tf hpf_tf_{}; // high-pass filter
-
-  ns_control_toolbox::tf2ss lpf_ss_{}; // low-pass filter
-  ns_control_toolbox::tf2ss hpf_ss_{}; // high-pass filter
-
-  // Filter states
-  Eigen::MatrixXd xh0_{Eigen::MatrixXd::Zero(1, 1)}; // high-pass filter internal state
-  Eigen::MatrixXd xl0_{Eigen::MatrixXd::Zero(1, 1)}; // low-pass filter internal state
-
   double theta_hat_{}; // integrated dither signal.
+
+  ns_control_toolbox::tf lpf_tf_; // low-pass filter
+  ns_control_toolbox::tf hpf_tf_; // high-pass filter
+
+  ns_control_toolbox::scalarFilters_ss lpf_ss_; // low-pass filter
+  ns_control_toolbox::scalarFilters_ss hpf_ss_; // high-pass filter
+
 
 };
 

@@ -124,14 +124,11 @@ ExtremumSeeker::ExtremumSeeker(sExtremumSeekerParams const &es_params)
   hpf_tf_ = ns_control_toolbox::tf({1., 0.,}, {tau_wh, 1.});
 
   // create the discrete state space systems.
-//  lpf_ss_ = ns_control_toolbox::tf2ss(lpf_tf_, dt_);
-//  hpf_ss_ = ns_control_toolbox::tf2ss(hpf_tf_, dt_);
-
-  // Initialize the filter states.
-  xl0_ = Eigen::MatrixXd::Zero(lpf_tf_.order(), 1);
-  xh0_ = Eigen::MatrixXd::Zero(hpf_tf_.order(), 1);
+  lpf_ss_ = ns_control_toolbox::scalarFilters_ss(lpf_tf_, dt_);
+  hpf_ss_ = ns_control_toolbox::scalarFilters_ss(hpf_tf_, dt_);
 
 }
+
 double ExtremumSeeker::getTheta(double const &error)
 {
   cum_dt_ += dt_; // for simulating time-varying sinusoidal perturbation.
@@ -139,7 +136,7 @@ double ExtremumSeeker::getTheta(double const &error)
   ns_utils::print("In extremum seeker - current time : ", cum_dt_);
 
   // High-pass filter the error sqr, to remove trends.
-  auto const &error_sqr_filt = hpf_ss_.simulateOneStep(xh0_, error);
+  auto const &error_sqr_filt = hpf_ss_.simulateOneStep(error);
 
   ns_utils::print("High-pass filtered : ", error_sqr_filt);
 

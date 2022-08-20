@@ -38,21 +38,14 @@ namespace ns_control_toolbox
 class tf2ss
 {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   // Constructors
   tf2ss() = default;
 
   explicit tf2ss(tf const &sys_tf, const double &Ts = 0.1);
 
   tf2ss(std::vector<double> const &num, std::vector<double> const &den, const double &Ts = 0.1);
-
-  // Copy constructor
-  tf2ss(tf2ss const &other);
-  tf2ss &operator=(const tf2ss &other);
-
-  tf2ss(tf2ss &&other) noexcept;
-  tf2ss &operator=(tf2ss &&other) noexcept;
-
-  ~tf2ss() = default;
 
   // Public methods
   // Currently only Tustin - Bilinear discretization is implemented.
@@ -126,6 +119,26 @@ class tf2ss
   Eigen::MatrixXd Bd_{Eigen::MatrixXd::Zero(1, 1)};
   Eigen::MatrixXd Cd_{Eigen::MatrixXd::Zero(1, 1)};
   Eigen::MatrixXd Dd_{Eigen::MatrixXd::Zero(1, 1)};
+};
+
+class scalarFilters_ss
+{
+ public:
+  scalarFilters_ss() = default;
+  scalarFilters_ss(tf const &sys_tf, const double &Ts);
+
+  double simulateOneStep(double const &u);
+  void print() const;
+
+ private:
+  double ad_{};
+  double bd_{};
+  double cd_{};
+  double dd_{};
+
+  // internal state
+  double x0_{};
+
 };
 
 // Type definitions.

@@ -225,7 +225,7 @@ class NonlinearMPCNode : public rclcpp::Node
   /**
    * @brief Finite State Machine for tracking vehicle motion states.
    * */
-  ns_deadzone::sDeadZone deadzone_inverter_{};
+  ns_deadzone::sDeadZone deadzone_inverter_;
   ns_deadzone::ExtremumSeeker extremum_seeker_;
 
   // Pointers to the received messages.
