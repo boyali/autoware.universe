@@ -141,13 +141,11 @@ ExtremumSeeker::ExtremumSeeker(sExtremumSeekerParams const &es_params)
 double ExtremumSeeker::getTheta(double const &error)
 {
   cum_dt_ += dt_; // for simulating time-varying sinusoidal perturbation.
-
   ns_utils::print("In extremum seeker - current time : ", cum_dt_);
 
   // High-pass filter the error sqr, to remove trends.
   auto const &error_sqr_filt = hpf_ss_.simulateOneStep(error);
 
-  ns_utils::print("High-pass filtered : ", error_sqr_filt);
 
   // Compute the dither signal.
   auto const &dither_sig = ay_ * sin(wd_ * cum_dt_);

@@ -556,20 +556,25 @@ void NonlinearMPCNode::onTimer()
     auto const &ey = x0_predicted_(ns_utils::toUType(VehicleStateIds::ey)); // lateral error
     auto const &eyaw = x0_predicted_(ns_utils::toUType(VehicleStateIds::eyaw)); // heading error
 
-    auto const &predicted_steering = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
-    auto const &e_steering = predicted_steering - current_steering; // steering error
+    // auto const &predicted_steering = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
+    auto const &e_steering = u0_kalman_(1) - current_steering; // steering error
 
-    auto const &error_es = std::hypot(ey, eyaw, e_steering);
-    //    auto const &error_es = std::hypot(e_steering, e_steering);
+    // auto const &error_es = std::hypot(ey, eyaw, e_steering);
+    auto const &error_es = std::hypot(e_steering, e_steering);
+    ns_utils::print("Current ES error : ", error_es);
+
+
     //    auto const &error_es = std::hypot(eyaw, eyaw);
     //    auto const &error_es = std::hypot(ey, ey);
 
     auto const &theta = extremum_seeker_.getTheta(error_es);
+
     nmpc_performance_vars_.es_theta = theta;
+    nmpc_performance_vars_.es_error = u0_kalman_(1);
 
     deadzone_inverter_.updateCurrentBreakpoints(theta);
 
-    extremum_seeker_.print();
+    // extremum_seeker_.print();
     //ns_utils::print("In ...", theta);
   }
 
@@ -2069,7 +2074,6 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
     control_cmd_kalman_ = *it_first_cmd_to_appy;
 
     // ns_utils::print("First command steering : ", control_cmd_kalman_.lateral.steering_tire_angle);
-
     u0_kalman_(ns_utils::toUType(VehicleControlIds::u_vx)) =
       static_cast<double>(control_cmd_kalman_.longitudinal.acceleration);
 

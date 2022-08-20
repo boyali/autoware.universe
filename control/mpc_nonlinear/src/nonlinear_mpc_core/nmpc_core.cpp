@@ -992,10 +992,10 @@ double ns_nmpc_interface::NonlinearMPCController::getPredictedVxControl()
 
 double ns_nmpc_interface::NonlinearMPCController::getPredictedteeringState()
 {
-  auto const &d0 = data_nmpc_.trajectory_data.X[0](ns_utils::toUType(VehicleStateIds::steering));
+  // auto const &d0 = data_nmpc_.trajectory_data.X[0](ns_utils::toUType(VehicleStateIds::steering));
   auto const &d1 = data_nmpc_.trajectory_data.X[1](ns_utils::toUType(VehicleStateIds::steering));
 
-  return (d0 + d1) / 2;
+  return d1;
 
 }
 
