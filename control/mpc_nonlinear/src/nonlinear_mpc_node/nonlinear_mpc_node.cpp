@@ -563,6 +563,8 @@ void NonlinearMPCNode::onTimer()
     auto const &theta = extremum_seeker_.getTheta(error_es);
     nmpc_performance_vars_.es_theta = theta;
 
+    deadzone_inverter_.updateCurrentBreakpoints(theta);
+
     extremum_seeker_.print();
     //ns_utils::print("In ...", theta);
   }
@@ -944,7 +946,8 @@ void NonlinearMPCNode::loadDeadzoneParameters()
 
   auto const &ml = declare_parameter<double>("deadzone_params.ml");
   auto const &bl = declare_parameter<double>("deadzone_params.bl");
-  deadzone_inverter_ = ns_deadzone::sDeadZone(mr, br, ml, bl);
+  auto const &bmax = declare_parameter<double>("deadzone_params.bmax");
+  deadzone_inverter_ = ns_deadzone::sDeadZone(mr, br, ml, bl, bmax);
 }
 
 void NonlinearMPCNode::loadExtremumSeekerParameters(ns_deadzone::sExtremumSeekerParams &es_params)

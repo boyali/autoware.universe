@@ -19,8 +19,9 @@
 namespace ns_deadzone
 {
 
-sDeadZone::sDeadZone(const double &mr, const double &br, const double &ml, const double &bl)
-  : mr_{mr}, mrbr_{mr * br}, ml_{ml}, mlbl_{-ml * bl}
+sDeadZone::sDeadZone(const double &mr, const double &br, const double &ml,
+                     const double &bl, double const &bmax)
+  : mr_{mr}, mrbr_{mr * br}, ml_{ml}, mlbl_{-ml * bl}, bmax_{bmax}
 {
 
 }
@@ -78,6 +79,14 @@ double sDeadZone::invDeadzoneOutput(double const &u, const double &desired_Du) c
   auto const &indicator_neg = desired_Du <= 0. ? 1. : 0.;
   auto const &u_dz = (u - br) * indicator_pos + (u - bl) * indicator_neg;
   return u_dz;
+}
+void sDeadZone::updateCurrentBreakpoints(const double &bs)
+{
+  auto bsaturated = ns_utils::clamp(bs, 0., bmax_);
+
+  mrbr_ = mr_ * bsaturated;
+  mlbl_ = -ml_ * bsaturated;
+
 }
 
 /**

@@ -516,7 +516,7 @@ constexpr void print(T const &msg)
 template<typename T0, typename T1>
 constexpr void print(T0 const &msg0, T1 const &msg1)
 {
-  std::cout << msg0 << "  " << msg1 << std::endl;
+  std::cout << "\n" << msg0 << "  " << msg1 << std::endl;
 }
 
 template<class T0, class ... Args>

@@ -48,7 +48,7 @@ struct sDeadZone
   sDeadZone(double const &mr, /*right slope*/
             double const &br,  /*right threshold*/
             double const &ml,
-            double const &bl);
+            double const &bl, double const &bmax);
 
   // Members
   double mr_{1.};
@@ -56,6 +56,8 @@ struct sDeadZone
 
   double ml_{1.};
   double mlbl_{0.};
+
+  double bmax_{0.15};
 
   double e0_{1e-2}; // param for sigmoid like indicator function for the inverse.
 
@@ -70,6 +72,8 @@ struct sDeadZone
 //  [[nodiscard]] double convertInverted_d_minus_u(double const &current_steering,
 //                                                 double const &current_steering_cmd,
 //                                                 double const &invDu) const;
+
+  void updateCurrentBreakpoints(const double &bs);
 
 };
 
