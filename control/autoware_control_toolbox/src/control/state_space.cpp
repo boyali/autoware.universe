@@ -341,12 +341,49 @@ Eigen::MatrixXd ns_control_toolbox::tf2ss::T() const
 
 ns_control_toolbox::scalarFilters_ss::scalarFilters_ss(const ns_control_toolbox::tf &sys_tf, const double &Ts)
 {
-  auto ss_temp = tf2ss(sys_tf, Ts);
 
-  ad_ = ss_temp.Ad()(0);
-  bd_ = ss_temp.Bd()(0);
-  cd_ = ss_temp.Cd()(0);
-  dd_ = ss_temp.Dd()(0);
+  // Low-pass filter case
+  auto num = sys_tf.num();
+  auto den = sys_tf.den();
+
+  double a_{};
+  double b_{};
+  double c_{};
+  double d_{};
+
+  if (num.size() == 1) // low-pass filter
+  {
+    auto a0 = num[0];
+    auto b0 = den[0];
+    auto b1 = den[1];
+
+    // state space
+    a_ = -b1 / b0;
+    b_ = 1 / b0;
+    c_ = a0;
+    d_ = 0.;
+  }
+
+  if (num.size() == 2) // high-pass filter
+  {
+    auto a0 = num[0];
+    auto a1 = num[1];
+    auto b0 = den[0];
+    auto b1 = den[1];
+
+    // state space
+    a_ = -b1 / b0;
+    b_ = 1 / b0;
+
+    c_ = a1 - a0 * b1 / b0;
+    d_ = -1. / b0;
+  }
+
+  auto inv_a = 1. - a_ * Ts / 2;
+  ad_ = inv_a * (1. + a_ * Ts / 2.);
+  bd_ = inv_a * b_ * Ts;
+  cd_ = c_ * inv_a;
+  dd_ = d_ + d_ * bd_ / 2.;
 
 }
 double ns_control_toolbox::scalarFilters_ss::simulateOneStep(const double &u)
@@ -363,3 +400,4 @@ void ns_control_toolbox::scalarFilters_ss::print() const
   ns_utils::print("Ad, Bd, Cd, Dd : ", ad_, bd_, cd_, dd_);
 
 }
+

@@ -97,7 +97,6 @@ class tf2ss
   Eigen::Index N_{};  // system size (A.rows+1).
 
   // Data members
-
   // system matrices  in a single matrix form of [A, B;C, D]
   /**
    *	A_ = ss_system.topLeftCorner(nx, nx);
@@ -128,6 +127,7 @@ class scalarFilters_ss
   scalarFilters_ss(tf const &sys_tf, const double &Ts);
 
   double simulateOneStep(double const &u);
+
   void print() const;
 
  private:

@@ -111,11 +111,11 @@ class ExtremumSeeker
   double cum_dt_{};
   double theta_hat_{}; // integrated dither signal.
 
-  ns_control_toolbox::tf lpf_tf_; // low-pass filter
-  ns_control_toolbox::tf hpf_tf_; // high-pass filter
+  ns_control_toolbox::tf lpf_tf_{}; // low-pass filter
+  ns_control_toolbox::tf hpf_tf_{}; // high-pass filter
 
-  ns_control_toolbox::scalarFilters_ss lpf_ss_; // low-pass filter
-  ns_control_toolbox::scalarFilters_ss hpf_ss_; // high-pass filter
+  ns_control_toolbox::scalarFilters_ss lpf_ss_{}; // low-pass filter
+  ns_control_toolbox::scalarFilters_ss hpf_ss_{}; // high-pass filter
 
 
 };
