@@ -152,6 +152,12 @@ double ExtremumSeeker::getTheta(double const &error)
   // Compute the dither signal.
   auto const &dither_sig = ay_ * sin(wd_ * cum_dt_);
 
+  auto fmod_remainder = std::fmod(wd_ * cum_dt_, 2. * M_PI);
+  if (wd_ * cum_dt_ - 20 * M_PI > 0. && fmod_remainder <= 1e-2)
+  {
+    cum_dt_ = 0.;
+  }
+
   // Low-pass filter the dither signal
   auto const &xi = lpf_ss_.simulateOneStep(dither_sig * error_sqr_filt);
 

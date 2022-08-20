@@ -560,6 +560,10 @@ void NonlinearMPCNode::onTimer()
     auto const &e_steering = predicted_steering - current_steering; // steering error
 
     auto const &error_es = std::hypot(ey, eyaw, e_steering);
+    //    auto const &error_es = std::hypot(e_steering, e_steering);
+    //    auto const &error_es = std::hypot(eyaw, eyaw);
+    //    auto const &error_es = std::hypot(ey, ey);
+
     auto const &theta = extremum_seeker_.getTheta(error_es);
     nmpc_performance_vars_.es_theta = theta;
 
