@@ -551,7 +551,7 @@ void NonlinearMPCNode::onTimer()
    * */
   auto const &current_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
 
-  if (params_node_.use_extremum_seeker)
+  if (params_node_.use_extremum_seeker && (current_fsm_state_ != ns_states::motionStateEnums::isAtCompleteStop))
   {
     auto const &ey = x0_predicted_(ns_utils::toUType(VehicleStateIds::ey)); // lateral error
     auto const &eyaw = x0_predicted_(ns_utils::toUType(VehicleStateIds::eyaw)); // heading error
