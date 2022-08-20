@@ -557,12 +557,12 @@ void NonlinearMPCNode::onTimer()
     auto const &eyaw = x0_predicted_(ns_utils::toUType(VehicleStateIds::eyaw)); // heading error
 
     // auto const &predicted_steering = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
-    auto const &e_steering = u0_kalman_(1) - current_steering; // steering error
+    auto const
+      &e_steering = -params_node_.control_period * (current_steering - u0_kalman_(1)) / params_node_.steering_tau;
+
 
     // auto const &error_es = std::hypot(ey, eyaw, e_steering);
     auto const &error_es = std::hypot(e_steering, e_steering);
-    ns_utils::print("Current ES error : ", error_es);
-
 
     //    auto const &error_es = std::hypot(eyaw, eyaw);
     //    auto const &error_es = std::hypot(ey, ey);
@@ -980,6 +980,8 @@ void NonlinearMPCNode::loadVehicleParameters(ns_models::ParamsVehicle &params_ve
   params_vehicle.steering_tau = declare_parameter<double>("steering_time_constant", 0.27);
   params_vehicle.speed_tau = declare_parameter<double>("speed_time_constant", 0.61);
   params_vehicle.use_delay_model = params_node_.use_delay_sim_model;
+
+  params_node_.steering_tau = params_vehicle.steering_tau;
 }
 
 void NonlinearMPCNode::loadNMPCoreParameters(ns_data::data_nmpc_core_type_t &data_nmpc_core,

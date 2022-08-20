@@ -58,6 +58,7 @@ struct ParamsNMPCNode
 
   // Vehicle parameters to keep in the node
   double lr{};
+  double steering_tau{};
 
   // CDOB DOB parameters.
   bool use_cdob{false};
