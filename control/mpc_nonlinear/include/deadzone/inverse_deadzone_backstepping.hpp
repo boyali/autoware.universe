@@ -66,7 +66,7 @@ struct sDeadZone
   [[nodiscard]] double get_bl() const;
 
   [[nodiscard]] double deadzoneOutput(double const &u, double const &Du) const;
-  [[nodiscard]] double invDeadzoneOutputSmooth(double const &Du) const;
+  [[nodiscard]] double invDeadzoneOutputSmooth(double const &u, const double &desired_Du) const;
   [[nodiscard]] double invDeadzoneOutput(double const &u, double const &Du) const;
 
 //  [[nodiscard]] double convertInverted_d_minus_u(double const &current_steering,
@@ -102,6 +102,10 @@ class ExtremumSeeker
 
   // Methods
   double getTheta(double const &error);
+  [[nodiscard]] double getMeanError() const
+  {
+    return mean_error_;
+  }
 
  private:
   double K_{1.}; // Gain
@@ -114,6 +118,7 @@ class ExtremumSeeker
   // cumulative time.
   double cum_dt_{};
   double theta_hat_{}; // integrated dither signal.
+  double mean_error_{};
 
   ns_control_toolbox::tf lpf_tf_{}; // low-pass filter
   ns_control_toolbox::tf hpf_tf_{}; // high-pass filter

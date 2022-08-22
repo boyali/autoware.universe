@@ -551,15 +551,18 @@ void NonlinearMPCNode::onTimer()
    * */
   auto const &current_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
 
-  if (params_node_.use_extremum_seeker && (current_fsm_state_ != ns_states::motionStateEnums::isAtCompleteStop))
+  if (params_node_.use_extremum_seeker &&
+      (current_fsm_state_ == ns_states::motionStateEnums::isMoving ||
+       current_fsm_state_ != ns_states::motionStateEnums::isStoppedWillMove))
   {
-    auto const &ey = x0_predicted_(ns_utils::toUType(VehicleStateIds::ey)); // lateral error
-    auto const &eyaw = x0_predicted_(ns_utils::toUType(VehicleStateIds::eyaw)); // heading error
+    // auto const &ey = x0_predicted_(ns_utils::toUType(VehicleStateIds::ey)); // lateral error
+    // auto const &eyaw = x0_predicted_(ns_utils::toUType(VehicleStateIds::eyaw)); // heading error
 
     // auto const &predicted_steering = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
     auto const
       &e_steering = -params_node_.control_period * (current_steering - u0_kalman_(1)) / params_node_.steering_tau;
 
+    // auto const &e_steering = x0_predicted_(7) - current_steering;
 
     // auto const &error_es = std::hypot(ey, eyaw, e_steering);
     auto const &error_es = std::hypot(e_steering, e_steering);
@@ -570,12 +573,10 @@ void NonlinearMPCNode::onTimer()
     auto const &theta = extremum_seeker_.getTheta(error_es);
 
     nmpc_performance_vars_.es_theta = theta;
-    nmpc_performance_vars_.es_error = u0_kalman_(1);
+    nmpc_performance_vars_.es_error = extremum_seeker_.getMeanError();
 
     deadzone_inverter_.updateCurrentBreakpoints(theta);
 
-    // extremum_seeker_.print();
-    //ns_utils::print("In ...", theta);
   }
 
   /**
@@ -586,7 +587,8 @@ void NonlinearMPCNode::onTimer()
 
     auto const &steering_deviation = current_steering - u_solution_(1);
 
-    auto const &u_steer_dz_inv = deadzone_inverter_.invDeadzoneOutput(u_solution_(1), steering_deviation);
+    // auto const &u_steer_dz_inv = deadzone_inverter_.invDeadzoneOutput(u_solution_(1), steering_deviation);
+    auto const &u_steer_dz_inv = deadzone_inverter_.invDeadzoneOutputSmooth(u_solution_(1), steering_deviation);
     u_solution_(1) = u_steer_dz_inv;
   }
 

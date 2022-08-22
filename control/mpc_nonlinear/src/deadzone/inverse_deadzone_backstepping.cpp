@@ -56,17 +56,18 @@ double sDeadZone::deadzoneOutput(const double &u, const double &Du) const
  * @param desired_Du = steering - steering_control = δ - u
  * */
 
-double sDeadZone::invDeadzoneOutputSmooth(const double &desired_Du) const
+double sDeadZone::invDeadzoneOutputSmooth(double const &u, const double &desired_Du) const
 {
-  auto const &u = desired_Du;
-  auto x = u / e0_;
+
+  auto x = desired_Du / e0_;
 
   auto const &phi_r = exp(x) / (exp(x) + exp(-x));
   auto const &phi_l = exp(-x) / (exp(x) + exp(-x));
 
-  auto const &dz_inv = phi_r * (u + mrbr_) / mr_ + phi_l * (u + mlbl_) / ml_;
+  // auto const &dz_inv = phi_r * (u - mrbr_) / mr_ + phi_l * (u - mlbl_) / ml_;
+  auto const &udz_inv = phi_r * (u - mrbr_) / mr_ + phi_l * (u - mlbl_) / ml_;
 
-  return dz_inv;
+  return udz_inv;
 }
 
 double sDeadZone::invDeadzoneOutput(double const &u, const double &desired_Du) const
@@ -141,23 +142,24 @@ ExtremumSeeker::ExtremumSeeker(sExtremumSeekerParams const &es_params)
 double ExtremumSeeker::getTheta(double const &error)
 {
   cum_dt_ += dt_; // for simulating time-varying sinusoidal perturbation.
-  ns_utils::print("In extremum seeker - current time : ", cum_dt_);
+  // ns_utils::print("In extremum seeker - current time : ", cum_dt_);
 
   // High-pass filter the error sqr, to remove trends.
   auto const &error_sqr_filt = hpf_ss_.simulateOneStep(error);
 
+  mean_error_ = (mean_error_ * cum_dt_ + error_sqr_filt) / cum_dt_;
 
   // Compute the dither signal.
   auto const &dither_sig = ay_ * sin(wd_ * cum_dt_);
 
-  auto fmod_remainder = std::fmod(wd_ * cum_dt_, 2. * M_PI);
-  if (wd_ * cum_dt_ - 20 * M_PI > 0. && fmod_remainder <= 1e-2)
-  {
-    cum_dt_ = 0.;
-  }
+  //  auto fmod_remainder = std::fmod(wd_ * cum_dt_, 2. * M_PI);
+  //  if (wd_ * cum_dt_ - 20 * M_PI > 0. && fmod_remainder <= 1e-2)
+  //  {
+  //    cum_dt_ = 0.;
+  //  }
 
   // Low-pass filter the dither signal
-  auto const &xi = lpf_ss_.simulateOneStep(dither_sig * error_sqr_filt);
+  auto const &xi = lpf_ss_.simulateOneStep(dither_sig * mean_error_);
 
   // Integrate the filtered signal
   theta_hat_ += K_ * xi * dt_;
