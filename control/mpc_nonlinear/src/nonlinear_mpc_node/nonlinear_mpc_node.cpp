@@ -560,7 +560,7 @@ void NonlinearMPCNode::onTimer()
 
     // auto const &predicted_steering = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
     auto const
-      &e_steering = -params_node_.control_period * (current_steering - u0_kalman_(1)) / params_node_.steering_tau;
+      &e_steering = -(current_steering - u0_kalman_(1)) / params_node_.steering_tau;
 
     // auto const &e_steering = x0_predicted_(7) - current_steering;
 
@@ -573,7 +573,7 @@ void NonlinearMPCNode::onTimer()
     auto const &theta = extremum_seeker_.getTheta(error_es);
 
     nmpc_performance_vars_.es_theta = theta;
-    nmpc_performance_vars_.es_error = extremum_seeker_.getMeanError();
+    nmpc_performance_vars_.es_error = error_es; // extremum_seeker_.getMeanError();
 
     deadzone_inverter_.updateCurrentBreakpoints(theta);
 

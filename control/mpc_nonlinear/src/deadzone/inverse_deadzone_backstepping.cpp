@@ -90,34 +90,6 @@ void sDeadZone::updateCurrentBreakpoints(const double &bs)
 
 }
 
-/**
- * @brief computes u from delta_u = δ - u. --> u =  δ - delta_u
- * invDu is the desired deadzone output computed by the inverted deadzone function.
- * */
-//double sDeadZone::convertInverted_d_minus_u(double const &current_steering,
-//                                            double const &current_steering_cmd,
-//                                            const double &invDu) const
-//{
-//  auto const &br = get_br();
-//  auto const &bl = get_bl();
-//
-//  auto const &Du = current_steering - current_steering_cmd;
-//
-//  if (Du >= br)
-//  {
-//    return current_steering + invDu * mr_ + mrbr_;
-//  }
-//
-//  if (Du <= bl)
-//  {
-//    return current_steering + invDu * ml_ + mlbl_;
-//  }
-//
-//  return current_steering_cmd;
-//
-//  return current_steering;
-//}
-
 ExtremumSeeker::ExtremumSeeker(sExtremumSeekerParams const &es_params)
   : K_{es_params.K},
     ay_{es_params.ay},
@@ -146,8 +118,7 @@ double ExtremumSeeker::getTheta(double const &error)
 
   // High-pass filter the error sqr, to remove trends.
   auto const &error_sqr_filt = hpf_ss_.simulateOneStep(error);
-
-  mean_error_ = (mean_error_ * cum_dt_ + error_sqr_filt) / cum_dt_;
+  // mean_error_ = (mean_error_ * cum_dt_ + error_sqr_filt) / cum_dt_;
 
   // Compute the dither signal.
   auto const &dither_sig = ay_ * sin(wd_ * cum_dt_);
@@ -159,7 +130,8 @@ double ExtremumSeeker::getTheta(double const &error)
   //  }
 
   // Low-pass filter the dither signal
-  auto const &xi = lpf_ss_.simulateOneStep(dither_sig * mean_error_);
+  // auto const &xi = lpf_ss_.simulateOneStep(dither_sig * std::sqrt(mean_error_));
+  auto const &xi = lpf_ss_.simulateOneStep(dither_sig * error_sqr_filt);
 
   // Integrate the filtered signal
   theta_hat_ += K_ * xi * dt_;
