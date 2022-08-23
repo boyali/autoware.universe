@@ -147,7 +147,7 @@ class NonlinearMPCController
 
   double getPredictedVxControl();
 
-  double getPredictedteeringState();
+  double getPredictedSteeringState();
 
   /**
    * @brief apply state constraints to the given index.

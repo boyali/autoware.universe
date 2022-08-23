@@ -550,6 +550,10 @@ void NonlinearMPCNode::onTimer()
    * @brief Extremum-seeker optimal deadzone threshold finder.
    * */
   auto const &current_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
+  auto const
+    &e_steering = -(current_steering - u0_kalman_(1)) / params_node_.steering_tau;
+
+  nmpc_performance_vars_.es_error = std::fabs(e_steering); // extremum_seeker_.getMeanError();
 
   if (params_node_.use_extremum_seeker &&
       (current_fsm_state_ == ns_states::motionStateEnums::isMoving ||
@@ -557,11 +561,7 @@ void NonlinearMPCNode::onTimer()
   {
     // auto const &ey = x0_predicted_(ns_utils::toUType(VehicleStateIds::ey)); // lateral error
     // auto const &eyaw = x0_predicted_(ns_utils::toUType(VehicleStateIds::eyaw)); // heading error
-
-    // auto const &predicted_steering = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
-    auto const
-      &e_steering = -(current_steering - u0_kalman_(1)) / params_node_.steering_tau;
-
+    // auto const &predicted_steering = nonlinear_mpc_controller_ptr_->getPredictedSteeringState();
     // auto const &e_steering = x0_predicted_(7) - current_steering;
 
     // auto const &error_es = std::hypot(ey, eyaw, e_steering);
@@ -573,7 +573,6 @@ void NonlinearMPCNode::onTimer()
     auto const &theta = extremum_seeker_.getTheta(error_es);
 
     nmpc_performance_vars_.es_theta = theta;
-    nmpc_performance_vars_.es_error = error_es; // extremum_seeker_.getMeanError();
 
     deadzone_inverter_.updateCurrentBreakpoints(theta);
 
@@ -585,11 +584,14 @@ void NonlinearMPCNode::onTimer()
   if (params_node_.use_deadzone_inverse)
   {
 
-    auto const &steering_deviation = current_steering - u_solution_(1);
+    auto const &steering_deviation = current_steering - u0_kalman_(1);
+
 
     // auto const &u_steer_dz_inv = deadzone_inverter_.invDeadzoneOutput(u_solution_(1), steering_deviation);
-    auto const &u_steer_dz_inv = deadzone_inverter_.invDeadzoneOutputSmooth(u_solution_(1), steering_deviation);
+
+    auto const &u_steer_dz_inv = deadzone_inverter_.invDeadzoneOutput(u_solution_(1), steering_deviation);
     u_solution_(1) = u_steer_dz_inv;
+
   }
 
   auto const
@@ -828,7 +830,7 @@ void NonlinearMPCNode::publishPerformanceVariables(ControlCmdMsg const &control_
 
   // Predicted next steering angle.
   nmpc_performance_vars_.mpc_steering_input_original = u_solution_(1);
-  nmpc_performance_vars_.mpc_steering_reference = nonlinear_mpc_controller_ptr_->getPredictedteeringState();
+  nmpc_performance_vars_.mpc_steering_reference = nonlinear_mpc_controller_ptr_->getPredictedSteeringState();
 
   pub_nmpc_performance_->publish(nmpc_performance_vars_);
 

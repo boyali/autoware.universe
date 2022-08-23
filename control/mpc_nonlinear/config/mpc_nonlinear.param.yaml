@@ -103,13 +103,13 @@
 
     deadzone_params:
       use_deadzone_inv: true
-      bmax: 0.05
+      bmax: 0.06
       mr: 1.
       br: 0.05
       ml: 1.
       bl: 0.05
 
-      use_extremum_seeker: true
+      use_extremum_seeker: false
       K_ex: 5. # Gain
       ay: 0.01 # dithering sinusoidal amplitude.
       freq_low_ex: 5. #low-pass filter cut-off frequency in Hertz
