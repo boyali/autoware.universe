@@ -550,8 +550,7 @@ void NonlinearMPCNode::onTimer()
    * @brief Extremum-seeker optimal deadzone threshold finder.
    * */
   auto const &current_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
-  auto const
-    &e_steering = -(current_steering - u0_kalman_(1)) / params_node_.steering_tau;
+  auto const &e_steering = -(current_steering - u0_kalman_(1)) / params_node_.steering_tau;
 
   nmpc_performance_vars_.es_error = std::fabs(e_steering); // extremum_seeker_.getMeanError();
 
@@ -584,7 +583,7 @@ void NonlinearMPCNode::onTimer()
   if (params_node_.use_deadzone_inverse)
   {
 
-    auto const &steering_deviation = current_steering - u0_kalman_(1);
+    auto const &steering_deviation = current_steering - u_solution_(1);
 
 
     // auto const &u_steer_dz_inv = deadzone_inverter_.invDeadzoneOutput(u_solution_(1), steering_deviation);

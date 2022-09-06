@@ -76,8 +76,19 @@ double sDeadZone::invDeadzoneOutput(double const &u, const double &desired_Du) c
   auto const &br = get_br();
   auto const &bl = get_bl();
 
-  auto const &indicator_pos = desired_Du >= 0. ? 1. : 0.;
-  auto const &indicator_neg = desired_Du <= 0. ? 1. : 0.;
+//  double delta = u + desired_Du;
+//  double w_dz{};
+//  if (desired_Du >= 0)
+//  {
+//    w_dz = desired_Du - br;
+//  }
+//  if (desired_Du < 0)
+//  {
+//    w_dz = desired_Du - bl;
+//  }
+
+  auto const &indicator_pos = desired_Du >= 0 ? 1. : 0.;
+  auto const &indicator_neg = desired_Du < 0 ? 1. : 0.;
   auto const &u_dz = (u - br) * indicator_pos + (u - bl) * indicator_neg;
   return u_dz;
 }

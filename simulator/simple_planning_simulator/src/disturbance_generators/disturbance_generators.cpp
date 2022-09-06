@@ -189,7 +189,8 @@ double OutputDisturbance_SlopeVariation::getDisturbedOutput()
   return current_slope_disturbance_;
 }
 
-InputDisturbance_DeadZone::InputDisturbance_DeadZone(const double &m_lr_variance, const double &b_lr_mean,
+InputDisturbance_DeadZone::InputDisturbance_DeadZone(const double &m_lr_variance,
+                                                     const double &b_lr_mean,
                                                      const double &b_lr_variance_in_percent, /*in percentage*/
                                                      const double &sin_mag, const bool &use_time_varying_deadzone)
   : b_mean_th_{b_lr_mean}, a_sin_mag_{sin_mag}, use_time_varying_deadzone_{use_time_varying_deadzone}
@@ -301,13 +302,13 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double &delta_u)
   { // omit sinusoidal part.
     if (delta_u >= current_br_threshold_)
     {
-      // delta_v = current_mr_slope_ * (delta_u - current_br_threshold_);
-      delta_v = current_mr_slope_ * delta_u;
+      delta_v = delta_u - current_br_threshold_;
+      //delta_v = current_mr_slope_ * delta_u;
 
     } else if (delta_u <= current_bl_threshold_)
     {
-      // delta_v = current_ml_slope_ * (delta_u - current_bl_threshold_);
-      delta_v = current_ml_slope_ * delta_u;
+      delta_v = delta_u - current_bl_threshold_;
+      //delta_v = current_ml_slope_ * delta_u;
 
     } else
     {
