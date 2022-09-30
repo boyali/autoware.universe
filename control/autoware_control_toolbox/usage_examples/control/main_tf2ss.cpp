@@ -43,8 +43,7 @@ int main()
   sys_ss2.print();
 
   // Test copy
-  ns_control_toolbox::tf2ss sys_ss3;
-  sys_ss3 = ns_control_toolbox::tf2ss(sys_tf, Ts);
+  ns_control_toolbox::tf2ss sys_ss3(sys_tf, Ts);
   sys_ss3.print_discrete_system();
 
   ns_utils::print("SS.A \n");

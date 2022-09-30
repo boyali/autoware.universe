@@ -34,7 +34,7 @@ TEST_F(FakeNodeFixture, nodeTestTemplate)
     this->create_publisher<SteeringReport>("communication_delay_compensator/input/steering_state");
 
 //  rclcpp::Publisher<ErrorReportMsg>::SharedPtr long_error_pub_ =
-//    this->create_publisher<ErrorReportMsg>("communication_delay_compensator/input/long_errors");
+//  this->create_publisher<ErrorReportMsg>("communication_delay_compensator/input/long_errors");
 
   rclcpp::Publisher<ErrorReportMsg>::SharedPtr lat_error_pub_ =
     this->create_publisher<ErrorReportMsg>("communication_delay_compensator/input/lat_errors");

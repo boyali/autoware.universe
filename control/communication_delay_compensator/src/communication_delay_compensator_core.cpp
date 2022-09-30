@@ -83,7 +83,7 @@ LateralCommunicationDelayCompensator::LateralCommunicationDelayCompensator(
 {
   // Compute the state-space model of QGinv(s)
   // Do not forget to enter the time step dt.
-  ss_qfilter_lat_ = ss_t(tf_qfilter_lat_, dt_);
+  ss_qfilter_lat_ = std::make_unique<ss_t>(tf_qfilter_lat_, dt_);
 
   /**
    * Compute 1-Q transfer function and the ss representation
@@ -94,7 +94,7 @@ LateralCommunicationDelayCompensator::LateralCommunicationDelayCompensator(
   auto den_num = den_fc_ - num_fc_;
 
   tf_one_minus_qfilter_lat_ = tf_t(den_num(), den_fc_());
-  ss_one_min_qfilter_lat_ = ss_t(tf_one_minus_qfilter_lat_, dt_);
+  ss_one_min_qfilter_lat_ = std::make_unique<ss_t>(tf_one_minus_qfilter_lat_, dt_);
 
   /** initialize (1-Q) filter states */
   xey0_ = Eigen::MatrixXd(tf_one_minus_qfilter_lat_.order(), 1);
@@ -127,10 +127,10 @@ void LateralCommunicationDelayCompensator::printQfilterSSs() const
 {
   ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
   ns_utils::print("State-Space Matrices of qfilter of lateral error : \n");
-  ss_qfilter_lat_.print();
+  ss_qfilter_lat_->print();
 
   ns_utils::print("State-Space Matrices of [1_Q] qfilter of lateral error : \n");
-  ss_one_min_qfilter_lat_.print();
+  ss_one_min_qfilter_lat_->print();
 }
 
 void LateralCommunicationDelayCompensator::printLyapMatrices() const
@@ -234,7 +234,7 @@ void LateralCommunicationDelayCompensator::qfilterControlCommand(
 {
   // First give the output, then update the states.
   prev_qfiltered_control_cmd_ = current_qfiltered_control_cmd_;
-  current_qfiltered_control_cmd_ = ss_qfilter_lat_.simulateOneStep(xu0_, current_control_cmd);
+  current_qfiltered_control_cmd_ = ss_qfilter_lat_->simulateOneStep(xu0_, current_control_cmd);
 }
 
 /**
@@ -271,7 +271,7 @@ void LateralCommunicationDelayCompensator::estimateVehicleStates(
     * uf - dfilt = ue^{-sT}
     * We filter this state because in the current_yobs_ C row is zero, we cannot observe it from this output.
     * */
-  df_d0_ = current_qfiltered_control_cmd_ - ss_qfilter_lat_.simulateOneStep(xd0_, dist_state);
+  df_d0_ = current_qfiltered_control_cmd_ - ss_qfilter_lat_->simulateOneStep(xd0_, dist_state);
 
   // Send the qfiltered disturbance input to the vehicle model to get the response.
 
@@ -299,9 +299,9 @@ void LateralCommunicationDelayCompensator::estimateVehicleStatesQ(
    * Compute (1-Q) outputs
    * */
 
-  y_one_minus_Q_(0) = ss_one_min_qfilter_lat_.simulateOneStep(xey0_, current_measurements(0));
-  y_one_minus_Q_(1) = ss_one_min_qfilter_lat_.simulateOneStep(xeyaw0_, current_measurements(1));
-  y_one_minus_Q_(2) = ss_one_min_qfilter_lat_.simulateOneStep(xsteer0_, current_measurements(2));
+  y_one_minus_Q_(0) = ss_one_min_qfilter_lat_->simulateOneStep(xey0_, current_measurements(0));
+  y_one_minus_Q_(1) = ss_one_min_qfilter_lat_->simulateOneStep(xeyaw0_, current_measurements(1));
+  y_one_minus_Q_(2) = ss_one_min_qfilter_lat_->simulateOneStep(xsteer0_, current_measurements(2));
 
 
   // get the current estimated state before updating for the next state.
@@ -336,7 +336,7 @@ LateralDisturbanceCompensator::LateralDisturbanceCompensator(
     qfilter_order_{qfilter_lateral.order()}
 {
   // Compute the state-space model of QGinv(s)
-  ss_qfilter_lat_ = ss_t(tf_qfilter_lat_, dt_);  // Do not forget to enter the time step dt.
+  ss_qfilter_lat_ = std::make_unique<ss_t>(tf_qfilter_lat_, dt_);  // Do not forget to enter the time step dt.
 
   /**
    * Initialize the vectors.
@@ -359,7 +359,7 @@ void LateralDisturbanceCompensator::printQfilterSSs() const
 {
   ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
   ns_utils::print("State-Space Matrices of qfilter of lateral error : \n");
-  ss_qfilter_lat_.print();
+  ss_qfilter_lat_->print();
 }
 
 void LateralDisturbanceCompensator::printLyapMatrices() const
@@ -442,7 +442,7 @@ void LateralDisturbanceCompensator::qfilterControlCommand(
   const float64_t &current_control_cmd)
 {
   // First give the output, then update the states.
-  current_qfiltered_control_cmd_ = ss_qfilter_lat_.simulateOneStep(xu0_, current_control_cmd);
+  current_qfiltered_control_cmd_ = ss_qfilter_lat_->simulateOneStep(xu0_, current_control_cmd);
 }
 
 void LateralDisturbanceCompensator::estimateVehicleStates(
@@ -472,7 +472,7 @@ void LateralDisturbanceCompensator::estimateVehicleStates(
    * the disturbance input estimated for compensation.
   * */
   xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - current_measurements);
-  dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_, xhat0_prev_.eval().bottomRows<1>()(0));
+  dist_input_ = ss_qfilter_lat_->simulateOneStep(xd0_, xhat0_prev_.eval().bottomRows<1>()(0));
 
   /**
    * UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.

@@ -150,12 +150,13 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
 
   // Data Members for the delay-compensation
   // CDOB: Communication Disturbance Observer-based.
-  LateralCommunicationDelayCompensator cdob_lateral;
+  //LateralCommunicationDelayCompensator cdob_lateral;
+  std::unique_ptr<ns_control_toolbox::tf2ss> dummy_ss;
 
   /**
    * @brief observer vehicle model for input disturbance estimation estimation.
    * */
-  LateralDisturbanceCompensator dob_lateral;
+  //LateralDisturbanceCompensator dob_lateral;
 
   /**
    * @brief observer vehicle model for state estimation.

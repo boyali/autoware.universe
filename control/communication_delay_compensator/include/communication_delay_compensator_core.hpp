@@ -93,8 +93,8 @@ class LateralCommunicationDelayCompensator
   tf_t tf_one_minus_qfilter_lat_{};
 
   // state-space models.
-  ss_t ss_qfilter_lat_{};
-  ss_t ss_one_min_qfilter_lat_{};
+  std::unique_ptr<ss_t> ss_qfilter_lat_;
+  std::unique_ptr<ss_t> ss_one_min_qfilter_lat_;
 
   // ------------ QFILTER VARIABLES ----------------------------------
   // state vectors for filtering inputs.
@@ -221,7 +221,7 @@ class LateralDisturbanceCompensator
   tf_t tf_qfilter_lat_;
 
   // state-space models.
-  ss_t ss_qfilter_lat_;
+  std::unique_ptr<ss_t> ss_qfilter_lat_;
 
   // ------------ QFILTER VARIABLES ----------------------------------
   // state vectors for filtering inputs.

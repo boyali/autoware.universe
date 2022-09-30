@@ -26,6 +26,12 @@
 #include <algorithm>
 #include <vector>
 
+#ifdef EIGEN_MAX_STATIC_ALIGN_BYTES
+#undef EIGEN_MAX_STATIC_ALIGN_BYTES
+#endif
+
+#define EIGEN_MAX_STATIC_ALIGN_BYTES 0
+
 namespace ns_control_toolbox
 {
 
@@ -47,7 +53,6 @@ class tf2ss
  public:
 
   // Constructors
-  tf2ss() = default;
   explicit tf2ss(tf const &sys_tf, const double &Ts = 0.1);
   tf2ss(std::vector<double> const &num, std::vector<double> const &den, const double &Ts = 0.1);
 
@@ -101,6 +106,8 @@ class tf2ss
   void print() const;
 
   void print_discrete_system() const;
+
+  ~tf2ss() = default;
 
  private:
   double Ts_{};
