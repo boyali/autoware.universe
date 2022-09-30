@@ -29,6 +29,13 @@
 namespace ns_control_toolbox
 {
 
+// Type definitions.
+template<int nx, int ny>
+using mat_type_t = Eigen::Matrix<double, nx, ny>;
+
+template<int N>
+using state_type_t = Eigen::Matrix<double, N, 1>;
+
 /**
  * @brief tf2ss Converts a transfer function representation in to a state-space form.
  * We assume the system is SISO type.
@@ -37,22 +44,25 @@ namespace ns_control_toolbox
 
 class tf2ss
 {
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+ public:
 
   // Constructors
   tf2ss() = default;
+  explicit tf2ss(tf const &sys_tf, const double &Ts = 0.1);
+  tf2ss(std::vector<double> const &num, std::vector<double> const &den, const double &Ts = 0.1);
 
-  explicit tf2ss(tf const & sys_tf, const double & Ts = 0.1);
+  tf2ss(tf2ss const &other);
+  tf2ss &operator=(tf2ss const &other);
 
-  tf2ss(std::vector<double> const & num, std::vector<double> const & den, const double & Ts = 0.1);
+  tf2ss(tf2ss &&other) noexcept;
+  tf2ss &operator=(tf2ss &&other) noexcept;
 
   // Public methods
   // Currently only Tustin - Bilinear discretization is implemented.
-  void discretisize(double const & Ts);
+  void discretisize(double const &Ts);
 
   // Update state-space once constructed and in case of a parameter change.
-  void updateStateSpace(tf const & sys_tf);
+  void updateStateSpace(tf const &sys_tf);
 
   // Getters for the system matrices.
   // Discrete time state-space matrices.
@@ -81,18 +91,18 @@ public:
    * xy = [A B;C D]xu.
    * */
 
-  double simulateOneStep(Eigen::MatrixXd & x0, double const & u) const;
+  double simulateOneStep(Eigen::MatrixXd &x0, double const &u) const;
 
   /**
    * @brief Compute the system continuous time system matrices
    * */
-  void computeSystemMatrices(std::vector<double> const & num, std::vector<double> const & den);
+  void computeSystemMatrices(std::vector<double> const &num, std::vector<double> const &den);
 
   void print() const;
 
   void print_discrete_system() const;
 
-private:
+ private:
   double Ts_{};
   Eigen::Index N_{};  // system size (A.rows+1).
 
@@ -104,33 +114,36 @@ private:
    *	C_ = ss_system.bottomLeftCorner(1, nx);
    *	D_ = ss_system.bottomRightCorner(1, 1);
    * */
-  Eigen::MatrixXd Tsimilarity_mat_{Eigen::MatrixXd::Identity(1, 1)};  // Similarity mat of A, Aprime = Tinv * A *T.
 
   // Data members
   // Continuous time state-space model
-  Eigen::MatrixXd A_{Eigen::MatrixXd::Identity(1, 1)};
-  Eigen::MatrixXd B_{Eigen::MatrixXd::Zero(1, 1)};
-  Eigen::MatrixXd C_{Eigen::MatrixXd::Zero(1, 1)};
-  Eigen::MatrixXd D_{Eigen::MatrixXd::Zero(1, 1)};
+  Eigen::MatrixXd A_;
+  Eigen::MatrixXd B_;
+  Eigen::MatrixXd C_;
+  Eigen::MatrixXd D_;
 
   // Discrete time state-space model
-  Eigen::MatrixXd Ad_{Eigen::MatrixXd::Zero(1, 1)};
-  Eigen::MatrixXd Bd_{Eigen::MatrixXd::Zero(1, 1)};
-  Eigen::MatrixXd Cd_{Eigen::MatrixXd::Zero(1, 1)};
-  Eigen::MatrixXd Dd_{Eigen::MatrixXd::Zero(1, 1)};
+  Eigen::MatrixXd Ad_;
+  Eigen::MatrixXd Bd_;
+  Eigen::MatrixXd Cd_;
+  Eigen::MatrixXd Dd_;
+
+  // Similarity mat of A, Aprime = Tinv * A *T.
+  Eigen::MatrixXd Tsimilarity_mat_;
+
 };
 
 class scalarFilters_ss
 {
-public:
+ public:
   scalarFilters_ss() = default;
-  scalarFilters_ss(tf const & sys_tf, const double & Ts);
+  scalarFilters_ss(tf const &sys_tf, const double &Ts);
 
-  double simulateOneStep(double const & u);
+  double simulateOneStep(double const &u);
 
   void print() const;
 
-private:
+ private:
   double ad_{};
   double bd_{};
   double cd_{};
@@ -140,13 +153,6 @@ private:
   double x0_{};
 
 };
-
-// Type definitions.
-template<int nx, int ny>
-using mat_type_t = Eigen::Matrix<double, nx, ny>;
-
-template<int N>
-using state_type_t = Eigen::Matrix<double, N, 1>;
 
 }  // namespace ns_control_toolbox
 #endif  // AUTOWARE_CONTROL_TOOLBOX_STATE_SPACE_HPP

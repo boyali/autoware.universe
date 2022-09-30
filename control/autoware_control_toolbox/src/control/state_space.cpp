@@ -342,6 +342,67 @@ double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd &x0, const dou
 Eigen::MatrixXd ns_control_toolbox::tf2ss::T() const
 { return Tsimilarity_mat_; }
 
+ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf2ss &other)
+  : A_{other.A_},
+    B_{other.B_},
+    C_{other.C_},
+    D_{other.D_},
+    Ad_{other.Ad_},
+    Bd_{other.Bd_},
+    Cd_{other.Cd_},
+    Dd_{other.Dd_},
+    Tsimilarity_mat_{other.Tsimilarity_mat_}
+{
+}
+ns_control_toolbox::tf2ss &ns_control_toolbox::tf2ss::operator=(const ns_control_toolbox::tf2ss &other)
+{
+  if (this != &other)
+  {
+    A_ = other.A_;
+    B_ = other.B_;
+    C_ = other.C_;
+    D_ = other.D_;
+    Ad_ = other.Ad_;
+    Bd_ = other.Bd_;
+    Cd_ = other.Cd_;
+    Dd_ = other.Dd_;
+    Tsimilarity_mat_ = other.Tsimilarity_mat_;
+  }
+  return *this;
+}
+ns_control_toolbox::tf2ss::tf2ss(ns_control_toolbox::tf2ss &&other) noexcept
+{
+  A_ = std::move(other.A_);
+  B_ = std::move(other.B_);
+  C_ = std::move(other.C_);
+  D_ = std::move(other.D_);
+
+  Ad_ = std::move(other.Ad_);
+  Bd_ = std::move(other.Bd_);
+  Cd_ = std::move(other.Cd_);
+  Dd_ = std::move(other.Dd_);
+  Tsimilarity_mat_ = std::move(other.Tsimilarity_mat_);
+
+}
+ns_control_toolbox::tf2ss &ns_control_toolbox::tf2ss::operator=(ns_control_toolbox::tf2ss &&other)
+noexcept
+{
+  if (this != &other)
+  {
+    A_ = std::move(other.A_);
+    B_ = std::move(other.B_);
+    C_ = std::move(other.C_);
+    D_ = std::move(other.D_);
+
+    Ad_ = std::move(other.Ad_);
+    Bd_ = std::move(other.Bd_);
+    Cd_ = std::move(other.Cd_);
+    Dd_ = std::move(other.Dd_);
+    Tsimilarity_mat_ = std::move(other.Tsimilarity_mat_);
+  }
+  return *this;
+}
+
 ns_control_toolbox::scalarFilters_ss::scalarFilters_ss(
   const ns_control_toolbox::tf &sys_tf,
   const double &Ts)
