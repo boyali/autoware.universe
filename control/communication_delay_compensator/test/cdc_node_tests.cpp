@@ -138,7 +138,7 @@ TEST_F(FakeNodeFixture, isLPVobserverStable)
   double const steering{};
 
   double const vmax{20.}; // m/s
-  auto vx_grid = ns_utils::linspace(1., vmax., 4);  // curvature
+  auto vx_grid = ns_utils::linspace(1., vmax, 4);  // curvature
 
   for (double const &ey : ey_grid)
   {
