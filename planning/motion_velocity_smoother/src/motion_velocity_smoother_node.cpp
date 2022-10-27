@@ -304,7 +304,7 @@ void MotionVelocitySmootherNode::onExternalVelocityLimit(const VelocityLimit::Co
   // to decelerate to external velocity limit with jerk and acceleration
   // constraints.
   // if external velocity limit decreases
-  if (std::fabs((external_velocity_limit_ - msg->max_velocity)) > eps) {
+  if (std::fabs(external_velocity_limit_ - msg->max_velocity) > eps) {
     const double v0 = prev_closest_point_->longitudinal_velocity_mps;
     const double a0 = prev_closest_point_->acceleration_mps2;
 

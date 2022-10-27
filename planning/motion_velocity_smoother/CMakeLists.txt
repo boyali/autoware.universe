@@ -10,12 +10,21 @@ find_package(Eigen3 REQUIRED)
 
 include_directories(
   SYSTEM
-    ${EIGEN3_INCLUDE_DIR}
+  ${EIGEN3_INCLUDE_DIR}
 )
+
+# For Eigen vectorization.
+include(CheckCXXCompilerFlag)
+
+check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+if(COMPILER_SUPPORTS_MARCH_NATIVE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native") #  -mtune=native -mavx2 -mfma
+  message(STATUS "Enabling MARCH NATIVE ")
+endif()
 
 set(MOTION_VELOCITY_SMOOTHER_SRC
   src/motion_velocity_smoother_node.cpp
-)
+  )
 
 set(SMOOTHER_SRC
   src/smoother/smoother_base.cpp
@@ -26,37 +35,37 @@ set(SMOOTHER_SRC
   src/smoother/analytical_jerk_constrained_smoother/velocity_planning_utils.cpp
   src/trajectory_utils.cpp
   src/resample.cpp
-)
+  )
 
 ament_auto_add_library(smoother SHARED
   ${SMOOTHER_SRC}
-)
+  )
 
 ament_auto_add_library(motion_velocity_smoother_node SHARED
   ${MOTION_VELOCITY_SMOOTHER_SRC}
-)
+  )
 
 target_link_libraries(motion_velocity_smoother_node
   smoother
-)
+  )
 
 rclcpp_components_register_node(motion_velocity_smoother_node
   PLUGIN "motion_velocity_smoother::MotionVelocitySmootherNode"
   EXECUTABLE motion_velocity_smoother
-)
+  )
 
 if(BUILD_TESTING)
   ament_add_ros_isolated_gmock(test_smoother_functions
     test/test_smoother_functions.cpp
-  )
+    )
   target_link_libraries(test_smoother_functions
     smoother
-  )
+    )
 endif()
 
 
 ament_auto_package(
   INSTALL_TO_SHARE
-    launch
-    config
+  launch
+  config
 )
