@@ -48,6 +48,7 @@ OSQPInterface::OSQPInterface(const c_float eps_abs, const bool8_t polish)
     m_settings->max_iter = 4000;
     m_settings->verbose = false;
     m_settings->polish = polish;
+    m_settings->scaling = true;
   }
   m_exitflag = 0;
 }
@@ -185,6 +186,11 @@ void OSQPInterface::updateVerbose(const bool is_verbose)
   if (m_work_initialized) {
     osqp_update_verbose(m_work.get(), is_verbose);  // for current work
   }
+}
+
+void OSQPInterface::updateScaling(const bool is_scaled)
+{
+  m_settings->scaling = is_scaled;  // for default setting
 }
 
 void OSQPInterface::updateRhoInterval(const int rho_interval)
