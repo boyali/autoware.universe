@@ -307,6 +307,19 @@ bool JerkFilteredSmoother::apply(
 
   qp_solver_.logUnsolvedStatus("[motion_velocity_smoother]");
 
+  /**
+   * Compute singular values
+   * */
+  auto const & APeigs = ns_eigen_utils::block_diag(A, P).eigenvalues();
+
+  //  auto const & Aeigs = A.eigenvalues();
+
+  auto const & condition_numberAP = APeigs.array().abs().max() / APeigs.array().abs().min();
+
+  //  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Condition Number of A: %2.2f", condition_numberA);
+
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Condition Number of AP :%2.2f", condition_numberAP);
+
   if (TMP_SHOW_DEBUG_INFO) {
     // jerk calculation
     std::vector<double> p_jerk, jerk_converted, jerk_ideal;

@@ -19,6 +19,8 @@
 #include "motion_velocity_smoother/smoother/smoother_base.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "utils_act/act_utils.hpp"
+#include "utils_act/act_utils_eigen.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 
