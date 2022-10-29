@@ -21,6 +21,9 @@
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
+#include "utils_act/writetopath.hpp"
+
+#include <experimental/filesystem>  // fmt package
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 
@@ -32,7 +35,7 @@ namespace motion_velocity_smoother
 {
 class JerkFilteredSmoother : public SmootherBase
 {
-public:
+ public:
   struct Param
   {
     double jerk_weight;
@@ -42,34 +45,45 @@ public:
     double jerk_filter_ds;
   };
 
-  explicit JerkFilteredSmoother(rclcpp::Node & node);
+  explicit JerkFilteredSmoother(rclcpp::Node &node);
 
   bool apply(
-    const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
-    TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) override;
+    const double initial_vel, const double initial_acc, const TrajectoryPoints &input,
+    TrajectoryPoints &output, std::vector<TrajectoryPoints> &debug_trajectories) override;
 
   boost::optional<TrajectoryPoints> resampleTrajectory(
-    const TrajectoryPoints & input, [[maybe_unused]] const double v0,
-    const geometry_msgs::msg::Pose & current_pose, const double nearest_dist_threshold,
+    const TrajectoryPoints &input, [[maybe_unused]] const double v0,
+    const geometry_msgs::msg::Pose &current_pose, const double nearest_dist_threshold,
     const double nearest_yaw_threshold) const override;
 
-  void setParam(const Param & param);
+  void setParam(const Param &param);
   Param getParam() const;
 
-private:
+ private:
   Param smoother_param_;
   autoware::common::osqp::OSQPInterface qp_solver_;
   rclcpp::Logger logger_{rclcpp::get_logger("smoother").get_child("jerk_filtered_smoother")};
 
-  TrajectoryPoints forwardJerkFilter(
-    const double v0, const double a0, const double a_max, const double a_stop, const double j_max,
-    const TrajectoryPoints & input) const;
-  TrajectoryPoints backwardJerkFilter(
-    const double v0, const double a0, const double a_min, const double a_stop, const double j_min,
-    const TrajectoryPoints & input) const;
-  TrajectoryPoints mergeFilteredTrajectory(
-    const double v0, const double a0, const double a_min, const double j_min,
-    const TrajectoryPoints & forward_filtered, const TrajectoryPoints & backward_filtered) const;
+  TrajectoryPoints forwardJerkFilter(const double v0,
+                                     const double a0,
+                                     const double a_max,
+                                     const double a_stop,
+                                     const double j_max,
+                                     const TrajectoryPoints &input) const;
+
+  TrajectoryPoints backwardJerkFilter(const double v0,
+                                      const double a0,
+                                      const double a_min,
+                                      const double a_stop,
+                                      const double j_min,
+                                      const TrajectoryPoints &input) const;
+
+  TrajectoryPoints mergeFilteredTrajectory(const double v0,
+                                           const double a0,
+                                           const double a_min,
+                                           const double j_min,
+                                           const TrajectoryPoints &forward_filtered,
+                                           const TrajectoryPoints &backward_filtered) const;
 };
 }  // namespace motion_velocity_smoother
 

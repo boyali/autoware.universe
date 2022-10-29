@@ -1,12 +1,18 @@
 cmake_minimum_required(VERSION 3.14)
 project(motion_velocity_smoother)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 99)
+
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(Boost REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
+
+# FMT
+find_package(fmt)
 
 include_directories(
   SYSTEM
@@ -40,6 +46,8 @@ set(SMOOTHER_SRC
 ament_auto_add_library(smoother SHARED
   ${SMOOTHER_SRC}
   )
+
+target_link_libraries(smoother fmt::fmt stdc++fs)
 
 ament_auto_add_library(motion_velocity_smoother_node SHARED
   ${MOTION_VELOCITY_SMOOTHER_SRC}
