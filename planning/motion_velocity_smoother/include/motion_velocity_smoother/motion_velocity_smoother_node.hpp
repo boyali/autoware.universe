@@ -68,10 +68,10 @@ struct Motion
 
 class MotionVelocitySmootherNode : public rclcpp::Node
 {
-public:
-  explicit MotionVelocitySmootherNode(const rclcpp::NodeOptions & node_options);
+ public:
+  explicit MotionVelocitySmootherNode(const rclcpp::NodeOptions &node_options);
 
-private:
+ private:
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_;
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr pub_over_stop_velocity_;
   rclcpp::Subscription<Odometry>::SharedPtr sub_current_odometry_;
@@ -83,7 +83,7 @@ private:
   Trajectory::ConstSharedPtr base_traj_raw_ptr_;   // current base_waypoints
   double external_velocity_limit_;                 // current external_velocity_limit
   double max_velocity_with_deceleration_;          // maximum velocity with deceleration
-                                                   // for external velocity limit
+  // for external velocity limit
   double external_velocity_limit_dist_{0.0};       // distance to set external velocity limit
   double wheelbase_;                               // wheelbase
 
@@ -96,7 +96,8 @@ private:
 
   bool is_reverse_;
 
-  enum class AlgorithmType {
+  enum class AlgorithmType
+  {
     INVALID = 0,
     JERK_FILTERED = 1,
     L2 = 2,
@@ -104,7 +105,8 @@ private:
     ANALYTICAL = 4,
   };
 
-  enum class InitializeType {
+  enum class InitializeType
+  {
     INIT = 0,
     LARGE_DEVIATION_REPLAN = 1,
     ENGAGING = 2,
@@ -116,11 +118,11 @@ private:
     double max_velocity;                              // max velocity [m/s]
     double margin_to_insert_external_velocity_limit;  // for external velocity limit [m]
     double replan_vel_deviation;                      // if speed error exceeds this [m/s],
-                                                      // replan from current velocity
+    // replan from current velocity
     double engage_velocity;                           // use this speed when start moving [m/s]
     double engage_acceleration;           // use this acceleration when start moving [m/ss]
     double engage_exit_ratio;             // exit engage sequence
-                                          // when the speed exceeds ratio x engage_vel.
+    // when the speed exceeds ratio x engage_vel.
     double stopping_velocity;             // change target velocity to this value before v=0 point.
     double stopping_distance;             // distance for the stopping_velocity
     double extract_ahead_dist;            // forward waypoints distance from current position [m]
@@ -138,13 +140,14 @@ private:
   bool publish_debug_trajs_;  // publish planned trajectories
 
   double over_stop_velocity_warn_thr_;  // threshold to publish over velocity warn
+  double average_mpc_solve_time_{0.015};  // milliseconds.
 
   rclcpp::Clock::SharedPtr clock_;
 
   // parameter update
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult onParameter(
-    const std::vector<rclcpp::Parameter> & parameters);
+    const std::vector<rclcpp::Parameter> &parameters);
 
   // topic callback
   void onCurrentOdometry(const Odometry::ConstSharedPtr msg);
@@ -154,53 +157,53 @@ private:
   void onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg);
 
   // publish methods
-  void publishTrajectory(const TrajectoryPoints & traj) const;
+  void publishTrajectory(const TrajectoryPoints &traj) const;
 
-  void publishStopDistance(const TrajectoryPoints & trajectory) const;
+  void publishStopDistance(const TrajectoryPoints &trajectory) const;
 
   // non-const methods
-  void publishClosestState(const TrajectoryPoints & trajectory);
+  void publishClosestState(const TrajectoryPoints &trajectory);
 
-  void updatePrevValues(const TrajectoryPoints & final_result);
+  void updatePrevValues(const TrajectoryPoints &final_result);
 
   // const methods
   bool checkData() const;
 
   void updateDataForExternalVelocityLimit();
 
-  AlgorithmType getAlgorithmType(const std::string & algorithm_name) const;
+  AlgorithmType getAlgorithmType(const std::string &algorithm_name) const;
 
-  TrajectoryPoints calcTrajectoryVelocity(const TrajectoryPoints & input) const;
+  TrajectoryPoints calcTrajectoryVelocity(const TrajectoryPoints &input) const;
 
   bool smoothVelocity(
-    const TrajectoryPoints & input, const size_t input_closest,
-    TrajectoryPoints & traj_smoothed) const;
+    const TrajectoryPoints &input, const size_t input_closest,
+    TrajectoryPoints &traj_smoothed) const;
 
   std::pair<Motion, InitializeType> calcInitialMotion(
-    const TrajectoryPoints & input_traj, const size_t input_closest,
-    const TrajectoryPoints & prev_traj) const;
+    const TrajectoryPoints &input_traj, const size_t input_closest,
+    const TrajectoryPoints &prev_traj) const;
 
-  void applyExternalVelocityLimit(TrajectoryPoints & traj) const;
+  void applyExternalVelocityLimit(TrajectoryPoints &traj) const;
 
   void insertBehindVelocity(
-    const size_t output_closest, const InitializeType type, TrajectoryPoints & output) const;
+    const size_t output_closest, const InitializeType type, TrajectoryPoints &output) const;
 
-  void applyStopApproachingVelocity(TrajectoryPoints & traj) const;
+  void applyStopApproachingVelocity(TrajectoryPoints &traj) const;
 
-  void overwriteStopPoint(const TrajectoryPoints & input, TrajectoryPoints & output) const;
+  void overwriteStopPoint(const TrajectoryPoints &input, TrajectoryPoints &output) const;
 
   double calcTravelDistance() const;
 
   bool isEngageStatus(const double target_vel) const;
 
-  void publishDebugTrajectories(const std::vector<TrajectoryPoints> & debug_trajectories) const;
+  void publishDebugTrajectories(const std::vector<TrajectoryPoints> &debug_trajectories) const;
 
   void publishClosestVelocity(
-    const TrajectoryPoints & trajectory, const Pose & current_pose,
+    const TrajectoryPoints &trajectory, const Pose &current_pose,
     const rclcpp::Publisher<Float32Stamped>::SharedPtr pub) const;
 
   Trajectory toTrajectoryMsg(
-    const TrajectoryPoints & points, const std_msgs::msg::Header * header = nullptr) const;
+    const TrajectoryPoints &points, const std_msgs::msg::Header *header = nullptr) const;
 
   // parameter handling
   void initCommonParam();
@@ -229,9 +232,9 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr pub_closest_merged_velocity_;
 
   // helper functions
-  size_t findNearestIndexFromEgo(const TrajectoryPoints & points) const;
-  bool isReverse(const TrajectoryPoints & points) const;
-  void flipVelocity(TrajectoryPoints & points) const;
+  size_t findNearestIndexFromEgo(const TrajectoryPoints &points) const;
+  bool isReverse(const TrajectoryPoints &points) const;
+  void flipVelocity(TrajectoryPoints &points) const;
   void publishStopWatchTime();
 };
 }  // namespace motion_velocity_smoother

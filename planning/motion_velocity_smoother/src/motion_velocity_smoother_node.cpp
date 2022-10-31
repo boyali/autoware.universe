@@ -1083,6 +1083,13 @@ void MotionVelocitySmootherNode::publishStopWatchTime()
   Float32Stamped calculation_time_data{};
   calculation_time_data.stamp = this->now();
   calculation_time_data.data = stop_watch_.toc();
+
+  // Average the calculation time
+  average_mpc_solve_time_ =
+    ns_utils::exponentialMovingAverage(average_mpc_solve_time_, 100, calculation_time_data.data);
+
+  calculation_time_data.data = average_mpc_solve_time_;
+
   debug_calculation_time_->publish(calculation_time_data);
 }
 
