@@ -45,7 +45,7 @@ using autoware::common::types::float64_t;
  */
 class OSQP_INTERFACE_PUBLIC OSQPInterface
 {
-private:
+ private:
   std::unique_ptr<OSQPWorkspace, std::function<void(OSQPWorkspace *)>> m_work;
   std::unique_ptr<OSQPSettings> m_settings;
   std::unique_ptr<OSQPData> m_data;
@@ -61,9 +61,9 @@ private:
   // Runs the solver on the stored problem.
   std::tuple<std::vector<float64_t>, std::vector<float64_t>, int64_t, int64_t, int64_t> solve();
 
-  static void OSQPWorkspaceDeleter(OSQPWorkspace * ptr) noexcept;
+  static void OSQPWorkspaceDeleter(OSQPWorkspace *ptr) noexcept;
 
-public:
+ public:
   /// \brief Constructor without problem formulation
   explicit OSQPInterface(
     const c_float eps_abs = std::numeric_limits<c_float>::epsilon(), const bool8_t polish = true);
@@ -75,11 +75,11 @@ public:
   /// \param u: (m) vector defining the upper bound problem constraint.
   /// \param eps_abs: Absolute convergence tolerance.
   OSQPInterface(
-    const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<float64_t> & q,
-    const std::vector<float64_t> & l, const std::vector<float64_t> & u, const c_float eps_abs);
+    const Eigen::MatrixXd &P, const Eigen::MatrixXd &A, const std::vector<float64_t> &q,
+    const std::vector<float64_t> &l, const std::vector<float64_t> &u, const c_float eps_abs);
   OSQPInterface(
-    const CSC_Matrix & P, const CSC_Matrix & A, const std::vector<float64_t> & q,
-    const std::vector<float64_t> & l, const std::vector<float64_t> & u, const c_float eps_abs);
+    const CSC_Matrix &P, const CSC_Matrix &A, const std::vector<float64_t> &q,
+    const std::vector<float64_t> &l, const std::vector<float64_t> &u, const c_float eps_abs);
   ~OSQPInterface();
 
   /****************
@@ -122,8 +122,8 @@ public:
   /// \details        float64_t x_0 = param[0];
   /// \details        float64_t x_1 = param[1];
   std::tuple<std::vector<float64_t>, std::vector<float64_t>, int64_t, int64_t, int64_t> optimize(
-    const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<float64_t> & q,
-    const std::vector<float64_t> & l, const std::vector<float64_t> & u);
+    const Eigen::MatrixXd &P, const Eigen::MatrixXd &A, const std::vector<float64_t> &q,
+    const std::vector<float64_t> &l, const std::vector<float64_t> &u);
 
   /// \brief Converts the input data and sets up the workspace object.
   /// \param P (n,n) matrix defining relations between parameters.
@@ -132,11 +132,11 @@ public:
   /// \param l (m) vector defining the lower bound problem constraint.
   /// \param u (m) vector defining the upper bound problem constraint.
   int64_t initializeProblem(
-    const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<float64_t> & q,
-    const std::vector<float64_t> & l, const std::vector<float64_t> & u);
+    const Eigen::MatrixXd &P, const Eigen::MatrixXd &A, const std::vector<float64_t> &q,
+    const std::vector<float64_t> &l, const std::vector<float64_t> &u);
   int64_t initializeProblem(
-    CSC_Matrix P, CSC_Matrix A, const std::vector<float64_t> & q, const std::vector<float64_t> & l,
-    const std::vector<float64_t> & u);
+    CSC_Matrix P, CSC_Matrix A, const std::vector<float64_t> &q, const std::vector<float64_t> &l,
+    const std::vector<float64_t> &u);
 
   // Updates problem parameters while keeping solution in memory.
   //
@@ -146,14 +146,14 @@ public:
   //   q_new: (n) vector defining the linear cost of the problem.
   //   l_new: (m) vector defining the lower bound problem constraint.
   //   u_new: (m) vector defining the upper bound problem constraint.
-  void updateP(const Eigen::MatrixXd & P_new);
-  void updateCscP(const CSC_Matrix & P_csc);
-  void updateA(const Eigen::MatrixXd & A_new);
-  void updateCscA(const CSC_Matrix & A_csc);
-  void updateQ(const std::vector<double> & q_new);
-  void updateL(const std::vector<double> & l_new);
-  void updateU(const std::vector<double> & u_new);
-  void updateBounds(const std::vector<double> & l_new, const std::vector<double> & u_new);
+  void updateP(const Eigen::MatrixXd &P_new);
+  void updateCscP(const CSC_Matrix &P_csc);
+  void updateA(const Eigen::MatrixXd &A_new);
+  void updateCscA(const CSC_Matrix &A_csc);
+  void updateQ(const std::vector<double> &q_new);
+  void updateL(const std::vector<double> &l_new);
+  void updateU(const std::vector<double> &u_new);
+  void updateBounds(const std::vector<double> &l_new, const std::vector<double> &u_new);
   void updateEpsAbs(const double eps_abs);
   void updateEpsRel(const double eps_rel);
   void updateMaxIter(const int iter);
@@ -163,28 +163,39 @@ public:
   void updateRho(const double rho);
   void updateAlpha(const double alpha);
 
+  // Setter functions for warm start
+  bool setWarmStart(
+    const std::vector<double> &primal_variables, const std::vector<double> &dual_variables);
+  bool setPrimalVariables(const std::vector<double> &primal_variables);
+  bool setDualVariables(const std::vector<double> &dual_variables);
+
   /// \brief Get the number of iteration taken to solve the problem
-  inline int64_t getTakenIter() const { return static_cast<int64_t>(m_latest_work_info.iter); }
+  inline int64_t getTakenIter() const
+  { return static_cast<int64_t>(m_latest_work_info.iter); }
   /// \brief Get the status message for the latest problem solved
   inline std::string getStatusMessage() const
   {
     return static_cast<std::string>(m_latest_work_info.status);
   }
   /// \brief Get the status value for the latest problem solved
-  inline int64_t getStatus() const { return static_cast<int64_t>(m_latest_work_info.status_val); }
+  inline int64_t getStatus() const
+  { return static_cast<int64_t>(m_latest_work_info.status_val); }
   /// \brief Get the status polish for the latest problem solved
   inline int64_t getStatusPolish() const
   {
     return static_cast<int64_t>(m_latest_work_info.status_polish);
   }
   /// \brief Get the runtime of the latest problem solved
-  inline float64_t getRunTime() const { return m_latest_work_info.run_time; }
+  inline float64_t getRunTime() const
+  { return m_latest_work_info.run_time; }
   /// \brief Get the objective value the latest problem solved
-  inline float64_t getObjVal() const { return m_latest_work_info.obj_val; }
+  inline float64_t getObjVal() const
+  { return m_latest_work_info.obj_val; }
   /// \brief Returns flag asserting interface condition (Healthy condition: 0).
-  inline int64_t getExitFlag() const { return m_exitflag; }
+  inline int64_t getExitFlag() const
+  { return m_exitflag; }
 
-  void logUnsolvedStatus(const std::string & prefix_message = "") const;
+  void logUnsolvedStatus(const std::string &prefix_message = "") const;
 };
 
 }  // namespace osqp
