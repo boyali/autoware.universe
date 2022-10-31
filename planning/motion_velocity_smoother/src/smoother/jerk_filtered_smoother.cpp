@@ -161,179 +161,181 @@ bool JerkFilteredSmoother::apply(
   }
 
 
-  // Disablsed Section
-  {
+  // Disabled Section
 
-//    /*
-//     * x = [
-//     *      b[0], b[1], ..., b[N],               : 0~N
-//     *      a[0], a[1], .... a[N],               : N~2N
-//     *      delta[0], ..., delta[N],             : 2N~3N
-//     *      sigma[0], sigma[1], ...., sigma[N],  : 3N~4N
-//     *      gamma[0], gamma[1], ..., gamma[N]    : 4N~5N
-//     *     ]
-//     *
-//     * b[i]  : velocity^2
-//     * delta : 0 < b[i]-delta[i] < max_vel[i]*max_vel[i]
-//     * sigma : a_min < a[i] - sigma[i] < a_max
-//     * gamma : jerk_min < pseudo_jerk[i] * ref_vel[i] - gamma[i] < jerk_max
-//     */
-//    const uint32_t IDX_B0 = 0;
-//    const uint32_t IDX_A0 = N;
-//    const uint32_t IDX_DELTA0 = 2 * N;
-//    const uint32_t IDX_SIGMA0 = 3 * N;
-//    const uint32_t IDX_GAMMA0 = 4 * N;
-//
-//    const uint32_t l_variables = 5 * N;
-//    const uint32_t l_constraints = 4 * N + 1;
-//
-//    // the matrix size depends on constraint numbers.
-//    Eigen::MatrixXd A = Eigen::MatrixXd::Zero(l_constraints, l_variables);
-//
-//    std::vector<double> lower_bound(l_constraints, 0.0);
-//    std::vector<double> upper_bound(l_constraints, 0.0);
-//
-//    Eigen::MatrixXd P = Eigen::MatrixXd::Zero(l_variables, l_variables);
-//    std::vector<double> q(l_variables, 0.0);
-//
-//    /**************************************************************/
-//    /**************************************************************/
-//    /**************** design objective function *******************/
-//    /**************************************************************/
-//    /**************************************************************/
-//
-//    // jerk: d(ai)/ds * v_ref -> minimize weight * ((a1 - a0) / ds * v_ref)^2 * ds
-//    constexpr double ZERO_VEL_THR_FOR_DT_CALC = 0.3;
-//    const double smooth_weight = smoother_param_.jerk_weight;
-//
-//    for (size_t i = 0; i < N - 1; ++i)
-//    {
-//      const double ref_vel = v_max_arr.at(i);
-//
-//      const double interval_dist = std::max(interval_dist_arr.at(i), 0.0001);
-//      const double w_x_ds_inv = (1.0 / interval_dist) * ref_vel;
-//
-//      P(IDX_A0 + i, IDX_A0 + i) += smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
-//      P(IDX_A0 + i, IDX_A0 + i + 1) -= smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
-//      P(IDX_A0 + i + 1, IDX_A0 + i) -= smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
-//      P(IDX_A0 + i + 1, IDX_A0 + i + 1) += smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
-//    }
-//
-//    for (size_t i = 0; i < N; ++i)
-//    {
-//      const double v_max = std::max(v_max_arr.at(i), 0.1);
-//      q.at(IDX_B0 + i) =
-//        -1.0 / (v_max * v_max);  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
-//
-//      if (i < N - 1)
-//      {
-//        q.at(IDX_B0 + i) *= std::max(interval_dist_arr.at(i), 0.0001);
-//      }
-//
-//      P(IDX_DELTA0 + i, IDX_DELTA0 + i) += over_v_weight;  // over velocity cost
-//      P(IDX_SIGMA0 + i, IDX_SIGMA0 + i) += over_a_weight;  // over acceleration cost
-//      P(IDX_GAMMA0 + i, IDX_GAMMA0 + i) += over_j_weight;  // over jerk cost
-//    }
-//
-//    /**************************************************************/
-//    /**************************************************************/
-//    /**************** design constraint matrix ********************/
-//    /**************************************************************/
-//    /**************************************************************/
-//
-//    /*
-//    NOTE: The delta allows b to be negative. This is actually invalid because the definition is b=v^2.
-//    But mathematically, the strict b>0 constraint may make the problem infeasible, such as the case of
-//    v=0 & a<0. To avoid the infeasibility, we allow b<0. The negative b is dealt as b=0 when it is
-//    converted to v with sqrt. If the weight of delta^2 is large (the value of delta is very small),
-//    b is almost 0, and is not a big problem.
-//    */
-//
-//    size_t constr_idx = 0;
-//
-//    // Soft Constraint Velocity Limit: 0 < b - delta < v_max^2
-//    for (size_t i = 0; i < N; ++i, ++constr_idx)
-//    {
-//      A(constr_idx, IDX_B0 + i) = 1.0;       // b_i
-//      A(constr_idx, IDX_DELTA0 + i) = -1.0;  // -delta_i
-//
-//      upper_bound[constr_idx] = v_max_arr.at(i) * v_max_arr.at(i);
-//      lower_bound[constr_idx] = 0.0;
-//    }
-//
-//    // Soft Constraint Acceleration Limit: a_min < a - sigma < a_max
-//    for (size_t i = 0; i < N; ++i, ++constr_idx)
-//    {
-//      A(constr_idx, IDX_A0 + i) = 1.0;       // a_i
-//      A(constr_idx, IDX_SIGMA0 + i) = -1.0;  // -sigma_i
-//
-//      constexpr double stop_vel = 1e-3;
-//      if (v_max_arr.at(i) < stop_vel)
-//      {
-//        // Stop Point
-//        upper_bound[constr_idx] = a_stop_decel;
-//        lower_bound[constr_idx] = a_stop_decel;
-//
-//      } else
-//      {
-//        upper_bound[constr_idx] = a_max;
-//        lower_bound[constr_idx] = a_min;
-//      }
-//    }
-//
-//    // Soft Constraint Jerk Limit: jerk_min < pseudo_jerk[i] * ref_vel[i] - gamma[i] < jerk_max
-//    // -> jerk_min * ds < (a[i+1] - a[i]) * ref_vel[i] - gamma[i] * ds < jerk_max * ds
-//    for (size_t i = 0; i < N - 1; ++i, ++constr_idx)
-//    {
-//      const double ref_vel = std::max(v_max_arr.at(i), ZERO_VEL_THR_FOR_DT_CALC);
-//      const double ds = interval_dist_arr.at(i);
-//      A(constr_idx, IDX_A0 + i) = -ref_vel;     // -a[i] * ref_vel
-//      A(constr_idx, IDX_A0 + i + 1) = ref_vel;  //  a[i+1] * ref_vel
-//      A(constr_idx, IDX_GAMMA0 + i) = -ds;      // -gamma[i] * ds
-//      upper_bound[constr_idx] = j_max * ds;     //  jerk_max * ds
-//      lower_bound[constr_idx] = j_min * ds;     //  jerk_min * ds
-//    }
-//
-//    // b' = 2a ... (b(i+1) - b(i)) / ds = 2a(i)
-//    for (size_t i = 0; i < N - 1; ++i, ++constr_idx)
-//    {
-//      A(constr_idx, IDX_B0 + i) = -1.0;                            // b(i)
-//      A(constr_idx, IDX_B0 + i + 1) = 1.0;                         // b(i+1)
-//      A(constr_idx, IDX_A0 + i) = -2.0 * interval_dist_arr.at(i);  // a(i) * ds
-//      upper_bound[constr_idx] = 0.0;
-//      lower_bound[constr_idx] = 0.0;
-//    }
-//
-//    // initial condition
-//    {
-//      A(constr_idx, IDX_B0) = 1.0;  // b0
-//      upper_bound[constr_idx] = v0 * v0;
-//      lower_bound[constr_idx] = v0 * v0;
-//      ++constr_idx;
-//
-//      A(constr_idx, IDX_A0) = 1.0;  // a0
-//      upper_bound[constr_idx] = a0;
-//      lower_bound[constr_idx] = a0;
-//      ++constr_idx;
-//    }
-//
-//    // execute optimization
-//    const auto result = qp_solver_.optimize(P, A, q, lower_bound, upper_bound);
-//    const std::vector<double> optval = std::get<0>(result);
-//
-//    const auto tf1 = std::chrono::system_clock::now();
-//    const double dt_ms1 =
-//      std::chrono::duration_cast<std::chrono::nanoseconds>(tf1 - ts).count() * 1.0e-6;
-//    RCLCPP_DEBUG(logger_, "optimization time = %f [ms]", dt_ms1);
+  /*
+   * x = [
+   *      b[0], b[1], ..., b[N],               : 0~N
+   *      a[0], a[1], .... a[N],               : N~2N
+   *      delta[0], ..., delta[N],             : 2N~3N
+   *      sigma[0], sigma[1], ...., sigma[N],  : 3N~4N
+   *      gamma[0], gamma[1], ..., gamma[N]    : 4N~5N
+   *     ]
+   *
+   * b[i]  : velocity^2
+   * delta : 0 < b[i]-delta[i] < max_vel[i]*max_vel[i]
+   * sigma : a_min < a[i] - sigma[i] < a_max
+   * gamma : jerk_min < pseudo_jerk[i] * ref_vel[i] - gamma[i] < jerk_max
+   */
+  const uint32_t IDX_B0 = 0;
+  const uint32_t IDX_A0 = N;
+  const uint32_t IDX_DELTA0 = 2 * N;
+  const uint32_t IDX_SIGMA0 = 3 * N;
+  const uint32_t IDX_GAMMA0 = 4 * N;
+
+  const uint32_t l_variables = 5 * N;
+  const uint32_t l_constraints = 4 * N + 1;
+
+  // the matrix size depends on constraint numbers.
+  Eigen::MatrixXd A = Eigen::MatrixXd::Zero(l_constraints, l_variables);
+
+  std::vector<double> lower_bound(l_constraints, 0.0);
+  std::vector<double> upper_bound(l_constraints, 0.0);
+
+  Eigen::MatrixXd P = Eigen::MatrixXd::Zero(l_variables, l_variables);
+  std::vector<double> q(l_variables, 0.0);
+
+  /**************************************************************/
+  /**************************************************************/
+  /**************** design objective function *******************/
+  /**************************************************************/
+  /**************************************************************/
+
+  // jerk: d(ai)/ds * v_ref -> minimize weight * ((a1 - a0) / ds * v_ref)^2 * ds
+  constexpr double ZERO_VEL_THR_FOR_DT_CALC = 0.3;
+  const double smooth_weight = smoother_param_.jerk_weight;
+
+  for (size_t i = 0; i < N - 1; ++i)
+  {
+    const double ref_vel = v_max_arr.at(i);
+
+    const double interval_dist = std::max(interval_dist_arr.at(i), 0.0001);
+    const double w_x_ds_inv = (1.0 / interval_dist) * ref_vel;
+
+    P(IDX_A0 + i, IDX_A0 + i) += smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
+    P(IDX_A0 + i, IDX_A0 + i + 1) -= smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
+    P(IDX_A0 + i + 1, IDX_A0 + i) -= smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
+    P(IDX_A0 + i + 1, IDX_A0 + i + 1) += smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
   }
+
+  double bweight = 1.;
+  for (size_t i = 0; i < N; ++i)
+  {
+    const double v_max = std::max(v_max_arr.at(i), 0.1);
+    // q.at(IDX_B0 + i) = -1./ (v_max * v_max);  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
+
+    q.at(IDX_B0 + i) = -bweight * (v_max * v_max);  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
+    P(IDX_B0 + i, IDX_B0 + i) = bweight;
+
+    if (i == N - 1)
+    {
+      q.at(IDX_B0 + i) = 0; // std::max(interval_dist_arr.at(i), 0.0001);
+    }
+
+    P(IDX_DELTA0 + i, IDX_DELTA0 + i) += over_v_weight;  // over velocity cost
+    P(IDX_SIGMA0 + i, IDX_SIGMA0 + i) += over_a_weight;  // over acceleration cost
+    P(IDX_GAMMA0 + i, IDX_GAMMA0 + i) += over_j_weight;  // over jerk cost
+  }
+
+  /**************************************************************/
+  /**************************************************************/
+  /**************** design constraint matrix ********************/
+  /**************************************************************/
+  /**************************************************************/
+
+  /*
+  NOTE: The delta allows b to be negative. This is actually invalid because the definition is b=v^2.
+  But mathematically, the strict b>0 constraint may make the problem infeasible, such as the case of
+  v=0 & a<0. To avoid the infeasibility, we allow b<0. The negative b is dealt as b=0 when it is
+  converted to v with sqrt. If the weight of delta^2 is large (the value of delta is very small),
+  b is almost 0, and is not a big problem.
+  */
+
+  size_t constr_idx = 0;
+
+  // Soft Constraint Velocity Limit: 0 < b - delta < v_max^2
+  for (size_t i = 0; i < N; ++i, ++constr_idx)
+  {
+    A(constr_idx, IDX_B0 + i) = 1.0;       // b_i
+    A(constr_idx, IDX_DELTA0 + i) = -1.0;  // -delta_i
+
+    upper_bound[constr_idx] = v_max_arr.at(i) * v_max_arr.at(i);
+    lower_bound[constr_idx] = 0.0;
+  }
+
+  // Soft Constraint Acceleration Limit: a_min < a - sigma < a_max
+  for (size_t i = 0; i < N; ++i, ++constr_idx)
+  {
+    A(constr_idx, IDX_A0 + i) = 1.0;       // a_i
+    A(constr_idx, IDX_SIGMA0 + i) = -1.0;  // -sigma_i
+
+    constexpr double stop_vel = 1e-3;
+    if (v_max_arr.at(i) < stop_vel)
+    {
+      // Stop Point
+      upper_bound[constr_idx] = a_stop_decel;
+      lower_bound[constr_idx] = a_stop_decel;
+
+    } else
+    {
+      upper_bound[constr_idx] = a_max;
+      lower_bound[constr_idx] = a_min;
+    }
+  }
+
+  // Soft Constraint Jerk Limit: jerk_min < pseudo_jerk[i] * ref_vel[i] - gamma[i] < jerk_max
+  // -> jerk_min * ds < (a[i+1] - a[i]) * ref_vel[i] - gamma[i] * ds < jerk_max * ds
+  for (size_t i = 0; i < N - 1; ++i, ++constr_idx)
+  {
+    const double ref_vel = std::max(v_max_arr.at(i), ZERO_VEL_THR_FOR_DT_CALC);
+    const double ds = interval_dist_arr.at(i);
+    A(constr_idx, IDX_A0 + i) = -ref_vel;     // -a[i] * ref_vel
+    A(constr_idx, IDX_A0 + i + 1) = ref_vel;  //  a[i+1] * ref_vel
+    A(constr_idx, IDX_GAMMA0 + i) = -ds;      // -gamma[i] * ds
+    upper_bound[constr_idx] = j_max * ds;     //  jerk_max * ds
+    lower_bound[constr_idx] = j_min * ds;     //  jerk_min * ds
+  }
+
+  // b' = 2a ... (b(i+1) - b(i)) / ds = 2a(i)
+  for (size_t i = 0; i < N - 1; ++i, ++constr_idx)
+  {
+    A(constr_idx, IDX_B0 + i) = -1.0;                            // b(i)
+    A(constr_idx, IDX_B0 + i + 1) = 1.0;                         // b(i+1)
+    A(constr_idx, IDX_A0 + i) = -2.0 * interval_dist_arr.at(i);  // a(i) * ds
+    upper_bound[constr_idx] = 0.0;
+    lower_bound[constr_idx] = 0.0;
+  }
+
+  // initial condition
+  {
+    A(constr_idx, IDX_B0) = 1.0;  // b0
+    upper_bound[constr_idx] = v0 * v0;
+    lower_bound[constr_idx] = v0 * v0;
+    ++constr_idx;
+
+    A(constr_idx, IDX_A0) = 1.0;  // a0
+    upper_bound[constr_idx] = a0;
+    lower_bound[constr_idx] = a0;
+    ++constr_idx;
+  }
+
+  // execute optimization
+  const auto result = qp_solver_.optimize(P, A, q, lower_bound, upper_bound);
+  const std::vector<double> optval = std::get<0>(result);
+
+  const auto tf1 = std::chrono::system_clock::now();
+  const double dt_ms1 =
+    std::chrono::duration_cast<std::chrono::nanoseconds>(tf1 - ts).count() * 1.0e-6;
+  RCLCPP_DEBUG(logger_, "optimization time = %f [ms]", dt_ms1);
+
   // Disabled Section
 
   // get velocity & acceleration
   for (size_t i = 0; i < N; ++i)
   {
-    double b = 1.; // optval.at(IDX_B0 + i);
-    output.at(i).longitudinal_velocity_mps = 1; // std::sqrt(std::max(b, 0.0));
-    output.at(i).acceleration_mps2 = 1; // optval.at(IDX_A0 + i);
+    double b = optval.at(IDX_B0 + i);
+    output.at(i).longitudinal_velocity_mps = std::sqrt(std::max(b, 0.0));
+    output.at(i).acceleration_mps2 = optval.at(IDX_A0 + i);
   }
   for (size_t i = N; i < output.size(); ++i)
   {

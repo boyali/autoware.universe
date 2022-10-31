@@ -4,13 +4,22 @@
   <Tab containers="1" tab_name="tab1">
    <Container>
     <DockSplitter count="1" sizes="1" orientation="-">
-     <DockArea name="...">
-      <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
-       <range right="30.399449" left="0.000000" bottom="16.196375" top="88.042626"/>
-       <limitY/>
-       <curve name="/planning/scenario_planning/motion_velocity_smoother/calculation_time/data" color="#1f77b4"/>
-      </plot>
-     </DockArea>
+     <DockSplitter count="2" sizes="0.5;0.5" orientation="|">
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_y="false" flip_x="false">
+        <range top="35.527151" right="364.385583" bottom="-0.431150" left="0.000000"/>
+        <limitY/>
+        <curve name="/planning/scenario_planning/motion_velocity_smoother/calculation_time/data" color="#1f77b4"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_y="false" flip_x="false">
+        <range top="9.248858" right="364.385583" bottom="-0.225582" left="0.000000"/>
+        <limitY/>
+        <curve name="/vehicle/status/velocity_status/longitudinal_velocity" color="#1f77b4"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
     </DockSplitter>
    </Container>
   </Tab>
