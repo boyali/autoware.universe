@@ -40,7 +40,7 @@ JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node &node) : SmootherBase(no
   qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
   qp_solver_.updateEpsAbs(1.0e-8);  // def: 1.0e-4
   qp_solver_.updateVerbose(false);
-  qp_solver_.updateScaling(20);
+  qp_solver_.updateScaling(10);
 }
 
 void JerkFilteredSmoother::setParam(const Param &smoother_param)
@@ -205,9 +205,12 @@ bool JerkFilteredSmoother::apply(
   constexpr double ZERO_VEL_THR_FOR_DT_CALC = 0.3;
   const double smooth_weight = smoother_param_.jerk_weight;
 
+  double bweight = 0.5;
+  double ks = 1.;
+
   for (size_t i = 0; i < N - 1; ++i)
   {
-    const double ref_vel = v_max_arr.at(i);
+    const double ref_vel = v_max_arr.at(i) / ks;
 
     const double interval_dist = std::max(interval_dist_arr.at(i), 0.0001);
     const double w_x_ds_inv = (1.0 / interval_dist) * ref_vel;
@@ -218,10 +221,9 @@ bool JerkFilteredSmoother::apply(
     P(IDX_A0 + i + 1, IDX_A0 + i + 1) += smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
   }
 
-  double bweight = 1.;
   for (size_t i = 0; i < N; ++i)
   {
-    const double v_max = std::max(v_max_arr.at(i), 0.1);
+    const double v_max = std::max(v_max_arr.at(i), 0.1) / ks;
     // q.at(IDX_B0 + i) = -1./ (v_max * v_max);  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
 
     q.at(IDX_B0 + i) = -bweight * (v_max * v_max);  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
@@ -259,7 +261,7 @@ bool JerkFilteredSmoother::apply(
     A(constr_idx, IDX_B0 + i) = 1.0;       // b_i
     A(constr_idx, IDX_DELTA0 + i) = -1.0;  // -delta_i
 
-    upper_bound[constr_idx] = v_max_arr.at(i) * v_max_arr.at(i);
+    upper_bound[constr_idx] = v_max_arr.at(i) * v_max_arr.at(i) / ks / ks;
     lower_bound[constr_idx] = 0.0;
   }
 
@@ -273,13 +275,13 @@ bool JerkFilteredSmoother::apply(
     if (v_max_arr.at(i) < stop_vel)
     {
       // Stop Point
-      upper_bound[constr_idx] = a_stop_decel;
-      lower_bound[constr_idx] = a_stop_decel;
+      upper_bound[constr_idx] = a_stop_decel / ks;
+      lower_bound[constr_idx] = a_stop_decel / ks;
 
     } else
     {
-      upper_bound[constr_idx] = a_max;
-      lower_bound[constr_idx] = a_min;
+      upper_bound[constr_idx] = a_max / ks;
+      lower_bound[constr_idx] = a_min / ks;
     }
   }
 
@@ -287,13 +289,14 @@ bool JerkFilteredSmoother::apply(
   // -> jerk_min * ds < (a[i+1] - a[i]) * ref_vel[i] - gamma[i] * ds < jerk_max * ds
   for (size_t i = 0; i < N - 1; ++i, ++constr_idx)
   {
-    const double ref_vel = std::max(v_max_arr.at(i), ZERO_VEL_THR_FOR_DT_CALC);
+    const double ref_vel = std::max(v_max_arr.at(i), ZERO_VEL_THR_FOR_DT_CALC) / ks;
+
     const double ds = interval_dist_arr.at(i);
     A(constr_idx, IDX_A0 + i) = -ref_vel;     // -a[i] * ref_vel
     A(constr_idx, IDX_A0 + i + 1) = ref_vel;  //  a[i+1] * ref_vel
     A(constr_idx, IDX_GAMMA0 + i) = -ds;      // -gamma[i] * ds
-    upper_bound[constr_idx] = j_max * ds;     //  jerk_max * ds
-    lower_bound[constr_idx] = j_min * ds;     //  jerk_min * ds
+    upper_bound[constr_idx] = j_max * ds / ks;     //  jerk_max * ds
+    lower_bound[constr_idx] = j_min * ds / ks;     //  jerk_min * ds
   }
 
   // b' = 2a ... (b(i+1) - b(i)) / ds = 2a(i)
@@ -301,7 +304,7 @@ bool JerkFilteredSmoother::apply(
   {
     A(constr_idx, IDX_B0 + i) = -1.0;                            // b(i)
     A(constr_idx, IDX_B0 + i + 1) = 1.0;                         // b(i+1)
-    A(constr_idx, IDX_A0 + i) = -2.0 * interval_dist_arr.at(i);  // a(i) * ds
+    A(constr_idx, IDX_A0 + i) = -2.0 * interval_dist_arr.at(i) / ks;  // a(i) * ds
     upper_bound[constr_idx] = 0.0;
     lower_bound[constr_idx] = 0.0;
   }
@@ -309,13 +312,13 @@ bool JerkFilteredSmoother::apply(
   // initial condition
   {
     A(constr_idx, IDX_B0) = 1.0;  // b0
-    upper_bound[constr_idx] = v0 * v0;
-    lower_bound[constr_idx] = v0 * v0;
+    upper_bound[constr_idx] = v0 * v0 / ks / ks;
+    lower_bound[constr_idx] = v0 * v0 / ks / ks;
     ++constr_idx;
 
     A(constr_idx, IDX_A0) = 1.0;  // a0
-    upper_bound[constr_idx] = a0;
-    lower_bound[constr_idx] = a0;
+    upper_bound[constr_idx] = a0 / ks;
+    lower_bound[constr_idx] = a0 / ks;
     ++constr_idx;
   }
 
@@ -333,9 +336,9 @@ bool JerkFilteredSmoother::apply(
   // get velocity & acceleration
   for (size_t i = 0; i < N; ++i)
   {
-    double b = optval.at(IDX_B0 + i);
+    double b = optval.at(IDX_B0 + i) * ks * ks;
     output.at(i).longitudinal_velocity_mps = std::sqrt(std::max(b, 0.0));
-    output.at(i).acceleration_mps2 = optval.at(IDX_A0 + i);
+    output.at(i).acceleration_mps2 = optval.at(IDX_A0 + i) * ks;
   }
   for (size_t i = N; i < output.size(); ++i)
   {
