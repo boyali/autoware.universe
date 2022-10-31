@@ -194,9 +194,9 @@ void OSQPInterface::updateVerbose(const bool is_verbose)
   }
 }
 
-void OSQPInterface::updateScaling(const bool is_scaled)
+void OSQPInterface::updateScaling(const int numof_scaling_iter)
 {
-  m_settings->scaling = is_scaled;  // for default setting
+  m_settings->scaling = numof_scaling_iter;  // for default setting
 }
 
 bool OSQPInterface::setWarmStart(

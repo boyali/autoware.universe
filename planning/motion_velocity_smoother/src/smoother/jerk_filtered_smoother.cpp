@@ -40,7 +40,7 @@ JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node &node) : SmootherBase(no
   qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
   qp_solver_.updateEpsAbs(1.0e-8);  // def: 1.0e-4
   qp_solver_.updateVerbose(false);
-  qp_solver_.updateScaling(true);
+  qp_solver_.updateScaling(20);
 }
 
 void JerkFilteredSmoother::setParam(const Param &smoother_param)

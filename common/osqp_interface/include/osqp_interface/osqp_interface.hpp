@@ -158,7 +158,7 @@ class OSQP_INTERFACE_PUBLIC OSQPInterface
   void updateEpsRel(const double eps_rel);
   void updateMaxIter(const int iter);
   void updateVerbose(const bool verbose);
-  void updateScaling(const bool scaling);
+  void updateScaling(const int numof_scaling_iter);
   void updateRhoInterval(const int rho_interval);
   void updateRho(const double rho);
   void updateAlpha(const double alpha);
