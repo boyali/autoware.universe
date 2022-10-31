@@ -11,6 +11,7 @@ find_package(Boost REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+
 # FMT
 find_package(fmt)
 
@@ -42,6 +43,7 @@ set(SMOOTHER_SRC
   src/trajectory_utils.cpp
   src/resample.cpp
   )
+
 
 ament_auto_add_library(smoother SHARED
   ${SMOOTHER_SRC}
