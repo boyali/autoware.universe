@@ -215,7 +215,7 @@ void NonlinearMPCNode::onTimer()
    * @brief MPC loop : THIS SCOPE is important to update and maintain the MPC_CORE object. The
    * operations are in an order.
    * */
-  double const &&timer_mpc_step = ns_utils::tic();
+  double const &&timer_mpc_step = stop_watch_.tic();
 
   // Find the index of the prev and next waypoint.
   current_error_report_ = ErrorReportMsg{};
@@ -325,8 +325,9 @@ void NonlinearMPCNode::onTimer()
     auto const &use_linear_initialization = params_node_.use_linear_trajectory_initialization;
 
     // Compute the initial reference trajectories and discretisize the system.
-    if (auto const &&is_initialized = nonlinear_mpc_controller_ptr_->initializeTrajectories(
-        interpolator_curvature_pws, use_linear_initialization);
+    if (auto const &&is_initialized =
+        nonlinear_mpc_controller_ptr_->initializeTrajectories(interpolator_curvature_pws,
+                                                              use_linear_initialization);
       !is_initialized)
     {
       // vehicle_motion_fsm_.setEmergencyFlag(true);
@@ -468,11 +469,12 @@ void NonlinearMPCNode::onTimer()
 
   auto const &time_that_input_will_apply =
     this->now() + rclcpp::Duration::from_seconds(params_node_.input_delay_time);
+
   control_cmd.stamp = time_that_input_will_apply;
   inputs_buffer_.emplace_back(control_cmd);
 
   /** estimate the average solve time */
-  auto const &&current_mpc_solve_time_msec = ns_utils::toc(timer_mpc_step);
+  auto const &&current_mpc_solve_time_msec = stop_watch_.toc(timer_mpc_step);
 
   // convert milliseconds to seconds.
   auto &&current_mpc_solve_time_sec = current_mpc_solve_time_msec * 1e-3;
@@ -596,14 +598,6 @@ bool NonlinearMPCNode::isDataReady()
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), (1000ms).count(),
       "[mpc_nonlinear] Waiting for the current steering measurement ...");
-    return false;
-  }
-
-  if (!interpolator_curvature_pws.isInitialized())
-  {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), (1000ms).count(),
-      "[mpc_nonlinear] Waiting for the curvature interpolator to be initialized ...");
     return false;
   }
 
@@ -1070,8 +1064,8 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
   return is_smoothed;
 }
 
-bool NonlinearMPCNode::makeFixedSizeMat_sxyz(
-  const ns_data::MPCdataTrajectoryVectors &mpc_traj_raw, map_matrix_in_t &fixed_map_ref_sxyz)
+bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVectors &mpc_traj_raw,
+                                             map_matrix_in_t &fixed_map_ref_sxyz)
 {
   /**
    * @brief Raw trajectory enters in variable size, it is resampled into a fixed size, and curvature
@@ -1087,37 +1081,18 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(
   /**
    * @brief A new coordinate vector for a fixed size trajectories.
    **/
-  std::vector<double> s_fixed_size_coordinate =
-    ns_utils::linspace(initial_distance, final_distance, map_in_fixed_size);
+  std::vector<double> s_fixed_size_coordinate = ns_utils::linspace(initial_distance, final_distance, map_in_fixed_size);
 
-  /**
-   * @brief Create a piece-wise cubic interpolator for x and y.
-   * */
-  ns_splines::InterpolatingSplinePCG interpolator_spline_pws(3);  // piecewise
 
   /**
    * @brief Create a piece-wise linear interpolator for the rest of the coordinates.
    * */
-  ns_splines::InterpolatingSplinePCG interpolator_linear(1);
 
   // Interpolated vector containers.
-  std::vector<double> xinterp;
-  std::vector<double> yinterp;
-  std::vector<double> zinterp;
-
-  xinterp.reserve(map_in_fixed_size);
-  yinterp.reserve(map_in_fixed_size);
-  zinterp.reserve(map_in_fixed_size);
-
   // Resample the varying size raw trajectory into a fixed size trajectory points.
-  auto const &&is_interpolated_x = interpolator_spline_pws.Interpolate(
-    mpc_traj_raw.s, mpc_traj_raw.x, s_fixed_size_coordinate, xinterp);
-
-  auto const &&is_interpolated_y = interpolator_spline_pws.Interpolate(
-    mpc_traj_raw.s, mpc_traj_raw.y, s_fixed_size_coordinate, yinterp);
-
-  auto const &&is_interpolated_z = interpolator_linear.Interpolate(
-    mpc_traj_raw.s, mpc_traj_raw.z, s_fixed_size_coordinate, zinterp);
+  auto xinterp = interpolation::spline(mpc_traj_raw.s, mpc_traj_raw.x, s_fixed_size_coordinate);
+  auto yinterp = interpolation::spline(mpc_traj_raw.s, mpc_traj_raw.y, s_fixed_size_coordinate);
+  auto zinterp = interpolation::spline(mpc_traj_raw.s, mpc_traj_raw.z, s_fixed_size_coordinate);
 
   // ns_utils::print("on trajectory vector sizes, zinterp vs map size", zinterp.size(),
   // map_in_fixed_size);
@@ -1130,12 +1105,15 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(
   fixed_map_ref_sxyz.col(2) = map_vector_in_t::Map(yinterp.data());                  // ynew
   fixed_map_ref_sxyz.col(3) = map_vector_in_t::Map(zinterp.data());                  // znew
 
-  return is_interpolated_x && is_interpolated_y && is_interpolated_z;
+  bool are_interpolated = s_fixed_size_coordinate.size() == xinterp.size();
+  are_interpolated &= s_fixed_size_coordinate.size() == yinterp.size();
+  are_interpolated &= s_fixed_size_coordinate.size() == zinterp.size();
+
+  return are_interpolated;
 }
 
-bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
-  ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw,
-  map_matrix_in_t const &fixed_map_ref_sxyz)
+bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw,
+                                                             map_matrix_in_t const &fixed_map_ref_sxyz)
 {
   using ::ns_data::trajVectorVariant;
 
@@ -1194,9 +1172,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
     z_smooth_vect.at(k) = interpolated_map.col(3)(k);
 
     // interpolate the longitudinal speed.
-    double vx_temp{};
-    ns_utils::interp1d_linear(mpc_traj_raw.s, mpc_traj_raw.vx, s_smooth_vect.at(k), vx_temp);
-
+    auto const &vx_temp = interpolation::lerp(mpc_traj_raw.s, mpc_traj_raw.vx, s_smooth_vect.at(k));
     v_smooth_vect.at(k) = vx_temp;
 
     curvature_smooth_vect.at(k) = curvature.col(0)(k);
@@ -1542,16 +1518,7 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
     error_states[0], error_states[1]);
 
   // compute the current curvature and store it.
-  if (auto const &&could_interpolate =
-      interpolator_curvature_pws.Interpolate(current_s0_, current_curvature_k0_);
-    !could_interpolate)
-  {
-    RCLCPP_ERROR(
-      get_logger(),
-      "[mpc_nonlinear] Could not interpolate the curvature in the initial state update "
-      "method ...");
-    return;
-  }
+  current_curvature_k0_ = interpolator_curvature_pws.interpolatePoint(current_s0_);
 
   // Create the dynamic parameters
   Model::param_vector_t params(Model::param_vector_t::Zero());
@@ -1619,19 +1586,10 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(
 
       // d stands for  delayed states.
       auto const &sd0 = x0_predicted(ns_utils::toUType(VehicleStateIds::s));
-      double kappad0{};  // curvature placeholder
       double vxk{};      // to interpolate the target speed.
 
       // Estimate the curvature.  The spline data is updated in the onTrajectory().
-      if (auto const &&could_interpolate = interpolator_curvature_pws.Interpolate(sd0, kappad0);
-        !could_interpolate)
-      {
-        RCLCPP_ERROR(
-          get_logger(),
-          "[nonlinear_mpc - predict initial state]: spline interpolator failed to compute  the  "
-          "coefficients ...");
-        return;
-      }
+      auto kappad0 = interpolator_curvature_pws.interpolatePoint(sd0);
 
       nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(sd0, vxk);
 
@@ -1655,8 +1613,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(
   nonlinear_mpc_controller_ptr_->setCurrent_s0_predicted(current_predicted_s0_);
 
   // Predict the curvature and Ackermann steering angle.
-  interpolator_curvature_pws.Interpolate(current_predicted_s0_, current_predicted_curvature_p0_);
-
+  current_predicted_curvature_p0_ = interpolator_curvature_pws.interpolatePoint(current_predicted_s0_);
   current_feedforward_steering_ = std::atan(current_predicted_curvature_p0_ * wheel_base_);
 
   // Set the predicted model params.
@@ -1673,7 +1630,7 @@ visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectory
   Model::trajectory_data_t const &td) const
 {
   visualization_msgs::msg::MarkerArray marker_array;
-  size_t const &&nX = td.nX();
+  size_t const &nX = td.nX();
 
   if (td.X.empty())
   {

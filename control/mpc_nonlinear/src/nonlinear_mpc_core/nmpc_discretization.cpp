@@ -215,14 +215,8 @@ bool ns_discretization::multipleShootingTrajectory(
     std::vector<double> kappa0_kappa1;
     kappa0_kappa1.reserve(2);
 
-    // InterpolateInCoordinates wit PCG setting reusing_param true.
-    if (auto const &&could_interpolate =
-        piecewise_interpolator.Interpolate(s0s1, kappa0_kappa1);!could_interpolate)
-    {
-      // ROS_ERROR("[nonlinear_mpc-discretization]
-      // Couldn't InterpolateInCoordinates at time %zu of %zu ", k, K);
-      return false;
-    }
+    kappa0_kappa1[0] = piecewise_interpolator.interpolatePoint(s0s1.at(0));
+    kappa0_kappa1[1] = piecewise_interpolator.interpolatePoint(s0s1.at(1));
 
     params0(ns_utils::toUType(VehicleParamIds::curvature)) = kappa0_kappa1[0];
     params0(ns_utils::toUType(VehicleParamIds::target_vx)) =
@@ -308,16 +302,8 @@ bool ns_discretization::multipleShootingTrajectory(
     auto const u_eq = trajectory_data.U.at(k);
 
     auto const &s0 = x_eq(3);
-    double kappa0{};
 
-    // InterpolateInCoordinates wit PCG setting reusing_param true.
-    if (auto const &&could_interpolate =
-        piecewise_interpolator.Interpolate(s0, kappa0); !could_interpolate)
-    {
-      // ROS_ERROR("[nonlinear_mpc-discretization] Couldn't InterpolateInCoordinates
-      // at time %zu of %zu ", k, K);
-      return false;
-    }
+    auto kappa0 = piecewise_interpolator.interpolatePoint(s0);
 
     params(ns_utils::toUType(VehicleParamIds::curvature)) = kappa0;
     params(ns_utils::toUType(VehicleParamIds::target_vx)) =

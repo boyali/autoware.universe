@@ -90,15 +90,7 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     // point.
 
     auto const &s0 = xk(ns_utils::toUType(VehicleStateIds::s));
-    double kappa0{};
-
-    // ns_utils::print("s vs curvature in LPV feedback : ", s0, kappa0);
-    if (auto const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);
-      !could_interpolate)
-    {
-      ns_utils::print("LPV spline interpolator failed to compute the spline coefficients");
-      return false;
-    }
+    auto kappa0 = piecewise_interpolator.interpolatePoint(s0);
 
     ns_utils::print("curvature and x_error in feedback", kappa0);
     ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x_error));

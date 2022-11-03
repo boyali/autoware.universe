@@ -33,6 +33,7 @@
     <depend>autoware_auto_vehicle_msgs</depend>
     <depend>autoware_control_toolbox</depend>
     <depend>communication_delay_compensator</depend>
+
     <depend>motion_utils</depend>
     <depend>interpolation</depend>
 
