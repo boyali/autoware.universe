@@ -629,8 +629,7 @@ void NonlinearMPCNode::publishPerformanceVariables(ControlCmdMsg const &control_
 {
   // Set nmpc performance variables.
   nmpc_performance_vars_.stamp = this->now();
-  nmpc_performance_vars_.steering_angle_input =
-    static_cast<double>(control_cmd.lateral.steering_tire_angle);
+  nmpc_performance_vars_.steering_angle_input = static_cast<double>(control_cmd.lateral.steering_tire_angle);
   nmpc_performance_vars_.steering_angle_rate_input =
     static_cast<double>(control_cmd.lateral.steering_tire_rotation_rate);
 

@@ -1,18 +1,16 @@
-/*
- * Copyright 2021 - 2022 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2022 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef MPC_NONLINEAR_NONLINEAR_MPC_STATE_MACHINE_H
 #define MPC_NONLINEAR_NONLINEAR_MPC_STATE_MACHINE_H
@@ -26,7 +24,8 @@
 
 namespace ns_states
 {
-enum class motionStateEnums : int {
+enum class motionStateEnums : int
+{
   isAtCompleteStop = 0,   // there is no trajectory to follow
   isStoppedWillMove = 1,  // vehicle is in stopped state will start moving
   willbeStopping = -1,    // vehicle will be moving
@@ -65,25 +64,25 @@ struct isMoving
 using State = std::variant<
   state::isatCompleteStop, state::isMoving, state::willbeStopping, state::isStoppedwillMove>;
 
-template <class... Ts>
-struct overload : Ts...
+template<class... Ts>
+struct overload : Ts ...
 {
   using Ts::operator()...;
 };
 
 /** creates overloaded  lambda functions state_type = []()(state_type as args ){}*/
-template <class... Ts>
+template<class... Ts>
 overload(Ts...) -> overload<Ts...>;
 
 /** MAIN VARIANT FSM */
 class VehicleMotionFSM
 {
-public:
+ public:
   VehicleMotionFSM() = default;
 
   VehicleMotionFSM(
-    double const & stop_entry_ego_speed, double const & stop_entry_target_speed,
-    double const & keep_stopping_distance, double const & will_stop_distance);
+    double const &stop_entry_ego_speed, double const &stop_entry_target_speed,
+    double const &keep_stopping_distance, double const &will_stop_distance);
 
   [[nodiscard]] State onEvent(state::isStoppedwillMove) const;
 
@@ -93,13 +92,13 @@ public:
 
   [[nodiscard]] State onEvent(state::isatCompleteStop) const;
 
-  void toggle(std::array<double, 3> const & dist2stop_egovx_nextvx);
+  void toggle(std::array<double, 3> const &dist2stop_egovx_nextvx);
   void printCurrentStateMsg();
   [[nodiscard]] motionStateEnums getCurrentStateType() const;
 
   std::string_view getFSMTypeReport();
 
-private:
+ private:
   State current_state_{state::isStoppedwillMove{}};
   motionStateEnums current_state_type_{motionStateEnums::isStoppedWillMove};
 

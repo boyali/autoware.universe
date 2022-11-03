@@ -1,18 +1,16 @@
-/*
- * Copyright 2021 - 2022 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2022 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef NONLINEAR_MPC_NODE__NONLINEAR_MPC_NODE_VISUALIZATION_HPP_
 #define NONLINEAR_MPC_NODE__NONLINEAR_MPC_NODE_VISUALIZATION_HPP_
@@ -78,13 +76,13 @@ inline std_msgs::msg::ColorRGBA createMarkerColor(float r, float g, float b, flo
 
 inline visualization_msgs::msg::Marker
 createDefaultMarker(
-  const std::string_view & frame_id,
-  const builtin_interfaces::msg::Time & stamp,
-  const std::string_view & ns,
+  const std::string_view &frame_id,
+  const builtin_interfaces::msg::Time &stamp,
+  const std::string_view &ns,
   const int32_t id,
   const int32_t type,
-  const geometry_msgs::msg::Vector3 & scale,
-  const std_msgs::msg::ColorRGBA & color)
+  const geometry_msgs::msg::Vector3 &scale,
+  const std_msgs::msg::ColorRGBA &color)
 {
   visualization_msgs::msg::Marker marker;
 
@@ -106,9 +104,9 @@ createDefaultMarker(
 }
 
 visualization_msgs::msg::Marker createLocationMarker(
-  geometry_msgs::msg::Pose const & waypoint_pose,
-  const builtin_interfaces::msg::Time & stamp,
-  std::string const & ns);
+  geometry_msgs::msg::Pose const &waypoint_pose,
+  const builtin_interfaces::msg::Time &stamp,
+  std::string const &ns);
 
 /**
  * @brief Create a Autoware Planning Trajectory Msg object
@@ -121,8 +119,8 @@ visualization_msgs::msg::Marker createLocationMarker(
  * @return false
  */
 bool createAutowarePlanningTrajectoryMsg(
-  Model::trajectory_data_t const & td,
-  std::array<double, 2> const & xy0,
-  autoware_auto_planning_msgs::msg::Trajectory * autoware_traj);
+  Model::trajectory_data_t const &td,
+  std::array<double, 2> const &xy0,
+  autoware_auto_planning_msgs::msg::Trajectory *autoware_traj);
 
 #endif  // NONLINEAR_MPC_NODE__NONLINEAR_MPC_NODE_VISUALIZATION_HPP_

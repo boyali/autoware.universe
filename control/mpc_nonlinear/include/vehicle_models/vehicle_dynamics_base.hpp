@@ -1,23 +1,22 @@
+// Copyright 2022 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 /*
  * Use of this source code is governed by an MIT-style license that can be found
  * in the LICENSE file or at https://opensource.org/licenses/MIT.
  */
 
-/*
- * Copyright 2021 - 2022 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 #ifndef VEHICLE_MODELS__VEHICLE_DYNAMICS_BASE_HPP_
 #define VEHICLE_MODELS__VEHICLE_DYNAMICS_BASE_HPP_
@@ -55,7 +54,7 @@
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 class VehicleDynamicsBase
 {
-public:
+ public:
   using state_vector_t = Eigen::Matrix<double, STATE_DIM, 1>;  // x, weights wx, z for f_0(x,u)
   using state_matrix_t = Eigen::Matrix<double, STATE_DIM, STATE_DIM>;  // A, Q
 
@@ -140,7 +139,7 @@ public:
   void InitializeModel();
 
   [[nodiscard]] bool IsInitialized() const
-  {return initialized_;}
+  { return initialized_; }
 
   /**
    * @brief Vehicle dynamics base class that defines vehicle model nonlinear and linear equations
@@ -151,18 +150,18 @@ public:
    * @param xdot [out]  xdot =f(x, u)
    * */
   virtual void systemEquations(
-    const state_vector_ad_t & x, const input_vector_ad_t & u,
-    const VehicleDynamicsBase::param_vector_ad_t & params,  // curvature, target vx
-    state_vector_ad_t & xdot_f) = 0;
+    const state_vector_ad_t &x, const input_vector_ad_t &u,
+    const VehicleDynamicsBase::param_vector_ad_t &params,  // curvature, target vx
+    state_vector_ad_t &xdot_f) = 0;
 
   void computeFx(
-    const state_vector_t & x, const input_vector_t & u,
-    const VehicleDynamicsBase::param_vector_t & params,  // curvature, target vx
-    state_vector_t & f);
+    const state_vector_t &x, const input_vector_t &u,
+    const VehicleDynamicsBase::param_vector_t &params,  // curvature, target vx
+    state_vector_t &f);
 
   void computeJacobians(
-    const state_vector_t & x, const input_vector_t & u, param_vector_t const & params,
-    state_matrix_t & A, control_matrix_t & B);
+    const state_vector_t &x, const input_vector_t &u, param_vector_t const &params,
+    state_matrix_t &A, control_matrix_t &B);
 
   virtual ~VehicleDynamicsBase()
   {
@@ -170,7 +169,7 @@ public:
     CppAD::thread_alloc::inuse(0);
   }
 
-private:
+ private:
   // cppAd function for xdot = f(x, u).
   CppAD::ADFun<scalar_t> f_;
 
@@ -188,7 +187,8 @@ private:
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::InitializeModel()
 {
-  if (initialized_) {
+  if (initialized_)
+  {
     return;
   }
 
@@ -288,8 +288,8 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
  * */
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeFx(
-  const VehicleDynamicsBase::state_vector_t & x, const VehicleDynamicsBase::input_vector_t & u,
-  const VehicleDynamicsBase::param_vector_t & params, VehicleDynamicsBase::state_vector_t & f)
+  const VehicleDynamicsBase::state_vector_t &x, const VehicleDynamicsBase::input_vector_t &u,
+  const VehicleDynamicsBase::param_vector_t &params, VehicleDynamicsBase::state_vector_t &f)
 {
   assert(initialized_);
 
@@ -318,9 +318,9 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeFx
  * */
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeJacobians(
-  const VehicleDynamicsBase::state_vector_t & x, const VehicleDynamicsBase::input_vector_t & u,
-  const VehicleDynamicsBase::param_vector_t & params, VehicleDynamicsBase::state_matrix_t & A,
-  VehicleDynamicsBase::control_matrix_t & B)
+  const VehicleDynamicsBase::state_vector_t &x, const VehicleDynamicsBase::input_vector_t &u,
+  const VehicleDynamicsBase::param_vector_t &params, VehicleDynamicsBase::state_matrix_t &A,
+  VehicleDynamicsBase::control_matrix_t &B)
 {
   assert(initialized_);
 

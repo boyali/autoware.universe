@@ -1,18 +1,16 @@
-/*
- * Copyright 2021 - 2022 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2022 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef NONLINEAR_MPC_CORE__NMPC_DATA_TRAJECTORY_HPP_
 #define NONLINEAR_MPC_CORE__NMPC_DATA_TRAJECTORY_HPP_
@@ -80,10 +78,10 @@ using trajVectorVariant =
  * */
 class MPCdataTrajectoryVectors
 {
-public:
+ public:
   MPCdataTrajectoryVectors() = default;
 
-  explicit MPCdataTrajectoryVectors(size_t const & traj_size);
+  explicit MPCdataTrajectoryVectors(size_t const &traj_size);
 
   // ~MPCdataTrajectoryVectors() = default;
   std::vector<double> s;          //!< @brief arc-length [m]
@@ -100,42 +98,51 @@ public:
    * @brief push_back for all values.
    * @param msg trajectory message.
    */
-  void emplace_back(autoware_auto_planning_msgs::msg::Trajectory const & msg);
+  void emplace_back(autoware_auto_planning_msgs::msg::Trajectory const &msg);
 
   /**
    * @brief set the std::vectors of the corresponding data: i.e x, y, z, yaw.
    * @param coord_letter data variable name; s, x, y, z ...
    * */
-  void setTrajectoryCoordinate(char const & coord_letter, std::vector<double> const & data);
+  void setTrajectoryCoordinate(char const &coord_letter, std::vector<double> const &data);
 
-  void setTrajectoryVector(std::vector<double> & vect, trajVectorVariant const & vartag)
+  void setTrajectoryVector(std::vector<double> &vect, trajVectorVariant const &vartag)
   {
     std::visit(
       overload{
-        [this, &vect](s_tag const &) {this->s = std::move(vect);},
+        [this, &vect](s_tag const &)
+        { this->s = std::move(vect); },
 
-        [this, &vect](t_tag const &) {this->t = std::move(vect);},
+        [this, &vect](t_tag const &)
+        { this->t = std::move(vect); },
 
-        [this, &vect](a_tag const &) {this->ax = std::move(vect);},
+        [this, &vect](a_tag const &)
+        { this->ax = std::move(vect); },
 
-        [this, &vect](x_tag const &) {this->x = std::move(vect);},
+        [this, &vect](x_tag const &)
+        { this->x = std::move(vect); },
 
-        [this, &vect](y_tag const &) {this->y = std::move(vect);},
+        [this, &vect](y_tag const &)
+        { this->y = std::move(vect); },
 
-        [this, &vect](z_tag const &) {this->z = std::move(vect);},
+        [this, &vect](z_tag const &)
+        { this->z = std::move(vect); },
 
-        [this, &vect](yaw_tag const &) {this->yaw = std::move(vect);},
+        [this, &vect](yaw_tag const &)
+        { this->yaw = std::move(vect); },
 
-        [this, &vect](vx_tag const &) {this->vx = std::move(vect);},
+        [this, &vect](vx_tag const &)
+        { this->vx = std::move(vect); },
 
-        [this, &vect](curv_tag const &) {this->curvature = std::move(vect);}},
+        [this, &vect](curv_tag const &)
+        { this->curvature = std::move(vect); }},
       vartag);
   }
 
   /**
    * @brief adds an additional point to the std:vectors to extend the coordinates at the end.
    * */
-  void addExtraEndPoints(double const & avg_mpc_compute_time = 0.0);
+  void addExtraEndPoints(double const &avg_mpc_compute_time = 0.0);
 
   void clear();
 
@@ -160,7 +167,7 @@ struct TrajectoryData
   /**
    * @brief initialize the state and control trajectories in the containers.
    * */
-  void initializeTrajectory(size_t const & K, double const & dt_step);
+  void initializeTrajectory(size_t const &K, double const &dt_step);
 
   /**
    * @brief returns the size of X-vector container.
@@ -180,8 +187,8 @@ struct TrajectoryData
    * @param [out] interpolated control signal at the requested time.
    * */
   void getControlMPCSolutionsAtTime(
-    double const & t, double const & mpc_dt,
-    typename Model::input_vector_t & u_solutions_mpc) const;
+    double const &t, double const &mpc_dt,
+    typename Model::input_vector_t &u_solutions_mpc) const;
 
   // DATA MEMBERS
   double dt{};  // trajectory time step.
@@ -201,7 +208,7 @@ struct TrajectoryData
  *
  * */
 template<class Model>
-void TrajectoryData<Model>::initializeTrajectory(size_t const & K, double const & dt_step)
+void TrajectoryData<Model>::initializeTrajectory(size_t const &K, double const &dt_step)
 {
   // X.resize(K);
   // U.resize(K); // Alternative initialization of X and U is;
@@ -232,9 +239,10 @@ size_t TrajectoryData<Model>::nU() const
 
 template<class Model>
 void TrajectoryData<Model>::getControlMPCSolutionsAtTime(
-  const double & t, const double & mpc_dt, typename Model::input_vector_t & u_solutions_mpc) const
+  const double &t, const double &mpc_dt, typename Model::input_vector_t &u_solutions_mpc) const
 {
-  if (t > mpc_dt) {
+  if (t > mpc_dt)
+  {
     ns_utils::print(
       "[nonlinear_mpc] The control at time t greater than"
       " the MPC time is not implemented ...");
@@ -248,9 +256,11 @@ void TrajectoryData<Model>::getControlMPCSolutionsAtTime(
   // Get the first and second controls.
   auto u0 = U.at(0);
 
-  if (control_signal_order == controlSampling_order::ZOH) {
+  if (control_signal_order == controlSampling_order::ZOH)
+  {
     u_solutions_mpc = u0;
-  } else {
+  } else
+  {
     auto const u1 = U.at(1);
     u_solutions_mpc = u0 + (t / mpc_dt) * (u1 - u0);
   }

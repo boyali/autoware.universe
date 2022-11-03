@@ -1,18 +1,16 @@
-/*
- * Copyright 2021 - 2022 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2022 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef NONLINEAR_MPC_CORE__NMPC_DATA_DISCRETIZATION_HPP_
 #define NONLINEAR_MPC_CORE__NMPC_DATA_DISCRETIZATION_HPP_
@@ -35,7 +33,7 @@ struct DiscretizationData
 
   typename Model::state_vector_v_t z;  // !<-@brief f0 - Ax0 - Bu0 - Cu1
 
-  void initializeDiscretizationMatrices(size_t const & K, double const & dt_step);
+  void initializeDiscretizationMatrices(size_t const &K, double const &dt_step);
   [[nodiscard]] std::size_t nX() const;
 
   [[nodiscard]] __attribute__((unused)) std::size_t nU() const;
@@ -45,8 +43,8 @@ struct DiscretizationData
 
 template<class Model>
 void DiscretizationData<Model>::initializeDiscretizationMatrices(
-  size_t const & K,
-  double const & dt_step)
+  size_t const &K,
+  double const &dt_step)
 {
   A.resize(K - 1, Model::state_matrix_t::Zero());     // !<-@brief vector of As
   B.resize(K - 1, Model::control_matrix_t::Zero());   // !<-@brief vector of Bs
