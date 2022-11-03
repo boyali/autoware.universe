@@ -1266,19 +1266,9 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
    * node modules.
    * */
 
-  if (auto const &is_updated =
-      interpolator_curvature_pws.Initialize(mpc_traj_smoothed.s, mpc_traj_smoothed.curvature);
-    !is_updated)
-  {
-    RCLCPP_ERROR(
-      get_logger(),
-      "[mpc_nonlinear - resampling] Could not update the point-wise curvature "
-      "interpolator_spline_pws  data ...");
-    return false;
-  }
+  interpolator_curvature_pws.calcSplineCoefficients(mpc_traj_smoothed.s, mpc_traj_smoothed.curvature);
 
   // DEBUG
-
   // end of DEBUG
   return true;
 }

@@ -60,6 +60,8 @@
 
 // Autoware headers.
 #include "helper_functions/angle_utils.hpp"
+#include "interpolation/linear_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
@@ -93,14 +95,13 @@ struct DebugData
   geometry_msgs::msg::Pose current_closest_pose{};
 };
 
-template<typename T>
+template <typename T>
 void update_param(
   const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
 {
   auto it = std::find_if(
     parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter)
-    {return parameter.get_name() == name;});
+    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
   if (it != parameters.cend()) {
     value = static_cast<T>(it->template get_value<T>());
   }
@@ -108,9 +109,7 @@ void update_param(
 
 struct sCommandTimeStampFind
 {
-  explicit sCommandTimeStampFind(rclcpp::Time const & timestamp)
-  : time_stamp_(timestamp)
-  {}
+  explicit sCommandTimeStampFind(rclcpp::Time const & timestamp) : time_stamp_(timestamp) {}
 
   bool operator()(ControlCmdMsg const & cmd) const
   {
@@ -152,8 +151,7 @@ public:
    *
    * */
   // pws stands for point-wise
-  ns_splines::InterpolatingSplinePCG interpolator_curvature_pws =
-    ns_splines::InterpolatingSplinePCG(3);
+  SplineInterpolation interpolator_curvature_pws;
 
   ns_nmpc_interface::NonlinearMPCController getNMPCcore() const
   {
