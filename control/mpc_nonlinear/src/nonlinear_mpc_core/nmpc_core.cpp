@@ -474,21 +474,11 @@ void ns_nmpc_interface::NonlinearMPCController::getPredictedArcLengthDistanceVec
 
   // to create a base time coordinate for the time-vx interpolator.
   auto const &&t_predicted_coords = ns_utils::linspace<double>(t_mpc_start, t_mpc_ends, K_mpc_steps);
-  std::vector<double> vx_interpolated_vect;
 
-  SplineInterpolation time_speed_interpolator(1);
+  auto vx_interpolated_vect = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->t,
+                                                  current_MPCtraj_smooth_vects_ptr_->vx,
+                                                  t_predicted_coords);
 
-  if (bool const &&is_interpolated = time_speed_interpolator.Interpolate(
-      current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx,
-      t_predicted_coords, vx_interpolated_vect);
-    !is_interpolated)
-  {
-    RCLCPP_ERROR(
-      rclcpp::get_logger(node_logger_name_),
-      "[nonlinear_mpc]: getPredictedArcLengthDistanceVector spline interpolator failed to compute "
-      "the coefficients ...");
-    return;
-  }
 
   // Integrate the speeds by the trapezoidal rule and mpc_time step duration.
   std::transform(
