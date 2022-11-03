@@ -230,7 +230,7 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredict
     // Get s0 and interpolate the curvature at this distance point.
     double const &s0 = xk(3);  // always (k-1)th. x[k-1].
 
-    kappa0 = piecewise_interpolator.getSplineInterpolatedValues(s0);
+    kappa0 = piecewise_interpolator.interpolatePoint(s0);
 
     params(0) = kappa0;
     params(1) = data_nmpc_.target_reference_states_and_controls.X[k - 1](6);  // target vx
@@ -278,25 +278,16 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceUseVaryin
     double s0 = xk(3);  // always (k-1)th. x[k-1].
 
     // We don't need to use could_interpolate, as the interpolator is verified inside
-    if (auto could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);
-      !could_interpolate)
-    {
-      RCLCPP_ERROR(
-        rclcpp::get_logger(node_logger_name_),
-        "[nonlinear-mpc - simulate varying speed sequence], the spline could not interpolate ...");
-      return;
-    }
+    kappa0 = piecewise_interpolator.interpolatePoint(s0);
 
     auto const &uk = data_nmpc_.trajectory_data.U[k - 1];
 
     // InterpolateInCoordinates the target v0, v1 on the trajectory.
-    ns_utils::interp1d_linear(
-      current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx, td0, v0);
+    v0 = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx, td0);
 
-    // use the mpc time step duration dt.
-    ns_utils::interp1d_linear(
-      current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx,
-      td0 + data_nmpc_.mpc_prediction_dt, v1);
+    v1 = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->t,
+                             current_MPCtraj_smooth_vects_ptr_->vx,
+                             td0 + data_nmpc_.mpc_prediction_dt);
 
     params(0) = kappa0;
     params(1) = data_nmpc_.target_reference_states_and_controls.X[k - 1](6);
@@ -344,22 +335,11 @@ void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInter
     t_mpc_start + static_cast<double>(K_mpc_steps - 1) * data_nmpc_.mpc_prediction_dt;
 
   // to create a base time coordinate for the time-vx interpolator.
-  auto const &t_predicted_coords =
-    ns_utils::linspace<double>(t_mpc_start, t_mpc_ends, K_mpc_steps);
-  std::vector<double> vx_interpolated_vect;
+  auto const &t_predicted_coords = ns_utils::linspace<double>(t_mpc_start, t_mpc_ends, K_mpc_steps);
 
-  SplineInterpolation interpolator_time_speed(1);
-
-  if (auto const &is_interpolated = interpolator_time_speed.Interpolate(
-      current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx,
-      t_predicted_coords, vx_interpolated_vect);
-    !is_interpolated)
-  {
-    RCLCPP_ERROR(
-      rclcpp::get_logger(node_logger_name_),
-      "[mpc_nonlinear] UpdateScaledTargets couldn't interpolate the target speeds ...");
-    return;
-  }
+  auto vx_interpolated_vect = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->t,
+                                                  current_MPCtraj_smooth_vects_ptr_->vx,
+                                                  t_predicted_coords);
 
   // Set the target states.
   for (size_t k = 0; k < nX; ++k)
@@ -395,20 +375,10 @@ void ns_nmpc_interface::NonlinearMPCController::updateScaledPredictedTargetState
   std::vector<double> vx_interpolated;
 
   // Alternatively we can use Eigen version of Autoware spline.
-  SplineInterpolation spline_aw_eigen(1);  // linear interpolation.
 
   auto const &sbase = current_MPCtraj_raw_vects_ptr_->s;
   auto const &vxbase = current_MPCtraj_raw_vects_ptr_->vx;
-
-  if (auto const &is_interpolated =
-      spline_aw_eigen.Interpolate(sbase, vxbase, s_predicted, vx_interpolated);
-    !is_interpolated)
-  {
-    RCLCPP_ERROR(
-      rclcpp::get_logger(node_logger_name_),
-      "[mpc_nonlinear] UpdateScaledTargets couldn't interpolate the target states ...");
-    return;
-  }
+  vx_interpolated = interpolation::lerp(sbase, vxbase, s_predicted);
 
   // Set the target states.
   for (size_t k = 0; k < nX; k++)
@@ -643,42 +613,33 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
   double kappa0{};
 
   // Get predicted arc-length vector.
-  std::vector<double> xpredicted;
-  std::vector<double> ypredicted;
-  std::vector<double> yaw_predicted;
-  std::vector<double> ey_predicted;
-  std::vector<double> eyaw_predicted;
-  std::vector<double> vx_predicted;
-  std::vector<double> ax_predicted;
 
   // Fill the empty predicted vectors.
-  ns_utils::interp1d_linear(
-    current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->x, s_predicted_vect,
-    xpredicted);  // x
+  auto xpredicted = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s,
+                                        current_MPCtraj_smooth_vects_ptr_->x,
+                                        s_predicted_vect);  // x
 
-  ns_utils::interp1d_linear(
-    current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->y, s_predicted_vect,
-    ypredicted);  // y
 
-  ns_utils::interp1d_linear(
-    current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->yaw, s_predicted_vect,
-    yaw_predicted);  // yaw
+  auto ypredicted =
+    interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s,
+                        current_MPCtraj_smooth_vects_ptr_->y, s_predicted_vect);  // y
 
-  ns_utils::interp1d_linear(
-    current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->vx, s_predicted_vect,
-    vx_predicted);  // Vx
+  auto yaw_predicted = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s,
+                                           current_MPCtraj_smooth_vects_ptr_->yaw,
+                                           s_predicted_vect);  // yaw
 
-  ns_utils::interp1d_linear(
-    current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->ax, s_predicted_vect,
-    ax_predicted);  // ax
+  auto vx_predicted = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s,
+                                          current_MPCtraj_smooth_vects_ptr_->vx,
+                                          s_predicted_vect);  // Vx
+
+  auto ax_predicted = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s,
+                                          current_MPCtraj_smooth_vects_ptr_->ax, s_predicted_vect);  // ax
 
   //  [x, y, psi, s, ey, epsi, delta]
-  ey_predicted = ns_utils::linspace(xinitial_measured(4), 0.0, K_mpc_steps);
-  eyaw_predicted = ns_utils::linspace(xinitial_measured(5), 0.0, K_mpc_steps);
+  auto ey_predicted = ns_utils::linspace(xinitial_measured(4), 0.0, K_mpc_steps);
+  auto eyaw_predicted = ns_utils::linspace(xinitial_measured(5), 0.0, K_mpc_steps);
 
   // Target speeds
-  SplineInterpolation interpolator_distance_speed(1);
-
   for (size_t k = 1; k < K_mpc_steps; k++)
   {
     // auto xprev = data_nmpc_.trajectory_data.X[k - 1];
@@ -694,17 +655,7 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
 
     // InterpolateInCoordinates the curvature and compute the steering
     auto const sk = xk(3);
-
-    if (bool const &could_interpolate = piecewise_interpolator.Interpolate(sk, kappa0);
-      !could_interpolate)
-    {
-      RCLCPP_ERROR(
-        rclcpp::get_logger(node_logger_name_),
-        "[nonlinear_mpc] Linear trajectory initialization, spline "
-        " interpolator failed to compute  the coefficients ...");
-
-      return false;
-    }
+    kappa0 = piecewise_interpolator.interpolatePoint(sk);
 
     double const &&steering_k = atan(kappa0 * data_nmpc_.wheel_base);
 
@@ -717,10 +668,8 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
 
     // Initialize the controls.
     uk.setZero();
-
-    double vx_target{};
-    interpolator_distance_speed.Interpolate(
-      current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->vx, sk, vx_target);
+    auto vx_target = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s,
+                                         current_MPCtraj_smooth_vects_ptr_->vx, sk);
 
     uk(0) = ax_predicted[k];  // predicted acceleration.
     uk(1) = xk(7);            // predicted feedforward steering
@@ -895,31 +844,31 @@ double ns_nmpc_interface::NonlinearMPCController::getObjectiveValue() const
 void ns_nmpc_interface::NonlinearMPCController::getRawVxAtDistance(
   double const &s, double &vx) const
 {
-  ns_utils::interp1d_linear(
+  interpolation::lerp(
     current_MPCtraj_raw_vects_ptr_->s, current_MPCtraj_raw_vects_ptr_->vx, s, vx);
 }
 
 void ns_nmpc_interface::NonlinearMPCController::getSmoothVxAtDistance(
   double const &s, double &vx) const
 {
-  ns_utils::interp1d_linear(
+  interpolation::lerp(
     current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->vx, s, vx);
 }
 
 void ns_nmpc_interface::NonlinearMPCController::getSmoothYawAtDistance(
   double const &s, double &yaw) const
 {
-  ns_utils::interp1d_linear(
+  interpolation::lerp(
     current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->yaw, s, yaw);
 }
 
 void ns_nmpc_interface::NonlinearMPCController::getSmoothXYZAtDistance(
   double const &s, std::array<double, 3> &xyz) const
 {
-  ns_utils::interp1d_linear(
+  interpolation::lerp(
     current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->x, s, xyz[0]);
-  ns_utils::interp1d_linear(
+  interpolation::lerp(
     current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->y, s, xyz[1]);
-  ns_utils::interp1d_linear(
+  interpolation::lerp(
     current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->z, s, xyz[2]);
 }
