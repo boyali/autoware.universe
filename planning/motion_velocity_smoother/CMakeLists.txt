@@ -38,6 +38,7 @@ set(SMOOTHER_SRC
   src/smoother/l2_pseudo_jerk_smoother.cpp
   src/smoother/linf_pseudo_jerk_smoother.cpp
   src/smoother/jerk_filtered_smoother.cpp
+  src/optimization_problem.cpp
   src/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.cpp
   src/smoother/analytical_jerk_constrained_smoother/velocity_planning_utils.cpp
   src/trajectory_utils.cpp
@@ -46,7 +47,7 @@ set(SMOOTHER_SRC
 
 
 ament_auto_add_library(smoother SHARED
-  ${SMOOTHER_SRC}
+  ${SMOOTHER_SRC} include/optimization_problem.hpp
   )
 
 target_link_libraries(smoother fmt::fmt stdc++fs)

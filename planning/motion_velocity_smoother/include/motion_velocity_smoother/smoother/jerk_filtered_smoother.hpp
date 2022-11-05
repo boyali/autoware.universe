@@ -33,6 +33,7 @@
 
 namespace motion_velocity_smoother
 {
+
 class JerkFilteredSmoother : public SmootherBase
 {
  public:
