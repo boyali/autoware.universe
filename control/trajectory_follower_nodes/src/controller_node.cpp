@@ -20,6 +20,7 @@
 #include "time_utils/time_utils.hpp"
 #include "trajectory_follower/mpc_lateral_controller.hpp"
 #include "trajectory_follower/pid_longitudinal_controller.hpp"
+#include "trajectory_follower/sysid_steering_input_generator/sysid_steering_input_generator.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -36,7 +37,7 @@ namespace control
 {
 namespace trajectory_follower_nodes
 {
-Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("controller", node_options)
+Controller::Controller(const rclcpp::NodeOptions &node_options) : Node("controller", node_options)
 {
   using std::placeholders::_1;
 
@@ -45,29 +46,40 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
 
   const auto lateral_controller_mode =
     getLateralControllerMode(declare_parameter("lateral_controller_mode", "mpc_follower"));
-  switch (lateral_controller_mode) {
-    case LateralControllerMode::MPC: {
+
+  switch (lateral_controller_mode)
+  {
+    case LateralControllerMode::MPC:
+    {
       lateral_controller_ = std::make_shared<trajectory_follower::MpcLateralController>(*this);
       break;
     }
-    case LateralControllerMode::PURE_PURSUIT: {
+    case LateralControllerMode::PURE_PURSUIT:
+    {
       lateral_controller_ = std::make_shared<pure_pursuit::PurePursuitLateralController>(*this);
       break;
     }
-    default:
-      throw std::domain_error("[LateralController] invalid algorithm");
+
+    case LateralControllerMode::SYS_ID:
+    {
+      lateral_controller_ = std::make_shared<trajectory_follower::SysIDLateralController>(*this);
+      break;
+    }
+
+    default:throw std::domain_error("[LateralController] invalid algorithm");
   }
 
   const auto longitudinal_controller_mode =
     getLongitudinalControllerMode(declare_parameter("longitudinal_controller_mode", "pid"));
-  switch (longitudinal_controller_mode) {
-    case LongitudinalControllerMode::PID: {
+  switch (longitudinal_controller_mode)
+  {
+    case LongitudinalControllerMode::PID:
+    {
       longitudinal_controller_ =
         std::make_shared<trajectory_follower::PidLongitudinalController>(*this);
       break;
     }
-    default:
-      throw std::domain_error("[LongitudinalController] invalid algorithm");
+    default:throw std::domain_error("[LongitudinalController] invalid algorithm");
   }
 
   sub_ref_path_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
@@ -89,7 +101,7 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
 }
 
 Controller::LateralControllerMode Controller::getLateralControllerMode(
-  const std::string & controller_mode) const
+  const std::string &controller_mode) const
 {
   if (controller_mode == "mpc_follower") return LateralControllerMode::MPC;
   if (controller_mode == "pure_pursuit") return LateralControllerMode::PURE_PURSUIT;
@@ -98,7 +110,7 @@ Controller::LateralControllerMode Controller::getLateralControllerMode(
 }
 
 Controller::LongitudinalControllerMode Controller::getLongitudinalControllerMode(
-  const std::string & controller_mode) const
+  const std::string &controller_mode) const
 {
   if (controller_mode == "pid") return LongitudinalControllerMode::PID;
 
@@ -123,13 +135,15 @@ void Controller::onSteering(const autoware_auto_vehicle_msgs::msg::SteeringRepor
 bool Controller::isTimeOut()
 {
   const auto now = this->now();
-  if ((now - lateral_output_->control_cmd.stamp).seconds() > timeout_thr_sec_) {
+  if ((now - lateral_output_->control_cmd.stamp).seconds() > timeout_thr_sec_)
+  {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 1000 /*ms*/,
       "Lateral control command too old, control_cmd will not be published.");
     return true;
   }
-  if ((now - longitudinal_output_->control_cmd.stamp).seconds() > timeout_thr_sec_) {
+  if ((now - longitudinal_output_->control_cmd.stamp).seconds() > timeout_thr_sec_)
+  {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 1000 /*ms*/,
       "Longitudinal control command too old, control_cmd will not be published.");
