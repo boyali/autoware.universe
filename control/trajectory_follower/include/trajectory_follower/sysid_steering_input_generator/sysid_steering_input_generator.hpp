@@ -1,6 +1,16 @@
+// Copyright 2022 The Autoware Foundation
 //
-// Created by ali on 18/11/22.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef TRAJECTORY_FOLLOWER_INCLUDE_TRAJECTORY_FOLLOWER_SYSID_STEERING_INPUT_GENERATOR_SYSID_STEERING_INPUT_GENERATOR_HPP_
 #define TRAJECTORY_FOLLOWER_INCLUDE_TRAJECTORY_FOLLOWER_SYSID_STEERING_INPUT_GENERATOR_SYSID_STEERING_INPUT_GENERATOR_HPP_
@@ -44,6 +54,34 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
 
  private:
   rclcpp::Node *node_;
+
+  // DATA MEMBERS
+  //!< @brief measured velocity
+  nav_msgs::msg::Odometry::SharedPtr m_current_velocity_ptr_;
+
+  //!< @brief measured steering
+  autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr m_current_steering_ptr_;
+
+  //!< @brief reference trajectory
+  // autoware_auto_planning_msgs::msg::Trajectory::SharedPtr m_current_trajectory_ptr_;
+
+  // INTERFACE Methods
+  /**
+   * @brief compute control command for path follow with a constant control period
+   */
+  boost::optional<LateralOutput> run() override;
+
+  /**
+   * @brief set input data like current odometry, trajectory and steering.
+   */
+  void setInputData(InputData const &input_data) override;
+
+  /**
+   * @brief create control command
+   * @param [in] ctrl_cmd published control command
+   */
+  autoware_auto_control_msgs::msg::AckermannLateralCommand createCtrlCmdMsg(autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd);
+
 };
 
 } // namespace autoware::motion::control::trajectory_follower
