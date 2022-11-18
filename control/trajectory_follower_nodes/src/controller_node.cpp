@@ -45,7 +45,7 @@ Controller::Controller(const rclcpp::NodeOptions &node_options) : Node("controll
   timeout_thr_sec_ = declare_parameter<double>("timeout_thr_sec", 0.5);
 
   const auto lateral_controller_mode =
-    getLateralControllerMode(declare_parameter("lateral_controller_mode", "mpc_follower"));
+    getLateralControllerMode(declare_parameter("lateral_controller_mode", "sysid"));
 
   switch (lateral_controller_mode)
   {
@@ -105,6 +105,7 @@ Controller::LateralControllerMode Controller::getLateralControllerMode(
 {
   if (controller_mode == "mpc_follower") return LateralControllerMode::MPC;
   if (controller_mode == "pure_pursuit") return LateralControllerMode::PURE_PURSUIT;
+  if (controller_mode == "sysid") return LateralControllerMode::SYS_ID;
 
   return LateralControllerMode::INVALID;
 }
