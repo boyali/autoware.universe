@@ -24,14 +24,24 @@ SysIDLateralController::SysIDLateralController(rclcpp::Node &node) : node_{&node
   loadParams();
 
 }
+
+SysIDLateralController::~SysIDLateralController() = default;
+
 void SysIDLateralController::setInputData(InputData const &input_data)
 {
   m_current_velocity_ptr_ = input_data.current_odometry_ptr;
   m_current_steering_ptr_ = input_data.current_steering_ptr;
+  m_current_trajectory_ptr_ = input_data.current_trajectory_ptr;
 }
 
 boost::optional<LateralOutput> SysIDLateralController::run()
 {
+
+  if (!checkData())
+  {
+    return boost::none;
+  }
+
   autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd;
   ctrl_cmd.steering_tire_angle = 0.;
   ctrl_cmd.steering_tire_rotation_rate = 0.;
@@ -47,10 +57,10 @@ boost::optional<LateralOutput> SysIDLateralController::run()
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 5000 /*ms*/, "In SYSID run ....");
 
-  auto const &stream = ns_utils::print_stream("dummy param", dummy_param_);
-
-  RCLCPP_WARN_SKIPFIRST_THROTTLE(
-    node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
+//   auto const &stream = ns_utils::print_stream("dummy param", dummy_param_);
+//
+//   RCLCPP_WARN_SKIPFIRST_THROTTLE(
+//     node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
 
   return createLateralOutput(ctrl_cmd);
 
@@ -66,8 +76,33 @@ autoware_auto_control_msgs::msg::AckermannLateralCommand SysIDLateralController:
 void SysIDLateralController::loadParams()
 {
   dummy_param_ = node_->declare_parameter<double>("dummy_param", 0.);
-
 }
 
-SysIDLateralController::~SysIDLateralController() = default;
+bool SysIDLateralController::checkData() const
+{
+
+  if (!m_current_velocity_ptr_)
+  {
+    RCLCPP_DEBUG(node_->get_logger(), "Waiting for the  current_velocity = %d",
+                 m_current_velocity_ptr_ != nullptr);
+    return false;
+  }
+
+  if (!m_current_steering_ptr_)
+  {
+    RCLCPP_DEBUG(
+      node_->get_logger(), "Waiting for the current_steering = %d", m_current_steering_ptr_ != nullptr);
+    return false;
+  }
+
+  if (!m_current_trajectory_ptr_)
+  {
+    RCLCPP_DEBUG(
+      node_->get_logger(), " Waiting for the current trajectory = %d", m_current_trajectory_ptr_ != nullptr);
+    return false;
+  }
+
+  return true;
+}
+
 } // namespace autoware::motion::control::trajectory_follower

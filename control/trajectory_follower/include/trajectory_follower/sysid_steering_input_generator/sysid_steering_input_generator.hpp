@@ -66,7 +66,7 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
   autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr m_current_steering_ptr_;
 
   //!< @brief reference trajectory
-  // autoware_auto_planning_msgs::msg::Trajectory::SharedPtr m_current_trajectory_ptr_;
+  autoware_auto_planning_msgs::msg::Trajectory::SharedPtr m_current_trajectory_ptr_;
 
   double dummy_param_{};
 
@@ -88,6 +88,7 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
   autoware_auto_control_msgs::msg::AckermannLateralCommand createCtrlCmdMsg(autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd);
 
   void loadParams();
+  bool checkData() const;
 };
 
 } // namespace autoware::motion::control::trajectory_follower
