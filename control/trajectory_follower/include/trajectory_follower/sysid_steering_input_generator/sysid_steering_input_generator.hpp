@@ -68,6 +68,8 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
   //!< @brief reference trajectory
   // autoware_auto_planning_msgs::msg::Trajectory::SharedPtr m_current_trajectory_ptr_;
 
+  double dummy_param_{};
+
   // INTERFACE Methods
   /**
    * @brief compute control command for path follow with a constant control period
@@ -85,6 +87,7 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
    */
   autoware_auto_control_msgs::msg::AckermannLateralCommand createCtrlCmdMsg(autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd);
 
+  void loadParams();
 };
 
 } // namespace autoware::motion::control::trajectory_follower

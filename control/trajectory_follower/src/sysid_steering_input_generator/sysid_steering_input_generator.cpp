@@ -21,6 +21,7 @@ SysIDLateralController::SysIDLateralController(rclcpp::Node &node) : node_{&node
 {
 
   using std::placeholders::_1;
+  loadParams();
 
 }
 void SysIDLateralController::setInputData(InputData const &input_data)
@@ -46,7 +47,7 @@ boost::optional<LateralOutput> SysIDLateralController::run()
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 5000 /*ms*/, "In SYSID run ....");
 
-  auto const &stream = ns_utils::print_stream("hello", 1);
+  auto const &stream = ns_utils::print_stream("dummy param", dummy_param_);
 
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
@@ -61,6 +62,11 @@ autoware_auto_control_msgs::msg::AckermannLateralCommand SysIDLateralController:
   // m_steer_cmd_prev = ctrl_cmd.steering_tire_angle;
 
   return ctrl_cmd;
+}
+void SysIDLateralController::loadParams()
+{
+  dummy_param_ = node_->declare_parameter<double>("dummy_param", 0.);
+
 }
 
 SysIDLateralController::~SysIDLateralController() = default;
