@@ -35,6 +35,8 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_msgs/msg/tf_message.hpp"
+#include "utils_act/act_utils.hpp"
+#include "utils_act/act_utils_eigen.hpp"
 
 namespace autoware::motion::control::trajectory_follower
 {

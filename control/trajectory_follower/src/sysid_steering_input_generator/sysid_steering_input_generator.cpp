@@ -46,6 +46,11 @@ boost::optional<LateralOutput> SysIDLateralController::run()
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 5000 /*ms*/, "In SYSID run ....");
 
+  auto const &stream = ns_utils::print_stream("hello", 1);
+
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
+
   return createLateralOutput(ctrl_cmd);
 
 }
