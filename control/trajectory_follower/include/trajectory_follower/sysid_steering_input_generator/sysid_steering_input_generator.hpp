@@ -37,6 +37,7 @@
 #include "tf2_msgs/msg/tf_message.hpp"
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
+#include "signal_processing/lowpass_filter.hpp"
 
 namespace autoware::motion::control::trajectory_follower
 {
