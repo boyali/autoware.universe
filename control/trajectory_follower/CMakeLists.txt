@@ -1,8 +1,46 @@
 cmake_minimum_required(VERSION 3.14)
 project(trajectory_follower)
 
+set(CMAKE_CXX_STANDARD 17)
+
+#Release, Debug, RelWithDebInfo, MinSizeRel
+set(CMAKE_BUILD_TYPE "Release")
+
+
 find_package(autoware_cmake REQUIRED)
 autoware_package()
+
+# Clang tidy
+if (TIDY_WITH_CLANG)
+    string(
+            CONCAT CMAKE_CXX_CLANG_TIDY
+            "clang-tidy;"
+            "-checks=-*,"
+            "bugprone-*,"
+            "cert-*,"
+            "cppcoreguidelines-*,"
+            "clang-analyze-*,"
+            "google-*,"
+            "hicpp-*,"
+            "modernize-*,"
+            "performance-*,"
+            "readability-*")
+endif ()
+
+
+if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(
+            -Wall
+            -Wextra
+            -Wpedantic
+            -Wno-unused-parameter
+            -Wno-conversion
+            -Wno-double-promotion
+            -Wno-float-equal
+            -Wno-address
+            -Wno-unused-but-set-variable
+            -fvisibility=default)
+endif ()
 
 # lateral_controller
 set(LATERAL_CONTROLLER_LIB lateral_controller_lib)
