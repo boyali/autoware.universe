@@ -59,6 +59,7 @@ set(LATERAL_CONTROLLER_LIB_SRC
         src/vehicle_model/vehicle_model_interface.cpp
         # SYSTEM ID
         src/sysid_steering_input_generator/sysid_steering_input_generator.cpp
+        src/input_library/input_lib.cpp
         )
 
 set(LATERAL_CONTROLLER_LIB_HEADERS
@@ -81,6 +82,8 @@ set(LATERAL_CONTROLLER_LIB_HEADERS
         include/trajectory_follower/vehicle_model/vehicle_model_interface.hpp
         # SYSTEM ID
         include/trajectory_follower/sysid_steering_input_generator/sysid_steering_input_generator.hpp
+        include/input_library/prbs_tap_bits.hpp
+        include/input_library/input_lib.hpp
         )
 
 ament_auto_add_library(${LATERAL_CONTROLLER_LIB} SHARED
