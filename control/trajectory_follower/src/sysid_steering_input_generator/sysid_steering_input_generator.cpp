@@ -37,7 +37,7 @@ void SysIDLateralController::setInputData(InputData const &input_data)
 boost::optional<LateralOutput> SysIDLateralController::run()
 {
 
-  if (!checkData())
+  if (!checkData() || !updateCurrentPose())
   {
     return boost::none;
   }
@@ -67,6 +67,11 @@ boost::optional<LateralOutput> SysIDLateralController::run()
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
 
+  stream = ns_utils::print_stream("\n signal magnitude ", signal_mag_);
+
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
+
   return createLateralOutput(ctrl_cmd);
 
 }
@@ -80,7 +85,7 @@ autoware_auto_control_msgs::msg::AckermannLateralCommand SysIDLateralController:
 }
 void SysIDLateralController::loadParams()
 {
-  dummy_param_ = node_->declare_parameter<double>("dummy_param", 0.);
+  signal_mag_ = node_->declare_parameter<double>("common_variables.signal_magnitude", 0.);
   min_speed_ = node_->declare_parameter<double>("common_variables.min_speed", 0.);
   max_speed_ = node_->declare_parameter<double>("common_variables.max_speed", 0.);
 }
@@ -108,6 +113,31 @@ bool SysIDLateralController::checkData() const
       node_->get_logger(), " Waiting for the current trajectory = %d", m_current_trajectory_ptr_ != nullptr);
     return false;
   }
+
+  return true;
+}
+
+bool SysIDLateralController::updateCurrentPose()
+{
+  geometry_msgs::msg::TransformStamped transform;
+  try
+  {
+    transform =
+      m_tf_buffer_.lookupTransform(m_current_trajectory_ptr_->header.frame_id, "base_link", tf2::TimePointZero);
+  } catch (tf2::TransformException &ex)
+  {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000 /*ms*/, ex.what());
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000 /*ms*/,
+                                   m_tf_buffer_.allFramesAsString().c_str());
+    return false;
+  }
+  geometry_msgs::msg::PoseStamped ps;
+  ps.header = transform.header;
+  ps.pose.position.x = transform.transform.translation.x;
+  ps.pose.position.y = transform.transform.translation.y;
+  ps.pose.position.z = transform.transform.translation.z;
+  ps.pose.orientation = transform.transform.rotation;
+  m_current_pose_ptr_ = std::make_shared<geometry_msgs::msg::PoseStamped>(ps);
 
   return true;
 }

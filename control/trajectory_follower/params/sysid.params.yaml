@@ -3,5 +3,6 @@
     dummy_param: 10.0
 
     common_variables:
+      signal_magnitude: 0.1
       min_speed: 2.
       max_speed: 2.3

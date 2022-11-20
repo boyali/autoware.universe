@@ -59,6 +59,9 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
   rclcpp::Node *node_;
 
   // DATA MEMBERS
+  //!< @brief measured pose
+  geometry_msgs::msg::PoseStamped::SharedPtr m_current_pose_ptr_;
+
   //!< @brief measured velocity
   nav_msgs::msg::Odometry::SharedPtr m_current_velocity_ptr_;
 
@@ -68,9 +71,13 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
   //!< @brief reference trajectory
   autoware_auto_planning_msgs::msg::Trajectory::SharedPtr m_current_trajectory_ptr_;
 
-  double dummy_param_{};
-  double min_speed_{};
-  double max_speed_{};
+  //!< @brief buffer for transforms
+  tf2::BufferCore m_tf_buffer_{tf2::BUFFER_CORE_DEFAULT_CACHE_TIME};
+  tf2_ros::TransformListener m_tf_listener_{m_tf_buffer_};
+
+  double signal_mag_{};  // maximum magnitude of the control signal
+  double min_speed_{};   // the speed over which the signal is generated
+  double max_speed_{};   // the speed guard to make the input zero.
 
   // INTERFACE Methods
   /**
@@ -88,6 +95,8 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
    * @param [in] ctrl_cmd published control command
    */
   autoware_auto_control_msgs::msg::AckermannLateralCommand createCtrlCmdMsg(autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd);
+
+  bool updateCurrentPose();
 
   void loadParams();
   bool checkData() const;
