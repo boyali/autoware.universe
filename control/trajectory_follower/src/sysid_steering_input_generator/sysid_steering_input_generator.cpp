@@ -126,9 +126,9 @@ bool SysIDLateralController::updateCurrentPose()
       m_tf_buffer_.lookupTransform(m_current_trajectory_ptr_->header.frame_id, "base_link", tf2::TimePointZero);
   } catch (tf2::TransformException &ex)
   {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000 /*ms*/, ex.what());
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000 /*ms*/, "%s", ex.what());
     RCLCPP_WARN_SKIPFIRST_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000 /*ms*/,
-                                   m_tf_buffer_.allFramesAsString().c_str());
+                                   "%s", m_tf_buffer_.allFramesAsString().c_str());
     return false;
   }
   geometry_msgs::msg::PoseStamped ps;
