@@ -57,7 +57,12 @@ boost::optional<LateralOutput> SysIDLateralController::run()
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 5000 /*ms*/, "In SYSID run ....");
 
-  auto const &stream = ns_utils::print_stream("max_speed ", max_speed_);
+  auto stream = ns_utils::print_stream("min_speed ", min_speed_);
+
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
+
+  stream = ns_utils::print_stream("\n max_speed ", max_speed_);
 
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
@@ -76,7 +81,8 @@ autoware_auto_control_msgs::msg::AckermannLateralCommand SysIDLateralController:
 void SysIDLateralController::loadParams()
 {
   dummy_param_ = node_->declare_parameter<double>("dummy_param", 0.);
-  max_speed_ = node_->declare_parameter<double>("max_speed", 0.);
+  min_speed_ = node_->declare_parameter<double>("common_variables.min_speed", 0.);
+  max_speed_ = node_->declare_parameter<double>("common_variables.max_speed", 0.);
 }
 
 bool SysIDLateralController::checkData() const
