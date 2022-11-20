@@ -1,3 +1,4 @@
 /**:
   ros__parameters:
     dummy_param: 10.0
+    max_speed: 2.3

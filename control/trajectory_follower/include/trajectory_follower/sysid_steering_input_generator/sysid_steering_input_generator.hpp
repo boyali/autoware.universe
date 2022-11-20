@@ -69,6 +69,7 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
   autoware_auto_planning_msgs::msg::Trajectory::SharedPtr m_current_trajectory_ptr_;
 
   double dummy_param_{};
+  double max_speed_{};
 
   // INTERFACE Methods
   /**
