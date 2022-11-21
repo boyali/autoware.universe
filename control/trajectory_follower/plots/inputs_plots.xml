@@ -1,22 +1,22 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
- <tabbed_widget name="Main Window" parent="main_window">
-  <Tab containers="1" tab_name="control_commands">
+ <tabbed_widget parent="main_window" name="Main Window">
+  <Tab tab_name="tab1" containers="1">
    <Container>
-    <DockSplitter orientation="-" count="1" sizes="1">
-     <DockSplitter orientation="|" count="2" sizes="0.5;0.5">
+    <DockSplitter count="1" orientation="-" sizes="1">
+     <DockSplitter count="2" orientation="|" sizes="0.5;0.5">
       <DockArea name="...">
-       <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-        <range right="6.719870" bottom="-0.002500" top="0.102500" left="1.740103"/>
+       <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+        <range left="1.710476" bottom="-0.002500" top="0.102500" right="6.689567"/>
         <limitY/>
-        <curve name="/control/command/control_cmd/lateral/steering_tire_angle" color="#1f77b4"/>
+        <curve color="#1f77b4" name="/control/command/control_cmd/lateral/steering_tire_angle"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
-        <range right="6.719870" bottom="-0.100000" top="0.100000" left="1.740103"/>
+       <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
+        <range left="1.710476" bottom="-0.100000" top="0.100000" right="6.689567"/>
         <limitY/>
-        <curve name="/control/command/control_cmd/longitudinal/speed" color="#d62728"/>
+        <curve color="#1f77b4" name="/control/command/control_cmd/longitudinal/speed"/>
        </plot>
       </DockArea>
      </DockSplitter>

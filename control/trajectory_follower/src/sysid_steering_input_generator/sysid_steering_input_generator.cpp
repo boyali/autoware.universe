@@ -128,8 +128,12 @@ void SysIDLateralController::loadParams(InputType const &input_type)
   common_input_lib_params_.maximum_amplitude =
     node_->declare_parameter<double>("common_variables.signal_magnitude", 0.);
 
-  common_input_lib_params_.minimum_speed = node_->declare_parameter<double>("common_variables.min_speed", 0.);
-  common_input_lib_params_.maximum_speed = node_->declare_parameter<double>("common_variables.max_speed", 0.);
+  auto const &vstart = node_->declare_parameter<double>("common_variables.min_speed", 0.);
+  auto const &vmax = node_->declare_parameter<double>("common_variables.max_speed", 0.);
+
+  common_input_lib_params_.minimum_speed = sysid::kmh2ms(vstart);
+  common_input_lib_params_.maximum_speed = sysid::kmh2ms(vmax);
+
   common_input_lib_params_.tstart = node_->declare_parameter<double>("common_variables.time_start_after", 0.);
 
   if (input_type == InputType::STEP)

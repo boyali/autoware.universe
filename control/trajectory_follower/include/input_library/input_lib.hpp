@@ -447,6 +447,13 @@ class InpFilteredWhiteNoise
 
 };
 
+// UTILS functions
+
+constexpr double kmh2ms(const double &vx_kmh)
+{
+  return vx_kmh / 3.6;
+}
+
 } // namespace sysid
 
 #endif  // SYSTEM_IDENTIFICATION_INCLUDE_INPUT_LIBRARY_INPUT_LIB_HPP_
