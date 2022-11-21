@@ -3,6 +3,7 @@
     dummy_param: 10.0
 
     common_variables:
-      signal_magnitude: 0.1
-      min_speed: 2.
-      max_speed: 2.3
+      signal_magnitude: 0.1   # maximum signal amplitude
+      min_speed: 2.           # signal start after this speed m/s
+      max_speed: 2.3          # signal zeroed after this speed
+      time_start_after: 0.5   # signal starts after min-speed activated [sec]

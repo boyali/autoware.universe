@@ -38,9 +38,17 @@
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
 #include "signal_processing/lowpass_filter.hpp"
+#include "input_library/input_lib.hpp"
 
 namespace autoware::motion::control::trajectory_follower
 {
+struct sCommonParametersInputLib
+{
+  double maximum_amplitude{0.1};
+  double minimum_speed{1.};  // signal activated after this speed
+  double maximum_speed{3.};  // signal zeroed after this speed
+  double tstart{0.5};  // signal started to generate after this amount of time.
+};
 
 class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControllerBase
 {
@@ -75,9 +83,8 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
   tf2::BufferCore m_tf_buffer_{tf2::BUFFER_CORE_DEFAULT_CACHE_TIME};
   tf2_ros::TransformListener m_tf_listener_{m_tf_buffer_};
 
-  double signal_mag_{};  // maximum magnitude of the control signal
-  double min_speed_{};   // the speed over which the signal is generated
-  double max_speed_{};   // the speed guard to make the input zero.
+  //!< @brief Signal class
+  sCommonParametersInputLib common_input_lib_params_{};
 
   // INTERFACE Methods
   /**

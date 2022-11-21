@@ -54,20 +54,27 @@ boost::optional<LateralOutput> SysIDLateralController::run()
     return boost::optional<LateralOutput>(output);
   };
 
+
+  // DEBUG
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 5000 /*ms*/, "In SYSID run ....");
 
-  auto stream = ns_utils::print_stream("min_speed ", min_speed_);
+  auto stream = ns_utils::print_stream("min_speed ", common_input_lib_params_.minimum_speed);
 
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
 
-  stream = ns_utils::print_stream("\n max_speed ", max_speed_);
+  stream = ns_utils::print_stream("\n max_speed ", common_input_lib_params_.maximum_speed);
 
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
 
-  stream = ns_utils::print_stream("\n signal magnitude ", signal_mag_);
+  stream = ns_utils::print_stream("\n signal magnitude ", common_input_lib_params_.maximum_amplitude);
+
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
+
+  stream = ns_utils::print_stream("\n time starts ", common_input_lib_params_.tstart);
 
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
@@ -85,9 +92,12 @@ autoware_auto_control_msgs::msg::AckermannLateralCommand SysIDLateralController:
 }
 void SysIDLateralController::loadParams()
 {
-  signal_mag_ = node_->declare_parameter<double>("common_variables.signal_magnitude", 0.);
-  min_speed_ = node_->declare_parameter<double>("common_variables.min_speed", 0.);
-  max_speed_ = node_->declare_parameter<double>("common_variables.max_speed", 0.);
+  common_input_lib_params_.maximum_amplitude =
+    node_->declare_parameter<double>("common_variables.signal_magnitude", 0.);
+
+  common_input_lib_params_.minimum_speed = node_->declare_parameter<double>("common_variables.min_speed", 0.);
+  common_input_lib_params_.maximum_speed = node_->declare_parameter<double>("common_variables.max_speed", 0.);
+  common_input_lib_params_.tstart = node_->declare_parameter<double>("common_variables.time_start_after", 0.);
 }
 
 bool SysIDLateralController::checkData() const
