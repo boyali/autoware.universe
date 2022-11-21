@@ -140,6 +140,7 @@ void SysIDLateralController::loadParams(InputType const &input_type)
   common_input_lib_params_.maximum_speed = sysid::kmh2ms(vmax);
 
   common_input_lib_params_.tstart = node_->declare_parameter<double>("common_variables.time_start_after", 0.);
+  const double ctrl_period = node_->get_parameter("ctrl_period").as_double();
 
   if (input_type == InputType::STEP)
   {
@@ -155,13 +156,13 @@ void SysIDLateralController::loadParams(InputType const &input_type)
                                                  step_params);
     // Change the input wrapper class.
     input_wrapper_ = sysid::InputWrapper{step_up_down_input_type};
+    return;
   }
 
   if (input_type == InputType::PRBS)
   {
     // const size_t prbs_n = static_cast<size_t>( node_->declare_parameter<int>("prbs_input_params.prbs_type_n", 8));
     const double estimated_rise_time = node_->declare_parameter<double>("prbs_input_params.estimated_rise_time", 0.5);
-    const double ctrl_period = node_->get_parameter("ctrl_period").as_double();
 
     sysid::sPRBSparams prbs_params(common_input_lib_params_.tstart,
                                    estimated_rise_time,
@@ -176,6 +177,34 @@ void SysIDLateralController::loadParams(InputType const &input_type)
 
     // Change the input wrapper class.
     input_wrapper_ = sysid::InputWrapper{prbs_input_type};
+    return;
+  }
+  if (input_type == InputType::FWNOISE)
+  {
+
+    auto const &lowpass_filter_cutoff_hz =
+      node_->declare_parameter<double>("fwnoise_input_params"".noise_cutoff_frq_hz", 5.);
+
+    auto const &lowpass_filter_order = node_->declare_parameter<int>("fwnoise_input_params.lowpass_filter_order", 3);
+    auto const &noise_mean = node_->declare_parameter<double>("fwnoise_input_params.noise_mean", 0.);
+    auto const &noise_std = node_->declare_parameter<double>("fwnoise_input_params.noise_std", 0.1);
+
+    sysid::sFilteredWhiteNoiseParameters params{};
+    params.start_time = common_input_lib_params_.tstart;
+    params.cutoff_frequency_hz = lowpass_filter_cutoff_hz;
+    params.sampling_frequency_hz = 1. / ctrl_period;
+    params.max_amplitude = common_input_lib_params_.maximum_amplitude;
+    params.filter_order = lowpass_filter_order;
+    params.noise_mean = noise_mean;
+    params.noise_stddev = noise_std;
+
+    sysid::InpFilteredWhiteNoise filtered_white_noise_input_type(common_input_lib_params_.minimum_speed,
+                                                                 common_input_lib_params_.maximum_speed,
+                                                                 params);
+
+    // Change the input wrapper class.
+    input_wrapper_ = sysid::InputWrapper{filtered_white_noise_input_type};
+    return;
   }
 }
 
