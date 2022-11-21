@@ -21,7 +21,11 @@ SysIDLateralController::SysIDLateralController(rclcpp::Node &node) : node_{&node
 {
 
   using std::placeholders::_1;
-  loadParams();
+
+  // Define input type
+  int input_type_id = node_->declare_parameter<int>("default_input_class", 0);
+  auto input_type = getInputType(input_type_id);
+  loadParams(input_type);
 
 }
 
@@ -96,14 +100,53 @@ autoware_auto_control_msgs::msg::AckermannLateralCommand SysIDLateralController:
 
   return ctrl_cmd;
 }
-void SysIDLateralController::loadParams()
+
+InputType SysIDLateralController::getInputType(int const &input_id)
 {
+  if (input_id == 0)
+  { return InputType::IDENTITY; }
+
+  if (input_id == 1)
+  { return InputType::STEP; }
+
+  if (input_id == 2)
+  { return InputType::PRBS; }
+
+  if (input_id == 3)
+  { return InputType::FWNOISE; }
+
+  if (input_id == 4)
+  { return InputType::SUMSINs; }
+
+  return InputType::IDENTITY;
+}
+
+void SysIDLateralController::loadParams(InputType const &input_type)
+{
+
+  // Load common parameters.
   common_input_lib_params_.maximum_amplitude =
     node_->declare_parameter<double>("common_variables.signal_magnitude", 0.);
 
   common_input_lib_params_.minimum_speed = node_->declare_parameter<double>("common_variables.min_speed", 0.);
   common_input_lib_params_.maximum_speed = node_->declare_parameter<double>("common_variables.max_speed", 0.);
   common_input_lib_params_.tstart = node_->declare_parameter<double>("common_variables.time_start_after", 0.);
+
+  if (input_type == InputType::STEP)
+  {
+    sysid::sStepParameters step_params;
+    step_params.start_time = common_input_lib_params_.tstart;
+    step_params.max_amplitude = common_input_lib_params_.maximum_amplitude;
+
+    step_params.step_period = node_->declare_parameter<double>("step_input_params.step_period", 1.);
+    step_params.step_direction_flag = node_->declare_parameter<int8_t>("step_input_params.step_direction", 0);
+
+    sysid::InpStepUpDown step_up_down(common_input_lib_params_.minimum_speed,
+                                      common_input_lib_params_.maximum_speed,
+                                      step_params);
+    // Change the input wrapper class.
+    input_wrapper_ = sysid::InputWrapper{step_up_down};
+  }
 }
 
 bool SysIDLateralController::checkData() const

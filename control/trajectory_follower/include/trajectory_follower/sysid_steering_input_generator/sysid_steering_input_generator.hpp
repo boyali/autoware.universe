@@ -50,6 +50,15 @@ struct sCommonParametersInputLib
   double tstart{0.5};  // signal started to generate after this amount of time.
 };
 
+enum class InputType : int
+{
+  IDENTITY = 0,
+  STEP = 1,
+  PRBS = 2,
+  FWNOISE = 3,
+  SUMSINs = 4,
+};
+
 class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControllerBase
 {
  public:
@@ -83,8 +92,10 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
   tf2::BufferCore m_tf_buffer_{tf2::BUFFER_CORE_DEFAULT_CACHE_TIME};
   tf2_ros::TransformListener m_tf_listener_{m_tf_buffer_};
 
-  //!< @brief Signal class
+  //!< @brief input library common parameters.
   sCommonParametersInputLib common_input_lib_params_{};
+
+  //!< @brief input class wrapper with a default identity input 0.
   sysid::InputWrapper input_wrapper_{sysid::InputIdentity{}};
 
   // INTERFACE Methods
@@ -106,7 +117,8 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
 
   bool updateCurrentPose();
 
-  void loadParams();
+  InputType getInputType(int const &input_id);
+  void loadParams(InputType const &input_type);
   bool checkData() const;
 };
 

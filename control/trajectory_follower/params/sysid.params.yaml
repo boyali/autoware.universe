@@ -1,9 +1,18 @@
 /**:
   ros__parameters:
-    dummy_param: 10.0
+
+    # inputs: 0-zero, 1-step, 2-prbs, 3-filtered noise, 4-sum of sinusoids
+    default_input_class: 1
 
     common_variables:
       signal_magnitude: 0.1   # maximum signal amplitude
       min_speed: 2.           # signal start after this speed m/s
       max_speed: 2.3          # signal zeroed after this speed
       time_start_after: 0.5   # signal starts after min-speed activated [sec]
+
+
+    # individual class parameters:
+    # STEP INPUTS.
+    step_input_params:
+      step_direction: 1 # Up: 1, Down: -1, Up and Down : 0
+      step_period: 1.1 # step durations
