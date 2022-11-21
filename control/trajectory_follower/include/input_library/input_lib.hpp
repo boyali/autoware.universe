@@ -139,6 +139,16 @@ class InputWrapper
 
 };
 
+// Identity element
+
+class InputIdentity
+{
+ public:
+  [[nodiscard]] double generateInput(double const &)
+  { return 0.; }
+
+};
+
 // ****************************************** INPUT IMPLEMENTATIONS ***************************************
 /**
  * @brief Input types.

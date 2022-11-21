@@ -85,6 +85,7 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
 
   //!< @brief Signal class
   sCommonParametersInputLib common_input_lib_params_{};
+  sysid::InputWrapper input_wrapper_{sysid::InputIdentity{}};
 
   // INTERFACE Methods
   /**
