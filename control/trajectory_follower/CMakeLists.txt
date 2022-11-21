@@ -60,6 +60,7 @@ set(LATERAL_CONTROLLER_LIB_SRC
         # SYSTEM ID
         src/sysid_steering_input_generator/sysid_steering_input_generator.cpp
         src/input_library/input_lib.cpp
+        src/input_library/prbs_tap_bits.cpp
         )
 
 set(LATERAL_CONTROLLER_LIB_HEADERS

@@ -314,7 +314,7 @@ double InpPRBS<N>::generateInput(const double &vx)
   // current time in milliseconds
   if (auto const &t_ms = time_tracker_();t_ms < Ts_ * 1000)
   {
-    ns_utils::print("Time after experiment regime reached : ", t_ms);
+    // ns_utils::print("Time after experiment regime reached : ", t_ms);
     return 0.;
   }
 
@@ -325,12 +325,12 @@ double InpPRBS<N>::generateInput(const double &vx)
   if (auto dt_temp = static_cast<double>(time_since_last_call.count()) / 1e6;dt_temp > dt_prbs_)
   {
     auto const b0 = lfsr();
-    current_input_ = static_cast<double>(b0) * max_amplitute_ - max_amplitute_ / 2.; // signal - mean(signal)
+    current_input_ = static_cast<double>(b0) * max_amplitute_ * 2. - max_amplitute_; // signal - mean(signal)
 
     // update the time at which the control is updated.
     last_tick_time_ = std::chrono::system_clock::now();
 
-    ns_utils::print("prbs time passed ", dt_prbs_, "--> == ? ", dt_temp);
+    // ns_utils::print("prbs time passed ", dt_prbs_, "--> == ? ", dt_temp);
   }
 
   //  if (current_seed_ != initial_seed_)

@@ -83,6 +83,11 @@ boost::optional<LateralOutput> SysIDLateralController::run()
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
 
+  auto ctrl_period = node_->get_parameter("ctrl_period").as_double();
+
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n Control period  %2.2f", ctrl_period);
+
   return createLateralOutput(ctrl_cmd);
 
 }
@@ -145,11 +150,32 @@ void SysIDLateralController::loadParams(InputType const &input_type)
     step_params.step_period = node_->declare_parameter<double>("step_input_params.step_period", 1.);
     step_params.step_direction_flag = node_->declare_parameter<int8_t>("step_input_params.step_direction", 0);
 
-    sysid::InpStepUpDown step_up_down(common_input_lib_params_.minimum_speed,
-                                      common_input_lib_params_.maximum_speed,
-                                      step_params);
+    sysid::InpStepUpDown step_up_down_input_type(common_input_lib_params_.minimum_speed,
+                                                 common_input_lib_params_.maximum_speed,
+                                                 step_params);
     // Change the input wrapper class.
-    input_wrapper_ = sysid::InputWrapper{step_up_down};
+    input_wrapper_ = sysid::InputWrapper{step_up_down_input_type};
+  }
+
+  if (input_type == InputType::PRBS)
+  {
+    // const size_t prbs_n = static_cast<size_t>( node_->declare_parameter<int>("prbs_input_params.prbs_type_n", 8));
+    const double estimated_rise_time = node_->declare_parameter<double>("prbs_input_params.estimated_rise_time", 0.5);
+    const double ctrl_period = node_->get_parameter("ctrl_period").as_double();
+
+    sysid::sPRBSparams prbs_params(common_input_lib_params_.tstart,
+                                   estimated_rise_time,
+                                   ctrl_period,
+                                   PRBS_N);
+
+    prbs_params.max_amplitude = common_input_lib_params_.maximum_amplitude;
+
+    sysid::InpPRBS<PRBS_N> prbs_input_type(common_input_lib_params_.minimum_speed,
+                                           common_input_lib_params_.maximum_speed,
+                                           prbs_params);
+
+    // Change the input wrapper class.
+    input_wrapper_ = sysid::InputWrapper{prbs_input_type};
   }
 }
 
