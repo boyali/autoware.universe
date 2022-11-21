@@ -1,22 +1,22 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
- <tabbed_widget parent="main_window" name="Main Window">
-  <Tab tab_name="Control Commands" containers="1">
+ <tabbed_widget name="Main Window" parent="main_window">
+  <Tab containers="1" tab_name="control_commands">
    <Container>
-    <DockSplitter count="1" orientation="-" sizes="1">
-     <DockSplitter count="2" orientation="|" sizes="0.5;0.5">
+    <DockSplitter orientation="-" count="1" sizes="1">
+     <DockSplitter orientation="|" count="2" sizes="0.5;0.5">
       <DockArea name="...">
-       <plot flip_y="false" flip_x="false" style="Lines" mode="TimeSeries">
-        <range top="0.100000" right="17.731214" bottom="-0.100000" left="12.751154"/>
+       <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+        <range right="6.719870" bottom="-0.002500" top="0.102500" left="1.740103"/>
         <limitY/>
-        <curve color="#1f77b4" name="/control/command/control_cmd/lateral/steering_tire_angle"/>
+        <curve name="/control/command/control_cmd/lateral/steering_tire_angle" color="#1f77b4"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_y="false" flip_x="false" style="Lines" mode="TimeSeries">
-        <range top="0.100000" right="17.731214" bottom="-0.100000" left="12.751154"/>
+       <plot mode="TimeSeries" style="Lines" flip_x="false" flip_y="false">
+        <range right="6.719870" bottom="-0.100000" top="0.100000" left="1.740103"/>
         <limitY/>
-        <curve color="#d62728" name="/control/command/control_cmd/longitudinal/speed"/>
+        <curve name="/control/command/control_cmd/longitudinal/speed" color="#d62728"/>
        </plot>
       </DockArea>
      </DockSplitter>
@@ -40,7 +40,7 @@
   <plugin ID="DataLoad ULog"/>
   <plugin ID="ROS2 Topic Subscriber">
    <use_header_stamp value="false"/>
-   <discard_large_arrays value="true"/>
+   <discard_large_arrays value="false"/>
    <max_array_size value="true"/>
    <selected_topics>
     <topic name="/control/command/control_cmd"/>

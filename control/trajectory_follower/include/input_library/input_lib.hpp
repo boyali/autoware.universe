@@ -100,7 +100,7 @@ class OwningInputModel : public InputConcept
 
  private:
   InputType input_object_;
-  // sGenerator input_generator_;
+
 };
 
 class InputWrapper
@@ -315,7 +315,7 @@ double InpPRBS<N>::generateInput(const double &vx)
   if (auto const &t_ms = time_tracker_();t_ms < Ts_ * 1000)
   {
     ns_utils::print("Time after experiment regime reached : ", t_ms);
-    return 0;
+    return 0.;
   }
 
   // Compute the generator output.
@@ -447,6 +447,6 @@ class InpFilteredWhiteNoise
 
 };
 
-}
+} // namespace sysid
 
 #endif  // SYSTEM_IDENTIFICATION_INCLUDE_INPUT_LIBRARY_INPUT_LIB_HPP_

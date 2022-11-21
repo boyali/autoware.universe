@@ -77,7 +77,7 @@ double InpSumOfSinusoids::generateInput(double const &vx)
   if (t_ms < Ts_ * 1000)
   {
     // ns_utils::print("Time after experiment regime reached : ", t_ms);
-    return 0;
+    return 0.;
   }
 
   // Compute the generator output.
@@ -145,7 +145,7 @@ double InpFilteredWhiteNoise::generateInput(double const &vx)
   if (auto const &t_ms = time_tracker_();t_ms < Ts_ * 1000)
   {
     ns_utils::print("Time after experiment regime reached : ", t_ms);
-    return 0;
+    return 0.;
   }
 
   // Compute the generator output.
@@ -172,15 +172,22 @@ InpStepUpDown::InpStepUpDown(double const &activation_vx,
     step_direction_flag_{params.step_direction_flag}
 {
 
-  if (step_direction_flag_ == 1)
+  switch (step_direction_flag_)
   {
-    input_set_ = std::vector<double>{1., 0.};
-  } else if (step_direction_flag_ == -1)
-  {
-    input_set_ = std::vector<double>{-1., 0.};
-  } else
-  {
-    input_set_ = std::vector<double>{-1., 0., 1., 0.};
+
+    case 1:input_set_ = std::vector<double>{1., 0.};  // step up
+      break;
+
+    case -1:input_set_ = std::vector<double>{-1., 0.};   // step down
+      break;
+
+    case 2:input_set_ = std::vector<double>{1., 0., -1., 0.};  // step up down
+      break;
+
+    case 3:input_set_ = std::vector<double>{-1., 0., 1., 0.}; // step down up
+      break;
+    default:input_set_ = std::vector<double>{1., 0.};
+      break;
   }
 
 }
@@ -198,7 +205,7 @@ double InpStepUpDown::generateInput(double const &vx)
   if (auto const &t_ms = time_tracker_(); t_ms < Ts_ * 1000)
   {
     ns_utils::print("Time after experiment regime reached : ", t_ms);
-    return 0;
+    return 0.;
   }
 
   // Compute the generator output.

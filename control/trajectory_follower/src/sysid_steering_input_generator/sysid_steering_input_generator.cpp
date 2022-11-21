@@ -89,9 +89,9 @@ boost::optional<LateralOutput> SysIDLateralController::run()
 autoware_auto_control_msgs::msg::AckermannLateralCommand SysIDLateralController::createCtrlCmdMsg(
   autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd)
 {
-
   // Generate input from input classes.
-  auto const &sysid_input_val = input_wrapper_.generateInput(0.);
+  auto const &vx = m_current_velocity_ptr_->twist.twist.linear.x;
+  auto const &sysid_input_val = input_wrapper_.generateInput(vx);
 
   // Put in the command message.
   ctrl_cmd.steering_tire_angle = sysid_input_val;
