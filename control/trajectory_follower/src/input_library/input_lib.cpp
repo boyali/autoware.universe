@@ -48,6 +48,7 @@ InpSumOfSinusoids::InpSumOfSinusoids(const double &activation_vx,
   frequency_band_hz_{params.frequency_band},
   num_sins_{params.num_of_sins},
   max_amplitude_{params.max_amplitude},
+  add_noise_{params.add_noise},
   noise_mean_{params.noise_mean},
   noise_stddev_{params.noise_stddev}
 {
@@ -90,14 +91,16 @@ double InpSumOfSinusoids::generateInput(double const &vx)
     input_val_at_t += std::sin(arg);
   }
 
-  ns_utils::print("In Sum of Sinusoids ... and current time ", t_ms);
+  // ns_utils::print("In Sum of Sinusoids ... and current time ", t_ms);
 
   // Generate noise
-  auto const &additive_noise = normal_distribution_(random_engine_);
-  auto const &clean_signal = max_amplitude_ * input_val_at_t / static_cast<double>(num_sins_);
-  auto const &noisy_signal = clean_signal + additive_noise;
+  if (add_noise_)
+  {
+    auto const &additive_noise = normal_distribution_(random_engine_);
+    input_val_at_t += additive_noise;
+  }
 
-  return noisy_signal;
+  return max_amplitude_ * input_val_at_t / static_cast<double>(num_sins_);
 }
 
 /**

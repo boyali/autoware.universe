@@ -165,6 +165,7 @@ struct sSumOfSinParameters
   std::array<double, 2> frequency_band{2, 8}; // frequency content of sum of sinusoids.
   size_t num_of_sins{3};
   double max_amplitude{0.1};
+  bool add_noise{};
 
   // additive noise.
   double noise_mean{};
@@ -191,6 +192,7 @@ class InpSumOfSinusoids
   double max_amplitude_;  // maximum amplitude of the sin signals
 
   // Noise definitions.
+  bool add_noise_{};
   double noise_mean_;  // noise mean and std.
   double noise_stddev_;
 

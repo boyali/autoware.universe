@@ -206,6 +206,32 @@ void SysIDLateralController::loadParams(InputType const &input_type)
     input_wrapper_ = sysid::InputWrapper{filtered_white_noise_input_type};
     return;
   }
+
+  if (input_type == InputType::SUMSINs)
+  {
+    sysid::sSumOfSinParameters params;
+    params.start_time = common_input_lib_params_.tstart;
+    auto temp_frequency_band = node_->
+                                      declare_parameter<std::vector<double>>("sumof_sinusoids_params.frequency_band_hz",
+                                                                             std::vector<double>{1., 10.});
+
+    params.frequency_band = std::array<double, 2>{temp_frequency_band[0], temp_frequency_band[0]};
+    params.num_of_sins = node_->declare_parameter<int>("sumof_sinusoids_params.num_of_sinuses", 5);
+
+    // noise definitions
+    params.add_noise = node_->declare_parameter<bool>("sumof_sinusoids_params.add_noise", false);
+    params.noise_mean = node_->declare_parameter<double>("sumof_sinusoids_params.noise_mean", 0.);
+    params.noise_stddev = node_->declare_parameter<double>("sumof_sinusoids_params.noise_std", 0.01);
+
+    params.max_amplitude = common_input_lib_params_.maximum_amplitude;
+
+    sysid::InpSumOfSinusoids inp_sum_of_sinusoids_type(common_input_lib_params_.minimum_speed,
+                                                       common_input_lib_params_.maximum_speed,
+                                                       params);
+
+    // Change the input wrapper class.
+    input_wrapper_ = sysid::InputWrapper{inp_sum_of_sinusoids_type};
+  }
 }
 
 bool SysIDLateralController::checkData() const

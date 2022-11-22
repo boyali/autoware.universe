@@ -2,7 +2,7 @@
   ros__parameters:
 
     # inputs: 0-zero, 1-step, 2-prbs, 3-filtered noise, 4-sum of sinusoids
-    default_input_class: 3
+    default_input_class: 4
 
     common_variables:
       signal_magnitude: 0.1   # maximum signal amplitude
@@ -24,6 +24,13 @@
     fwnoise_input_params:
       noise_cutoff_frq_hz: 10.  # low-pass filter noise cut-off frequency Hz
       lowpass_filter_order: 3  # low-pass filter order
+      noise_mean: 0. # mean value of Gaussian noise
+      noise_std: 0.08 # std deviation of Gaussian noise
+
+    sumof_sinusoids_params:
+      frequency_band_hz: [ 2.0, 8.0 ]  # the frequency range of the sinus signals in Hz
+      num_of_sinuses: 10
+      add_noise: false
       noise_mean: 0. # mean value of Gaussian noise
       noise_std: 0.08 # std deviation of Gaussian noise
 
