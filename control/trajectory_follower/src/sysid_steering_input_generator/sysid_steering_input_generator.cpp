@@ -88,6 +88,10 @@ boost::optional<LateralOutput> SysIDLateralController::run()
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n Control period  %2.2f", ctrl_period);
 
+  stream = ns_utils::print_stream("sin frequency band ", dummy_array_[0], dummy_array_[1]);
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    node_->get_logger(), *node_->get_clock(), 2000 /*ms*/, "\n  %s", stream.str().c_str());
+
   return createLateralOutput(ctrl_cmd);
 
 }
@@ -194,7 +198,7 @@ void SysIDLateralController::loadParams(InputType const &input_type)
     params.cutoff_frequency_hz = lowpass_filter_cutoff_hz;
     params.sampling_frequency_hz = 1. / ctrl_period;
     params.max_amplitude = common_input_lib_params_.maximum_amplitude;
-    params.filter_order = lowpass_filter_order;
+    params.filter_order = static_cast<int>(lowpass_filter_order);
     params.noise_mean = noise_mean;
     params.noise_stddev = noise_std;
 
@@ -211,12 +215,14 @@ void SysIDLateralController::loadParams(InputType const &input_type)
   {
     sysid::sSumOfSinParameters params;
     params.start_time = common_input_lib_params_.tstart;
-    auto temp_frequency_band = node_->
-                                      declare_parameter<std::vector<double>>("sumof_sinusoids_params.frequency_band_hz",
-                                                                             std::vector<double>{1., 10.});
+    auto const &temp_frequency_band = node_->declare_parameter<std::vector<double>>("sumof_sinusoids_params"
+                                                                                    ".frequency_band_hz",
+                                                                                    std::vector<double>{1., 10.});
 
-    params.frequency_band = std::array<double, 2>{temp_frequency_band[0], temp_frequency_band[0]};
+    params.frequency_band = std::array<double, 2>{temp_frequency_band[0], temp_frequency_band[1]};
     params.num_of_sins = node_->declare_parameter<int>("sumof_sinusoids_params.num_of_sinuses", 5);
+
+    dummy_array_ = params.frequency_band;
 
     // noise definitions
     params.add_noise = node_->declare_parameter<bool>("sumof_sinusoids_params.add_noise", false);

@@ -97,6 +97,7 @@ class TRAJECTORY_FOLLOWER_PUBLIC SysIDLateralController : public LateralControll
 
   //!< @brief input class wrapper with a default identity input 0.
   sysid::InputWrapper input_wrapper_{sysid::InputIdentity{}};
+  std::array<double, 2> dummy_array_{};
 
   // INTERFACE Methods
   /**
