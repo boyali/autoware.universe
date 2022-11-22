@@ -22,7 +22,10 @@
 #include "prbs_tap_bits.hpp"
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
+
+// Filtering headers
 #include "signal_processing/lowpass_filter.hpp"
+#include "signal_processing/butterworth.hpp"
 
 namespace sysid
 {

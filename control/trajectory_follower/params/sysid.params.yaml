@@ -22,9 +22,9 @@
       estimate_rise_time: 0.5 # estimated rise time for a step input to the system [sec].
 
     fwnoise_input_params:
-      noise_cutoff_frq_hz: 5.  # low-pass filter noise cut-off frequency Hz
+      noise_cutoff_frq_hz: 10.  # low-pass filter noise cut-off frequency Hz
       lowpass_filter_order: 3  # low-pass filter order
       noise_mean: 0. # mean value of Gaussian noise
-      noise_std: 0.2 # std deviation of Gaussian noise
+      noise_std: 0.08 # std deviation of Gaussian noise
 
 

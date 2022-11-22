@@ -117,12 +117,27 @@ InpFilteredWhiteNoise::InpFilteredWhiteNoise(double const &activation_vx,
     noise_stddev_{params.noise_stddev}
 {
 
-  // Design filter here calling the Butterworth and set b_, a_.
-  auto b = std::vector<double>{0.002898194633721, 0.008694583901164,
-                               0.008694583901164, 0.002898194633721};
+  ButterworthFilter butterworth_filter;
+  butterworth_filter.setOrder(filter_order_);
+  butterworth_filter.setCutOffFrequency(fc_hz_, fs_hz_);
 
-  auto a = std::vector<double>{1.0, -2.374094743709352,
-                               1.929355669091215, -0.532075368312092};
+  bool use_sampling_frequency{true};
+  butterworth_filter.computeContinuousTimeTF(use_sampling_frequency);
+  butterworth_filter.computeDiscreteTimeTF(use_sampling_frequency);
+
+  //  butterworth_filter.printFilterContinuousTimeRoots();
+  //  butterworth_filter.printContinuousTimeTF();
+
+  // Get filter numerator and denominator
+  auto const &a = butterworth_filter.getAn();
+  auto const &b = butterworth_filter.getBn();
+
+  // Design filter here calling the Butterworth and set b_, a_.
+  //   auto b = std::vector<double>{0.002898194633721, 0.008694583901164,
+  //                                0.008694583901164, 0.002898194633721};
+  //
+  //   auto a = std::vector<double>{1.0, -2.374094743709352,
+  //                                1.929355669091215, -0.532075368312092};
 
   low_pass_filter_ = LowPassFilter(b, a);
 
@@ -186,10 +201,10 @@ InpStepUpDown::InpStepUpDown(double const &activation_vx,
 
     case 3:input_set_ = std::vector<double>{-1., 0., 1., 0.}; // step down up
       break;
+
     default:input_set_ = std::vector<double>{1., 0.};
       break;
   }
-
 }
 
 double InpStepUpDown::generateInput(double const &vx)
