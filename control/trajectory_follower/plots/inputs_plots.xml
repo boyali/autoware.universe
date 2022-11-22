@@ -1,25 +1,16 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
- <tabbed_widget parent="main_window" name="Main Window">
-  <Tab tab_name="tab1" containers="1">
+ <tabbed_widget name="Main Window" parent="main_window">
+  <Tab containers="1" tab_name="tab1">
    <Container>
-    <DockSplitter count="1" orientation="-" sizes="1">
-     <DockSplitter count="2" orientation="|" sizes="0.5;0.5">
-      <DockArea name="...">
-       <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
-        <range left="1.710476" bottom="-0.002500" top="0.102500" right="6.689567"/>
-        <limitY/>
-        <curve color="#1f77b4" name="/control/command/control_cmd/lateral/steering_tire_angle"/>
-       </plot>
-      </DockArea>
-      <DockArea name="...">
-       <plot mode="TimeSeries" flip_y="false" flip_x="false" style="Lines">
-        <range left="1.710476" bottom="-0.100000" top="0.100000" right="6.689567"/>
-        <limitY/>
-        <curve color="#1f77b4" name="/control/command/control_cmd/longitudinal/speed"/>
-       </plot>
-      </DockArea>
-     </DockSplitter>
+    <DockSplitter count="1" sizes="1" orientation="-">
+     <DockArea name="...">
+      <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
+       <range left="1.859797" right="6.839802" bottom="-0.100000" top="0.100000"/>
+       <limitY/>
+       <curve name="/control/trajectory_follower/control_cmd/lateral/steering_tire_angle" color="#1f77b4"/>
+      </plot>
+     </DockArea>
     </DockSplitter>
    </Container>
   </Tab>
@@ -30,7 +21,7 @@
  <!-- - - - - - - - - - - - - - - -->
  <Plugins>
   <plugin ID="DataLoad CSV">
-   <default time_axis="" delimiter="0"/>
+   <default delimiter="0" time_axis=""/>
   </plugin>
   <plugin ID="DataLoad ROS2 bags">
    <use_header_stamp value="false"/>
@@ -43,7 +34,8 @@
    <discard_large_arrays value="false"/>
    <max_array_size value="true"/>
    <selected_topics>
-    <topic name="/control/command/control_cmd"/>
+    <topic name="/vehicle/status/velocity_status"/>
+    <topic name="/control/trajectory_follower/control_cmd"/>
    </selected_topics>
   </plugin>
   <plugin ID="UDP Server"/>

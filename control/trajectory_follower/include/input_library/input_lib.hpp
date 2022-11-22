@@ -453,7 +453,6 @@ class InpFilteredWhiteNoise
 };
 
 // UTILS functions
-
 constexpr double kmh2ms(const double &vx_kmh)
 {
   return vx_kmh / 3.6;

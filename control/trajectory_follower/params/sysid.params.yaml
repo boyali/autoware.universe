@@ -28,8 +28,8 @@
       noise_std: 0.08 # std deviation of Gaussian noise
 
     sumof_sinusoids_params:
-      frequency_band_hz: [ 1.0, 8.0 ]  # the frequency range of the sinus signals in Hz
-      num_of_sinuses: 10
+      frequency_band_hz: [ 1.0, 15.0 ]  # the frequency range of the sinus signals in Hz
+      num_of_sinuses: 5
       add_noise: false
       noise_mean: 0. # mean value of Gaussian noise
       noise_std: 0.08 # std deviation of Gaussian noise

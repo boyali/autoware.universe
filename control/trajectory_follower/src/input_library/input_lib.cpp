@@ -87,7 +87,7 @@ double InpSumOfSinusoids::generateInput(double const &vx)
   for (auto const &wt_hz : sin_frequencies_hz_)
   {
     auto &&current_sin_time = (t_ms / 1000 - Ts_);
-    auto &&arg = wt_hz * 2. * M_PI * current_sin_time;
+    auto &&arg = wt_hz * 2. * M_PI * current_sin_time;  // w = 2*9i*f
     input_val_at_t += std::sin(arg);
   }
 
